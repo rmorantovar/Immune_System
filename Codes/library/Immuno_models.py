@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-#from Bio import Phylo
 from io import StringIO
 from matplotlib.lines import Line2D
 from datetime import datetime, timedelta
@@ -11,6 +10,7 @@ import json
 from scipy.optimize import curve_fit
 
 
+#----------------- Classes -----------------
 class Sequence():
 	"""docstring for Sequence"""
 	def __init__(self, seq_id, master_sequence, energy_parent, complementary_sequence, Energy_Matrix, parent,  parent_id = 0, Master_Seq = False):
@@ -65,6 +65,93 @@ class Sequence():
 		self.hamming_distance = hamming_distance(self.master_sequence, self.sequence)
 		self.Alphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't']
 		self.calculate_delta_energy(Energy_Matrix = Energy_Matrix, old_letter = old_letter, new_letter = new_letter)
+
+class Immune_response():
+	"""docstring for Immune_response
+	=============================================
+	Params : N	Number of B cells that I produce
+			 L	Lenght of sequences
+
+	"""
+	def __init__(self, L, N, alpha, beta, antigen_str, text_files_path, energy_model = 'MJ', growth_model = 'exponential'):
+		super(Immune_response, self).__init__()
+		self.N_A = 6.02214076e23
+		self.L = L
+		self.N = N
+		self.alpha = alpha
+		self.beta = beta
+		self.antigen_str = antigen_str
+		assert(np.char.str_len(self.antigen_str) == L), "The antigen provided has no lenght %d."%(self.L)
+		self.energy_model = energy_model
+		self.growth_model = growth_model
+		self.text_files_path = text_files_path
+		self.Alphabet = np.loadtxt('../Input_files/Alphabet.txt', dtype=bytes, delimiter='\t').astype(str)
+		self.B_cells_seqs = np.random.randint(low = 0, high=np.size(self.Alphabet)-1, size=self.N*self.L).reshape(self.N, self.L) 
+		self.energies = np.zeros(self.N)
+		self.activation_status = np.zeros(self.N)
+
+		if(self.growth_model=='exponential'):
+			self.exponential=True
+			self.linear=False
+		if(self.growth_model=='linear'):
+			self.exponential=False
+			self.linear=True
+
+
+		#--- Initial functions ---
+		self.antigen_seq()
+		self.load_matrix()
+		self.calculate_energies()
+	
+
+	#----- Function of the class
+	def antigen_seq(self):
+		self.dict_Alphabet = {s:i for i, s in enumerate(self.Alphabet)}
+		self.antigen = np.array([self.dict_Alphabet[s] for s in self.antigen_str])
+
+	def load_matrix(self):
+		if(self.energy_model=='MJ'):
+			self.E_matrix = np.loadtxt("../Input_files/MJ2.txt")
+		if(self.energy_model=='MM'):
+			self.E_matrix = np.loadtxt('../Input_files/MM.txt')
+
+
+	def energy(self, seq):
+		if(self.energy_model == 'MJ' or self.energy_model == 'MM'):
+			self.energies[seq] = np.sum(self.E_matrix[self.antigen, self.B_cells_seqs[seq,:]])
+		if(self.energy_model == 'Random'):
+			self.energies[seq] = np.random.normal(loc = -56.0, scale = 1.17, size = 1)
+
+	def calculate_energies(self):
+		for seq in np.arange(self.N):
+			self.energy(seq)
+
+	def step(self):
+		self.antigen_Tseries[self.idt] = self.antigen_Tseries[self.idt-1] + self.exponential*self.alpha*self.antigen_Tseries[self.idt-1]*self.dT + self.linear*2000*self.alpha*self.dT
+		p_b = (self.antigen_Tseries[self.idt]/self.N_A)/((self.antigen_Tseries[self.idt]/self.N_A)+(np.exp(self.energies+25)))
+		self.activation_status = np.greater(p_b, 0.5)
+		self.B_cells_Tseries[:,self.idt] = self.B_cells_Tseries[:,self.idt-1] + self.B_cells_Tseries[:,self.idt-1]*self.beta*self.activation_status*self.dT
+
+	def run(self,T, dT = 0.005, T0 = 0):
+
+
+		self.T = T
+		self.T0 = T0
+		self.dT = dT
+		self.time = np.linspace(self.T0, self.T, int((self.T-self.T0)/self.dT))
+		self.antigen_Tseries = np.zeros(np.size(self.time))
+		self.antigen_Tseries[0] = np.exp(self.alpha*self.T0)*self.exponential + 1e3*self.linear
+		self.B_cells_Tseries = np.zeros((self.N, np.size(self.time)))
+		self.B_cells_Tseries[:,0] = np.ones(self.N)
+		self.idt = 1
+		while(self.time[self.idt-1]<self.T):
+			self.step()
+			self.idt+=1
+
+
+
+	#@staticmethod
+	#def create_b_cells(self):
 	
 
 #----------------- Models -----------------
