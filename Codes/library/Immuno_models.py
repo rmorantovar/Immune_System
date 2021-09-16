@@ -149,7 +149,6 @@ class Immune_response():
 			self.idt+=1
 
 
-
 	#@staticmethod
 	#def create_b_cells(self):
 	
