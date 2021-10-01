@@ -9,8 +9,6 @@ import pickle
 import time
 from tqdm import tqdm
 
-def neutralization(a, b, x):
-	return 1/(1+((np.exp(a*(x-1.2)))/(b)))
 
 N_epitopes = np.arange(1, 12, 1)
 
@@ -32,7 +30,7 @@ for l in np.arange(len(N_epitopes)): #Running loop over number of epitopes
 
 	for n in np.arange(N_ensemble): #Running ensemble
 		mutations = np.random.randint(low=1, high=N_epitopes[l]+1, size = T*N_epitopes[l])
-		cross_protection_temp = 1-np.array([np.product([1-neutralization(2.5, 10, np.count_nonzero(mutations[0:t]==i)) for i in N_epitopes[0: l+1]]) for t in np.arange(len(time))])
+		cross_protection_temp = 1-np.array([np.product([1-binding_affinity(np.count_nonzero(mutations[0:t]==i), -6, 3.0) for i in N_epitopes[0: l+1]]) for t in np.arange(len(time))])
 		cross_protection = cross_protection + cross_protection_temp
 
 	gain_function_fast = np.append(gain_function_fast, (cross_protection[time<=4][-1])/N_ensemble)
