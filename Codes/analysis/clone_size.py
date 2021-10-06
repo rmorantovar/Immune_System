@@ -12,7 +12,7 @@ growth_models = ['exponential', 'linear']
 text_pos = np.array([[4e0, 5e-7],[1e2, 6e-2]], dtype = object)
 text = [r'$\sim N_{b}^{-1-\frac{\lambda\alpha}{\beta}}$', r'$\sim N_{b}^{-1}$']
 
-path = "../../../../../Dropbox/Research/Evolution_Immune_System/Text_files/Dynamics/Python/ensemble/"
+path = "/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/Dynamics/Python/ensemble/"
 
 alpha = 1
 beta = 0.5

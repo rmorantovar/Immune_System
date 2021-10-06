@@ -8,7 +8,7 @@ import pickle
 import time
 from tqdm import tqdm
 
-path = "../../../../../Dropbox/Research/Evolution_Immune_System/Text_files/Dynamics/Python/ensemble/"
+path = "/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/Dynamics/Python/ensemble/"
 
 growth_models = ['exponential', 'linear']
 growth_models = ['exponential']
