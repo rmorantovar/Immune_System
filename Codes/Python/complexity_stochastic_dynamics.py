@@ -10,18 +10,18 @@ import time
 from tqdm import tqdm
 
 
-a = -2
-b = 1
-N_epitopes = np.arange(1, 9, 1)
-rhos = np.logspace(-1, np.log10(2), 12)
+n0 = 2
+e0 = 2.5
+N_epitopes = np.arange(1, 6, 1)
+rhos = np.logspace(np.log10(0.08), np.log10(2), 6)
 tau = 1
-T = 5000
+T = 8000
 R_bar = np.zeros((len(N_epitopes), len(rhos)))
 for r, rho in enumerate(rhos):
 	print('\n rho=%.1e \n'%(rho))
 	for g in tqdm(N_epitopes):
 	    n_mutations = np.zeros(g) #Array with number of mutatios in each epitope
-	    neutralizations = binding_affinity(n_mutations, a, b) #Array with individuals neutralization probabilities
+	    neutralizations = binding_affinity(n_mutations, -n0*e0, e0) #Array with individuals neutralization probabilities
 	    time = np.array([0]) #Array with time
 	    t = time[-1]
 	    time_intervals = np.array([])
@@ -49,7 +49,7 @@ for r, rho in enumerate(rhos):
 	            if(r_sick>R[-1]): #sick
 	                n_mutations = np.zeros(g) #restart mutations
 	                sick_times = np.append(sick_times, t)
-	        neutralizations = binding_affinity(n_mutations, a, b) #update neutralizations  
+	        neutralizations = binding_affinity(n_mutations, -n0*e0, e0) #update neutralizations  
 	        R = np.append(R, 1-np.product(1-neutralizations)) #update R
 	    if(g==1):
 	    	R_bar_1 = 1-np.size(sick_times)/np.size(exposure_times)
