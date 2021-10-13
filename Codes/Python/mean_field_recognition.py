@@ -10,7 +10,7 @@ import time
 from tqdm import tqdm
 
 rhos = np.logspace(np.log10(0.08), np.log10(2), 6)
-N_epitopes = np.arange(1, 6, 1)
+N_epitopes = np.linspace(1, 6, 20)
 g=4
 n0 = 2
 e0 = 2.5
@@ -26,10 +26,10 @@ R_bar = np.zeros((len(N_epitopes), len(rhos)))
 r = np.linspace(0.01, 0.99, 500)
 
 for i, rho in enumerate(rhos):
-	for g in tqdm(N_epitopes):
+	for j, g in tqdm(enumerate(N_epitopes)):
 		R = 1-(1-binding_affinity(time*rho, -n0*e0, e0))**g
 
-		R_bar[g-1, i] = (R_MF(r))[np.where((R_MF(r)-r)>=0)[0][-1]]
+		R_bar[j, i] = (R_MF(r))[np.where((R_MF(r)-r)>=0)[0][-1]]
 
 df_R = pd.DataFrame(R_bar)
-df_R.to_csv('/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/Complexity/R_bar_MF.txt', sep = '\t', index = False, header = False)
+df_R.to_csv('/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/Complexity/R_bar_MF_continuous.txt', sep = '\t', index = False, header = False)
