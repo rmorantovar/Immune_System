@@ -73,7 +73,7 @@ class Immune_response():
 			 L	Lenght of sequences
 
 	"""
-	def __init__(self, L, N, alpha, beta, antigen_str, text_files_path, energy_model = 'MJ', growth_model = 'exponential'):
+	def __init__(self, L, N, alpha, beta, text_files_path, energy_model = 'MJ', d=1, antigen_str='', growth_model = 'exponential'):
 		super(Immune_response, self).__init__()
 		self.N_A = 6.02214076e23
 		self.L = L
@@ -81,12 +81,16 @@ class Immune_response():
 		self.alpha = alpha
 		self.beta = beta
 		self.antigen_str = antigen_str
-		assert(np.char.str_len(self.antigen_str) == L), "The antigen provided has no lenght %d."%(self.L)
 		self.energy_model = energy_model
 		self.growth_model = growth_model
 		self.text_files_path = text_files_path
 		self.Alphabet = np.loadtxt('../Input_files/Alphabet.txt', dtype=bytes, delimiter='\t').astype(str)
-		self.B_cells_seqs = np.random.randint(low = 0, high=np.size(self.Alphabet)-1, size=self.N*self.L).reshape(self.N, self.L) 
+		if(self.energy_model=='MM'):
+			self.d = d #If the model is MM, we can choose the size of the alphabet d
+		else:
+			self.d = np.size(self.Alphabet) #If the model is MJ or random, d is the number of aa (d=20)
+
+		self.B_cells_seqs = np.random.randint(low = 0, high=d-1, size=self.N*self.L).reshape(self.N, self.L) 
 		self.energies = np.zeros(self.N)
 		self.activation_status = np.zeros(self.N)
 
@@ -98,14 +102,20 @@ class Immune_response():
 			self.linear=True
 
 
-		#--- Initial functions ---
-		self.antigen_seq()
+		#--- Initialize functions ---
+
+		self.antigen = np.random.randint(low = 0, high=d-1, size=self.L) #create a random antigen. In the case of MM, it does not matter.
+
+		if(self.antigen_str!=''): #in case the input is a seq of aa, then we look for the numerical seq.
+			self.antigen_seq()
+
 		self.load_matrix()
 		self.calculate_energies()
-	
+		
 
-	#----- Function of the class
+	#----- Functions of the class
 	def antigen_seq(self):
+		assert(np.char.str_len(self.antigen_str) == self.L), "The antigen provided has no lenght %d."%(self.L)
 		self.dict_Alphabet = {s:i for i, s in enumerate(self.Alphabet)}
 		self.antigen = np.array([self.dict_Alphabet[s] for s in self.antigen_str])
 
@@ -113,7 +123,7 @@ class Immune_response():
 		if(self.energy_model=='MJ'):
 			self.E_matrix = np.loadtxt("../Input_files/MJ2.txt")
 		if(self.energy_model=='MM'):
-			self.E_matrix = np.loadtxt('../Input_files/MM.txt')
+			self.E_matrix = np.diag(-1*np.ones(self.d))
 
 
 	def energy(self, seq):
@@ -128,12 +138,11 @@ class Immune_response():
 
 	def step(self):
 		self.antigen_Tseries[self.idt] = self.antigen_Tseries[self.idt-1] + self.exponential*self.alpha*self.antigen_Tseries[self.idt-1]*self.dT + self.linear*2000*self.alpha*self.dT
-		p_b = (self.antigen_Tseries[self.idt]/self.N_A)/((self.antigen_Tseries[self.idt]/self.N_A)+(np.exp(self.energies+25)))
+		p_b = (self.antigen_Tseries[self.idt]/self.N_A)/((self.antigen_Tseries[self.idt]/self.N_A)+(np.exp(self.energies-(2*self.d))))
 		self.activation_status = np.greater(p_b, 0.5)
 		self.B_cells_Tseries[:,self.idt] = self.B_cells_Tseries[:,self.idt-1] + self.B_cells_Tseries[:,self.idt-1]*self.beta*self.activation_status*self.dT
 
 	def run(self,T, dT = 0.005, T0 = 0):
-
 
 		self.T = T
 		self.T0 = T0
@@ -147,7 +156,6 @@ class Immune_response():
 		while(self.time[self.idt-1]<self.T):
 			self.step()
 			self.idt+=1
-
 
 	#@staticmethod
 	#def create_b_cells(self):
