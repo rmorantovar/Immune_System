@@ -73,10 +73,12 @@ class Immune_response():
 			 L	Lenght of sequences
 
 	"""
-	def __init__(self, L, N, alpha, beta, text_files_path, energy_model = 'MJ', d=1, antigen_str='', growth_model = 'exponential'):
+	def __init__(self, L, N, alpha, beta, text_files_path, energy_model = 'MJ', d=1, e0=1, antigen_str='', growth_model = 'exponential'):
 		super(Immune_response, self).__init__()
 		self.N_A = 6.02214076e23
 		self.L = L
+		self.e0 = e0
+		self.E0 = self.e0*self.L - np.log(self.N_A)+0
 		self.N = N
 		self.alpha = alpha
 		self.beta = beta
@@ -90,7 +92,7 @@ class Immune_response():
 		else:
 			self.d = np.size(self.Alphabet) #If the model is MJ or random, d is the number of aa (d=20)
 
-		self.B_cells_seqs = np.random.randint(low = 0, high=d-1, size=self.N*self.L).reshape(self.N, self.L) 
+		self.B_cells_seqs = np.random.randint(low = 0, high=d, size=self.N*self.L).reshape(self.N, self.L) 
 		self.energies = np.zeros(self.N)
 		self.activation_status = np.zeros(self.N)
 
@@ -104,7 +106,7 @@ class Immune_response():
 
 		#--- Initialize functions ---
 
-		self.antigen = np.random.randint(low = 0, high=d-1, size=self.L) #create a random antigen. In the case of MM, it does not matter.
+		self.antigen = np.random.randint(low = 0, high=d, size=self.L) #create a random antigen. In the case of MM, it does not matter.
 
 		if(self.antigen_str!=''): #in case the input is a seq of aa, then we look for the numerical seq.
 			self.antigen_seq()
@@ -123,7 +125,7 @@ class Immune_response():
 		if(self.energy_model=='MJ'):
 			self.E_matrix = np.loadtxt("../Input_files/MJ2.txt")
 		if(self.energy_model=='MM'):
-			self.E_matrix = np.diag(-1*np.ones(self.d))
+			self.E_matrix = np.diag(-self.e0*np.ones(self.d))
 
 
 	def energy(self, seq):
@@ -138,7 +140,7 @@ class Immune_response():
 
 	def step(self):
 		self.antigen_Tseries[self.idt] = self.antigen_Tseries[self.idt-1] + self.exponential*self.alpha*self.antigen_Tseries[self.idt-1]*self.dT + self.linear*2000*self.alpha*self.dT
-		p_b = (self.antigen_Tseries[self.idt]/self.N_A)/((self.antigen_Tseries[self.idt]/self.N_A)+(np.exp(self.energies-(2*self.d))))
+		p_b = (self.antigen_Tseries[self.idt]/self.N_A)/((self.antigen_Tseries[self.idt]/self.N_A)+(np.exp(self.energies+self.E0)))
 		self.activation_status = np.greater(p_b, 0.5)
 		self.B_cells_Tseries[:,self.idt] = self.B_cells_Tseries[:,self.idt-1] + self.B_cells_Tseries[:,self.idt-1]*self.beta*self.activation_status*self.dT
 

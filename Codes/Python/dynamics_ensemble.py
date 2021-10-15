@@ -12,24 +12,31 @@ path = "/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_f
 
 growth_models = ['exponential', 'linear']
 growth_models = ['exponential']
-N_ensemble  = 500
+N_ensemble  = 200
 
 alphas = [1]
-betas = [1]
-for beta in betas:
-	for alpha in alphas:
-		for i, growth_model in enumerate(growth_models):
-			print('Growth model: ',growth_model)
-			file_clone_sizes = open(path+'clone_size_data_alpha-%.2f_beta-%.2f_'%(alpha, beta)+growth_model+'.pkl','wb')
-			clone_sizes = np.array([])
+betas = [2, 1, 0.5]
+ds = [2, 4]
+Ns = [2e3, 2e4]
+L = 15
+e0 = 4
 
-			for n in tqdm(np.arange(N_ensemble)):
-				
-				my_response = Immune_response(L=15, N=2000, alpha = alpha, beta=beta, antigen_str = 'FMLFMAVFVMTSWYC', text_files_path=path, energy_model = 'MJ',
-					growth_model = growth_model)
-				my_response.run(T = 20)
-				clone_sizes = np.append(clone_sizes, my_response.B_cells_Tseries[my_response.activation_status,-1])
+for d in ds:
+	for beta in betas:
+		for alpha in alphas:
+			for N in Ns:
+				for i, growth_model in enumerate(growth_models):
+					print('Growth model: ',growth_model)
+					file_clone_sizes = open(path+'clone_size_data_d-%d_beta-%.2f_N-%.1e_'%(d, beta, N)+growth_model+'.pkl','wb')
+					clone_sizes = np.array([])
 
-			pickle.dump(clone_sizes, file_clone_sizes)
-			file_clone_sizes.close()
+					for n in tqdm(np.arange(N_ensemble)):
+						
+						#my_response = Immune_response(L=15, N=2000, alpha = alpha, beta=beta, antigen_str = 'FMLFMAVFVMTSWYC', text_files_path=path, energy_model = 'MJ', growth_model = growth_model)
+						my_response = Immune_response(L=L, N=int(N), alpha = alpha, beta=beta,  text_files_path=path, energy_model = 'MM', d = d, e0=e0)
+						my_response.run(T = 40)
+						clone_sizes = np.append(clone_sizes, my_response.B_cells_Tseries[my_response.activation_status,-1])
+
+					pickle.dump(clone_sizes, file_clone_sizes)
+					file_clone_sizes.close()
 

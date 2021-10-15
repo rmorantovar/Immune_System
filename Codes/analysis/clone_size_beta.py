@@ -15,7 +15,7 @@ text = [r'$\sim N_{b}^{-1-\frac{\lambda\alpha}{\beta}}$', r'$\sim N_{b}^{-1}$']
 path = "/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/Dynamics/Python/ensemble/"
 
 alpha = 1
-betas = [0.05, 0.1, 0.2, 0.5, 1.0]
+betas = [0.5, 1.0, 2.0]
 lamda = 0.62
 colors_betas = plt.cm.BuPu(np.linspace(0,1,len(betas)+2))
 fig, ax = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'bottom':.15})
