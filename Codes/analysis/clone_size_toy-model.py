@@ -46,7 +46,7 @@ for d in ds:
 
 
 			ax.plot(clone_size[:][:], plaw_fit_csd[:][:], linestyle = '--', marker = '', ms = 8, linewidth = 4, alpha = .8, color = colors_betas[i+2])
-			ax.plot(clone_size[:-1], clone_size_counts[:-1], linestyle = '', marker = 's', ms = 6, linewidth = 4, color = colors_betas[i+2], label = '%.1e'%(delta))
+			ax.plot(clone_size[:-1], clone_size_counts[:-1], linestyle = '', marker = 's', ms = 6, linewidth = 4, color = colors_betas[i+2])
 
 
 			#ax.text(x=text_pos[i][0], y=text_pos[i][1], s = text[i], fontsize=44, color = colors_fit[i])
