@@ -12,10 +12,10 @@ from tqdm import tqdm
 
 n0 = 2
 e0 = 2.5
-N_epitopes = np.arange(1, 6, 1)
+N_epitopes = np.arange(1, 10, 1)
 rhos = np.logspace(np.log10(0.08), np.log10(2), 6)
 tau = 1
-T = 8000
+T = 10000
 R_bar = np.zeros((len(N_epitopes), len(rhos)))
 for r, rho in enumerate(rhos):
 	print('\n rho=%.1e \n'%(rho))

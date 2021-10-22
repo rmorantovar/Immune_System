@@ -73,19 +73,21 @@ class Immune_response():
 			 L	Lenght of sequences
 
 	"""
-	def __init__(self, L, N, alpha, beta, text_files_path, energy_model = 'MJ', d=1, e0=1, antigen_str='', growth_model = 'exponential'):
+	def __init__(self, L, N, alpha, beta, text_files_path, energy_model = 'MJ', d=1, e0=1, antigen_str='', growth_model = 'exponential', bcells_filter = False):
 		super(Immune_response, self).__init__()
 		self.N_A = 6.02214076e23
 		self.L = L
 		self.e0 = e0
 		self.E0 = self.e0*self.L - np.log(self.N_A)+0
 		self.N = N
+		self.NN = N
 		self.alpha = alpha
 		self.beta = beta
 		self.antigen_str = antigen_str
 		self.energy_model = energy_model
 		self.growth_model = growth_model
 		self.text_files_path = text_files_path
+		self.Bcells_to_delete = np.array([], dtype = int)
 		self.Alphabet = np.loadtxt('../Input_files/Alphabet.txt', dtype=bytes, delimiter='\t').astype(str)
 		if(self.energy_model=='MM'):
 			self.d = d #If the model is MM, we can choose the size of the alphabet d
@@ -106,13 +108,14 @@ class Immune_response():
 
 		#--- Initialize functions ---
 
-		self.antigen = np.random.randint(low = 0, high=d, size=self.L) #create a random antigen. In the case of MM, it does not matter.
+		self.antigen = np.random.randint(low = 0, high=self.d, size=self.L) #create a random antigen. In the case of MM, it does not matter.
 
 		if(self.antigen_str!=''): #in case the input is a seq of aa, then we look for the numerical seq.
 			self.antigen_seq()
 
+		self.energy_bar = -self.e0*self.L/self.d
 		self.load_matrix()
-		self.calculate_energies()
+		self.calculate_energies(filter = bcells_filter)
 		
 
 	#----- Functions of the class
@@ -128,15 +131,27 @@ class Immune_response():
 			self.E_matrix = np.diag(-self.e0*np.ones(self.d))
 
 
-	def energy(self, seq):
+	def energy(self, nseq):
 		if(self.energy_model == 'MJ' or self.energy_model == 'MM'):
-			self.energies[seq] = np.sum(self.E_matrix[self.antigen, self.B_cells_seqs[seq,:]])
+			self.energies[nseq] = np.sum(self.E_matrix[self.antigen, self.B_cells_seqs[nseq,:]])
 		if(self.energy_model == 'Random'):
-			self.energies[seq] = np.random.normal(loc = -56.0, scale = 1.17, size = 1)
+			self.energies[nseq] = np.random.normal(loc = -56.0, scale = 1.17, size = 1)
 
-	def calculate_energies(self):
-		for seq in np.arange(self.N):
-			self.energy(seq)
+	def calculate_energies(self, filter=False):
+		if(filter):
+			for nseq in np.arange(self.N):
+				self.energy(nseq)
+				if self.energies[nseq] > self.energy_bar:
+					self.Bcells_to_delete = np.append(self.Bcells_to_delete, int(nseq))
+
+			self.B_cells_seqs = np.delete(self.B_cells_seqs, self.Bcells_to_delete, 0)
+			self.energies = np.delete(self.energies, self.Bcells_to_delete, 0)
+			self.NN = self.N - np.size(self.Bcells_to_delete)
+
+
+		if not(filter):
+			for nseq in np.arange(self.N):
+				self.energy(nseq)
 
 	def step(self):
 		self.antigen_Tseries[self.idt] = self.antigen_Tseries[self.idt-1] + self.exponential*self.alpha*self.antigen_Tseries[self.idt-1]*self.dT + self.linear*2000*self.alpha*self.dT
@@ -152,8 +167,8 @@ class Immune_response():
 		self.time = np.linspace(self.T0, self.T, int((self.T-self.T0)/self.dT))
 		self.antigen_Tseries = np.zeros(np.size(self.time))
 		self.antigen_Tseries[0] = np.exp(self.alpha*self.T0)*self.exponential + 1e3*self.linear
-		self.B_cells_Tseries = np.zeros((self.N, np.size(self.time)))
-		self.B_cells_Tseries[:,0] = np.ones(self.N)
+		self.B_cells_Tseries = np.zeros((self.NN, np.size(self.time)))
+		self.B_cells_Tseries[:,0] = np.ones(self.NN)
 		self.idt = 1
 		while(self.time[self.idt-1]<self.T):
 			self.step()
