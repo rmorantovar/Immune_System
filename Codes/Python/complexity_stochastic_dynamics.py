@@ -17,6 +17,7 @@ rhos = np.logspace(np.log10(0.08), np.log10(2), 6)
 tau = 1
 T = 10000
 R_bar = np.zeros((len(N_epitopes), len(rhos)))
+
 for r, rho in enumerate(rhos):
 	print('\n rho=%.1e \n'%(rho))
 	for g in tqdm(N_epitopes):
