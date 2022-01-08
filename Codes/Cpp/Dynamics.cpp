@@ -6,7 +6,7 @@
 //
 //Template to run a stochastic/deterministic simulation of the antigen and bcells dynamics.
 
-#include "../lib/Immuno_functions.hpp"
+#include "../library/Immuno_functions.hpp"
 
 #include <stdio.h>
 
@@ -14,7 +14,7 @@
 using namespace std;
 
 //----------------------------------------------------------------------------------
-int main(int argc, char* argv[]) //argv has 1:L 2:N , 3:T , 4:T0 , 5:eta , 6:nu , 7:gamma , 8:linear ; 9:type
+int main(int argc, char* argv[]) //argv has 1:L 2:N , 3:T , 4:T0 , 5:alpha , 6:beta , 7:gamma , 8:linear ; 9:model
 {
     string Text_files_path = "../../../../../Dropbox/Research/Evolution_Immune_System/Text_files/Dynamics/Single_trajectory/";
     cout<<">Running simulation of the Bcells-Antigen dynamics ..."<< endl;
@@ -24,10 +24,10 @@ int main(int argc, char* argv[]) //argv has 1:L 2:N , 3:T , 4:T0 , 5:eta , 6:nu 
     t1=clock();
     //-----------------------------------------------------------------------------
     //Parameters:
-    std::string eta_s (argv[5]);
-    double eta = stod(eta_s);
-    std::string nu_s (argv[6]);
-    double nu = stod(nu_s);;
+    std::string alpha_s (argv[5]);
+    double alpha = stod(alpha_s);
+    std::string beta_s (argv[6]);
+    double beta = stod(beta_s);;
     std::string gamma_s (argv[7]);
     double gamma = stod(gamma_s);;
     int L  = atoi(argv[1]); //length of the sequence
@@ -37,9 +37,9 @@ int main(int argc, char* argv[]) //argv has 1:L 2:N , 3:T , 4:T0 , 5:eta , 6:nu 
     int T0 = atoi(argv[4]); //initial number of days for the simulation
     double dT = 0.005; //time step
     long long int NT = (T-T0)/dT; //number of steps
-    long long A_0 = exp(eta*T0);
+    long long A_0 = exp(alpha*T0);
     int linear = atoi(argv[8]);
-    string type (argv[9]);
+    string model (argv[9]);
 
     //------------Energy Matrix------------------------------------------------------
     vector < vector < double > > MJ;
@@ -88,7 +88,7 @@ int main(int argc, char* argv[]) //argv has 1:L 2:N , 3:T , 4:T0 , 5:eta , 6:nu 
     //Array with Naive-specific Bcells
     vector < bcell* > Naive;
     int n_naive = 0;
-    choose_naive_Bcells(N, L, L_alphabet, MJ, Antigen, Bcells, Naive, n_naive, type, r);
+    choose_naive_Bcells(N, L, L_alphabet, MJ, Antigen, Bcells, Naive, n_naive, model, r);
     
     //Matrix with the time series of the antigen-specific Bcells
     vector<vector < long double > > Time_series_Bcells;
@@ -120,14 +120,15 @@ int main(int argc, char* argv[]) //argv has 1:L 2:N , 3:T , 4:T0 , 5:eta , 6:nu 
     //Output files
     
  
-    ofstream fout (Text_files_path+"energies_L-"+std::to_string(L)+"_N-"+ std::to_string(N)+"_Antigen-"+Antigen_aa+"_Linear-"+std::to_string(linear)+"_"+type+".txt");
-    ofstream fout_antigen (Text_files_path+"antigen_L-"+std::to_string(L)+"_N-"+ std::to_string(N)+"_Antigen-"+Antigen_aa+"_eta-"+std::to_string(eta)+"_nu-"+std::to_string(nu)+"_gamma-"+std::to_string(gamma)+"_Linear-"+std::to_string(linear)+"_"+type+".txt");
-    ofstream fout_bcells (Text_files_path+"bcells_L-"+std::to_string(L)+"_N-"+ std::to_string(N)+"_Antigen-"+Antigen_aa+"_eta-"+std::to_string(eta)+"_nu-"+std::to_string(nu)+"_gamma-"+std::to_string(gamma)+"_Linear-"+std::to_string(linear)+"_"+type+".txt");
-    ofstream fout_N_active_linages (Text_files_path+"N_active_linages_L-"+std::to_string(L)+"_N-"+ std::to_string(N)+"_Antigen-"+Antigen_aa+"_eta-"+std::to_string(eta)+"_nu-"+std::to_string(nu)+"_gamma-"+std::to_string(gamma)+"_Linear-"+std::to_string(linear)+"_"+type+".txt");
+    ofstream fout (Text_files_path+"energies_L-"+std::to_string(L)+"_N-"+ std::to_string(N)+"_Antigen-"+Antigen_aa+"_Linear-"+std::to_string(linear)+"_"+model+".txt");
+    ofstream fout_antigen (Text_files_path+"antigen_L-"+std::to_string(L)+"_N-"+ std::to_string(N)+"_Antigen-"+Antigen_aa+"_alpha-"+std::to_string(alpha)+"_beta-"+std::to_string(beta)+"_gamma-"+std::to_string(gamma)+"_Linear-"+std::to_string(linear)+"_"+model+".txt");
+    ofstream fout_bcells (Text_files_path+"bcells_L-"+std::to_string(L)+"_N-"+ std::to_string(N)+"_Antigen-"+Antigen_aa+"_alpha-"+std::to_string(alpha)+"_beta-"+std::to_string(beta)+"_gamma-"+std::to_string(gamma)+"_Linear-"+std::to_string(linear)+"_"+model+".txt");
+    ofstream fout_N_active_linages (Text_files_path+"N_active_linages_L-"+std::to_string(L)+"_N-"+ std::to_string(N)+"_Antigen-"+Antigen_aa+"_alpha-"+std::to_string(alpha)+"_beta-"+std::to_string(beta)+"_gamma-"+std::to_string(gamma)+"_Linear-"+std::to_string(linear)+"_"+model+".txt");
 
     
+    cout << mean_energy(L, L_alphabet, MJ, Antigen) << endl;
     // Run ODE
-    ODE(linear, eta, nu, gamma, NT, dT, n_naive, Naive, Time_series_Bcells, Time_series_Antigen, N_active_linages);
+    ODE(linear, alpha, beta, gamma, NT, dT, n_naive, Naive, Time_series_Bcells, Time_series_Antigen, N_active_linages);
     
     for (int n= 0; n<n_naive; n++)
     {

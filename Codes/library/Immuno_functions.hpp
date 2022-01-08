@@ -166,8 +166,26 @@ void mutate_sequence(int L, int L_alphabet, vector< int > & sequence){
     }
 }
 
-// Function to run de set of differential equations
-void ODE(int linear, double const eta, double const nu, double const gamma, long long NT, double dT, int n_naive, vector<bcell*> & Naive, vector<vector < long double > > & Time_series_Bcells, vector < long double > & Time_series_Antigen, vector < int > & N_active_linages){
+//Function to calculate the mean energy of the associated PWM
+
+double mean_energy(int L, int L_alphabet, vector< vector<double> > const & MJ, vector< int > const & Antigen){
+
+    double mean_E = 0.0;
+
+    for(int i=0; i<L ; i++){
+        for (int j = 0; j < L_alphabet; ++j)
+        {
+            mean_E = mean_E + MJ[Antigen[i]][j];
+        }
+    }
+    mean_E=mean_E/(L_alphabet);
+
+    return mean_E;
+
+}
+
+// Function to run the set of differential equations
+void ODE(int linear, double const alpha, double const beta, double const gamma, long long NT, double dT, int n_naive, vector<bcell*> & Naive, vector<vector < long double > > & Time_series_Bcells, vector < long double > & Time_series_Antigen, vector < int > & N_active_linages){
     double p_GC = 0.15;
     double f = 0;
     double N_active_bcells = 0;
@@ -175,14 +193,14 @@ void ODE(int linear, double const eta, double const nu, double const gamma, long
     if (linear==0) {
         for(int t = 1; t< NT ; t++){ // for loop of time
             //Update the antigen
-            Time_series_Antigen[t] = Time_series_Antigen[t-1] + (eta*Time_series_Antigen[t-1] - gamma*Time_series_Antigen[t-1]*N_active_bcells)*dT;
+            Time_series_Antigen[t] = Time_series_Antigen[t-1] + (alpha*Time_series_Antigen[t-1] - gamma*Time_series_Antigen[t-1]*N_active_bcells)*dT;
             if(Time_series_Antigen[t]<1){
                 Time_series_Antigen[t] = 0;
             }
             N_active_bcells = 0;
             //Update Bcells
             for(int n = 0 ; n<n_naive ; n++){
-                Time_series_Bcells[n][t] = Time_series_Bcells[n][t-1] + (nu*Time_series_Bcells[n][t-1])*dT*(Naive[n]->active);
+                Time_series_Bcells[n][t] = Time_series_Bcells[n][t-1] + (beta*Time_series_Bcells[n][t-1])*dT*(Naive[n]->active);
                 if(Naive[n]->active ==0){
                     f = (Time_series_Antigen[t]/N_A)/((Time_series_Antigen[t]/N_A) + exp(25+Naive[n]->e));
                     if(f>0.5){
@@ -206,14 +224,14 @@ void ODE(int linear, double const eta, double const nu, double const gamma, long
     } else {
         for(int t = 1; t< NT ; t++){ // for loop of time
             //Update the antigen
-            Time_series_Antigen[t] = Time_series_Antigen[t-1] + (eta*2000 - gamma*Time_series_Antigen[t-1]*N_active_bcells)*dT;
+            Time_series_Antigen[t] = Time_series_Antigen[t-1] + (alpha*2000 - gamma*Time_series_Antigen[t-1]*N_active_bcells)*dT;
             if(Time_series_Antigen[t]<1){
                 Time_series_Antigen[t] = 0;
             }
             N_active_bcells = 0;
             //Update Bcells
             for(int n = 0 ; n<n_naive ; n++){
-                Time_series_Bcells[n][t] = Time_series_Bcells[n][t-1] + (nu*Time_series_Bcells[n][t-1])*dT*(Naive[n]->active);
+                Time_series_Bcells[n][t] = Time_series_Bcells[n][t-1] + (beta*Time_series_Bcells[n][t-1])*dT*(Naive[n]->active);
                 if(Naive[n]->active ==0){
                     f = (Time_series_Antigen[t]/N_A)/((Time_series_Antigen[t]/N_A) + exp(25+Naive[n]->e));
                     if(f>0.5){
@@ -238,8 +256,8 @@ void ODE(int linear, double const eta, double const nu, double const gamma, long
     
 }
 
-// Function to run de set of differential equations
-void ODE_ensemble(int linear, double const eta, double const nu, double const gamma, long long NT, double dT, int n_naive, vector<bcell*> & Naive, vector < long double > & Time_series_Antigen, vector < double > & N_active_linages, vector <double> & N_final_active_linages){
+// Function to run an ensemble of trajectories
+void ODE_ensemble(int linear, double const alpha, double const beta, double const gamma, long long NT, double dT, int n_naive, vector<bcell*> & Naive, vector < long double > & Time_series_Antigen, vector < double > & N_active_linages, vector <double> & N_final_active_linages){
     double f = 0;
     double N_active_bcells = 0;
     int n_active_linages_t = 0;
@@ -247,7 +265,7 @@ void ODE_ensemble(int linear, double const eta, double const nu, double const ga
     if (linear==0) {
         for(int t = 1; t< NT ; t++){ // for loop of time
             //Update the antigen
-            Time_series_Antigen[t] = Time_series_Antigen[t-1] + (eta*Time_series_Antigen[t-1] - gamma*Time_series_Antigen[t-1]*N_active_bcells)*dT;
+            Time_series_Antigen[t] = Time_series_Antigen[t-1] + (alpha*Time_series_Antigen[t-1] - gamma*Time_series_Antigen[t-1]*N_active_bcells)*dT;
             if(Time_series_Antigen[t]<1){
                 Time_series_Antigen[t] = 0;
             }
@@ -255,9 +273,9 @@ void ODE_ensemble(int linear, double const eta, double const nu, double const ga
             n_active_linages_t = 0;
             //Update Bcells
             for(int n = 0 ; n<n_naive ; n++){
-                Naive[n]->cs = Naive[n]->cs + (nu*Naive[n]->cs*dT*(Naive[n]->active));
+                Naive[n]->cs = Naive[n]->cs + (beta*Naive[n]->cs*dT*(Naive[n]->active));
                 // This function, contrary to the one for the single dynamics, does not use the Time_series_Bcells array. It uses the variable cs of the Bcell Class.
-                //Time_series_Bcells[n][t] = Time_series_Bcells[n][t-1] + (nu*Time_series_Bcells[n][t-1])*dT*(Naive[n]->active); // this uses the time_series arrays
+                //Time_series_Bcells[n][t] = Time_series_Bcells[n][t-1] + (beta*Time_series_Bcells[n][t-1])*dT*(Naive[n]->active); // this uses the time_series arrays
                 if(Naive[n]->active == 0){
                     f = (Time_series_Antigen[t]/N_A)/((Time_series_Antigen[t]/N_A) + exp(25+Naive[n]->e));
                     if(f>0.5){
@@ -275,7 +293,7 @@ void ODE_ensemble(int linear, double const eta, double const nu, double const ga
     } else {
         for(int t = 1; t< NT ; t++){ // for loop of time
             //Update the antigen
-            Time_series_Antigen[t] = Time_series_Antigen[t-1] + (eta*2000 - gamma*Time_series_Antigen[t-1]*N_active_bcells)*dT;
+            Time_series_Antigen[t] = Time_series_Antigen[t-1] + (alpha*2000 - gamma*Time_series_Antigen[t-1]*N_active_bcells)*dT;
             if(Time_series_Antigen[t]<1){
                 Time_series_Antigen[t] = 0;
             }
@@ -283,9 +301,9 @@ void ODE_ensemble(int linear, double const eta, double const nu, double const ga
             n_active_linages_t = 0;
             //Update Bcells
             for(int n = 0 ; n<n_naive ; n++){
-                Naive[n]->cs = Naive[n]->cs + (nu*Naive[n]->cs*dT*(Naive[n]->active));
+                Naive[n]->cs = Naive[n]->cs + (beta*Naive[n]->cs*dT*(Naive[n]->active));
                 // This function, contrary to the one for the single dynamics, does not use the Time_series_Bcells array. It uses the variable cs of the Bcell Class.
-                //Time_series_Bcells[n][t] = Time_series_Bcells[n][t-1] + (nu*Time_series_Bcells[n][t-1])*dT*(Naive[n]->active); // this uses the time_series arrays
+                //Time_series_Bcells[n][t] = Time_series_Bcells[n][t-1] + (beta*Time_series_Bcells[n][t-1])*dT*(Naive[n]->active); // this uses the time_series arrays
                 if(Naive[n]->active == 0){
                     f = (Time_series_Antigen[t]/N_A)/((Time_series_Antigen[t]/N_A) + exp(25+Naive[n]->e));
                     if(f>0.5){

@@ -6,7 +6,7 @@
 //
 //Template to run a stochastic/deterministic simulation of the antigen and bcells dynamics.
 
-#include "../lib/Immuno_functions.hpp"
+#include "../library/Immuno_functions.hpp"
 
 #include <stdio.h>
 

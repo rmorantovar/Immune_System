@@ -10,12 +10,13 @@ import scipy as scipy
 path = "/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/Dynamics/Single_trajectory/"
 
 #my_response = Immune_response(L=15, N=5000, alpha = 1, beta=0.5, antigen_str = 'FMLFMAVFVMTSWYC', text_files_path=path, energy_model = 'MJ')
-my_response = Immune_response(L=10, N=100000, alpha = 1, beta=2,  text_files_path=path, energy_model = 'MM', d = 20, e0=4, bcells_filter = True)
+my_response = Immune_response(L=15, N=int(2e3), alpha = 1, beta=1,  text_files_path=path, energy_model = 'MM', d = 10, e0=4, bcells_filter = True)
 my_response.run(T = 25)
 
 #print(my_response.E_matrix)
 plt.hist(my_response.energies)
-plt.ylim(0, 20)
+#plt.ylim(0, 20)
+plt.yscale('log')
 plt.show()
 
 

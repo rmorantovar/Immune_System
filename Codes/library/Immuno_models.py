@@ -78,7 +78,9 @@ class Immune_response():
 		self.N_A = 6.02214076e23
 		self.L = L
 		self.e0 = e0
-		self.E0 = self.e0*self.L - np.log(self.N_A)+0
+		self.E0 = self.e0*self.L - np.log(self.N_A)-25 #be careful
+		print(self.E0)
+		self.energy_bar = 0
 		self.N = N
 		self.NN = N
 		self.alpha = alpha
@@ -93,8 +95,8 @@ class Immune_response():
 			self.d = d #If the model is MM, we can choose the size of the alphabet d
 		else:
 			self.d = np.size(self.Alphabet) #If the model is MJ or random, d is the number of aa (d=20)
+		self.B_cells_seqs = np.random.randint(low = 0, high=self.d, size=self.N*self.L).reshape(self.N, self.L) 
 
-		self.B_cells_seqs = np.random.randint(low = 0, high=d, size=self.N*self.L).reshape(self.N, self.L) 
 		self.energies = np.zeros(self.N)
 		self.activation_status = np.zeros(self.N)
 
@@ -109,12 +111,19 @@ class Immune_response():
 		#--- Initialize functions ---
 
 		self.antigen = np.random.randint(low = 0, high=self.d, size=self.L) #create a random antigen. In the case of MM, it does not matter.
+		self.load_matrix()
 
 		if(self.antigen_str!=''): #in case the input is a seq of aa, then we look for the numerical seq.
 			self.antigen_seq()
 
-		self.energy_bar = -self.e0*self.L/self.d
-		self.load_matrix()
+		if(self.energy_model=='MM'):
+			self.energy_bar = -self.e0*self.L/self.d
+		if(self.energy_model=="MJ"):
+			contributions = np.zeros(shape = (1,20))
+			for i in self.antigen:
+				contributions = np.vstack((contributions, self.E_matrix[i]))
+			self.energy_bar = np.sum(np.mean(contributions, axis=1))
+
 		self.calculate_energies(filter = bcells_filter)
 		
 
@@ -170,9 +179,11 @@ class Immune_response():
 		self.B_cells_Tseries = np.zeros((self.NN, np.size(self.time)))
 		self.B_cells_Tseries[:,0] = np.ones(self.NN)
 		self.idt = 1
-		while(self.time[self.idt-1]<self.T):
+		#while((self.time[self.idt-1]<self.T) & (np.sum(self.activation_status)<=10)):
+		while((self.time[self.idt-1]<self.T)):
 			self.step()
 			self.idt+=1
+		#print(np.sum(self.activation_status))
 
 	#@staticmethod
 	#def create_b_cells(self):
@@ -677,6 +688,20 @@ def plot_energy_matrix(Energy_Matrix, Alphabet, title, ax):
 	ax.set_title(title, fontsize = 22)
 	ax.tick_params(labelsize = 20)
 	ax.set_xticklabels(Alphabet)
+	ax.set_yticklabels(np.flip(Alphabet));
+	cbar = ax.collections[0].colorbar
+	cbar.ax.tick_params(labelsize=18)
+
+def plot_PWM(PWM, Alphabet, sequence, title, ax):
+
+	M = PWM
+	
+	Alphabet = Alphabet
+
+	sns.heatmap(np.flip(M, axis = 0), ax = ax, cmap=plt.cm.viridis, center = 0, cbar = True)
+	ax.set_title(title, fontsize = 22)
+	ax.tick_params(labelsize = 20)
+	ax.set_xticklabels(sequence)
 	ax.set_yticklabels(np.flip(Alphabet));
 	cbar = ax.collections[0].colorbar
 	cbar.ax.tick_params(labelsize=18)
