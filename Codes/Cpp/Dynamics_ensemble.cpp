@@ -14,7 +14,7 @@
 using namespace std;
 
 //----------------------------------------------------------------------------------
-int main(int argc, char* argv[]) //argv has 1:L , 2:N , 3:T , 4:T0 , 5:eta , 6:nu , 7:gamma , 8:N_ensemble , 9:linear , 10:type
+int main(int argc, char* argv[]) //argv has 1:L , 2:N , 3:T , 4:T0 , 5:alpha , 6:beta , 7:gamma , 8:N_ensemble , 9:linear , 10:type
 {
     string Text_files_path = "../../../../../Dropbox/Research/Evolution_Immune_System/Text_files/Dynamics/Ensemble/";
     cout<<">Running simulation of the Bcells-Antigen dynamics ..."<< endl;
@@ -24,10 +24,10 @@ int main(int argc, char* argv[]) //argv has 1:L , 2:N , 3:T , 4:T0 , 5:eta , 6:n
     t1=clock();
     //-----------------------------------------------------------------------------
     //Parameters:
-    std::string eta_s (argv[5]);
-    double eta = stod(eta_s);
-    std::string nu_s (argv[6]);
-    double nu = stod(nu_s);;
+    std::string alpha_s (argv[5]);
+    double alpha = stod(alpha_s);
+    std::string beta_s (argv[6]);
+    double beta = stod(beta_s);;
     std::string gamma_s (argv[7]);
     double gamma = stod(gamma_s);;
     int L  = atoi(argv[1]); //length of the sequence
@@ -38,7 +38,7 @@ int main(int argc, char* argv[]) //argv has 1:L , 2:N , 3:T , 4:T0 , 5:eta , 6:n
     double dT = 0.5; //time step
     long long int NT = (T-T0)/dT; //number of steps
     long long int N_ensemble = atoi(argv[8]);
-    long long A_0 = exp(eta*T0);
+    long long A_0 = exp(alpha*T0);
     int linear = atoi(argv[9]);
     string type (argv[10]);
     
@@ -100,9 +100,9 @@ int main(int argc, char* argv[]) //argv has 1:L , 2:N , 3:T , 4:T0 , 5:eta , 6:n
     //Output files
     ofstream fout (Text_files_path+"energies_tail_ensemble_L-"+std::to_string(L)+"_N-"+ std::to_string(N)+"_Antigen-"+Antigen_aa+"_Linear-"+std::to_string(linear)+"_"+type+".txt"); // Energies
     
-    ofstream fout_bcells (Text_files_path+"bcells_ensemble_L-"+std::to_string(L)+"_N-"+ std::to_string(N)+"_Antigen-"+Antigen_aa+"_eta-"+std::to_string(eta)+"_nu-"+std::to_string(nu)+"_gamma-"+std::to_string(gamma)+"_Linear-"+std::to_string(linear)+"_"+type+".txt"); // B cells final clone size
+    ofstream fout_bcells (Text_files_path+"bcells_ensemble_L-"+std::to_string(L)+"_N-"+ std::to_string(N)+"_Antigen-"+Antigen_aa+"_alpha-"+std::to_string(alpha)+"_beta-"+std::to_string(beta)+"_gamma-"+std::to_string(gamma)+"_Linear-"+std::to_string(linear)+"_"+type+".txt"); // B cells final clone size
     
-    ofstream fout_N_final_active (Text_files_path+"N_final_active_L-"+std::to_string(L)+"_N-"+ std::to_string(N)+"_Antigen-"+Antigen_aa+"_eta-"+std::to_string(eta)+"_nu-"+std::to_string(nu)+"_gamma-"+std::to_string(gamma)+"_Linear-"+std::to_string(linear)+"_"+type+".txt"); // B cells final clone size
+    ofstream fout_N_final_active (Text_files_path+"N_final_active_L-"+std::to_string(L)+"_N-"+ std::to_string(N)+"_Antigen-"+Antigen_aa+"_alpha-"+std::to_string(alpha)+"_beta-"+std::to_string(beta)+"_gamma-"+std::to_string(gamma)+"_Linear-"+std::to_string(linear)+"_"+type+".txt"); // B cells final clone size
     
     // ------------ Run ensemble of trajectories ------------
     cout << "Running ensemble of trajectories ..." << endl;
@@ -133,7 +133,7 @@ int main(int argc, char* argv[]) //argv has 1:L , 2:N , 3:T , 4:T0 , 5:eta , 6:n
         };
         */
         // Run ODE
-        ODE_ensemble(linear, eta, nu, gamma, NT, dT, n_naive, Naive, Time_series_Antigen, N_active_linages, N_final_active_linages);
+        ODE_ensemble(linear, alpha, beta, gamma, NT, dT, n_naive, Naive, Time_series_Antigen, N_active_linages, N_final_active_linages);
         
         for (int n = 0 ; n<n_naive ; n++){
             //print in file the energies and the activation state of the antigen-specific bcells.
@@ -147,7 +147,7 @@ int main(int argc, char* argv[]) //argv has 1:L , 2:N , 3:T , 4:T0 , 5:eta , 6:n
     }
     
     //print in file the time series of the average of the number of activated bcell linages.
-    ofstream fout_N_active_linages (Text_files_path+"N_active_linages_ensemble_L-"+std::to_string(L)+"_N-"+ std::to_string(N)+"_Antigen-"+Antigen_aa+"_eta-"+std::to_string(eta)+"_nu-"+std::to_string(nu)+"_gamma-"+std::to_string(gamma)+"_Linear-"+std::to_string(linear)+"_"+type+".txt");
+    ofstream fout_N_active_linages (Text_files_path+"N_active_linages_ensemble_L-"+std::to_string(L)+"_N-"+ std::to_string(N)+"_Antigen-"+Antigen_aa+"_alpha-"+std::to_string(alpha)+"_beta-"+std::to_string(beta)+"_gamma-"+std::to_string(gamma)+"_Linear-"+std::to_string(linear)+"_"+type+".txt");
     
     for (int t= 0; t<NT; t++)
     {

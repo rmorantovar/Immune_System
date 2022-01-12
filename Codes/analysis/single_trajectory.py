@@ -22,7 +22,7 @@ Alphabet2 = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n
 Alphabet = np.loadtxt(Text_files_path + 'Alphabet.txt', dtype=bytes, delimiter='\t').astype(str)
 
 
-NC = 2e3
+NC = 2e5
 T0 = 0
 Tf = 25
 dT = 0.005
@@ -81,7 +81,7 @@ for energy_model in energy_models:
             ax_a.text(x=8, y=1e8, s = r'$\sim e^{\alpha t}$', fontsize=48, color = colors_fit[j])
             my_plot_layout(ax = ax_a, yscale = 'log', xlabel = 'Time', ylabel = 'Antigen')
             ax_a.set_ylim(bottom = .8)
-            fig_a.savefig('../../Figures/1_Dynamics/Antigen_expansion_'+energy_model+'.pdf')
+            fig_a.savefig('../../Figures/1_Dynamics/Antigen_expansion_'+energy_model+'.png')
         if(linear == 1):
             ax[0,0].plot(time, 1e3 + time*2000, color = colors[j], label = models_name[j] + ' growth', linestyle = '--', linewidth = 3)
         my_plot_layout(ax = ax[0,0], yscale = 'log', xlabel = 'Time', ylabel = 'Antigen')
@@ -99,7 +99,7 @@ for energy_model in energy_models:
             ax_b.text(x=8, y=1e3, s = r'$\sim e^{\beta t}$', fontsize=48, color = colors_fit[j])
             my_plot_layout(ax = ax_b, yscale = 'log', xlabel = 'Time', ylabel = 'Clone size')
             ax_b.set_ylim(bottom = .8)
-            fig_b.savefig('../../Figures/1_Dynamics/B_cells_expansion_'+energy_model+'.pdf')
+            fig_b.savefig('../../Figures/1_Dynamics/B_cells_expansion_'+energy_model+'.png')
         #---- Activation rate ----
         ax[1,0].plot(time[::100], data_N_active_linages[::100], linestyle = '-', marker = 'o', ms = 5, linewidth = 2, label = 'simulation', color = colors[j])
         if(linear == 0):

@@ -29,7 +29,7 @@ Tf = 25
 dT = 0.005
 alpha = 1
 gamma = 0.0000
-beta = 1
+beta = 0.5
 
 antigen = 'TACNSEYPNTTK'
 antigen = 'CMFILVWYAGTSQNEDHRKPFMRTP'
