@@ -7,6 +7,10 @@ import scipy.special as sc
 import pickle
 from matplotlib import style
 from scipy.optimize import curve_fit
+import time
+
+start = time.time()
+print('Starting...\n')
 
 Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/'
 
@@ -105,16 +109,16 @@ dT = 0.5
 alpha = 1
 gamma = 0
 beta = 0.5
-Ns = np.array([2e2, 2e3, 2e4, 2e5])
+Ns = np.array([2e2, 2e3, 2e4, 2e5, 2e6])
 markers = ['o', '^', '*', 's', 'X']
-exponents_csd = np.array([])
+exponents_rcs = np.array([])
 lambda_simulations = np.array([])
-vars_csd = np.array([])
+vars_rcs = np.array([])
 energy_model='MJ'
 linear = 0
 fig, ax = plt.subplots(figsize = (10,8))
 for n, N in enumerate(Ns):
-    # ------- from clone size distribution -------
+    # ------- from relative clone size -------
     data_bcells_ensemble = np.loadtxt(Text_files_path + 'Dynamics/Ensemble/bcells_ensemble_L-%d_N-%d_Antigen-'%(L, N)+antigen+'_alpha-%.6f_beta-%.6f_gamma-%.6f_linear-%d_'%(alpha, beta, gamma, linear)+energy_model+'.txt')
     N_final_active = np.loadtxt(Text_files_path + "Dynamics/Ensemble/N_final_active_L-%d_N-%d_Antigen-"%(L, N)+antigen+"_alpha-%.6f_beta-%.6f_gamma-%.6f_Linear-%d_"%(alpha, beta, gamma, linear)+energy_model+".txt")
     N_final_active = np.concatenate(([0], N_final_active))
@@ -133,9 +137,9 @@ for n, N in enumerate(Ns):
     ax.plot(n_array, Clone_relative_sizes/N_ens, marker = markers[n], linestyle = '', ms = 11, linewidth = 4, alpha = .5, label = 'N=%.e'%(N), color = plt.cm.Set1(n))
     popt_csd, pcov_csd = curve_fit(my_linear_func, np.log(n_array), np.log(Clone_relative_sizes/N_ens))
     print(-beta/(alpha*(popt_csd[1])))
-    exponents_csd = np.append(exponents_csd, popt_csd[1])
+    exponents_rcs = np.append(exponents_rcs, popt_csd[1])
     lambda_simulations = np.append(lambda_simulations, -beta/(alpha*(popt_csd[1])))
-    vars_csd = np.append(vars_csd, pcov_csd[1,1])
+    vars_rcs = np.append(vars_rcs, pcov_csd[1,1])
     ax.plot(n_array, np.exp(my_linear_func(np.log(n_array), *popt_csd)), linestyle = '-', marker = '', ms = '10', linewidth = 2, color=plt.cm.Set1(n), alpha= .8)
 
     # ------- from density of sequences -------
@@ -167,7 +171,7 @@ def P_min_e(N, es):
     return (N*(1-np.cumsum(P_e_gaussian(avg_E, var_E, es)*de))**(N-1)*(P_e_gaussian(avg_E, var_E, es)))
 fig, ax = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18})
 lambd_gaussian = np.array([])
-Ns_array = np.logspace(0, 12, 50)
+Ns_array = np.logspace(2, 7, 50)
 for N in Ns_array:
     p_min_e = -np.diff((1-np.cumsum(P_e_gaussian(avg_E, var_E, es)*de))**N)/np.diff(es)
     avg_min_E = np.sum(es[:-1]*p_min_e*de)
@@ -176,17 +180,16 @@ for N in Ns_array:
 ax.plot(Ns_array, lambd_gaussian, label = 'Gaussian', linestyle = '--', linewidth= 2, color = 'indigo')
 
 for n, N in enumerate(Ns):
-    ax.vlines(N, 0, lambd_gaussian[np.where(Ns_array<N)][-1], color = 'black', linestyle = '--', linewidth = 1, alpha = .4)  
+    #ax.vlines(N/10, 0, lambd_gaussian[np.where(Ns_array<N)][-1], color = 'black', linestyle = '--', linewidth = 1, alpha = .4)  
     ax.scatter(N, lambda_simulations[n], color = 'indigo', s = 60)
-    ax.errorbar(x = N, y = lambda_simulations[n], yerr = 1.96*np.sqrt(vars_csd[n]), color = 'indigo', linestyle = '', capsize = 4)
+    ax.errorbar(x = N, y = lambda_simulations[n], yerr = 1.96*np.sqrt(vars_rcs[n]), color = 'indigo', linestyle = '', capsize = 4)
 
 my_plot_layout(ax=ax, xscale = 'log', yscale = 'linear', ylabel = '$\lambda(N)$', xlabel = '$N$')
 ax.legend(fontsize=24)
-fig.savefig('../../Figures/5_Geometric_exponent/lambda_simulations_N.png')
+fig.savefig('../../Figures/5_Geometric_exponent/lambda_simulations_N_prueba.png')
 
-
-
-
+end = time.time()
+print('\nFinished in', '%.2f'%((end-start)/60), 'minutes')
 
 
 
