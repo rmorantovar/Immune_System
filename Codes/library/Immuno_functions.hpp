@@ -186,7 +186,7 @@ double mean_energy(int L, int L_alphabet, vector< vector<double> > const & MJ, v
 
 // Function to run the set of differential equations
 void ODE(int linear, double const alpha, double const beta, double const gamma, long long NT, double dT, int n_naive, vector<bcell*> & Naive, vector<vector < long double > > & Time_series_Bcells, vector < long double > & Time_series_Antigen, vector < int > & N_active_linages){
-    double p_GC = 0.15;
+    double p_GC = 0.05;
     double f = 0;
     double N_active_bcells = 0;
     int n_active_linages = 0;

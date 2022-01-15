@@ -171,22 +171,22 @@ def P_min_e(N, es):
     return (N*(1-np.cumsum(P_e_gaussian(avg_E, var_E, es)*de))**(N-1)*(P_e_gaussian(avg_E, var_E, es)))
 fig, ax = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18})
 lambd_gaussian = np.array([])
-Ns_array = np.logspace(2, 7, 50)
+Ns_array = np.logspace(1, 6, 50)
 for N in Ns_array:
     p_min_e = -np.diff((1-np.cumsum(P_e_gaussian(avg_E, var_E, es)*de))**N)/np.diff(es)
     avg_min_E = np.sum(es[:-1]*p_min_e*de)
     lambd_gaussian = np.append(lambd_gaussian, (avg_E-avg_min_E)/var_E)
 
-ax.plot(Ns_array, lambd_gaussian, label = 'Gaussian', linestyle = '--', linewidth= 2, color = 'indigo')
+ax.plot(Ns_array, lambd_gaussian, label = 'Gaussian', linestyle = '--', linewidth= 4, color = 'darkolivegreen', alpha = .6)
 
 for n, N in enumerate(Ns):
     #ax.vlines(N/10, 0, lambd_gaussian[np.where(Ns_array<N)][-1], color = 'black', linestyle = '--', linewidth = 1, alpha = .4)  
-    ax.scatter(N, lambda_simulations[n], color = 'indigo', s = 60)
-    ax.errorbar(x = N, y = lambda_simulations[n], yerr = 1.96*np.sqrt(vars_rcs[n]), color = 'indigo', linestyle = '', capsize = 4)
+    ax.scatter(N/10, lambda_simulations[n], color = 'darkolivegreen', s = 65)
+    ax.errorbar(x = N/10, y = lambda_simulations[n], yerr = 2*1.96*np.sqrt(vars_rcs[n]), color = 'darkolivegreen', linestyle = '', capsize = 4)
 
 my_plot_layout(ax=ax, xscale = 'log', yscale = 'linear', ylabel = '$\lambda(N)$', xlabel = '$N$')
 ax.legend(fontsize=24)
-fig.savefig('../../Figures/5_Geometric_exponent/lambda_simulations_N_prueba.png')
+fig.savefig('../../Figures/5_Geometric_exponent/lambda_simulations_N_prueba.pdf')
 
 end = time.time()
 print('\nFinished in', '%.2f'%((end-start)/60), 'minutes')

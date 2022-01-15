@@ -11,13 +11,13 @@ from tqdm import tqdm
 path = "/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/Dynamics/Python/ensemble/"
 
 growth_models = ['exponential', 'linear']
-growth_models = ['exponential']
+#growth_models = ['exponential']
 N_ensemble  = 1000
-energy_model = "MM"
+energy_model = "MJ"
 
 alphas = [1]
-betas = [0.5, 1, 2]
-ds = [10]
+betas = [1, 2]
+ds = np.array([])
 Ns = [2e3]
 L = 15
 e0 = 4
@@ -56,7 +56,9 @@ if(energy_model=="MJ"):
 					for n in tqdm(np.arange(N_ensemble)):
 						
 						#my_response = Immune_response(L=15, N=2000, alpha = alpha, beta=beta, antigen_str = 'FMLFMAVFVMTSWYC', text_files_path=path, energy_model = 'MJ', growth_model = growth_model)
-						my_response = Immune_response(L=L, N=int(N), alpha = alpha, beta=beta,  text_files_path=path, energy_model = energy_model, d = d, e0=e0, bcells_filter = True)
+						my_response = Immune_response(L=L, N=int(N), alpha = alpha, beta=beta,  text_files_path=path,
+							energy_model = energy_model, d = d, e0=e0, bcells_filter = True, antigen_str='FMLFMAVFVMTSWYC',
+							growth_model = 'exponential')
 						my_response.run(T = 25)
 						clone_sizes = np.append(clone_sizes, my_response.B_cells_Tseries[my_response.activation_status,-1])
 

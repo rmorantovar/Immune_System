@@ -79,7 +79,8 @@ class Immune_response():
 		self.L = L
 		self.e0 = e0
 		self.E0 = self.e0*self.L - np.log(self.N_A)-25 #be careful
-		print(self.E0)
+		self.E0 = 25
+		#print(self.E0)
 		self.energy_bar = 0
 		self.N = N
 		self.NN = N
