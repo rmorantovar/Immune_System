@@ -103,9 +103,11 @@ for energy_model in energy_models:
         ax[j,1].set_ylim(bottom = ax[j,0].get_ylim()[0], top=ax[j,0].get_ylim()[1])
 
         #---- DISTRIBUTION GC VS PLASMA ----
-        ax[j,2].hist([energies_active[np.where(energies_active[:,2]==1)[0],0], energies_active[np.where(energies_active[:,2]==0)[0],0]], bins = np.linspace(min_e, max_e, 20), color = colors_fate[j], alpha = .6, histtype = 'barstacked', label = ['GC', 'Plasma'])
-        my_plot_layout(ax = ax[j,2], yscale = 'log', xlabel = 'Energies', ylabel = 'counts')
-        ax[j,2].set_ylim(bottom = ax[j,0].get_ylim()[0], top=ax[j,0].get_ylim()[1])
+        #ax[j,2].hist([energies_active[np.where(energies_active[:,2]==1)[0],0], energies_active[np.where(energies_active[:,2]==0)[0],0]], bins = np.linspace(min_e, max_e, 20), color = colors_fate[j], alpha = .6, histtype = 'barstacked', label = ['GC', 'Plasma'])
+        ax[j,2].hist([energies_active[np.where(energies_active[:,2]==1)[0],0]], bins = np.linspace(min_e, max_e, 20), color = colors_fate[j][0], alpha = .6, histtype = 'barstacked', label = ['GC'])
+        my_plot_layout(ax = ax[j,2], yscale = 'linear', xlabel = 'Energies', ylabel = 'counts')
+        #ax[j,2].set_ylim(bottom = ax[j,0].get_ylim()[0], top=ax[j,0].get_ylim()[1])
+        ax[j,2].set_ylim(bottom = ax[j,0].get_ylim()[0])
         ax[j,2].legend(fontsize = 24)
 
         ax2.hist([energies_active[np.where(energies_active[:,2]==1)[0],0], energies_active[np.where(energies_active[:,2]==0)[0],0]], bins = np.linspace(min_e, max_e, 20), color = colors_fate[j], alpha = .6, histtype = 'barstacked', label = ['GC', 'Plasma'])
