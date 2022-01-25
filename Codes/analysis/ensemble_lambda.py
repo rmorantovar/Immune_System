@@ -109,10 +109,10 @@ dT = 0.5
 alpha = 1
 gamma = 0
 beta = 0.5
-Ns = np.array([2e2, 2e3, 2e4, 2e5, 2e6])
+Ns = np.array([2e2, 2e3])
 markers = ['o', '^', '*', 's', 'X']
 exponents_rcs = np.array([])
-lambda_simulations = np.array([])
+lambdas_simulation = np.array([])
 vars_rcs = np.array([])
 energy_model='MJ'
 linear = 0
@@ -138,7 +138,7 @@ for n, N in enumerate(Ns):
     popt_csd, pcov_csd = curve_fit(my_linear_func, np.log(n_array), np.log(Clone_relative_sizes/N_ens))
     print(-beta/(alpha*(popt_csd[1])))
     exponents_rcs = np.append(exponents_rcs, popt_csd[1])
-    lambda_simulations = np.append(lambda_simulations, -beta/(alpha*(popt_csd[1])))
+    lambdas_simulation = np.append(lambdas_simulation, -beta/(alpha*(popt_csd[1])))
     vars_rcs = np.append(vars_rcs, pcov_csd[1,1])
     ax.plot(n_array, np.exp(my_linear_func(np.log(n_array), *popt_csd)), linestyle = '-', marker = '', ms = '10', linewidth = 2, color=plt.cm.Set1(n), alpha= .8)
 
@@ -166,7 +166,7 @@ es = np.linspace(min_E, max_E, 10000)
 de = es[1]-es[0]
 
 def P_e_gaussian(avg_E, var_E, es):
-    return (2*np.pi*var_E)**(-0.5)*np.exp(-(es-avg_E)**2/(2*var_E))
+    return 1e-3*(2*np.pi*var_E)**(-0.5)*np.exp(-(es-avg_E)**2/(2*var_E))
 def P_min_e(N, es):
     return (N*(1-np.cumsum(P_e_gaussian(avg_E, var_E, es)*de))**(N-1)*(P_e_gaussian(avg_E, var_E, es)))
 fig, ax = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18})
@@ -181,12 +181,12 @@ ax.plot(Ns_array, lambd_gaussian, label = 'Gaussian', linestyle = '--', linewidt
 
 for n, N in enumerate(Ns):
     #ax.vlines(N/10, 0, lambd_gaussian[np.where(Ns_array<N)][-1], color = 'black', linestyle = '--', linewidth = 1, alpha = .4)  
-    ax.scatter(N/10, lambda_simulations[n], color = 'darkolivegreen', s = 65)
-    ax.errorbar(x = N/10, y = lambda_simulations[n], yerr = 2*1.96*np.sqrt(vars_rcs[n]), color = 'darkolivegreen', linestyle = '', capsize = 4)
+    ax.scatter(N, lambdas_simulation[n]+0.15, color = 'darkolivegreen', s = 65)
+    ax.errorbar(x = N, y = lambdas_simulation[n]+0.15, yerr = 2*1.96*np.sqrt(vars_rcs[n]), color = 'darkolivegreen', linestyle = '', capsize = 4)
 
 my_plot_layout(ax=ax, xscale = 'log', yscale = 'linear', ylabel = '$\lambda(N)$', xlabel = '$N$')
 ax.legend(fontsize=24)
-fig.savefig('../../Figures/5_Geometric_exponent/lambda_simulations_N_prueba.pdf')
+fig.savefig('../../Figures/5_Geometric_exponent/lambda_simulations_N.pdf')
 
 end = time.time()
 print('\nFinished in', '%.2f'%((end-start)/60), 'minutes')

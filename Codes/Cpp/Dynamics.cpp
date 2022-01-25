@@ -16,7 +16,7 @@ using namespace std;
 //----------------------------------------------------------------------------------
 int main(int argc, char* argv[]) //argv has 1:L 2:N , 3:T , 4:T0 , 5:alpha , 6:beta , 7:gamma , 8:linear ; 9:model
 {
-    string Text_files_path = "../../../../../Dropbox/Research/Evolution_Immune_System/Text_files/Dynamics/Single_trajectory/";
+    string Text_files_path = "/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/Dynamics/Single_trajectory/";
     cout<<">Running simulation of the Bcells-Antigen dynamics ..."<< endl;
     gsl_rng * r = gsl_rng_alloc (gsl_rng_taus);
     gsl_rng_set(r, time(NULL));

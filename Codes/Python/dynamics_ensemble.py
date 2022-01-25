@@ -15,8 +15,11 @@ growth_models = ['exponential', 'linear']
 N_ensemble  = 1000
 energy_model = "MJ"
 
-alphas = [1]
-betas = [1, 2]
+alphas = [0.2, 0.5, 1.0, 2.0, 5.0]
+betas = [1]
+
+#betas = [0.1, 0.2, 0.5, 1, 2]
+#alphas = [1]
 ds = np.array([])
 Ns = [2e3]
 L = 15
@@ -30,7 +33,7 @@ if(energy_model=="MM"):
 				for N in Ns:
 					for i, growth_model in enumerate(growth_models):
 						print('Growth model: ',growth_model, '; Energy model: ',energy_model)
-						file_clone_sizes = open(path+'clone_size_data_d-%d_beta-%.2f_N-%.1e_'%(d, beta, N)+growth_model+'_'+energy_model+'.pkl','wb')
+						file_clone_sizes = open(path+'clone_size_data_d-%d_alpha-%.2f_beta-%.2f_N-%.1e_'%(d, alpha, beta, N)+growth_model+'_'+energy_model+'.pkl','wb')
 						clone_sizes = np.array([])
 
 						for n in tqdm(np.arange(N_ensemble)):
@@ -50,7 +53,7 @@ if(energy_model=="MJ"):
 			for N in Ns:
 				for i, growth_model in enumerate(growth_models):
 					print('Growth model: ',growth_model)
-					file_clone_sizes = open(path+'clone_size_data_d-%d_beta-%.2f_N-%.1e_'%(d, beta, N)+growth_model+'_'+energy_model+'.pkl','wb')
+					file_clone_sizes = open(path+'clone_size_data_d-%d_alpha-%.2f_beta-%.2f_N-%.1e_'%(d, alpha, beta, N)+growth_model+'_'+energy_model+'.pkl','wb')
 					clone_sizes = np.array([])
 
 					for n in tqdm(np.arange(N_ensemble)):
@@ -59,7 +62,7 @@ if(energy_model=="MJ"):
 						my_response = Immune_response(L=L, N=int(N), alpha = alpha, beta=beta,  text_files_path=path,
 							energy_model = energy_model, d = d, e0=e0, bcells_filter = True, antigen_str='FMLFMAVFVMTSWYC',
 							growth_model = 'exponential')
-						my_response.run(T = 25)
+						my_response.run(T = 20/alpha) #adjust final time then \alpha is different than 1
 						clone_sizes = np.append(clone_sizes, my_response.B_cells_Tseries[my_response.activation_status,-1])
 
 					pickle.dump(clone_sizes, file_clone_sizes)

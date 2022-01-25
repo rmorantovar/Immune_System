@@ -17,7 +17,7 @@ using namespace std;
 //----------------------------------------------------------------------------------
 int main(int argc, char* argv[]) //argv has 1:L , 2:N , 3:T , 4:T0 , 5:alpha , 6:beta , 7:gamma , 8:N_ensemble , 9:linear , 10:type
 {
-    string Text_files_path = "../../../../../Dropbox/Research/Evolution_Immune_System/Text_files/Dynamics/Ensemble/";
+    string Text_files_path = "/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/Dynamics/Ensemble/";
     cout<<">Running simulation of the Bcells-Antigen dynamics ..."<< endl;
     gsl_rng * r = gsl_rng_alloc (gsl_rng_taus);
     gsl_rng_set(r, time(NULL));
@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) //argv has 1:L , 2:N , 3:T , 4:T0 , 5:alpha , 6
     long long int N_ensemble = atoi(argv[8]);
     long long A_0 = exp(alpha*T0);
     int linear = atoi(argv[9]);
-    string type (argv[10]);
+    std::string type (argv[10]);
     
 
     //------------Energy Matrix------------------------------------------------------
@@ -52,13 +52,13 @@ int main(int argc, char* argv[]) //argv has 1:L , 2:N , 3:T , 4:T0 , 5:alpha , 6
         (MJ[k]).resize(L_alphabet);
     };
 
-    ifstream file("../Input_files/MJ2.txt");
+    ifstream file("../../Input_files/MJ2.txt");
 
     //------------ Alphabet ----------------------------------------------------------
     //Array with the Alphabet
     vector < string > Alphabet;
     Alphabet.resize(L_alphabet);
-    ifstream file2("../Input_files/Alphabet.txt");
+    ifstream file2("../../Input_files/Alphabet.txt");
     cout << "The Alphabet is :";
     for (int k = 0; k < L_alphabet; k++) {
 
@@ -74,9 +74,10 @@ int main(int argc, char* argv[]) //argv has 1:L , 2:N , 3:T , 4:T0 , 5:alpha , 6
     }
     //------------- Antigen -------------------------------------------------------------
     //Array with the antigen
-    string Antigen_aa;
-    cout << "Insert the Aminoacid sequence of the antigen:\n";
-    getline(cin, Antigen_aa);
+    //string Antigen_aa;
+    //cout << "Insert the Aminoacid sequence of the antigen:\n";
+    //getline(cin, Antigen_aa);
+    std::string Antigen_aa (argv[11]);
     
     vector < int > Antigen;
     Antigen.resize(L);
