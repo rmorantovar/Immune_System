@@ -98,6 +98,7 @@ class Immune_response():
 			self.d = np.size(self.Alphabet) #If the model is MJ or random, d is the number of aa (d=20)
 		self.B_cells_seqs = np.random.randint(low = 0, high=self.d, size=self.N*self.L).reshape(self.N, self.L) 
 
+		self.hamming_distances = np.zeros(self.N)
 		self.energies = np.zeros(self.N)
 		self.activation_status = np.zeros(self.N)
 
@@ -117,6 +118,9 @@ class Immune_response():
 		if(self.antigen_str!=''): #in case the input is a seq of aa, then we look for the numerical seq.
 			self.antigen_seq()
 
+		self.master_sequence = np.zeros_like(self.antigen)
+		self.find_master_seq()
+
 		if(self.energy_model=='MM'):
 			self.energy_bar = -self.e0*self.L/self.d
 		if(self.energy_model=="MJ"):
@@ -125,6 +129,7 @@ class Immune_response():
 				contributions = np.vstack((contributions, self.E_matrix[i]))
 			self.energy_bar = np.sum(np.mean(contributions, axis=1))
 
+		self.calculate_hamming_distances()
 		self.calculate_energies(filter = bcells_filter)
 		
 
@@ -140,6 +145,14 @@ class Immune_response():
 		if(self.energy_model=='MM'):
 			self.E_matrix = np.diag(-self.e0*np.ones(self.d))
 
+	def find_master_seq(self):
+
+		for i, letter in enumerate(self.antigen):
+			self.master_sequence[i] = np.where(np.isin(self.E_matrix[letter],np.min(self.E_matrix[letter])))[0]
+
+
+	def hamming_distance(self, nseq):
+		self.hamming_distances[nseq] = np.sum(c1 != c2 for c1, c2 in zip(self.master_sequence, self.B_cells_seqs[nseq]))
 
 	def energy(self, nseq):
 		if(self.energy_model == 'MJ' or self.energy_model == 'MM'):
@@ -147,15 +160,21 @@ class Immune_response():
 		if(self.energy_model == 'Random'):
 			self.energies[nseq] = np.random.normal(loc = -56.0, scale = 1.17, size = 1)
 
+	def calculate_hamming_distances(self, filter=False):
+		for nseq in np.arange(self.N):
+			self.hamming_distance(nseq)
+
 	def calculate_energies(self, filter=False):
 		if(filter):
 			for nseq in np.arange(self.N):
 				self.energy(nseq)
-				if self.energies[nseq] > self.energy_bar:
+				#if self.energies[nseq] > (self.energy_bar-5):
+				if self.energies[nseq] > (np.min(self.energies)+10):	
 					self.Bcells_to_delete = np.append(self.Bcells_to_delete, int(nseq))
 
 			self.B_cells_seqs = np.delete(self.B_cells_seqs, self.Bcells_to_delete, 0)
 			self.energies = np.delete(self.energies, self.Bcells_to_delete, 0)
+			self.hamming_distances = np.delete(self.hamming_distances, self.Bcells_to_delete, 0)
 			self.NN = self.N - np.size(self.Bcells_to_delete)
 
 
