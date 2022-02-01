@@ -8,7 +8,7 @@ import pickle
 import time
 from tqdm import tqdm
 
-path = "/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/Dynamics/Python/ensemble/"
+Text_files_path = "/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/"
 
 growth_models = ['exponential', 'linear']
 #growth_models = ['exponential']
@@ -33,13 +33,13 @@ if(energy_model=="MM"):
 				for N in Ns:
 					for i, growth_model in enumerate(growth_models):
 						print('Growth model: ',growth_model, '; Energy model: ',energy_model)
-						file_clone_sizes = open(path+'clone_size_data_d-%d_alpha-%.2f_beta-%.2f_N-%.1e_'%(d, alpha, beta, N)+growth_model+'_'+energy_model+'.pkl','wb')
+						file_clone_sizes = open(Text_files_path+'Dynamics/Python/ensemble/clone_size_data_d-%d_alpha-%.2f_beta-%.2f_N-%.1e_'%(d, alpha, beta, N)+growth_model+'_'+energy_model+'.pkl','wb')
 						clone_sizes = np.array([])
 
 						for n in tqdm(np.arange(N_ensemble)):
 							
 							#my_response = Immune_response(L=15, N=2000, alpha = alpha, beta=beta, antigen_str = 'FMLFMAVFVMTSWYC', text_files_path=path, energy_model = 'MJ', growth_model = growth_model)
-							my_response = Immune_response(L=L, N=int(N), alpha = alpha, beta=beta,  text_files_path=path, energy_model = energy_model, d = d, e0=e0, bcells_filter = True)
+							my_response = Immune_response(L=L, N=int(N), alpha = alpha, beta=beta,  text_files_path=Text_files_path, energy_model = energy_model, d = d, e0=e0, bcells_filter = True)
 							my_response.run(T = 25)
 							clone_sizes = np.append(clone_sizes, my_response.B_cells_Tseries[my_response.activation_status,-1])
 
@@ -53,13 +53,13 @@ if(energy_model=="MJ"):
 			for N in Ns:
 				for i, growth_model in enumerate(growth_models):
 					print('Growth model: ',growth_model)
-					file_clone_sizes = open(path+'clone_size_data_d-%d_alpha-%.2f_beta-%.2f_N-%.1e_'%(d, alpha, beta, N)+growth_model+'_'+energy_model+'.pkl','wb')
+					file_clone_sizes = open(Text_files_path+'Dynamics/Python/ensemble/clone_size_data_d-%d_alpha-%.2f_beta-%.2f_N-%.1e_'%(d, alpha, beta, N)+growth_model+'_'+energy_model+'.pkl','wb')
 					clone_sizes = np.array([])
 
 					for n in tqdm(np.arange(N_ensemble)):
 						
 						#my_response = Immune_response(L=15, N=2000, alpha = alpha, beta=beta, antigen_str = 'FMLFMAVFVMTSWYC', text_files_path=path, energy_model = 'MJ', growth_model = growth_model)
-						my_response = Immune_response(L=L, N=int(N), alpha = alpha, beta=beta,  text_files_path=path,
+						my_response = Immune_response(L=L, N=int(N), alpha = alpha, beta=beta,  text_files_path=Text_files_path,
 							energy_model = energy_model, d = d, e0=e0, bcells_filter = True, antigen_str='FMLFMAVFVMTSWYC',
 							growth_model = 'exponential')
 						my_response.run(T = 20/alpha) #adjust final time then \alpha is different than 1

@@ -18,6 +18,7 @@ using namespace std;
 int main(int argc, char* argv[]) //argv has 1:L , 2:N , 3:T , 4:T0 , 5:alpha , 6:beta , 7:gamma , 8:N_ensemble , 9:linear , 10:type
 {
     string Text_files_path = "/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/Dynamics/Ensemble/";
+    string Text_files_path2 = "/Users/robertomorantovar/Documents/Research/Evolution_Immune_System/Codes/";
     cout<<">Running simulation of the Bcells-Antigen dynamics ..."<< endl;
     gsl_rng * r = gsl_rng_alloc (gsl_rng_taus);
     gsl_rng_set(r, time(NULL));
@@ -52,13 +53,13 @@ int main(int argc, char* argv[]) //argv has 1:L , 2:N , 3:T , 4:T0 , 5:alpha , 6
         (MJ[k]).resize(L_alphabet);
     };
 
-    ifstream file("../../Input_files/MJ2.txt");
+    ifstream file(Text_files_path2+"Input_files/MJ2.txt");
 
     //------------ Alphabet ----------------------------------------------------------
     //Array with the Alphabet
     vector < string > Alphabet;
     Alphabet.resize(L_alphabet);
-    ifstream file2("../../Input_files/Alphabet.txt");
+    ifstream file2(Text_files_path2+"Input_files/Alphabet.txt");
     cout << "The Alphabet is :";
     for (int k = 0; k < L_alphabet; k++) {
 

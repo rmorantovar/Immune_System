@@ -277,7 +277,7 @@ void ODE_ensemble(int linear, double const alpha, double const beta, double cons
                 // This function, contrary to the one for the single dynamics, does not use the Time_series_Bcells array. It uses the variable cs of the Bcell Class.
                 //Time_series_Bcells[n][t] = Time_series_Bcells[n][t-1] + (beta*Time_series_Bcells[n][t-1])*dT*(Naive[n]->active); // this uses the time_series arrays
                 if(Naive[n]->active == 0){
-                    f = (Time_series_Antigen[t]/N_A)/((Time_series_Antigen[t]/N_A) + exp(25+Naive[n]->e));
+                    f = (Time_series_Antigen[t]/N_A)/((Time_series_Antigen[t]/N_A) + exp(30+Naive[n]->e));
                     if(f>0.5){
                         Naive[n]->active = 1;
                         n_active_linages_t++;
@@ -305,7 +305,7 @@ void ODE_ensemble(int linear, double const alpha, double const beta, double cons
                 // This function, contrary to the one for the single dynamics, does not use the Time_series_Bcells array. It uses the variable cs of the Bcell Class.
                 //Time_series_Bcells[n][t] = Time_series_Bcells[n][t-1] + (beta*Time_series_Bcells[n][t-1])*dT*(Naive[n]->active); // this uses the time_series arrays
                 if(Naive[n]->active == 0){
-                    f = (Time_series_Antigen[t]/N_A)/((Time_series_Antigen[t]/N_A) + exp(25+Naive[n]->e));
+                    f = (Time_series_Antigen[t]/N_A)/((Time_series_Antigen[t]/N_A) + exp(30+Naive[n]->e));
                     if(f>0.5){
                         Naive[n]->active = 1;
                         n_active_linages_t++;

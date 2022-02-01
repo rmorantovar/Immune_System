@@ -13,7 +13,8 @@ Ne=2000
 GMs_names=('exponential'  'linear')
 GMs=(0, 1)
 EMs=('MJ')
-antigen='FMLFMAVFVMTSWYC'
+#antigen='FMLFMAVFVMTSWYC'
+antigen='TACNSEYPNTTK'
 
 c++ ../../Cpp/Dynamics_ensemble.cpp -lgsl -lgslcblas -o ../dynamics_ensemble_prueba.x
 chmod +x ../dynamics_ensemble_prueba.x

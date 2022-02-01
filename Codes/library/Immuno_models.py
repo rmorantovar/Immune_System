@@ -687,6 +687,15 @@ def binding_affinity(x, a, b):
 	
     return 1/(1+((np.exp(a+b*x))))
 
+def Z_PWM(PWM, T):
+    Z = 1
+    for i in range(len(PWM[0,:])):
+        Z_i = 0
+        for j in range(len(PWM[:,0])):
+            Z_i = Z_i + np.exp((-PWM[j, i]/T))
+        Z = Z*Z_i
+    return Z
+
 def my_plot_layout(ax, yscale = 'linear', xscale = 'linear', ticks_labelsize = 24, xlabel = '', ylabel = '', title = '', x_fontsize=24, y_fontsize = 24, t_fontsize = 24):
     ax.tick_params(labelsize = ticks_labelsize)
     ax.set_yscale(yscale)
