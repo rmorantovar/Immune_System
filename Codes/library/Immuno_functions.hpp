@@ -146,10 +146,11 @@ void choose_naive_Bcells(int N, int L, int L_alphabet, vector< vector<double> > 
     MS.resize(L);
     find_complementary(L, L_alphabet, MJ, Antigen, MS);
     double e_MS = Energy(L, L_alphabet, MJ, MS, Antigen, "MJ", r);
+    //cout << e_MS <<endl;
     double e;
     for(int n = 0 ; n<N ; n++){
         e = Energy(L, L_alphabet, MJ, Bcells[n].seq, Antigen, type, r);
-        if(e<e_MS+28){
+        if(e<e_MS+35){ //Modulate this parameter properly with \epsilon_m
             Bcells[n].e = e;
             Naive.push_back( &Bcells[n]);
             n_naive++;
@@ -277,7 +278,7 @@ void ODE_ensemble(int linear, double const alpha, double const beta, double cons
                 // This function, contrary to the one for the single dynamics, does not use the Time_series_Bcells array. It uses the variable cs of the Bcell Class.
                 //Time_series_Bcells[n][t] = Time_series_Bcells[n][t-1] + (beta*Time_series_Bcells[n][t-1])*dT*(Naive[n]->active); // this uses the time_series arrays
                 if(Naive[n]->active == 0){
-                    f = (Time_series_Antigen[t]/N_A)/((Time_series_Antigen[t]/N_A) + exp(30+Naive[n]->e));
+                    f = (Time_series_Antigen[t]/N_A)/((Time_series_Antigen[t]/N_A) + exp(45+Naive[n]->e)); //Modulate this parameter promerly with \epsilon_MS
                     if(f>0.5){
                         Naive[n]->active = 1;
                         n_active_linages_t++;
@@ -305,7 +306,7 @@ void ODE_ensemble(int linear, double const alpha, double const beta, double cons
                 // This function, contrary to the one for the single dynamics, does not use the Time_series_Bcells array. It uses the variable cs of the Bcell Class.
                 //Time_series_Bcells[n][t] = Time_series_Bcells[n][t-1] + (beta*Time_series_Bcells[n][t-1])*dT*(Naive[n]->active); // this uses the time_series arrays
                 if(Naive[n]->active == 0){
-                    f = (Time_series_Antigen[t]/N_A)/((Time_series_Antigen[t]/N_A) + exp(30+Naive[n]->e));
+                    f = (Time_series_Antigen[t]/N_A)/((Time_series_Antigen[t]/N_A) + exp(45+Naive[n]->e)); //Modulate this parameter promerly with \epsilon_MS
                     if(f>0.5){
                         Naive[n]->active = 1;
                         n_active_linages_t++;

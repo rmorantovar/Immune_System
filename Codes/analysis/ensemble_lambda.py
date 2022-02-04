@@ -47,13 +47,13 @@ if(Matrix == 'BLOSUM62'):
 L_alphabet = len(Alphabet)
 
 #-------------------------PWM----------------------------------
-fig, ax = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18})
+fig, ax = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
 
 #antigen_seq = np.random.randint(0, len(Alphabet), L)
 #antigen = Alphabet[antigen_seq]
 antigen = 'FMLFMAVFVMTSWYC'
-antigens = ['NTKTAATNLF', 'TACNSEYPNTTK', 'FMLFMAVFVMTSWYC', 'TACNSFVMTSATNLFSEYPN']
-colors_L = plt.cm.Paired(np.linspace(0,1,len(antigens)+1))
+antigens = ['NTKTAATNLF', 'TACNSEYPNTTK', 'FMLFMAVFVMTSWYC', 'TACNSFVMTSATNLFSEYPN', 'TACNSFVMTSSEYPNPNEFYMAWYC']
+colors_L = plt.cm.ocean(np.linspace(0,1,2*len(antigens)+4))
 
 for l, antigen in enumerate(antigens):
     L=len(antigen)
@@ -148,20 +148,20 @@ for l, antigen in enumerate(antigens):
         #avg_min_E = np.sum(es[:-1]*p_min_e*de)
         #lambd_gaussian = np.append(lambd_gaussian, (avg_E-avg_min_E+2.95)/var_E)
         Us_N = np.append(Us_N, Us[np.where(Ms>N)[0][-1]])
-        lambdas_N = np.append(lambdas_N, lambdas[np.where(Us<(Us_N[-1]+(2.5/15)*L))[0][-1]]) #+(2.95/15)*L
+        lambdas_N = np.append(lambdas_N, lambdas[np.where(Us<(Us_N[-1])+(2.5/15)*L)[0][-1]]) #+(2.5/15)*L
 
 
     #ax.plot(Ns_array, lambd_gaussian, label = 'Gaussian', linestyle = '--', linewidth= 4, color = 'darkolivegreen', alpha = .6)
     #ax.plot(Ns_array, lambdas_N, color = 'darkolivegreen', linewidth = 2, label = r'$\int_{\epsilon_{MS}}^{\epsilon_m}\Lambda(\epsilon)d\epsilon\sim\frac{1}{M} $', alpha = .6, linestyle = '--')
-    ax.plot(Ns_array, lambdas_N, color = colors_L[l], linewidth = 2, label = r'%d'%(L), alpha = .6, linestyle = '--')
+    ax.plot(Ns_array/(20**L), lambdas_N, color = colors_L[2*l+4], linewidth = 3, label = r'%d'%(L), alpha = .6, linestyle = '--')
 
 
     for n, N in enumerate(Ns):
-        ax.scatter(N, lambdas_simulation[n], color = colors_L[l], s = 50, marker = '.', alpha = 1)
-        ax.errorbar(x = N, y = lambdas_simulation[n], yerr = 1.96*2*(alpha*(lambdas_simulation[n])**2)/(beta)*np.sqrt(vars_rcs_exponent[n]), color = colors_L[l], linestyle = '', capsize = 4)
+        ax.scatter(N/(20**L), lambdas_simulation[n], color = colors_L[2*l+4], s = 50, marker = 's', alpha = 1)
+        ax.errorbar(x = N/(20**L), y = lambdas_simulation[n], yerr = 1.96*2*(alpha*(lambdas_simulation[n])**2)/(beta)*np.sqrt(vars_rcs_exponent[n]), color = colors_L[2*l+4], linestyle = '', capsize = 4)
 
-my_plot_layout(ax=ax, xscale = 'log', yscale = 'linear', ylabel = '$\lambda(N)$', xlabel = '$M$')
-ax.legend(fontsize=24, title = 'L')
+my_plot_layout(ax=ax, xscale = 'log', yscale = 'linear', ylabel = '$\lambda(N)$', xlabel = '$M/20^L$')
+ax.legend(fontsize=24, title = r'$L$', title_fontsize = 26)
 fig.savefig('../../Figures/5_Geometric_exponent/lambda_simulations_N_L.pdf')
 
 end = time.time()

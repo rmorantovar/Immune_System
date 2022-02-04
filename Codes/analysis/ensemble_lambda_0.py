@@ -21,7 +21,8 @@ style.use('seaborn-paper')
 #antigen = 'FMLFMAVFVMTSWYC'
 antigen = 'TACNSEYPNTTK'
 #antigen = 'NTKTAATNLF'
-antigens = ['NTKTAATNLF', 'TACNSEYPNTTK', 'FMLFMAVFVMTSWYC', 'TACNSFVMTSATNLFSEYPN']
+antigens = ['NTKTAATNLF', 'TACNSEYPNTTK', 'FMLFMAVFVMTSWYC', 'TACNSFVMTSATNLFSEYPN', 'TACNSFVMTSSEYPNPNEFYMAWYC']
+antigens = ['TACNSFVMTSSEYPNPNEFYMAWYC']
 
 #-------------------------RELATIVE CLONE SIZE _ N----------------------------------
 for antigen in antigens:
@@ -53,7 +54,7 @@ for antigen in antigens:
         N_final_active = np.loadtxt(Text_files_path + "Dynamics/Ensemble/N_final_active_L-%d_N-%d_Antigen-"%(L, N)+antigen+"_alpha-%.6f_beta-%.6f_gamma-%.6f_Linear-%d_"%(alpha, beta, gamma, linear)+energy_model+".txt")
         N_final_active = np.concatenate(([0], N_final_active))
         N_final_active_cum = np.cumsum(N_final_active)
-        N_clones = 10
+        N_clones = 10 #Maybe reduce this so that the exponent is closer to \epsilon_m
         Clone_relative_sizes = np.zeros(N_clones)
         N_ens = 0
         for j, N_final in enumerate(N_final_active_cum[:-1]):

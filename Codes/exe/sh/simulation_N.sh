@@ -4,16 +4,17 @@
 #  
 #
 #  Created by Roberto Moran Tovar on 25.01.22.
-L=20
+L=25
 T0=0
 alpha=1.0
 beta=0.5
-Ns=(200000)
+Ns=(200 2000 20000 200000)
 Ne=2000
 GMs_names=('exponential')
 GMs=(0)
 EMs=('MJ')
-antigen='TACNSFVMTSATNLFSEYPN'
+antigen='TACNSFVMTSSEYPNPNEFYMAWYC'
+#antigen='TACNSFVMTSATNLFSEYPN'
 #antigen='FMLFMAVFVMTSWYC'
 #antigen='TACNSEYPNTTK'
 #antigen='NTKTAATNLF'
