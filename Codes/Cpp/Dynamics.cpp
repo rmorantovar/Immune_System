@@ -83,12 +83,14 @@ int main(int argc, char* argv[]) //argv has 1:L 2:N , 3:T , 4:T0 , 5:alpha , 6:b
     //Array with Bcells
     vector < bcell > Bcells;
     Bcells.resize(N);
-    generate_Bcells(N, L, L_alphabet, Bcells);
+    //generate_Bcells(N, L, L_alphabet, Bcells);
+    generate_Bcells_with_e(N, L, L_alphabet, Bcells, MJ, Antigen, model, r);
+
     //---------Choosing antigen-specific Bcells ---------------------------------------------------------
     //Array with Naive-specific Bcells
     vector < bcell* > Naive;
     int n_naive = 0;
-    choose_naive_Bcells(N, L, L_alphabet, MJ, Antigen, Bcells, Naive, n_naive, model, r);
+    choose_naive_Bcells2(N, L, L_alphabet, MJ, Antigen, Bcells, Naive, n_naive, model, r);
     
     //Matrix with the time series of the antigen-specific Bcells
     vector<vector < long double > > Time_series_Bcells;
@@ -106,7 +108,7 @@ int main(int argc, char* argv[]) //argv has 1:L 2:N , 3:T , 4:T0 , 5:alpha , 6:b
     if (linear==0) {
         Time_series_Antigen[0] = A_0;
     } else {
-        Time_series_Antigen[0] = 10E2;
+        Time_series_Antigen[0] = 1;// I used 10E2 before 
     }
     
     

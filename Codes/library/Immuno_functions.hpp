@@ -41,24 +41,54 @@ public:
     vector < int > seq; //vector with the positions of the aa sequence in the alphabet
     bcell();
     bcell(int const & L, int const & L_alphabet, vector< int > & seq);
+    bcell(int const & L, int const & L_alphabet, vector< vector<double> > const & MJ, vector< int > & seq, vector< int > const & Antigen, string type, gsl_rng *r);
     double e; //energy with respect to the current epitope.
     double cs;
     bool plasma;
     bool GC;
     bool active;
+
+    // Functions
+    double Energy(int const & L, int const & L_alphabet, vector< vector<double> > const & MJ, vector< int > const & sequence, vector< int > const & Antigen, string type, gsl_rng *r);
+
 };
 bcell::bcell(){
 
 }
 bcell::bcell(int const & L, int const & L_alphabet, vector< int > & seq){
     this->seq = seq;
-    cs = 1.0;
-    plasma = 0;
-    GC = 0;
-    active = 0;
+    this->cs = 1.0;
+    this->plasma = 0;
+    this->GC = 0;
+    this->active = 0;
+}
+bcell::bcell(int const & L, int const & L_alphabet, vector< vector<double> > const & MJ, vector< int > & seq, vector< int > const & Antigen, string type, gsl_rng *r){
+    this->seq = seq;
+    this->cs = 1.0;
+    this->plasma = 0;
+    this->GC = 0;
+    this->active = 0;
+    this->e = this->Energy(L, L_alphabet, MJ, seq, Antigen, type, r);
     
 }
 
+double bcell::Energy(int const & L, int const & L_alphabet, vector< vector<double> > const & MJ, vector< int > const & sequence, vector< int > const & Antigen, string type, gsl_rng *r)
+{
+
+    double E = 0.0;
+    if (type == "MJ") {
+        for(int i=0; i<L ; i++){
+            E = E + MJ[Antigen[i]][sequence[i]];
+        }
+    }else if(type == "Random"){
+        E = -56.0;
+        for(int i=0; i<L ; i++){
+            E = E + gsl_ran_gaussian(r, 1.17);
+        }
+    }
+    return E;
+
+};
 // ---------------- FUNCTION ---------------
 
 //Function to calculate the energy: Implement the Energy Matrix
@@ -138,6 +168,26 @@ void generate_Bcells(int N, int L, int L_alphabet, vector<bcell> & Bcells){
         Bcells[n]  = bcell_i;
     }
 }
+// Function to generate the initial amount of sequences with energy
+void generate_Bcells_with_e(int N, int L, int L_alphabet, vector<bcell> & Bcells, vector< vector<double> > const & MJ, vector< int > const & Antigen, string type, gsl_rng *r){
+    
+    //---------Array with the current Sequence-------------------------------------------
+    vector < int > Sequence;
+    Sequence.resize(L);
+    
+    for(int n =0 ; n<N ; n++){
+        
+        //Initiating Sequence with random sequence------------------------------------
+        for (int k= 0; k<L; k++)
+        {
+            Sequence[k] = randIX(0,L_alphabet-1);
+        };
+        
+        // Create a bcell and add it to the vector
+        bcell bcell_i(L, L_alphabet, MJ, Sequence, Antigen, type, r);
+        Bcells[n]  = bcell_i;
+    }
+}
 
 // Function that selects the antigen-specific naive Bcells from all the sequences
 void choose_naive_Bcells(int N, int L, int L_alphabet, vector< vector<double> > const & MJ, vector< int > const & Antigen, vector<bcell> & Bcells, vector<bcell*> & Naive, int & n_naive, string type, gsl_rng *r){
@@ -156,6 +206,28 @@ void choose_naive_Bcells(int N, int L, int L_alphabet, vector< vector<double> > 
             n_naive++;
         }
     }
+}
+
+// Function that selects the antigen-specific naive Bcells from all the sequences when energies are already calculated
+void choose_naive_Bcells2(int N, int L, int L_alphabet, vector< vector<double> > const & MJ, vector< int > const & Antigen, vector<bcell> & Bcells, vector<bcell*> & Naive, int & n_naive, string type, gsl_rng *r){
+    
+    double min_e  = Bcells[0].e;
+    double e;
+    for(int n = 1 ; n<N ; n++){
+        e = Bcells[n].e;
+        if(e<min_e){ //Modulate this parameter properly with \epsilon_m
+            min_e = e;
+        }
+    }
+    cout << min_e <<endl;
+    for(int n = 0 ; n<N ; n++){
+        e = Bcells[n].e;
+        if(e<min_e+6){
+            Naive.push_back( &Bcells[n]);
+            n_naive++;
+        }
+    }
+    
 }
 
 //Function that mutates any sequences in one random position
@@ -187,7 +259,7 @@ double mean_energy(int L, int L_alphabet, vector< vector<double> > const & MJ, v
 
 // Function to run the set of differential equations
 void ODE(int linear, double const alpha, double const beta, double const gamma, long long NT, double dT, int n_naive, vector<bcell*> & Naive, vector<vector < long double > > & Time_series_Bcells, vector < long double > & Time_series_Antigen, vector < int > & N_active_linages){
-    double p_GC = 0.05;
+    double p_GC = 0.1;
     double f = 0;
     double N_active_bcells = 0;
     int n_active_linages = 0;
@@ -225,7 +297,7 @@ void ODE(int linear, double const alpha, double const beta, double const gamma, 
     } else {
         for(int t = 1; t< NT ; t++){ // for loop of time
             //Update the antigen
-            Time_series_Antigen[t] = Time_series_Antigen[t-1] + (alpha*2000 - gamma*Time_series_Antigen[t-1]*N_active_bcells)*dT;
+            Time_series_Antigen[t] = Time_series_Antigen[t-1] + (alpha*1 - gamma*Time_series_Antigen[t-1]*N_active_bcells)*dT;
             if(Time_series_Antigen[t]<1){
                 Time_series_Antigen[t] = 0;
             }
