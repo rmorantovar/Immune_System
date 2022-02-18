@@ -1,3 +1,4 @@
+#Code to analize output from ensemble_lambda_0.py
 import sys
 sys.path.append('../library/')
 import numpy as np

@@ -696,6 +696,21 @@ def Z_PWM(PWM, T):
         Z = Z*Z_i
     return Z
 
+def Z_PWMj(PWM, beta):
+    Z = 1
+    for i in range(len(PWM[0,:])):
+        Z_i = 0.j
+        for j in range(len(PWM[:,0])):
+            Z_i = Z_i + np.exp(-PWM[j, i]*beta)
+        Z = Z*Z_i
+    return Z
+
+def Z_PWM_integral(T, lamda, k):
+    return np.exp(-lamda*min_E)*(np.exp(max_E*(lamda-(1/T)))-np.exp(min_E*(lamda-(1/T))))/(lamda-(1/T))*k
+
+def Z_PWM_integral2(T, lamda):
+    return 2*np.exp(-lamda*min_E)*(np.exp(avg_E*(lamda-(1/T)))-np.exp(min_E*(lamda-(1/T))))/(lamda-(1/T))
+
 def my_plot_layout(ax, yscale = 'linear', xscale = 'linear', ticks_labelsize = 24, xlabel = '', ylabel = '', title = '', x_fontsize=24, y_fontsize = 24, t_fontsize = 24):
     ax.tick_params(labelsize = ticks_labelsize)
     ax.set_yscale(yscale)
@@ -727,7 +742,7 @@ def plot_PWM(PWM, Alphabet, sequence, title, ax):
 	
 	Alphabet = Alphabet
 
-	sns.heatmap(np.flip(M, axis = 0), ax = ax, cmap=plt.cm.viridis, center = 0, cbar = True)
+	sns.heatmap(np.flip(M, axis = 0), ax = ax, cmap=plt.cm.get_cmap('bwr_r'), center = 0, cbar = True)
 	ax.set_title(title, fontsize = 22)
 	ax.tick_params(labelsize = 20)
 	ax.set_xticklabels(sequence)

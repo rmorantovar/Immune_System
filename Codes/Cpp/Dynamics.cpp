@@ -14,7 +14,7 @@
 using namespace std;
 
 //----------------------------------------------------------------------------------
-int main(int argc, char* argv[]) //argv has 1:L 2:N , 3:T , 4:T0 , 5:alpha , 6:beta , 7:gamma , 8:linear ; 9:model
+int main(int argc, char* argv[]) //argv has 1:L 2:N , 3:T , 4:T0 , 5:alpha , 6:beta , 7:gamma , 8:linear ; 9:energy_model
 {
     string Text_files_path = "/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/Dynamics/Single_trajectory/";
     cout<<">Running simulation of the Bcells-Antigen dynamics ..."<< endl;
@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) //argv has 1:L 2:N , 3:T , 4:T0 , 5:alpha , 6:b
     long long int NT = (T-T0)/dT; //number of steps
     long long A_0 = exp(alpha*T0);
     int linear = atoi(argv[8]);
-    string model (argv[9]);
+    string energy_model (argv[9]);
 
     //------------Energy Matrix------------------------------------------------------
     vector < vector < double > > MJ;
@@ -84,13 +84,13 @@ int main(int argc, char* argv[]) //argv has 1:L 2:N , 3:T , 4:T0 , 5:alpha , 6:b
     vector < bcell > Bcells;
     Bcells.resize(N);
     //generate_Bcells(N, L, L_alphabet, Bcells);
-    generate_Bcells_with_e(N, L, L_alphabet, Bcells, MJ, Antigen, model, r);
+    generate_Bcells_with_e(N, L, L_alphabet, Bcells, MJ, Antigen, energy_model, r);
 
     //---------Choosing antigen-specific Bcells ---------------------------------------------------------
     //Array with Naive-specific Bcells
     vector < bcell* > Naive;
     int n_naive = 0;
-    choose_naive_Bcells2(N, L, L_alphabet, MJ, Antigen, Bcells, Naive, n_naive, model, r);
+    choose_naive_Bcells2(N, L, L_alphabet, MJ, Antigen, Bcells, Naive, n_naive, energy_model, r);
     
     //Matrix with the time series of the antigen-specific Bcells
     vector<vector < long double > > Time_series_Bcells;
@@ -117,18 +117,18 @@ int main(int argc, char* argv[]) //argv has 1:L 2:N , 3:T , 4:T0 , 5:alpha , 6:b
     N_active_linages.resize(NT);
     
     
-    cout << n_naive << endl;
+    cout << "Reactive B cells:" << n_naive << endl;
     
     //Output files
     
  
-    ofstream fout (Text_files_path+"energies_L-"+std::to_string(L)+"_N-"+ std::to_string(N)+"_Antigen-"+Antigen_aa+"_Linear-"+std::to_string(linear)+"_"+model+".txt");
-    ofstream fout_antigen (Text_files_path+"antigen_L-"+std::to_string(L)+"_N-"+ std::to_string(N)+"_Antigen-"+Antigen_aa+"_alpha-"+std::to_string(alpha)+"_beta-"+std::to_string(beta)+"_gamma-"+std::to_string(gamma)+"_Linear-"+std::to_string(linear)+"_"+model+".txt");
-    ofstream fout_bcells (Text_files_path+"bcells_L-"+std::to_string(L)+"_N-"+ std::to_string(N)+"_Antigen-"+Antigen_aa+"_alpha-"+std::to_string(alpha)+"_beta-"+std::to_string(beta)+"_gamma-"+std::to_string(gamma)+"_Linear-"+std::to_string(linear)+"_"+model+".txt");
-    ofstream fout_N_active_linages (Text_files_path+"N_active_linages_L-"+std::to_string(L)+"_N-"+ std::to_string(N)+"_Antigen-"+Antigen_aa+"_alpha-"+std::to_string(alpha)+"_beta-"+std::to_string(beta)+"_gamma-"+std::to_string(gamma)+"_Linear-"+std::to_string(linear)+"_"+model+".txt");
+    ofstream fout (Text_files_path+"energies_L-"+std::to_string(L)+"_N-"+ std::to_string(N)+"_Antigen-"+Antigen_aa+"_Linear-"+std::to_string(linear)+"_"+energy_model+".txt");
+    ofstream fout_antigen (Text_files_path+"antigen_L-"+std::to_string(L)+"_N-"+ std::to_string(N)+"_Antigen-"+Antigen_aa+"_alpha-"+std::to_string(alpha)+"_beta-"+std::to_string(beta)+"_gamma-"+std::to_string(gamma)+"_Linear-"+std::to_string(linear)+"_"+energy_model+".txt");
+    ofstream fout_bcells (Text_files_path+"bcells_L-"+std::to_string(L)+"_N-"+ std::to_string(N)+"_Antigen-"+Antigen_aa+"_alpha-"+std::to_string(alpha)+"_beta-"+std::to_string(beta)+"_gamma-"+std::to_string(gamma)+"_Linear-"+std::to_string(linear)+"_"+energy_model+".txt");
+    ofstream fout_N_active_linages (Text_files_path+"N_active_linages_L-"+std::to_string(L)+"_N-"+ std::to_string(N)+"_Antigen-"+Antigen_aa+"_alpha-"+std::to_string(alpha)+"_beta-"+std::to_string(beta)+"_gamma-"+std::to_string(gamma)+"_Linear-"+std::to_string(linear)+"_"+energy_model+".txt");
 
     
-    cout << mean_energy(L, L_alphabet, MJ, Antigen) << endl;
+    cout << "e_bar:" << mean_energy(L, L_alphabet, MJ, Antigen) << endl;
     // Run ODE
     ODE(linear, alpha, beta, gamma, NT, dT, n_naive, Naive, Time_series_Bcells, Time_series_Antigen, N_active_linages);
     

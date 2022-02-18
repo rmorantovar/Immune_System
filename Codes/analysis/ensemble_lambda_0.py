@@ -1,3 +1,4 @@
+#Code to picke clone size data from C++ sumulations
 import sys
 sys.path.append('../library/')
 import numpy as np

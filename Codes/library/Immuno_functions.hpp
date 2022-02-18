@@ -41,7 +41,7 @@ public:
     vector < int > seq; //vector with the positions of the aa sequence in the alphabet
     bcell();
     bcell(int const & L, int const & L_alphabet, vector< int > & seq);
-    bcell(int const & L, int const & L_alphabet, vector< vector<double> > const & MJ, vector< int > & seq, vector< int > const & Antigen, string type, gsl_rng *r);
+    bcell(int const & L, int const & L_alphabet, vector< vector<double> > const & MJ, vector< int > & seq, vector< int > const & Antigen, string energy_model, gsl_rng *r);
     double e; //energy with respect to the current epitope.
     double cs;
     bool plasma;
@@ -49,7 +49,7 @@ public:
     bool active;
 
     // Functions
-    double Energy(int const & L, int const & L_alphabet, vector< vector<double> > const & MJ, vector< int > const & sequence, vector< int > const & Antigen, string type, gsl_rng *r);
+    double Energy(int const & L, int const & L_alphabet, vector< vector<double> > const & MJ, vector< int > const & sequence, vector< int > const & Antigen, string energy_model, gsl_rng *r);
 
 };
 bcell::bcell(){
@@ -62,25 +62,25 @@ bcell::bcell(int const & L, int const & L_alphabet, vector< int > & seq){
     this->GC = 0;
     this->active = 0;
 }
-bcell::bcell(int const & L, int const & L_alphabet, vector< vector<double> > const & MJ, vector< int > & seq, vector< int > const & Antigen, string type, gsl_rng *r){
+bcell::bcell(int const & L, int const & L_alphabet, vector< vector<double> > const & MJ, vector< int > & seq, vector< int > const & Antigen, string energy_model, gsl_rng *r){
     this->seq = seq;
     this->cs = 1.0;
     this->plasma = 0;
     this->GC = 0;
     this->active = 0;
-    this->e = this->Energy(L, L_alphabet, MJ, seq, Antigen, type, r);
+    this->e = this->Energy(L, L_alphabet, MJ, seq, Antigen, energy_model, r);
     
 }
 
-double bcell::Energy(int const & L, int const & L_alphabet, vector< vector<double> > const & MJ, vector< int > const & sequence, vector< int > const & Antigen, string type, gsl_rng *r)
+double bcell::Energy(int const & L, int const & L_alphabet, vector< vector<double> > const & MJ, vector< int > const & sequence, vector< int > const & Antigen, string energy_model, gsl_rng *r)
 {
 
     double E = 0.0;
-    if (type == "MJ") {
+    if (energy_model == "MJ") {
         for(int i=0; i<L ; i++){
             E = E + MJ[Antigen[i]][sequence[i]];
         }
-    }else if(type == "Random"){
+    }else if(energy_model == "Random"){
         E = -56.0;
         for(int i=0; i<L ; i++){
             E = E + gsl_ran_gaussian(r, 1.17);
@@ -92,15 +92,15 @@ double bcell::Energy(int const & L, int const & L_alphabet, vector< vector<doubl
 // ---------------- FUNCTION ---------------
 
 //Function to calculate the energy: Implement the Energy Matrix
-double Energy(int const & L, int const & L_alphabet, vector< vector<double> > const & MJ, vector< int > const & sequence, vector< int > const & Antigen, string type, gsl_rng *r)
+double Energy(int const & L, int const & L_alphabet, vector< vector<double> > const & MJ, vector< int > const & sequence, vector< int > const & Antigen, string energy_model, gsl_rng *r)
 {
 
     double E = 0.0;
-    if (type == "MJ") {
+    if (energy_model == "MJ") {
         for(int i=0; i<L ; i++){
             E = E + MJ[Antigen[i]][sequence[i]];
         }
-    }else if(type == "Random"){
+    }else if(energy_model == "Random"){
         E = -56.0;
         for(int i=0; i<L ; i++){
             E = E + gsl_ran_gaussian(r, 1.17);
@@ -169,7 +169,7 @@ void generate_Bcells(int N, int L, int L_alphabet, vector<bcell> & Bcells){
     }
 }
 // Function to generate the initial amount of sequences with energy
-void generate_Bcells_with_e(int N, int L, int L_alphabet, vector<bcell> & Bcells, vector< vector<double> > const & MJ, vector< int > const & Antigen, string type, gsl_rng *r){
+void generate_Bcells_with_e(int N, int L, int L_alphabet, vector<bcell> & Bcells, vector< vector<double> > const & MJ, vector< int > const & Antigen, string energy_model, gsl_rng *r){
     
     //---------Array with the current Sequence-------------------------------------------
     vector < int > Sequence;
@@ -184,22 +184,22 @@ void generate_Bcells_with_e(int N, int L, int L_alphabet, vector<bcell> & Bcells
         };
         
         // Create a bcell and add it to the vector
-        bcell bcell_i(L, L_alphabet, MJ, Sequence, Antigen, type, r);
+        bcell bcell_i(L, L_alphabet, MJ, Sequence, Antigen, energy_model, r);
         Bcells[n]  = bcell_i;
     }
 }
 
 // Function that selects the antigen-specific naive Bcells from all the sequences
-void choose_naive_Bcells(int N, int L, int L_alphabet, vector< vector<double> > const & MJ, vector< int > const & Antigen, vector<bcell> & Bcells, vector<bcell*> & Naive, int & n_naive, string type, gsl_rng *r){
+void choose_naive_Bcells(int N, int L, int L_alphabet, vector< vector<double> > const & MJ, vector< int > const & Antigen, vector<bcell> & Bcells, vector<bcell*> & Naive, int & n_naive, string energy_model, gsl_rng *r){
     
     vector <int> MS;
     MS.resize(L);
     find_complementary(L, L_alphabet, MJ, Antigen, MS);
     double e_MS = Energy(L, L_alphabet, MJ, MS, Antigen, "MJ", r);
-    //cout << e_MS <<endl;
+    cout << "e_MS:" << e_MS <<endl;
     double e;
     for(int n = 0 ; n<N ; n++){
-        e = Energy(L, L_alphabet, MJ, Bcells[n].seq, Antigen, type, r);
+        e = Energy(L, L_alphabet, MJ, Bcells[n].seq, Antigen, energy_model, r);
         if(e<e_MS+35){ //Modulate this parameter properly with \epsilon_m
             Bcells[n].e = e;
             Naive.push_back( &Bcells[n]);
@@ -209,8 +209,13 @@ void choose_naive_Bcells(int N, int L, int L_alphabet, vector< vector<double> > 
 }
 
 // Function that selects the antigen-specific naive Bcells from all the sequences when energies are already calculated
-void choose_naive_Bcells2(int N, int L, int L_alphabet, vector< vector<double> > const & MJ, vector< int > const & Antigen, vector<bcell> & Bcells, vector<bcell*> & Naive, int & n_naive, string type, gsl_rng *r){
+void choose_naive_Bcells2(int N, int L, int L_alphabet, vector< vector<double> > const & MJ, vector< int > const & Antigen, vector<bcell> & Bcells, vector<bcell*> & Naive, int & n_naive, string energy_model, gsl_rng *r){
     
+    vector <int> MS;
+    MS.resize(L);
+    find_complementary(L, L_alphabet, MJ, Antigen, MS);
+    double e_MS = Energy(L, L_alphabet, MJ, MS, Antigen, energy_model, r);
+    cout << "e_MS:" << e_MS <<endl;
     double min_e  = Bcells[0].e;
     double e;
     for(int n = 1 ; n<N ; n++){
@@ -219,7 +224,7 @@ void choose_naive_Bcells2(int N, int L, int L_alphabet, vector< vector<double> >
             min_e = e;
         }
     }
-    cout << min_e <<endl;
+    cout << "e_m:" << min_e <<endl;
     for(int n = 0 ; n<N ; n++){
         e = Bcells[n].e;
         if(e<min_e+6){
