@@ -98,15 +98,19 @@ int main(int argc, char* argv[]) //argv has 1:L , 2:N , 3:T , 4:T0 , 5:alpha , 6
     vector <double> N_active_linages;
     N_active_linages.resize(NT);
     //Array for total final number of active bcell linages
-    vector <double> N_final_active_linages;
+    vector <int> N_final_active_linages;
+    //N_final_active_linages.resize(N_ensemble);
     
     //Output files
-    ofstream fout (Text_files_path+"energies_tail_ensemble_L-"+std::to_string(L)+"_N-"+ std::to_string(N)+"_Antigen-"+Antigen_aa+"_Linear-"+std::to_string(linear)+"_"+type+".txt"); // Energies
+    ofstream fout (Text_files_path+"energies_ensemble_L-"+std::to_string(L)+"_N-"+ std::to_string(N)+"_Antigen-"+Antigen_aa+"_Linear-"+std::to_string(linear)+"_"+type+".txt"); // Energies
     
     ofstream fout_bcells (Text_files_path+"bcells_ensemble_L-"+std::to_string(L)+"_N-"+ std::to_string(N)+"_Antigen-"+Antigen_aa+"_alpha-"+std::to_string(alpha)+"_beta-"+std::to_string(beta)+"_gamma-"+std::to_string(gamma)+"_Linear-"+std::to_string(linear)+"_"+type+".txt"); // B cells final clone size
     
     ofstream fout_N_final_active (Text_files_path+"N_final_active_L-"+std::to_string(L)+"_N-"+ std::to_string(N)+"_Antigen-"+Antigen_aa+"_alpha-"+std::to_string(alpha)+"_beta-"+std::to_string(beta)+"_gamma-"+std::to_string(gamma)+"_Linear-"+std::to_string(linear)+"_"+type+".txt"); // B cells final clone size
     
+    //print in file the time series of the average of the number of activated bcell linages.
+    ofstream fout_N_active_linages (Text_files_path+"N_active_linages_ensemble_L-"+std::to_string(L)+"_N-"+ std::to_string(N)+"_Antigen-"+Antigen_aa+"_alpha-"+std::to_string(alpha)+"_beta-"+std::to_string(beta)+"_gamma-"+std::to_string(gamma)+"_Linear-"+std::to_string(linear)+"_"+type+".txt");
+
     // ------------ Run ensemble of trajectories ------------
     cout << "Running ensemble of trajectories ..." << endl;
     for(int i_ensemble = 0 ; i_ensemble<N_ensemble ; i_ensemble++){
@@ -148,10 +152,7 @@ int main(int argc, char* argv[]) //argv has 1:L , 2:N , 3:T , 4:T0 , 5:alpha , 6
         }
             
     }
-    
-    //print in file the time series of the average of the number of activated bcell linages.
-    ofstream fout_N_active_linages (Text_files_path+"N_active_linages_ensemble_L-"+std::to_string(L)+"_N-"+ std::to_string(N)+"_Antigen-"+Antigen_aa+"_alpha-"+std::to_string(alpha)+"_beta-"+std::to_string(beta)+"_gamma-"+std::to_string(gamma)+"_Linear-"+std::to_string(linear)+"_"+type+".txt");
-    
+        
     for (int t= 0; t<NT; t++)
     {
         fout_N_active_linages << N_active_linages[t]/N_ensemble << "\t";

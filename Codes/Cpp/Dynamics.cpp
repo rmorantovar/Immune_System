@@ -50,6 +50,11 @@ int main(int argc, char* argv[]) //argv has 1:L 2:N , 3:T , 4:T0 , 5:alpha , 6:b
     };
 
     ifstream file("../Input_files/MJ2.txt");
+    for (unsigned int i = 0; i < L_alphabet; i++) {
+        for (unsigned int j = 0; j < L_alphabet; j++) {
+            file >> MJ[i][j];
+        }
+    }
 
     //------------ Alphabet ----------------------------------------------------------
     //Array with the Alphabet
@@ -64,11 +69,7 @@ int main(int argc, char* argv[]) //argv has 1:L 2:N , 3:T , 4:T0 , 5:alpha , 6:b
     
     }
     cout << "\n";
-    for (unsigned int i = 0; i < L_alphabet; i++) {
-        for (unsigned int j = 0; j < L_alphabet; j++) {
-            file >> MJ[i][j];
-        }
-    }
+    
     //------------- Antigen -------------------------------------------------------------
     //Array with the antigen
     string Antigen_aa;

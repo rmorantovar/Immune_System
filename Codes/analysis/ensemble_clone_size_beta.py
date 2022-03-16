@@ -3,6 +3,7 @@ sys.path.append('../library/')
 from Immuno_models import *
 import numpy as np
 import matplotlib.pyplot as plt
+plt.rcParams['text.usetex'] = True
 import scipy as scipy
 import pickle
 
@@ -17,11 +18,12 @@ Text_files_path = "/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 
 antigen = 'FMLFMAVFVMTSWYC'
 L=len(antigen)
-N=2e3
+N=1e5
 alpha = 1
 betas = np.array([np.flip([0.1, 0.2, 0.5, 1, 2]), np.flip([0.1, 0.2, 0.5])], dtype=object)
+betas = np.array([np.flip([.5]), np.flip([.5])], dtype=object)
 gamma = 0
-lamda = 0.6
+lamda = 0.82
 d=20
 energy_model = 'MJ'
 colors_gm = np.array([plt.cm.Blues(np.linspace(0,1,len(betas[0])+2)),plt.cm.Reds(np.linspace(0,1,len(betas[1])+2)) ], dtype=object)
@@ -29,7 +31,7 @@ colors_gm = np.array([plt.cm.Blues(np.linspace(0,1,len(betas[0])+2)),plt.cm.Reds
 for j, gm in enumerate(growth_models):
 	fig, ax = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
 	for i, beta in enumerate(betas[j]):
-		exponents = [(-((alpha*lamda)/beta)-1), -1]
+		exponents = [(-((alpha)/beta)-1), -1]
 		
 		#file_clone_sizes = open(path+'/Dynamics/Python/ensemble/clone_size_data_d-%d_alpha-%.2f_beta-%.2f_N-%.1e_'%(d, alpha, beta, N)+gm+'_'+energy_model+'.pkl','rb')	
 		#clone_sizes = pickle.load(file_clone_sizes)
@@ -65,7 +67,8 @@ for j, gm in enumerate(growth_models):
 	
 	my_plot_layout(ax = ax, xscale='log', yscale= 'log', xlabel=r'Clone size $N_{b}$', ylabel=r'$p(N_{b})$', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 	ax.legend(title=r'$\alpha/\beta$', fontsize = 24, title_fontsize = 24)
-	fig.savefig('../../Figures/1_Dynamics/CSD_betas_'+gm+'.pdf')
+	plt.show()
+	#fig.savefig('../../Figures/1_Dynamics/CSD_betas_'+gm+'.pdf')
 
 	#ax.text(x=text_pos[i][0], y=text_pos[i][1], s = text[i], fontsize=44, color = colors_fit[i])
 

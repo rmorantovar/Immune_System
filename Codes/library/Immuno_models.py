@@ -207,6 +207,148 @@ class Immune_response():
 
 	#@staticmethod
 	#def create_b_cells(self):
+
+class Immune_response2():
+	"""docstring for Immune_response
+	=============================================
+	Params : N	Number of B cells that I produce
+			 L	Lenght of sequences
+
+	"""
+	def __init__(self, L, L_seq, N, alpha, beta, text_files_path, energy_model = 'MJ', d=1, e0=1, antigen_str='', growth_model = 'exponential', bcells_filter = False):
+		super(Immune_response, self).__init__()
+		self.N_A = 6.02214076e23
+		self.L_seq = L_seq
+		self.e0 = e0
+		self.E0 = self.e0*self.L - np.log(self.N_A)-25 #be careful
+		self.E0 = 25
+		#print(self.E0)
+		self.energy_bar = 0
+		self.N = N
+		self.NN = N
+		self.alpha = alpha
+		self.beta = beta
+		self.antigen_str = antigen_str
+		self.energy_model = energy_model
+		self.growth_model = growth_model
+		self.text_files_path = text_files_path
+		self.Bcells_to_delete = np.array([], dtype = int)
+		self.Alphabet = np.loadtxt('../Input_files/Alphabet.txt', dtype=bytes, delimiter='\t').astype(str)
+		if(self.energy_model=='MM'):
+			self.d = d #If the model is MM, we can choose the size of the alphabet d
+		else:
+			self.d = np.size(self.Alphabet) #If the model is MJ or random, d is the number of aa (d=20)
+		self.B_cells_seqs = np.random.randint(low = 0, high=self.d, size=self.N*self.L).reshape(self.N, self.L_seq) 
+
+		self.hamming_distances = np.zeros(self.N)
+		self.energies = np.zeros(self.N)
+		self.activation_status = np.zeros(self.N)
+
+		if(self.growth_model=='exponential'):
+			self.exponential=True
+			self.linear=False
+		if(self.growth_model=='linear'):
+			self.exponential=False
+			self.linear=True
+
+
+		#--- Initialize functions ---
+
+		self.antigen = np.random.randint(low = 0, high=self.d, size=self.L) #create a random antigen. In the case of MM, it does not matter.
+		self.load_matrix()
+
+		if(self.antigen_str!=''): #in case the input is a seq of aa, then we look for the numerical seq.
+			self.antigen_seq()
+
+		self.master_sequence = np.zeros_like(self.antigen)
+		self.find_master_seq()
+
+		if(self.energy_model=='MM'):
+			self.energy_bar = -self.e0*self.L/self.d
+		if(self.energy_model=="MJ"):
+			contributions = np.zeros(shape = (1,20))
+			for i in self.antigen:
+				contributions = np.vstack((contributions, self.E_matrix[i]))
+			self.energy_bar = np.sum(np.mean(contributions, axis=1))
+
+		self.calculate_hamming_distances()
+		self.calculate_energies(filter = bcells_filter)
+		
+
+	#----- Functions of the class
+	def antigen_seq(self):
+		assert(np.char.str_len(self.antigen_str) == self.L), "The antigen provided has no lenght %d."%(self.L)
+		self.dict_Alphabet = {s:i for i, s in enumerate(self.Alphabet)}
+		self.antigen = np.array([self.dict_Alphabet[s] for s in self.antigen_str])
+
+	def load_matrix(self):
+		if(self.energy_model=='MJ'):
+			self.E_matrix = np.loadtxt("../Input_files/MJ2.txt")
+		if(self.energy_model=='MM'):
+			self.E_matrix = np.diag(-self.e0*np.ones(self.d))
+
+	def find_master_seq(self):
+
+		for i, letter in enumerate(self.antigen):
+			self.master_sequence[i] = np.where(np.isin(self.E_matrix[letter],np.min(self.E_matrix[letter])))[0]
+
+
+	def hamming_distance(self, nseq):
+		self.hamming_distances[nseq] = np.sum(c1 != c2 for c1, c2 in zip(self.master_sequence, self.B_cells_seqs[nseq]))
+
+	def energy(self, nseq):
+		if(self.energy_model == 'MJ' or self.energy_model == 'MM'):
+			self.energies[nseq] = np.sum(self.E_matrix[self.antigen, self.B_cells_seqs[nseq,:]])
+		if(self.energy_model == 'Random'):
+			self.energies[nseq] = np.random.normal(loc = -56.0, scale = 1.17, size = 1)
+
+	def calculate_hamming_distances(self, filter=False):
+		for nseq in np.arange(self.N):
+			self.hamming_distance(nseq)
+
+	def calculate_energies(self, filter=False):
+		if(filter):
+			for nseq in np.arange(self.N):
+				self.energy(nseq)
+				#if self.energies[nseq] > (self.energy_bar-5):
+				if self.energies[nseq] > (np.min(self.energies)+10):	
+					self.Bcells_to_delete = np.append(self.Bcells_to_delete, int(nseq))
+
+			self.B_cells_seqs = np.delete(self.B_cells_seqs, self.Bcells_to_delete, 0)
+			self.energies = np.delete(self.energies, self.Bcells_to_delete, 0)
+			self.hamming_distances = np.delete(self.hamming_distances, self.Bcells_to_delete, 0)
+			self.NN = self.N - np.size(self.Bcells_to_delete)
+
+
+		if not(filter):
+			for nseq in np.arange(self.N):
+				self.energy(nseq)
+
+	def step(self):
+		self.antigen_Tseries[self.idt] = self.antigen_Tseries[self.idt-1] + self.exponential*self.alpha*self.antigen_Tseries[self.idt-1]*self.dT + self.linear*2000*self.alpha*self.dT
+		p_b = (self.antigen_Tseries[self.idt]/self.N_A)/((self.antigen_Tseries[self.idt]/self.N_A)+(np.exp(self.energies+self.E0)))
+		self.activation_status = np.greater(p_b, 0.5)
+		self.B_cells_Tseries[:,self.idt] = self.B_cells_Tseries[:,self.idt-1] + self.B_cells_Tseries[:,self.idt-1]*self.beta*self.activation_status*self.dT
+
+	def run(self,T, dT = 0.005, T0 = 0):
+
+		self.T = T
+		self.T0 = T0
+		self.dT = dT
+		self.time = np.linspace(self.T0, self.T, int((self.T-self.T0)/self.dT))
+		self.antigen_Tseries = np.zeros(np.size(self.time))
+		self.antigen_Tseries[0] = np.exp(self.alpha*self.T0)*self.exponential + 1e3*self.linear
+		self.B_cells_Tseries = np.zeros((self.NN, np.size(self.time)))
+		self.B_cells_Tseries[:,0] = np.ones(self.NN)
+		self.idt = 1
+		#while((self.time[self.idt-1]<self.T) & (np.sum(self.activation_status)<=10)):
+		while((self.time[self.idt-1]<self.T)):
+			self.step()
+			self.idt+=1
+		#print(np.sum(self.activation_status))
+
+	#@staticmethod
+	#def create_b_cells(self):
 	
 
 #----------------- Models -----------------
@@ -742,7 +884,7 @@ def plot_PWM(PWM, Alphabet, sequence, title, ax):
 	
 	Alphabet = Alphabet
 
-	sns.heatmap(np.flip(M, axis = 0), ax = ax, cmap=plt.cm.get_cmap('bwr_r'), center = 0, cbar = True)
+	sns.heatmap(np.flip(M, axis = 0), ax = ax, cmap=plt.cm.viridis, center = 0, cbar = True)
 	ax.set_title(title, fontsize = 22)
 	ax.tick_params(labelsize = 20)
 	ax.set_xticklabels(sequence)

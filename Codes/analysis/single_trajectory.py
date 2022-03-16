@@ -2,6 +2,7 @@ import sys
 sys.path.append('../library/')
 import numpy as np
 import matplotlib.pyplot as plt
+plt.rcParams['text.usetex'] = True
 from Immuno_models import*
 import scipy.special as sc
 import pickle
@@ -22,12 +23,12 @@ Alphabet2 = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n
 Alphabet = np.loadtxt(Text_files_path + 'Alphabet.txt', dtype=bytes, delimiter='\t').astype(str)
 
 
-NC = 2e3
+NC = 1e8
 T0 = 0
 Tf = 25
 dT = 0.005
 alpha = 1
-gamma = 0.0000
+gamma = 0.0333
 beta = 0.5
 
 antigen = 'TACNSEYPNTTK'
@@ -44,7 +45,7 @@ colors = ['tab:blue', 'tab:red']
 colors_fit = ['darkblue', 'darkred']
 growth_models = [0, 1]
 
-lambd = 0.65
+lambd = 1.2
 
 for energy_model in energy_models:
     
@@ -54,9 +55,9 @@ for energy_model in energy_models:
     for j, linear in enumerate(growth_models):
 
         colors_activation = []
-        data_antigen = np.loadtxt(Text_files_path + 'Dynamics/Single_trajectory/antigen_L-%d_N-%d_Antigen-'%(L, NC)+antigen+'_alpha-%.6f_beta-%.6f_gamma-%.6f_linear-%d_'%(alpha, beta, gamma, linear)+energy_model+'.txt')
-        data_bcells = np.loadtxt(Text_files_path + 'Dynamics/Single_trajectory/bcells_L-%d_N-%d_Antigen-'%(L, NC)+antigen+'_alpha-%.6f_beta-%.6f_gamma-%.6f_linear-%d_'%(alpha, beta, gamma, linear)+energy_model+'.txt')
-        data_N_active_linages = np.loadtxt(Text_files_path + 'Dynamics/Single_trajectory/N_active_linages_L-%d_N-%d_Antigen-'%(L, NC)+antigen+'_alpha-%.6f_beta-%.6f_gamma-%.6f_linear-%d_'%(alpha, beta, gamma, linear)+energy_model+'.txt')
+        data_antigen = np.loadtxt(Text_files_path + 'Dynamics/Trajectories/antigen_L-%d_N-%d_Antigen-'%(L, NC)+antigen+'_alpha-%.6f_beta-%.6f_gamma-%.6f_linear-%d_'%(alpha, beta, gamma, linear)+energy_model+'.txt')
+        data_bcells = np.loadtxt(Text_files_path + 'Dynamics/Trajectories/bcells_L-%d_N-%d_Antigen-'%(L, NC)+antigen+'_alpha-%.6f_beta-%.6f_gamma-%.6f_linear-%d_'%(alpha, beta, gamma, linear)+energy_model+'.txt')
+        data_N_active_linages = np.loadtxt(Text_files_path + 'Dynamics/Trajectories/N_active_linages_L-%d_N-%d_Antigen-'%(L, NC)+antigen+'_alpha-%.6f_beta-%.6f_gamma-%.6f_linear-%d_'%(alpha, beta, gamma, linear)+energy_model+'.txt')
         data_bcells_active = np.transpose(data_bcells[:,np.where(data_bcells[-1,:]>1)[0]])
         print('Activated clones:',data_N_active_linages[-1], np.shape(data_bcells_active))
         
@@ -80,17 +81,17 @@ for energy_model in energy_models:
             ax_a.plot(time[::500], expfit[::500], color = colors_fit[j], linestyle = '--', linewidth = 4)
             ax_a.text(x=7, y=5e7, s = r'$\sim e^{\alpha t}$', fontsize=48, color = colors_fit[j])
         if(linear == 1):
-            ax_a.plot(time, 1e3 + time*2000, color = colors[j], label = models_name[j] + ' growth', linestyle = '--', linewidth = 3)
+            ax_a.plot(time, 1 + time*alpha*10, color = colors[j], label = models_name[j] + ' growth', linestyle = '--', linewidth = 3)
             ax_a.text(x=16, y=1e2, s = r'$\sim \alpha t$', fontsize=48, color = colors_fit[j])
         my_plot_layout(ax = ax[0,0], yscale = 'log', xlabel = 'Time', ylabel = 'Antigen')
         #ax[0,0].set_ylim(bottom = 1)
 
         #---- B cell linages ----
-        for i in np.arange(int(data_N_active_linages[-1])):
+        for i in np.arange(0, int(data_N_active_linages[-1]), 20):
             ax[0,1].plot(time, data_bcells_active[i,:], color = colors[j], linewidth = 4, linestyle  = '-', marker = '', ms = 12);
         my_plot_layout(ax = ax[0,1], yscale = 'log', xlabel = 'Time', ylabel = 'Clone size')
         
-        for i in range(int(data_N_active_linages[-1])):
+        for i in range(0, int(data_N_active_linages[-1]), 12):
             ax_b.plot(time[::500], data_bcells_active[i,:][::500], color = colors[j], linewidth = 1, linestyle  = '-', marker = 'o', ms = 5);
         if(linear == 0):
             expfit = 1.5*np.exp(beta*time)
@@ -100,12 +101,12 @@ for energy_model in energy_models:
         #---- Activation rate ----
         ax[1,0].plot(time[::100], data_N_active_linages[::100], linestyle = '-', marker = 'o', ms = 5, linewidth = 2, label = 'simulation', color = colors[j])
         if(linear == 0):
-            theory = (1/(alpha*lambd))*(np.exp(alpha*lambd*(time-t0))-1)
+            theory = (1/(alpha))*(np.exp(alpha*(time-t0))-1)
             ax[1,0].plot(time, theory, color = colors[j], label = models_name[j] + ' growth', linestyle = '--', linewidth = 3)
         if(linear == 1):
-            theory = ((1/(alpha*2000*(lambd)*(alpha*2000*t0+a0)**(lambd-1)))*((alpha*2000*time+a0)**(lambd)-(alpha*2000*t0+a0)**(lambd)))
-            #theory = time**(lambd)
-            ax[1,0].plot(time, theory, color = colors[j], label = models_name[j] + ' growth', linestyle = '--', linewidth = 3)
+            #theory = ((1/(alpha*2000*(lambd)*(alpha*t0+a0)**(lambd-1)))*((alpha*2000*time+a0)**(lambd)-(alpha*2000*t0+a0)**(lambd)))
+            theory = 0.5*alpha*10*(time-t0)**2
+            ax[1,0].plot(time[time>=t0], theory[time>=t0], color = colors[j], label = models_name[j] + ' growth', linestyle = '--', linewidth = 3)
         my_plot_layout(ax = ax[1,0], xscale = 'linear', yscale = 'log', xlabel = 'Time', ylabel = r'$m(t)$')
 
         #---- Entropy ----
