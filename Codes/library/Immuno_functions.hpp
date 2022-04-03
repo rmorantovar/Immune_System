@@ -6,8 +6,6 @@
 
 #ifndef Immuno_functions_h
 #define Immuno_functions_h
-
-
 #endif /* Immuno_functions_h */
 
 #include <stdlib.h>
@@ -20,9 +18,6 @@
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_rng.h>
-
-
-
 
 //Library for random number generators
 #include "./random.cpp"
@@ -43,35 +38,40 @@ public:
     bcell(int const & L, int const & L_alphabet, vector< int > & seq);
     bcell(int const & L, int const & L_alphabet, vector< vector<double> > const & MJ, vector< int > & seq, vector< int > const & Antigen, string energy_model, gsl_rng *r);
     double e; //energy with respect to the current epitope.
-    double cs;
-    bool plasma;
-    bool GC;
-    bool active;
+    double cs; //clone size
+    bool plasma; // plasma cell?
+    //bool GC; // germinal center cell?
+    //bool engaged; //engaged with an antigen?
+    bool active; // activated clone?
+    double activation_time; // time of activation
 
     // Functions
     double Energy(int const & L, int const & L_alphabet, vector< vector<double> > const & MJ, vector< int > const & sequence, vector< int > const & Antigen, string energy_model, gsl_rng *r);
 
 };
 bcell::bcell(){
-
 }
-bcell::bcell(int const & L, int const & L_alphabet, vector< int > & seq){
+bcell::bcell(int const & L, int const & L_alphabet, vector< int > & seq)
+{
     this->seq = seq;
     this->cs = 1.0;
-    this->plasma = 0;
-    this->GC = 0;
+    this->plasma = 1;
+    //this->GC = 0;
+    //this->engaged = 0;
     this->active = 0;
+    this->activation_time = -1;
 }
-bcell::bcell(int const & L, int const & L_alphabet, vector< vector<double> > const & MJ, vector< int > & seq, vector< int > const & Antigen, string energy_model, gsl_rng *r){
+bcell::bcell(int const & L, int const & L_alphabet, vector< vector<double> > const & MJ, vector< int > & seq, vector< int > const & Antigen, string energy_model, gsl_rng *r)
+{
     this->seq = seq;
     this->cs = 1.0;
-    this->plasma = 0;
-    this->GC = 0;
+    this->plasma = 1;
+    //this->GC = 0;
+    //this->engaged = 0;
     this->active = 0;
+    this->activation_time = -1;
     this->e = this->Energy(L, L_alphabet, MJ, seq, Antigen, energy_model, r);
-    
 }
-
 double bcell::Energy(int const & L, int const & L_alphabet, vector< vector<double> > const & MJ, vector< int > const & sequence, vector< int > const & Antigen, string energy_model, gsl_rng *r)
 {
 
@@ -87,10 +87,8 @@ double bcell::Energy(int const & L, int const & L_alphabet, vector< vector<doubl
         }
     }
     return E;
-
 };
 // ---------------- FUNCTION ---------------
-
 //Function to calculate the energy: Implement the Energy Matrix
 double Energy(int const & L, int const & L_alphabet, vector< vector<double> > const & MJ, vector< int > const & sequence, vector< int > const & Antigen, string energy_model, gsl_rng *r)
 {
@@ -107,9 +105,7 @@ double Energy(int const & L, int const & L_alphabet, vector< vector<double> > co
         }
     }
     return E;
-
 };
-
 //Function to calculate the energy difference due to a mutation
 inline double delt( int const & L, int const & L_alphabet, vector< vector<double> > const & MJ, vector< int > const & sequence, vector< int > const & Antigen, int const & pos, int const & aa)
 {
@@ -117,7 +113,6 @@ inline double delt( int const & L, int const & L_alphabet, vector< vector<double
     deltaE = MJ[Antigen[pos]][aa] - MJ[Antigen[pos]][sequence[pos]];
     return deltaE;
 };
-
 //Function to change from aminoacids to positions
 void aa_to_positions( int const & L, int const & L_alphabet, vector< string > & Alphabet,  vector< int > & sequence_pos,  string  sequence_aa)
 {
@@ -130,7 +125,6 @@ void aa_to_positions( int const & L, int const & L_alphabet, vector< string > & 
         }
     }
 };
-
 //Function to calculate complementary sequence
 void find_complementary(int const & L, int const & L_alphabet, vector< vector<double> > const & MJ, vector< int > const & sequence, vector<int> & complementary_sequence)
 {
@@ -142,39 +136,82 @@ void find_complementary(int const & L, int const & L_alphabet, vector< vector<do
         complementary_sequence[i] = index;
     }
 };
-
-// Function to return energies < E_max
-
-void high_energy_filter(){
+//Function that mutates any sequences in one random position
+void mutate_sequence(int L, int L_alphabet, vector< int > & sequence)
+{
+    int pos = randIX(0,L-1);
+    int aa = randIX(0,L_alphabet-1);
+    if(sequence[pos] != aa){
+        sequence[pos]=aa;
+    }
 }
+//Function to calculate the mean energy of the associated PWM
+double mean_energy(int L, int L_alphabet, vector< vector<double> > const & MJ, vector< int > const & Antigen)
+{
 
+    double mean_E = 0.0;
+
+    for(int i=0; i<L ; i++){
+        for (int j = 0; j < L_alphabet; ++j)
+        {
+            mean_E = mean_E + MJ[Antigen[i]][j];
+        }
+    }
+    mean_E=mean_E/(L_alphabet);
+
+    return mean_E;
+}
+//Function to calculate the minimum energy of the associated PWM
+double MS_energy(int L, int L_alphabet, vector< vector<double> > const & MJ, vector< int > const & Antigen)
+{
+
+    double min_E = 0.0;
+
+    for(int i=0; i<L ; i++){
+
+        vector < double > v;
+        v.resize(L);
+        v = MJ[Antigen[i]];
+        int index = std::min_element(v.begin(), v.end()) - v.begin();
+
+        min_E = min_E + MJ[Antigen[i]][index];
+    }
+
+    return min_E;
+}
+// Function to return energies < E_max
+void high_energy_filter(){
+
+}
 // Function to generate the initial amount of sequences
-void generate_Bcells(int N, int L, int L_alphabet, vector<bcell> & Bcells){
+void generate_Bcells(int N, int L, int L_alphabet, vector<bcell> & Bcells)
+{
     
     //---------Array with the current Sequence-------------------------------------------
-    vector < int > Sequence;
-    Sequence.resize(L);
+    vector < int > sequence;
+    sequence.resize(L);
     
     for(int n =0 ; n<N ; n++){
         
         //Initiating Sequence with random sequence------------------------------------
         for (int k= 0; k<L; k++)
         {
-            Sequence[k] = randIX(0,L_alphabet-1);
+            sequence[k] = randIX(0,L_alphabet-1);
         };
         
         // Create a bcell and add it to the vector
-        bcell bcell_i(L, L_alphabet, Sequence);
+        bcell bcell_i(L, L_alphabet, sequence);
         Bcells[n]  = bcell_i;
     }
 }
 // Function to generate the initial amount of sequences with energy
-void generate_Bcells_with_e(int N, int L, int L_alphabet, vector<bcell> & Bcells, vector< vector<double> > const & MJ, vector< int > const & Antigen, string energy_model, gsl_rng *r){
+void generate_Bcells_with_e(int N, int L, int L_alphabet, vector<bcell> & Bcells, vector< vector<double> > const & MJ, vector< int > const & Antigen, string energy_model, gsl_rng *r)
+{
     
     //---------Array with the current Sequence-------------------------------------------
     vector < int > Sequence;
     Sequence.resize(L);
-    
+    double e_MS = MS_energy(L, L_alphabet, MJ, Antigen);
     for(int n =0 ; n<N ; n++){
         
         //Initiating Sequence with random sequence------------------------------------
@@ -185,12 +222,13 @@ void generate_Bcells_with_e(int N, int L, int L_alphabet, vector<bcell> & Bcells
         
         // Create a bcell and add it to the vector
         bcell bcell_i(L, L_alphabet, MJ, Sequence, Antigen, energy_model, r);
+        bcell_i.e = bcell_i.e - e_MS - 27.63;
         Bcells[n]  = bcell_i;
     }
 }
-
 // Function that selects the antigen-specific naive Bcells from all the sequences
-void choose_naive_Bcells(int N, int L, int L_alphabet, vector< vector<double> > const & MJ, vector< int > const & Antigen, vector<bcell> & Bcells, vector<bcell*> & Naive, int & n_naive, string energy_model, gsl_rng *r){
+void choose_naive_Bcells(int N, int L, int L_alphabet, vector< vector<double> > const & MJ, vector< int > const & Antigen, vector<bcell> & Bcells, vector<bcell*> & Naive, int & n_naive, string energy_model, gsl_rng *r)
+{
     
     vector <int> MS;
     MS.resize(L);
@@ -207,9 +245,9 @@ void choose_naive_Bcells(int N, int L, int L_alphabet, vector< vector<double> > 
         }
     }
 }
-
 // Function that selects the antigen-specific naive Bcells from all the sequences when energies are already calculated
-void choose_naive_Bcells2(int N, int L, int L_alphabet, vector< vector<double> > const & MJ, vector< int > const & Antigen, vector<bcell> & Bcells, vector<bcell*> & Naive, int & n_naive, string energy_model, gsl_rng *r){
+void choose_naive_Bcells2(int N, int L, int L_alphabet, vector< vector<double> > const & MJ, vector< int > const & Antigen, vector<bcell> & Bcells, vector<bcell*> & Naive, int & n_naive, string energy_model, gsl_rng *r)
+{
     
     vector <int> MS;
     MS.resize(L);
@@ -226,43 +264,22 @@ void choose_naive_Bcells2(int N, int L, int L_alphabet, vector< vector<double> >
     }
     for(int n = 0 ; n<N ; n++){
         e = Bcells[n].e;
-        if(e<min_e+6){
+        if(e<(min_e+20)){
             Naive.push_back( &Bcells[n]);
             n_naive++;
         }
     }
-    
 }
-
-//Function that mutates any sequences in one random position
-void mutate_sequence(int L, int L_alphabet, vector< int > & sequence){
-    int pos = randIX(0,L-1);
-    int aa = randIX(0,L_alphabet-1);
-    if(sequence[pos] != aa){
-        sequence[pos]=aa;
-    }
+// Recognition probability 
+double p_R_dT(double dT, double k_on, double rho_A, double gamma, int q, double e)
+{
+    double r_0 = (rho_A * k_on) * (pow(gamma, q)/(pow(gamma, q) + pow(k_on*exp(e), q)) ); //This rate has units of s^-1
+    double p_R_dT = 1-exp(-r_0*dT*60*60*24); // dT has units of days from the main simulation. Here we correct the units.
+    return p_R_dT;
 }
-
-//Function to calculate the mean energy of the associated PWM
-
-double mean_energy(int L, int L_alphabet, vector< vector<double> > const & MJ, vector< int > const & Antigen){
-
-    double mean_E = 0.0;
-
-    for(int i=0; i<L ; i++){
-        for (int j = 0; j < L_alphabet; ++j)
-        {
-            mean_E = mean_E + MJ[Antigen[i]][j];
-        }
-    }
-    mean_E=mean_E/(L_alphabet);
-
-    return mean_E;
-
-}
-
 // Function to run the set of differential equations
-void ODE(int linear, double const alpha, double const beta, double const gamma, long long NT, double dT, int n_naive, vector<bcell*> & Naive, vector<vector < long double > > & Time_series_Bcells, vector < long double > & Time_series_Antigen, vector < double > & N_active_linages){
+void ODE(int linear, double const alpha, double const beta, double const gamma, long long NT, double dT, int n_naive, vector<bcell*> & Naive, vector<vector < long double > > & Time_series_Bcells, vector < long double > & Time_series_Antigen, vector < double > & N_active_linages)
+{
     double p_GC = 0.1;
     double f = 0;
     double N_active_bcells = 0;
@@ -286,10 +303,7 @@ void ODE(int linear, double const alpha, double const beta, double const gamma, 
                         double r_GC = randX(0,1);
                         // Decide if the activated linage will have plasma or GC fate.
                         if(r_GC<p_GC){
-                            Naive[n]->GC = 1;
-                        }
-                        else{
-                            Naive[n]->plasma = 1;
+                            Naive[n]->plasma = 0;
                         }
                     }
                 }else{
@@ -317,10 +331,7 @@ void ODE(int linear, double const alpha, double const beta, double const gamma, 
                         double r_GC = randX(0,1);
                         // Decide if the activated linage will have plasma or GC fate.
                         if(r_GC<p_GC){
-                            Naive[n]->GC = 1;
-                        }
-                        else{
-                            Naive[n]->plasma = 1;
+                            Naive[n]->plasma = 0;
                         }
                     }
                 }else{
@@ -330,11 +341,10 @@ void ODE(int linear, double const alpha, double const beta, double const gamma, 
             N_active_linages[t] = N_active_linages[t] + n_active_linages;
         }
     }
-    
 }
-
 // Function to run an ensemble of trajectories
-void ODE_ensemble(int linear, double const alpha, double const beta, double const gamma, long long NT, double dT, int n_naive, vector<bcell*> & Naive, vector < long double > & Time_series_Antigen, vector < double > & N_active_linages, vector <int> & N_final_active_linages){
+void ODE_ensemble(int linear, double const alpha, double const beta, double const gamma, long long NT, double dT, int n_naive, vector<bcell*> & Naive, vector < long double > & Time_series_Antigen, vector < double > & N_active_linages, vector <int> & N_final_active_linages)
+{
     double f = 0;
     double N_active_bcells = 0;
     int n_active_linages_t = 0;
@@ -397,45 +407,43 @@ void ODE_ensemble(int linear, double const alpha, double const beta, double cons
         }
         N_final_active_linages.push_back(n_active_linages);
     }
-    
 }
-
-
 // Function to run an ensemble of trajectories of EF response
-void EF_dynamics(int linear, double const alpha, double const beta, double const gamma, long long NT, double dT, int n_naive, vector<bcell*> & Naive, vector<vector < long double > > & Time_series_Bcells, vector < long double > & Time_series_Antigen, vector < double > & N_active_linages){
+void EF_dynamics(int linear, double const alpha, double const beta, double const gamma, double const q, long long NT, double dT, int n_naive, vector<bcell*> & Naive, long double Antigen, vector < double > & N_active_linages)
+{
     double p_GC = 0.1;
     double r;
-    double N_active_bcells = 0;
+    //double N_active_bcells = 0; // To use if we want to kill antigen from B cells
     int n_active_linages = 0;
     double k_on = 1e6;
     if (linear==0) {
         for(int t = 1; t< NT ; t++){ // for loop of time
             //Update the antigen
-            Time_series_Antigen[t] = Time_series_Antigen[t-1] + (alpha*Time_series_Antigen[t-1] - 0*Time_series_Antigen[t-1]*N_active_bcells)*dT;
-            if(Time_series_Antigen[t]<1){
-                Time_series_Antigen[t] = 0;
+            //Time_series_Antigen[t] = Time_series_Antigen[t-1] + (alpha*Time_series_Antigen[t-1] - 0*Time_series_Antigen[t-1]*N_active_bcells)*dT;
+            Antigen = exp(alpha*t*dT);
+            if(Antigen<1){
+                Antigen = 0;
             }
-            N_active_bcells = 0;
+            //N_active_bcells = 0;
             //Update Bcells
             for(int n = 0 ; n<n_naive ; n++){
-                Time_series_Bcells[n][t] = Time_series_Bcells[n][t-1] + (beta*Time_series_Bcells[n][t-1])*dT*(Naive[n]->active);
+                //Time_series_Bcells[n][t] = Time_series_Bcells[n][t-1] + (beta*Time_series_Bcells[n][t-1])*dT*(Naive[n]->active);
                 if(Naive[n]->active ==0){
                     r = ((double) rand() / (RAND_MAX));
-                    //cout << f << " "; //Modulate this parameter promerly with \epsilon_MS
-                    if(r < ( (k_on*Time_series_Antigen[t]*gamma*(60*60*24))/(N_A*alpha * (gamma + exp(Naive[n]->e)) ) ) ){
+                    //Modulate this parameter promerly with \epsilon_MS
+                    if(r < ( p_R_dT(dT, k_on, Antigen/N_A, gamma, q, Naive[n]->e) )){
                         Naive[n]->active = 1;
+                        Naive[n]->activation_time = t*dT;
                         n_active_linages++;
                         double r_GC = randX(0,1);
                         // Decide if the activated linage will have plasma or GC fate.
                         if(r_GC<p_GC){
-                            Naive[n]->GC = 1;
-                        }
-                        else{
-                            Naive[n]->plasma = 1;
+                            Naive[n]->plasma = 0;
                         }
                     }
                 }else{
-                    N_active_bcells = N_active_bcells + Time_series_Bcells[n][t];
+                    Naive[n]->cs = exp(beta*(t*dT - Naive[n]->cs));
+                    //N_active_bcells = N_active_bcells + Time_series_Bcells[n][t];
                 }
             }
             N_active_linages[t] = N_active_linages[t] + n_active_linages;
@@ -443,41 +451,40 @@ void EF_dynamics(int linear, double const alpha, double const beta, double const
     } else {
         for(int t = 1; t< NT ; t++){ // for loop of time
             //Update the antigen
-            Time_series_Antigen[t] = Time_series_Antigen[t-1] + (alpha*10 - 0*Time_series_Antigen[t-1]*N_active_bcells)*dT;
-            if(Time_series_Antigen[t]<1){
-                Time_series_Antigen[t] = 0;
+            //Time_series_Antigen[t] = Time_series_Antigen[t-1] + (alpha*1E13  - 0*Time_series_Antigen[t-1]*N_active_bcells)*dT;
+            Antigen = 1+alpha*1e13*t*dT;
+            if(Antigen<1){
+                Antigen = 0;
             }
-            N_active_bcells = 0;
+            //N_active_bcells = 0;
             //Update Bcells
             for(int n = 0 ; n<n_naive ; n++){
-                Time_series_Bcells[n][t] = Time_series_Bcells[n][t-1] + (beta*Time_series_Bcells[n][t-1])*dT*(Naive[n]->active);
+                //Time_series_Bcells[n][t] = Time_series_Bcells[n][t-1] + (beta*Time_series_Bcells[n][t-1])*dT*(Naive[n]->active);
                 if(Naive[n]->active ==0){
                     r = ((double) rand() / (RAND_MAX));
-                    //cout << f << " "; //Modulate this parameter promerly with \epsilon_MS
-                    if(r < ( (k_on*Time_series_Antigen[t]*gamma*(60*60*24))/(N_A*alpha * (gamma + exp(Naive[n]->e)) ) ) ){
+                    //Modulate this parameter promerly with \epsilon_MS
+                    if(r < ( p_R_dT(dT, k_on, Antigen/N_A, gamma, q, Naive[n]->e) )){
                         Naive[n]->active = 1;
+                        Naive[n]->activation_time = t*dT;
                         n_active_linages++;
                         double r_GC = randX(0,1);
                         // Decide if the activated linage will have plasma or GC fate.
                         if(r_GC<p_GC){
-                            Naive[n]->GC = 1;
-                        }
-                        else{
-                            Naive[n]->plasma = 1;
+                            Naive[n]->plasma = 0;
                         }
                     }
                 }else{
-                    N_active_bcells = N_active_bcells + Time_series_Bcells[n][t];
+                    Naive[n]->cs = exp(beta*(t*dT - Naive[n]->cs));
+                    //N_active_bcells = N_active_bcells + Time_series_Bcells[n][t];
                 }
             }
             N_active_linages[t] = N_active_linages[t] + n_active_linages;
         }
-    }
-    
+    }   
 }
-
 // Function to run an ensemble of trajectories of EF response
-void EF_dynamics_ensemble(int linear, double const alpha, double const beta, double const gamma, long long NT, double dT, int n_naive, vector<bcell*> & Naive, vector < long double > & Time_series_Antigen, vector < double > & N_active_linages, vector <int> & N_final_active_linages){
+void EF_dynamics_ensemble(int linear, double const alpha, double const beta, double const gamma, double const q, long long NT, double dT, int n_naive, vector<bcell*> & Naive, vector < long double > & Time_series_Antigen, vector < double > & N_active_linages, vector <int> & N_final_active_linages)
+{
     double r;
     double N_active_bcells = 0;
     int n_active_linages_t = 0;
@@ -486,7 +493,7 @@ void EF_dynamics_ensemble(int linear, double const alpha, double const beta, dou
     if (linear==0){
         for(int t = 1; t< NT ; t++){ // for loop of time
             //Update the antigen
-            Time_series_Antigen[t] = Time_series_Antigen[t-1] + (alpha*Time_series_Antigen[t-1] - gamma*Time_series_Antigen[t-1]*N_active_bcells)*dT;
+            Time_series_Antigen[t] = Time_series_Antigen[t-1] + (alpha*Time_series_Antigen[t-1] - 0*Time_series_Antigen[t-1]*N_active_bcells)*dT;
             if(Time_series_Antigen[t]<1){
                 Time_series_Antigen[t] = 0;
             }
@@ -500,7 +507,7 @@ void EF_dynamics_ensemble(int linear, double const alpha, double const beta, dou
                 if(Naive[n]->active == 0){
                     r = ((double) rand() / (RAND_MAX));
                     //cout << f << " "; //Modulate this parameter promerly with \epsilon_MS
-                    if(r<(1E-8*Time_series_Antigen[t])){
+                    if(r < ( (k_on*Time_series_Antigen[t]*pow(gamma, q)*(60*60*24))/(N_A*alpha * (pow(gamma, q) + k_on*pow(exp(Naive[n]->e), q)) ) ) ){
                         Naive[n]->active = 1;
                         n_active_linages_t++;
                         n_active_linages++;
@@ -516,7 +523,7 @@ void EF_dynamics_ensemble(int linear, double const alpha, double const beta, dou
     } else {
         for(int t = 1; t< NT ; t++){ // for loop of time
             //Update the antigen
-            Time_series_Antigen[t] = Time_series_Antigen[t-1] + (alpha*10 - gamma*Time_series_Antigen[t-1]*N_active_bcells)*dT;
+            Time_series_Antigen[t] = Time_series_Antigen[t-1] + (alpha*1E8 - 0*Time_series_Antigen[t-1]*N_active_bcells)*dT;
             if(Time_series_Antigen[t]<1){
                 Time_series_Antigen[t] = 0;
             }
@@ -529,7 +536,7 @@ void EF_dynamics_ensemble(int linear, double const alpha, double const beta, dou
                 //Time_series_Bcells[n][t] = Time_series_Bcells[n][t-1] + (beta*Time_series_Bcells[n][t-1])*dT*(Naive[n]->active); // this uses the time_series arrays
                 if(Naive[n]->active == 0){
                     r = ((double) rand() / (RAND_MAX));
-                    if(r<(1E-8*Time_series_Antigen[t])){
+                    if(r < ( (k_on*Time_series_Antigen[t]*pow(gamma, q)*(60*60*24))/(N_A*alpha * (pow(gamma, q) + k_on*pow(exp(Naive[n]->e), q)) ) ) ){
                         Naive[n]->active = 1;
                         n_active_linages_t++;
                         n_active_linages++;
@@ -541,8 +548,29 @@ void EF_dynamics_ensemble(int linear, double const alpha, double const beta, dou
             N_active_linages[t] = N_active_linages[t] + n_active_linages_t;
         }
         N_final_active_linages.push_back(n_active_linages);
-    }
-    
+    } 
 }
+void EF_response(int linear, double const alpha, double const beta, double const gamma, double const q, long long NT, double dT, int n_naive, vector<bcell*> & Naive, long double Antigen, vector < double > & N_active_linages)
+{
 
+    vector < double > tower;
+    tower.resize(NT);
+
+    for(int n = 0 ; n<n_naive ; n++){
+
+        //Here I want to create a sampling of the exponential distribution for the recognition time of B cells
+
+    }
+
+    double p_GC = 0.1;
+    double r;
+    //double N_active_bcells = 0; // To use if we want to kill antigen from B cells
+    int n_active_linages = 0;
+    double k_on = 1e6;
+    if (linear==0) {
+        
+    } else {
+
+    }   
+}
 

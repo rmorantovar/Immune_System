@@ -11,6 +11,10 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <iostream>
+#include <fstream>
+#include <cstdlib>
+#include <filesystem>
 
 using namespace std;
 
@@ -20,6 +24,7 @@ static int ensemble_flag=0;
 
 //----------------------------------------------------------------------------------
 //using namespace std;
+namespace fs = std::filesystem;
 
 //----------------------------------------------------------------------------------
 int main(int argc, char* argv[]) //argv 
@@ -29,21 +34,23 @@ int main(int argc, char* argv[]) //argv
     gsl_rng_set(r, time(NULL));
     clock_t t1,t2;
     t1=clock();
+    int barWidth = 70;
 	//-----------------------------------------------------------------------------
     //Parameters:
     double alpha;
     double beta;
     double gamma;
+    int q;
     int L_seq; //length of the sequence
     int L;
     int L_alphabet (20); //length of the alphabet
-    long long int N_bbcs; // number of bcells
+    long long int N_bcs; // number of bcells
     int Tf; //number of days for the simulation
     int To;; //initial number of days for the simulation
     long long int NT;
     double dT = 0.5; //time step
     if(ensemble_flag==0){
-    	dT = 0.005;
+    	dT = 0.001;
     }
     long long int N_ens = 1;
     long long A0;
@@ -63,12 +70,13 @@ int main(int argc, char* argv[]) //argv
 	         We distinguish them by their indices. */
 	      {"alpha", required_argument, 0, 'a'},
 	      {"beta",  required_argument, 0, 'b'},
-	      {"gamma",required_argument, 0, 'c'},
+	      {"gamma",required_argument, 0, 'g'},
+	      {"proof_reading",required_argument, 0, 'q'},
 	      {"To",    required_argument, 0, 't'},
 	      {"Tf",    required_argument, 0, 'T'},
 	      {"energy_model",    required_argument, 0, 'E'},
 	      {"L",    required_argument, 0, 'L'},
-	      {"N_bbcs",    required_argument, 0, 'B'},
+	      {"N_bcs",    required_argument, 0, 'B'},
 	      {"Antigen_seq", required_argument, 0, 's'},
 	      {"N_ens", required_argument, 0, 'N'},
 	      {0, 0, 0, 0}
@@ -76,7 +84,7 @@ int main(int argc, char* argv[]) //argv
 	  /* getopt_long stores the option index here. */
 	  int option_index = 0;
 
-	  c = getopt_long (argc, argv, "a:b:c:t:T:E:L:B:s:N:",
+	  c = getopt_long (argc, argv, "a:b:g:q:t:T:E:L:B:s:N:",
 	                   long_options, &option_index);
 	  /* Detect the end of the options. */
 	  if (c == -1)
@@ -102,8 +110,12 @@ int main(int argc, char* argv[]) //argv
 	    	beta = atof(optarg);
 	    	break;
 
-	    case 'c':
+	    case 'g':
 	    	gamma = atof(optarg);
+	    	break;
+
+	    case 'q':
+	    	q = atof(optarg);
 	    	break;
 
 	    case 't':
@@ -123,7 +135,7 @@ int main(int argc, char* argv[]) //argv
 			break;
 
 	    case 'B':
-	    	N_bbcs = atoi(optarg);
+	    	N_bcs = atoi(optarg);
 			break;
 
 		case 's':
@@ -196,130 +208,154 @@ int main(int argc, char* argv[]) //argv
     vector < int > Antigen;
     Antigen.resize(L_seq);
     aa_to_positions(L_seq, L_alphabet, Alphabet, Antigen, Antigen_aa);
-
+    //variable with antigen size
+    long double Antigen_t;
     //---------Generating Bcells ---------------------------------------------------------
     //Array with Bcells
     vector < bcell > Bcells;
-    Bcells.resize(N_bbcs);
-
-    //Array with time series of the antigen
-    vector < long double > Time_series_Antigen;
-    Time_series_Antigen.resize(NT);
-    
+    Bcells.resize(N_bcs);
     //---------Activated linages ---------------------------------------------------------
-    //Array for time series of the number of active bcell linages per time
-    vector <double> N_active_linages;
-    N_active_linages.resize(NT);
+    //Array for time series of the average number of active bcell linages per time
+    vector <double> m_bar;
+    m_bar.resize(NT);
     //Array for total final number of active bcell linages
     vector <int> N_final_active_linages;
-    //N_final_active_linages.resize(N_ens);
+    N_final_active_linages.resize(N_ens);
 
     //------------------------------------------------------------------------------------
     //-------Files-----
     //Output files
     if(ensemble_flag){ // ENSEMBLE OF TRAJECTORIES
-    	ofstream fout (Text_files_path+"Ensemble/energies_ensemble_L-"+std::to_string(L_seq)+"_N-"+ std::to_string(N_bbcs)+"_Antigen-"+Antigen_aa+"_Linear-"+std::to_string(linear_flag)+"_"+energy_model+".txt"); // Energies
-    	ofstream fout_bcells (Text_files_path+"Ensemble/bcells_ensemble_L-"+std::to_string(L_seq)+"_N-"+ std::to_string(N_bbcs)+"_Antigen-"+Antigen_aa+"_alpha-"+std::to_string(alpha)+"_beta-"+std::to_string(beta)+"_gamma-"+std::to_string(gamma)+"_Linear-"+std::to_string(linear_flag)+"_"+energy_model+".txt"); // B cells final clone size
-    	ofstream fout_N_final_active (Text_files_path+"Ensemble/N_final_active_L-"+std::to_string(L_seq)+"_N-"+ std::to_string(N_bbcs)+"_Antigen-"+Antigen_aa+"_alpha-"+std::to_string(alpha)+"_beta-"+std::to_string(beta)+"_gamma-"+std::to_string(gamma)+"_Linear-"+std::to_string(linear_flag)+"_"+energy_model+".txt"); // B cells final clone siz
-    	//print in file the time series of the average of the number of activated bcell linages.
-    	ofstream fout_N_active_linages (Text_files_path+"Ensemble/N_active_linages_ensemble_L-"+std::to_string(L_seq)+"_N-"+ std::to_string(N_bbcs)+"_Antigen-"+Antigen_aa+"_alpha-"+std::to_string(alpha)+"_beta-"+std::to_string(beta)+"_gamma-"+std::to_string(gamma)+"_Linear-"+std::to_string(linear_flag)+"_"+energy_model+".txt");
+    	string parameters_path = "L-"+std::to_string(L_seq)+"_Nbc-"+ std::to_string(N_bcs)+"_Antigen-"+Antigen_aa+"_alpha-"+std::to_string(alpha)+"_beta-"+std::to_string(beta)+"_gamma-"+std::to_string(gamma)+"_Linear-"+std::to_string(linear_flag)+"_"+energy_model;
+    	fs::create_directories(Text_files_path+"Ensemble/"+parameters_path);
+    	ofstream fout_energies (Text_files_path+"Ensemble/"+parameters_path+"/energies_ensemble.txt"); // Energies
+    	ofstream fout_bcells (Text_files_path+"Ensemble/"+parameters_path+"/bcells_ensemble.txt"); // B cells final clone size
+    	ofstream fout_N_final_active (Text_files_path+"Ensemble/"+parameters_path+"/N_final_active.txt"); // B cells final clone siz
+    	ofstream fout_m_bar (Text_files_path+"Ensemble/"+parameters_path+"/m_bar.txt"); // time series of the average of the number of activated bcell linages.
     	// ------------ Run ensemble of trajectories ------------
 	    cout << "Running ensemble of trajectories ..." << endl;
 	    for(int i_ens = 0 ; i_ens<N_ens ; i_ens++){
-	        
+	    	//-------------------------------------------------------
+	    	// printing progress bar
+	    	float progress = i_ens/N_ens;
+	    	std::cout << "[";
+	    	int pos = barWidth * progress;
+	    	for (int i = 0; i < barWidth; ++i) {
+	        	if (i < pos) std::cout << "=";
+	        	else if (i == pos) std::cout << ">";
+	        	else std::cout << " ";
+	    	}
+	    	std::cout << "] " << int(progress * 100.0) << " %\r";
+	    	std::cout.flush();			
+	        //-------------------------------------------------------
 	        //Generate bcells
-	        generate_Bcells_with_e(N_bbcs, L_seq, L_alphabet, Bcells, MJ, Antigen, energy_model, r);
+	        generate_Bcells_with_e(N_bcs, L_seq, L_alphabet, Bcells, MJ, Antigen, energy_model, r);
 	        
 	        // Choose the antigen-specific bcells
 	        vector < bcell* > Naive;
 	        int n_naive = 0;
-	        choose_naive_Bcells2(N_bbcs, L_seq, L_alphabet, MJ, Antigen, Bcells, Naive, n_naive, energy_model, r);
+	        choose_naive_Bcells2(N_bcs, L_seq, L_alphabet, MJ, Antigen, Bcells, Naive, n_naive, energy_model, r);
 
 	        //initialize time series arrays
-	        if (linear_flag==0) {
-	            Time_series_Antigen[0] = A0;
-	        } else {
-	            Time_series_Antigen[0] = 1;
-	        };
+	        //if (linear_flag==0) {
+	        //    //Time_series_Antigen[0] = A0;
+	        //} else {
+	        //    //Time_series_Antigen[0] = 1;
+	        //};
 
 	        // Run EF dynamics
-	        EF_dynamics_ensemble(linear_flag, alpha, beta, gamma, NT, dT, n_naive, Naive, Time_series_Antigen, N_active_linages, N_final_active_linages);
+	        //EF_dynamics_ensemble(linear_flag, alpha, beta, gamma, q, NT, dT, n_naive, Naive, Time_series_Antigen, m_bar, N_final_active_linages);
 	        
 	        for (int n = 0 ; n<n_naive ; n++){
 	            //print in file the energies and the activation state of the antigen-specific bcells.
-	            fout << Naive[n]->e << "\t" << Naive[n]->active << endl;
+	            fout_energies << Naive[n]->e << "\t" << Naive[n]->active << endl;
 	            //Print the final clone-size of bcells
 	            if(Naive[n]->active==1){
 	                fout_bcells << Naive[n]->cs << endl;
 	            };
 	        };
 	    };
-
+	    std::cout << std::endl;
 	    for (int t= 0; t<NT; t++)
 	    {
-	        fout_N_active_linages << N_active_linages[t]/N_ens << "\t";
+	        fout_m_bar << m_bar[t]/N_ens << "\t";
 	    };
 	    
 	    for (int i=0; i<N_ens; i++){
 	        fout_N_final_active << N_final_active_linages[i] << "\t";
 	    }
 
-	    fout.close();
+	    fout_energies.close();
 	    fout_bcells.close();
-	    fout_N_active_linages.close();
+	    fout_m_bar.close();
 	    fout_N_final_active.close();
 
     }else{ // SINGLE TRAJECTORY
+    	string parameters_path = "L-"+std::to_string(L_seq)+"_Nbc-"+ std::to_string(N_bcs)+"_Antigen-"+Antigen_aa+"_alpha-"+std::to_string(alpha)+"_beta-"+std::to_string(beta)+"_gamma-"+std::to_string(gamma)+"_Linear-"+std::to_string(linear_flag)+"_"+energy_model;
+    	fs::create_directories(Text_files_path+"Trajectories/"+parameters_path);
     	cout<<">Running simulation of the EF dynamics ..."<< endl;
-    	ofstream fout (Text_files_path+"Trajectories/energies_L-"+std::to_string(L_seq)+"_N-"+ std::to_string(N_bbcs)+"_Antigen-"+Antigen_aa+"_Linear-"+std::to_string(linear_flag)+"_"+energy_model+".txt");
-    	ofstream fout_antigen (Text_files_path+"Trajectories/antigen_L-"+std::to_string(L_seq)+"_N-"+ std::to_string(N_bbcs)+"_Antigen-"+Antigen_aa+"_alpha-"+std::to_string(alpha)+"_beta-"+std::to_string(beta)+"_gamma-"+std::to_string(gamma)+"_Linear-"+std::to_string(linear_flag)+"_"+energy_model+".txt");
-    	ofstream fout_bcells (Text_files_path+"Trajectories/bcells_L-"+std::to_string(L_seq)+"_N-"+ std::to_string(N_bbcs)+"_Antigen-"+Antigen_aa+"_alpha-"+std::to_string(alpha)+"_beta-"+std::to_string(beta)+"_gamma-"+std::to_string(gamma)+"_Linear-"+std::to_string(linear_flag)+"_"+energy_model+".txt");
-    	ofstream fout_N_active_linages (Text_files_path+"Trajectories/N_active_linages_L-"+std::to_string(L_seq)+"_N-"+ std::to_string(N_bbcs)+"_Antigen-"+Antigen_aa+"_alpha-"+std::to_string(alpha)+"_beta-"+std::to_string(beta)+"_gamma-"+std::to_string(gamma)+"_Linear-"+std::to_string(linear_flag)+"_"+energy_model+".txt");
+    	ofstream fout (Text_files_path+"Trajectories/"+parameters_path+"/energies.txt"); // Energies, activation, fate, sequence and activation time
+    	//ofstream fout_antigen (Text_files_path+"Trajectories/"+parameters_path+"/antigen.txt"); // Antigen trajectory
+    	//ofstream fout_bcells (Text_files_path+"Trajectories/"+parameters_path+"/bcells.txt"); // B cell time series
+    	ofstream fout_m_bar (Text_files_path+"Trajectories/"+parameters_path+"/m_bar.txt");
 
     	//Generate bcells
-        generate_Bcells_with_e(N_bbcs, L_seq, L_alphabet, Bcells, MJ, Antigen, energy_model, r);
+        generate_Bcells_with_e(N_bcs, L_seq, L_alphabet, Bcells, MJ, Antigen, energy_model, r);
         
         // Choose the antigen-specific bcells
         vector < bcell* > Naive;
         int n_naive = 0;
-        choose_naive_Bcells2(N_bbcs, L_seq, L_alphabet, MJ, Antigen, Bcells, Naive, n_naive, energy_model, r);
+        choose_naive_Bcells2(N_bcs, L_seq, L_alphabet, MJ, Antigen, Bcells, Naive, n_naive, energy_model, r);
         //Matrix with the time series of the antigen-specific Bcells
-	    vector<vector < long double > > Time_series_Bcells;
-	    Time_series_Bcells.resize(n_naive);
-	    for(int n= 0; n<n_naive; n++)
-	    {
-	        Time_series_Bcells[n].resize(NT);
-	        Time_series_Bcells[n][0] = Naive[n]->cs;
-	    }
+	    //vector<vector < long double > > Time_series_Bcells;
+	    //Time_series_Bcells.resize(n_naive);
+	    //for(int n= 0; n<n_naive; n++)
+	    //{
+	    //    Time_series_Bcells[n].resize(NT);
+	    //    Time_series_Bcells[n][0] = Naive[n]->cs;
+	    //}
+
         //initialize time series arrays
-        if (linear_flag==0) {
-            Time_series_Antigen[0] = A0;
-        } else {
-            Time_series_Antigen[0] = 1;
-        };
+        //if (linear_flag==0) {
+        //    //Time_series_Antigen[0] = A0;
+        //} else {
+            //Time_series_Antigen[0] = 1;
+        //};
     	
-    	cout << "e_bar:" << mean_energy(L, L_alphabet, MJ, Antigen) << endl;
+    	cout << "e_bar: " << mean_energy(L_seq, L_alphabet, MJ, Antigen) << endl;
+    	cout << "e_min: " << MS_energy(L_seq, L_alphabet, MJ, Antigen) << endl;
+
 	    // Run EF dynamics
-	    EF_dynamics(linear_flag, alpha, beta, gamma, NT, dT, n_naive, Naive, Time_series_Bcells, Time_series_Antigen, N_active_linages);
+	    EF_dynamics(linear_flag, alpha, beta, gamma, q, NT, dT, n_naive, Naive, Antigen_t, m_bar);
 	    
 	    for (int n= 0; n<n_naive; n++)
 	    {
-	        fout << Naive[n]->e << "\t" << Naive[n]->active << "\t" << Naive[n]->GC << endl;
+	        fout << Naive[n]->e << "\t" << Naive[n]->active << "\t" << Naive[n]->plasma << "\t" << Naive[n]->activation_time << "\t";
+	        for (int i=0; i<L_seq; i++){
+	        	fout  << Alphabet[Naive[n]->seq[i]];
+	        }
+	        fout << endl;
 	    };
 	    
 	    //Print time series of antigen and bcells
-	    for(int t=0 ; t<NT; t++){
-	        fout_antigen << Time_series_Antigen[t] << endl;
-	        fout_N_active_linages << N_active_linages[t] << "\t";
-	        for (int n = 0 ; n<n_naive ; n++){
-	            fout_bcells << Time_series_Bcells[n][t] << "\t";
-	        }
-	        fout_bcells << endl;
-	    }
+	    //for (int n = 0 ; n<n_naive ; n++){
+	    //	for(int t=0 ; t<NT; t++){
+            	//fout_bcells << Time_series_Bcells[n][t] << " ";
+        //    }
+        //    fout_bcells << endl;
+        //}
+        for(int t=0 ; t<NT; t++){
+        	//fout_antigen << Time_series_Antigen[t] << " ";
+	        fout_m_bar << m_bar[t] << " ";
+        }
+        //fout_antigen << endl;
+        fout_m_bar << endl;
+	    
+	      
 	    fout.close();
-	    fout_antigen.close();
-	    fout_bcells.close();
-	    fout_N_active_linages.close();
+	    //fout_antigen.close();
+	    //fout_bcells.close();
+	    fout_m_bar.close();
     }
     
     //------------------------------------------------------------------------------------
