@@ -14,7 +14,7 @@ using namespace std;
 //----------------------------------------------------------------------------------
 int main(int argc, char* argv[]) //argv has 1:L
 {
-    string Text_files_path = "../../../../../Dropbox/Research/Evolution_Immune_System/Text_files/MCMC/";
+    string Text_files_path = "/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/MCMC/";
     cout<<">Running Monte Carlo simulation of the BCRs ..."<< endl;
     clock_t t1,t2;
     t1=clock();

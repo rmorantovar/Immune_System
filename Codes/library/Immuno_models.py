@@ -853,6 +853,33 @@ def Z_PWM_integral(T, lamda, k):
 def Z_PWM_integral2(T, lamda):
     return 2*np.exp(-lamda*min_E)*(np.exp(avg_E*(lamda-(1/T)))-np.exp(min_E*(lamda-(1/T))))/(lamda-(1/T))
 
+def calculate_Q0(Tmin, Tmax, E_matrix, E_ms, L):
+	Ts = np.linspace(Tmin, Tmax, 100000)
+	lambdas = 1/Ts[:-1]
+	F_PWM = -Ts*np.log(Z_PWM(E_matrix, Ts))
+	Es = F_PWM[:-1]-Ts[:-1]*(np.diff(F_PWM)/np.diff(Ts)) + E_ms
+	dE = np.diff(Es)
+
+	Omega = 20**L
+	S = np.cumsum(lambdas[:-1]*dE)
+
+	P0 = 1/Omega
+	Q0 = np.exp(S)/np.sum(np.exp(S)*dE)
+
+	return Es, dE, Q0, lambdas
+
+def calculate_QR(Q0, k_on, k_act, rho_A, Es, q, lambda_A, N_c, dE):
+
+	p_a = (1/(1 + (k_on*np.exp(Es[:-1])/k_act)**q) )
+	u_on = rho_A*k_on
+	R = 1-np.exp(-u_on*p_a*N_c/lambda_A)
+	QR = Q0*R
+	QR = QR
+
+	return u_on, p_a, R, QR
+
+
+
 def my_plot_layout(ax, yscale = 'linear', xscale = 'linear', ticks_labelsize = 24, xlabel = '', ylabel = '', title = '', x_fontsize=24, y_fontsize = 24, t_fontsize = 24):
     ax.tick_params(labelsize = ticks_labelsize)
     ax.set_yscale(yscale)

@@ -32,24 +32,31 @@ if(Matrix == 'MJ2'):
     Alphabet = np.loadtxt(Text_files_path + 'Alphabet.txt', dtype=bytes, delimiter='\t').astype(str)
     Alphabet_list = Alphabet.tolist()
 
-N_r = 1e4
+N_r = 5e4
 T0 = 0
-Tf = 35
-dT = 0.001
-alpha = 1
-alpha_lin = alpha*1e8
-gamma = 0.0333
-gamma = 0.000277
-beta = 0.5
-k_on = 1e6 #(M*s)^-1
-N_c = 1e0
-e_MS = -27
+Tf = 6
+dT = 0.05
+lambda_A = 6
+k_pr = 0.1 # hour^-1
+k_pr = k_pr*24 #days^-1
 
+#k_pr = 0.000277
+qs = [2]
+lambda_B = 3
+k_on = 1e6*24*3600; #(M*days)^-1
+N_c = 1e3
+E_ms = -27
+
+print('k_on/k_pr = %.1e'%(k_on/k_pr))
 
 antigen = 'CMFILVWYAGTSQNEDHRKPFMRTP'
 antigen = 'FMLFMAVFVMTSWYC'
 antigen = 'FTSENAYCGR'
 antigen = 'TACNSEYPNTTK'
+#antigen = 'TANSEYPNTK'
+#antigen = 'MRTAYRNG'
+#antigen = 'MRTAY'
+
 
 L=len(antigen)
 
@@ -58,7 +65,7 @@ energy_models = ['MJ']
 models_name = ['exponential', 'linear', ]
 colors = ['tab:blue', 'tab:red']
 colors_fit = ['darkblue', 'darkred']
-growth_models = [0, 1]
+growth_models = [0]#, 1]
 
 #fig2, ax2 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18})
 #fig3, ax3 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18})
@@ -67,12 +74,7 @@ colors_fate = [['darkblue', 'royalblue'], ['darkred', 'indianred']]
 
 gauge_e = 0
 
-lambd = 0.5976041516921407
-lambd = 0.8
-lambd = 1.2
-
-Tmin = .01
-Tmax = 50
+#----------------------------------------------------------------
 
 antigen_list = [i for i in antigen]
 antigen_seq = np.array([], dtype = int)
@@ -85,144 +87,113 @@ PWM_data = M2[:,antigen_seq]
 for i in np.arange(L):
     PWM_data[:,i]-=np.min(PWM_data[:,i], axis=0)
 
-Ts = np.linspace(Tmin, Tmax, 20000)
-lambdas = 1/Ts[:-1]
-F_PWM = -Ts*np.log(Z_PWM(PWM_data, Ts))
-Us = F_PWM[:-1]-Ts[:-1]*(np.diff(F_PWM)/np.diff(Ts)) + e_MS
-print(Us[0])
-dU = np.diff(Us)
+Es, dE, Q0, lambdas = calculate_Q0(0.01, 50, PWM_data, E_ms, L)
+#----------------------------------------------------------------
 
 for energy_model in energy_models:
     
-    fig, ax = plt.subplots(2,4,figsize=(40,18), gridspec_kw={'hspace':0.25})
-
-    for j, linear in enumerate(growth_models):
+    for l, linear in enumerate(growth_models):
 
         fig2, ax2 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18})
         fig3, ax3 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18})
-
-        colors_activation = []
-
-        parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_alpha-%.6f_beta-%.6f_gamma-%.6f_linear-%d_'%(alpha, beta, gamma, linear)+energy_model
-        #data_bcells = np.loadtxt(Text_files_path + 'Dynamics/Trajectories/'+parameters_path+'/bcells.txt')
-        data = pd.read_csv(Text_files_path + 'Dynamics/Trajectories/'+parameters_path+'/energies.txt', sep = '\t', header=None)
-
-        N_data = len(data[0])/10
-
-        min_e_data = np.min(data[0])
-        max_e_data = np.max(data[0])
-
-        print(min_e_data, max_e_data)
-
-        energies_array = np.linspace(min_e_data-1, max_e_data, 50)
-
-        data_active = data.loc[data[1]==1]
-
-        data_plasma = data_active.loc[data_active[2]==1]
-        data_GC = data_active.loc[data_active[2]==0]
+        fig4, ax4 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18})
 
 
-        #print(np.min(data))
+        for n_q, q in enumerate(qs):
 
-        #---- DISTRIBUTION ENERGIES ----
-        hist = ax[j,0].hist(data[0], bins = np.linspace(min_e_data-1, max_e_data+1, 10), color = colors[j], alpha = .8, histtype = 'bar')
-        my_plot_layout(ax = ax[j,0], yscale = 'log', xlabel = 'Energies', ylabel = 'counts')
-        ax[j,0].set_ylim(bottom = .8)
-        if(linear == 0):
-            fig_seq, ax_seq = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18})
-            expfit = np.exp(lambd*(energies_array-(min_e_data-1)))
-            ax_seq.plot(energies_array, expfit, color = 'indigo', linestyle = '--', linewidth = 4, alpha = .5)
-            #hist = np.histogram(data[:,0], bins = np.linspace(min_e_data-1, max_e_data, 10))
-            ax_seq.plot(hist[1][:-1][:], hist[0][:], color = 'indigo', alpha = 1, linestyle = '', marker = '^', ms = 10)
-            #ax_seq.text(x=min_e_data+1, y=1e2, s = r'$\sim e^{\lambda \epsilon}$', fontsize=48, color = 'indigo')
-            my_plot_layout(ax = ax_seq, yscale = 'log', xlabel = r'$\epsilon$', ylabel = r'$\Lambda(\epsilon)$')
-            ax_seq.set_ylim(bottom = .8)
-            fig_seq.savefig('../../Figures/1_Dynamics/Trajectories/Sequences_expansion_'+energy_model+'.pdf')
+            parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_alpha-%.6f_beta-%.6f_gamma-%.6f_q-%d_linear-%d_'%(lambda_A, 0.5, k_pr/24, q, linear)+energy_model
+            #data_bcells = np.loadtxt(Text_files_path + 'Dynamics/Trajectories/'+parameters_path+'/bcells.txt')
+            data = pd.read_csv(Text_files_path + 'Dynamics/Trajectories/'+parameters_path+'/energies.txt', sep = '\t', header=None)
 
-        #---- DISTRIBUTION ACTIVATED ENERGIES ----
-        Omega = 20**L
-        S = np.cumsum(lambdas[:-1]*dU)
-        P0 = 1/Omega
-        Q0 = np.exp(S)*P0
-        p_a = (gamma/(gamma + (k_on*np.exp(Us[:-1]))**2 ) )
-        p_e = ((np.exp(alpha*Tf)/N_A)*k_on)/(alpha/(24*60*60)) #probability of engagement up to time t
-        Q_R = N_r*Q0*(1-np.exp(-p_e*p_a*N_c))
-        
+            min_e_data = np.min(data[0])
+            max_e_data = np.max(data[0])
 
-        ax[j,1].hist(data_active[0], bins = np.linspace(min_e_data-1, max_e_data+1, 10), color = colors[j], alpha = .8, histtype = 'bar')
-        ax[j,1].plot(Us[:-1], Q_R, linestyle = '-', linewidth = 2, color = colors[j])
-        my_plot_layout(ax = ax[j,1], yscale = 'log', xlabel = 'Energies', ylabel = 'counts')
-        ax[j,1].set_ylim(bottom = ax[j,0].get_ylim()[0], top=ax[j,0].get_ylim()[1])
+            #print(min_e_data, max_e_data)
 
-        #---- DISTRIBUTION GC VS PLASMA ----
-        #ax[j,2].hist([data_active[np.where(data_active[:,2]==1)[0],0], data_active[np.where(data_active[:,2]==0)[0],0]], bins = np.linspace(min_e, max_e, 20), color = colors_fate[j], alpha = .6, histtype = 'barstacked', label = ['GC', 'Plasma'])
-        ax[j,2].hist(data_GC[0], bins = np.linspace(min_e_data-1, max_e_data+1, 15), color = colors_fate[j][0], alpha = .6, histtype = 'barstacked', label = ['GC'])
-        my_plot_layout(ax = ax[j,2], yscale = 'linear', xlabel = 'Energies', ylabel = 'counts')
-        #ax[j,2].set_ylim(bottom = ax[j,0].get_ylim()[0], top=ax[j,0].get_ylim()[1])
-        ax[j,2].set_ylim(bottom = ax[j,2].get_ylim()[0])
-        ax[j,2].legend(fontsize = 24)
-        ax2.hist([data_GC[0], data_plasma[0]], bins = np.linspace(min_e_data-1, max_e_data+1, 15), color = colors_fate[j], alpha = .6, histtype = 'barstacked', label = ['GC', 'Plasma'])
-        ax2.plot(Us[:-1], Q_R, linestyle = '-', linewidth = 2, color = colors[j])
-        my_plot_layout(ax = ax2, yscale = 'linear', xlabel = 'Energies', ylabel = 'counts')
-        ax2.set_ylim(bottom = ax2.get_ylim()[0], top=ax2.get_ylim()[1])
-        ax2.legend(fontsize = 24)
+            energies_array = np.linspace(min_e_data-1, max_e_data, 50)
 
-        #---- SERA ----
-        clone_sizes = np.exp(beta*(Tf-np.array(data_plasma[3])))
-        Kds = np.exp(data_plasma[0]+gauge_e)
-        data_Kds = ax[j,3].hist(Kds, bins = np.logspace(np.log10(np.exp(min_e_data-1+gauge_e)), np.log10(np.exp(max_e_data+1+gauge_e)), 8), density = False, color = colors_fate[j][1], alpha = .5, histtype = 'bar', zorder=10)
-        Kds_array_data = (data_Kds[1][:-1]+data_Kds[1][1:])/2
-        Kds_array = np.logspace(np.log10(np.exp(min_e_data-1+gauge_e)), np.log10(np.exp(max_e_data+1+gauge_e)), 50)
-        Kds_array = (Kds_array[:-1]+Kds_array[1:])/2
-        ax[j,3].hist(Kds, bins = np.logspace(np.log10(np.exp(min_e_data-1+gauge_e)), np.log10(np.exp(max_e_data+1+gauge_e)), 8), density = False, color = 'silver', alpha = .4, histtype = 'bar', weights = clone_sizes, zorder=0)
-        clone_sizes_binned = np.array([])
-        var_clone_sizes_binned = np.array([])
-        max_clone_sizes_binned = np.array([])
-        for i in np.arange(int(len(data_Kds[0]))):
-            clone_sizes_binned = np.append(clone_sizes_binned, np.mean( np.concatenate((clone_sizes[(Kds<=data_Kds[1][i+1]) & (Kds>data_Kds[1][i])], np.array([1]) )) )  )
-            #var_clone_sizes_binned = np.append(var_clone_sizes_binned, np.var(clone_sizes[(Kds<data_Kds[1][i+1]) & (Kds>data_Kds[1][i])]))
-            max_clone_sizes_binned = np.append(max_clone_sizes_binned, np.max(clone_sizes[(Kds<data_Kds[1][i+1]) & (Kds>data_Kds[1][i])],initial=1))
-        ax[j,3].plot(Kds_array_data, clone_sizes_binned, color = 'dimgray', linewidth =3, linestyle = '', marker = 's', ms = 12, alpha = .8)
-        ax[j,3].plot(Kds_array_data, max_clone_sizes_binned, color = 'dimgray', linewidth =3, linestyle = '', marker = '*', ms = 10, alpha = .8)
-        #ax[j,3].errorbar(x=Kds_array_data, y=clone_sizes_binned, yerr = np.sqrt(var_clone_sizes_binned), capsize = 10 , linestyle = '', color = 'dimgray', linewidth =2)
-        if(linear==0):
-        	ax[j,3].plot(Kds_array[:], (Kds_array[:]/np.min(Kds_array))**(lambd), color = colors_fate[j][1], linewidth =3, linestyle = '--', marker = '', ms = 15)
-        	#ax[j,3].plot(Kds_array[:], np.exp(beta*Tf)*np.exp(beta*(gauge_e-25)/alpha)*N_A**(-beta/alpha)*(Kds_array[:]/np.min(Kds_array))**(0), color = 'dimgray', linewidth =3, linestyle = '--', marker = '', ms = 15)
-        	#ax[j,3].plot(Kds_array[:], np.exp(beta*Tf)*np.exp(beta*(gauge_e-25)/alpha)*N_A**(-beta/alpha)*(Kds_array[:]/np.min(Kds_array))**(lambd+0), color = 'silver', linewidth =3, linestyle = '--', marker = '', ms = 15)
-        if(linear==1):
-            ax[j,3].plot(Kds_array[:], (Kds_array[:]/np.min(Kds_array))**(lambd), color = colors_fate[j][1], linewidth =3, linestyle = '--', marker = '', ms = 15)
-            #ax[j,3].plot(Kds_array[:-17], np.exp(beta*Tf)*np.exp(beta*1/(alpha_lin))*np.exp(-beta/(alpha_lin)*np.exp(-(gauge_e-25))*N_A*Kds_array[:-17]), color = 'dimgray', linewidth =3, linestyle = '--', marker = '', ms = 15)
-            ax[j,3].plot(Kds_array[:-17], 5e11*Kds_array[:-17]**(lambd)*np.exp(beta*Tf)*np.exp(beta*1/(alpha_lin))*np.exp(-beta/(alpha_lin)*np.exp(-(gauge_e-25))*N_A*Kds_array[:-17]), color = 'silver', linewidth =3, linestyle = '--', marker = '', ms = 15)
+            data_active = data.loc[data[1]==1]
 
-        ax[j,3].vlines(np.exp(np.average(np.log(Kds))), 0, ax[j,3].get_ylim()[1], color = colors_fate[j][1], linewidth = 3, linestyle = '-')
-        #ax[j,3].vlines(np.exp(np.average(np.log(Kds), weights = data_bcells_active[np.where(data_active[:,2]==0)[0],-1])), 0, ax[j,3].get_ylim()[1], color = colors_fate[j][1], linewidth = 3, linestyle = '--')
-        my_plot_layout(ax = ax[j,3], yscale = 'log', xscale = 'log', xlabel = r'$K_D$', ylabel = 'counts')
-        #ax[j,3].legend(loc = 4, fontsize = 24)
+            data_plasma = data_active.loc[data_active[2]==1]
+            data_GC = data_active.loc[data_active[2]==0]
 
-        ax3.hist(Kds, bins = np.logspace(np.log10(np.exp(min_e_data-1+gauge_e)), np.log10(np.exp(max_e_data+1+gauge_e)), 8), density = False, color = colors_fate[j][1], alpha = .5, histtype = 'bar', zorder=10)
-        ax3.hist(Kds, bins = np.logspace(np.log10(np.exp(min_e_data-1+gauge_e)), np.log10(np.exp(max_e_data+1+gauge_e)), 8), density = False, color = 'silver', alpha = .4, histtype = 'bar', weights = clone_sizes, zorder=0)
-        ax3.plot(Kds_array_data, clone_sizes_binned, color = 'dimgray', linewidth =3, linestyle = '', marker = '*', ms = 12, alpha = .8)
-        #ax3.plot(Kds_array_data, max_clone_sizes_binned, color = colors_fate[j][1], linewidth =3, linestyle = '', marker = '*', ms = 14, alpha = .8)
-        #ax3.errorbar(x=Kds_array_data, y=clone_sizes_binned, yerr = np.sqrt(var_clone_sizes_binned) , capsize = 10, linestyle = '', color = 'dimgray', linewidth =2)
+            #---- DISTRIBUTION ENERGIES ----
+            
+            if(linear == 0):
+                fig_seq, ax_seq = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18})
+                hist = ax_seq.hist(np.exp(data[0]), bins = np.logspace(np.log10(np.exp(min_e_data-1)), np.log10(np.exp(max_e_data)), 20), color = colors[n_q], alpha = 0, histtype = 'bar')
+                counts = hist[0][np.where(hist[0]!=0)]
+                energies = np.log(hist[1][np.where(hist[0]!=0)])
+                popt, pcov = curve_fit(f = my_linear_func , xdata = energies[:4], ydata= np.log(counts)[:4] )
+                print('beta = %.2f'%(popt[1]))
+                lambd_act = popt[1]
 
-        if(linear==0):
-            ax3.plot(Kds_array[:], (Kds_array[:]/np.min(Kds_array))**(lambd), color = colors_fate[j][1], linewidth =3, linestyle = '--', marker = '', ms = 15)
-            #ax3.plot(Kds_array[:], 5e2*np.exp(beta*Tf)*np.exp(beta*(gauge_e-25)/alpha)*N_A**(-beta/alpha)*Kds_array[:]**(0), color = 'dimgray', linewidth =3, linestyle = '--', marker = '', ms = 15)
-            ax3.plot(Kds_array[:], np.exp(beta*Tf)*(lambd*1e8/N_data)**(-beta/alpha)*(Kds_array[:]/np.min(Kds_array))**(0), color = 'dimgray', linewidth =3, linestyle = '--', marker = '', ms = 15)
-            ax3.plot(Kds_array[:], np.exp(beta*Tf)*(lambd*1e8/N_data)**(-beta/alpha)*(Kds_array[:]/np.min(Kds_array))**(beta*lambd/alpha), color = colors_fate[j][1], linewidth = 3, linestyle = ':', marker = '', ms = 15)
-            ax3.plot(Kds_array[:], np.exp(beta*Tf)*(lambd*1e8/N_data)**(-beta/alpha)*(Kds_array[:]/np.min(Kds_array))**(0 + lambd), color = 'silver', linewidth =3, linestyle = '--', marker = '', ms = 15)
-        if(linear==1):
-            ax3.plot(Kds_array[:], 5e11*Kds_array[:]**(lambd), color = colors_fate[j][1], linewidth =3, linestyle = '--', marker = '', ms = 15)
-            #ax3.plot(Kds_array[:-17], np.exp(beta*Tf)*np.exp(beta*1/(alpha_lin))*np.exp(-beta/(alpha_lin)*np.exp(-(gauge_e-25))*N_A*Kds_array[:-17]), color = 'dimgray', linewidth =3, linestyle = '--', marker = '', ms = 15)
-            #ax3.plot(Kds_array[:-17], 1e7*Kds_array[:-17]**(lambd)*np.exp(beta*Tf)*np.exp(beta*1/(alpha_lin))*np.exp(-beta/(alpha_lin)*np.exp(-(gauge_e-25))*N_A*Kds_array[:-17]), color = 'silver', linewidth =3, linestyle = '--', marker = '', ms = 15)
-        #ax3.vlines(np.exp(np.average(np.log(Kds))), 0, ax[j,3].get_ylim()[1], color = colors_fate[j][1], linewidth = 3, linestyle = '-')
-        #ax3.vlines(np.exp(np.average(np.log(Kds), weights = data_bcells_active[np.where(data_active[:,2]==0)[0],-1])), 0, ax[j,3].get_ylim()[1], color = colors_fate[j][1], linewidth = 3, linestyle = '--')
+                expfit = (np.exp(lambd_act*energies)/np.exp(lambd_act*energies[0]))*counts[0]
+                ax_seq.plot(np.exp(energies), counts, color = 'indigo', alpha = 1, linestyle = '', marker = '^', ms = 10)
+                #ax_seq.plot(energies, expfit, color = 'indigo', linestyle = '--', linewidth = 4, alpha = .5)
+                ax_seq.plot(np.exp(energies[:8]), np.exp(my_linear_func(energies[:8], *popt)), color = 'indigo', linestyle = '--', linewidth = 4, alpha = .5, label = '%.2f'%(popt[1]))
+                #ax_seq.text(x=min_e_data+1, y=1e2, s = r'$\sim e^{\beta \epsilon}$', fontsize=48, color = 'indigo')
+                my_plot_layout(ax = ax_seq, xscale = 'log', yscale = 'log', xlabel = r'$K_D$', ylabel = r'$\Lambda(\epsilon)$')
+                #ax_seq.set_ylim(bottom = .8)
+                ax_seq.legend(title = r'$\beta$', fontsize = 30, title_fontsize = 33)
+                fig_seq.savefig('../../Figures/1_Dynamics/Trajectories/Sequences_expansion_'+energy_model+'.pdf')
+
+            #---- DISTRIBUTION ACTIVATED ENERGIES ----
+            #----------------------------------------------------------------
+            u_on, p_a, R, QR = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*Tf)/N_A, Es, q, lambda_A, N_c, dE)
+            QR2 = Q0*(1-np.exp(-u_on*p_a*N_c/lambda_A))
+            #----------------------------------------------------------------
+            #data_Kds = ax2.hist( data_active[0], bins = np.logspace(np.log10(np.exp(min_e_data-1)), np.log10(np.exp(max_e_data)), 22), color = colors_fate[n_q][0], alpha = .2, density = False)
+            data_Kds = ax2.hist([np.exp(data_GC[0]), np.exp(data_plasma[0])], bins = np.logspace(np.log10(np.exp(min_e_data-1)), np.log10(np.exp(max_e_data)), 20), color = colors_fate[n_q], alpha = .6, histtype = 'barstacked', label = ['GC', 'Plasma'], density = False)
+            ax2.plot(np.exp(Es[:-1]), QR2*N_r, linestyle = '--', linewidth = 2, marker = '', color = colors[n_q])
+            ax2.plot(np.exp(Es[:-1]), QR*N_r, linestyle = '-', linewidth = 2, marker = '', color = colors[n_q])
+            lambd_peak = lambdas[:-1][QR == np.max(QR)][0]
+            print('beta = %.2f'%(lambd_peak))
+            #ax2.vlines(np.exp(Es)[lambdas[:] < q][0], ax2.get_ylim()[0], np.max(QR), color = colors[n_q], linestyle = ':', linewidth = 2)
+            my_plot_layout(ax = ax2, xscale = 'log', yscale = 'linear', xlabel = '$K_D$', ylabel = 'counts')
+            #ax2.set_ylim(bottom = ax2.get_ylim()[0], top=ax2.get_ylim()[1])
+            #ax2.legend(fontsize = 24)
+
+            #---- SERA ----
+            clone_sizes = np.exp(lambda_B*(Tf-np.array(data_plasma[3])))
+            Kds = np.exp(data_plasma[0]+gauge_e)
+           
+            data_Kds = ax3.hist(Kds, bins = np.logspace(np.log10(np.exp(min_e_data-1+gauge_e)), np.log10(np.exp(max_e_data+gauge_e)), 12), density = False, color = colors_fate[n_q][1],histtype = 'step', zorder=10, align = 'mid', linewidth = 2, alpha = 0)
+            counts = data_Kds[0][np.where(data_Kds[0]!=0)]
+            Kds_array_data = (data_Kds[1][np.where(data_Kds[0]!=0)])#+data_Kds[1][1:])/2
+            ax3.plot(Kds_array_data, counts, color = colors_fate[n_q][0], alpha = .8, marker = 'o', ms = 12, linestyle = '-')
+            ax3.hist(Kds, bins = np.logspace(np.log10(np.exp(min_e_data-1+gauge_e)), np.log10(np.exp(max_e_data+gauge_e)), 10), density = False, color = colors_fate[n_q][0], alpha = .2, histtype = 'step', weights = clone_sizes, zorder=0, align = 'left', linewidth = 2)
+            clone_sizes_binned = np.array([])
+            var_clone_sizes_binned = np.array([])
+            max_clone_sizes_binned = np.array([])
+            for i in np.arange(int(len(counts))):
+                clone_sizes_binned = np.append(clone_sizes_binned, np.mean( np.concatenate((clone_sizes[(Kds>=data_Kds[1][i]) & (Kds<data_Kds[1][i+1])], np.array([1]) )) )  )
+                #var_clone_sizes_binned = np.append(var_clone_sizes_binned, np.var(clone_sizes[(Kds<data_Kds[1][i+1]) & (Kds>data_Kds[1][i])]))
+                max_clone_sizes_binned = np.append(max_clone_sizes_binned, np.max(clone_sizes[(Kds>=data_Kds[1][i]) & (Kds<data_Kds[1][i+1]) ], initial=1))
+            ax4.plot(Kds_array_data, clone_sizes_binned, color = colors_fate[n_q][1], linewidth =3, linestyle = '', marker = 's', ms = 10, alpha = .4)
+            ax4.plot(Kds_array_data, max_clone_sizes_binned, color = colors_fate[n_q][1], linewidth =3, linestyle = '', marker = '*', ms = 12, alpha = .8)
+            #ax3.errorbar(x=Kds_array_data, y=clone_sizes_binned, yerr = np.sqrt(var_clone_sizes_binned) , capsize = 10, linestyle = '', color = 'dimgray', linewidth =2)
+
+            #ax3.plot(Kds_array_data[:], counts[0]*(Kds_array_data[:]/np.min(Kds_array_data))**(lambd_act), color = colors_fate[n_q][1], linewidth =2, linestyle = '--', marker = '', ms = 15, alpha = .8)
+            #ax3.plot(Kds_array_data[:], counts[-1]*(Kds_array_data[:]/np.max(Kds_array_data))**(lambd_act-q), color = colors_fate[n_q][1], linewidth =2, linestyle = ':', marker = '', ms = 15, alpha = .8)
+            
+            ax4.plot(Kds_array_data[:], clone_sizes_binned[0]*(Kds_array_data[:]/np.min(Kds_array_data))**((lambda_B/lambda_A)*(-lambd_act/q)), color = colors_fate[n_q][1], linewidth =2, linestyle = '--', marker = '', ms = 15, alpha = .8)
+            ax4.plot(Kds_array_data[:], max_clone_sizes_binned[0]*(Kds_array_data[:]/np.min(Kds_array_data))**((lambda_B/lambda_A)*(-lambd_act/q)), color = colors_fate[n_q][1], linewidth =2, linestyle = ':', marker = '', ms = 15, alpha = .8)
+            
+            #ax4.plot(Kds_array_data[:-5], clone_sizes_binned[0]*(Kds_array_data[:-5]/np.min(Kds_array_data))**((lambda_B/alpha)*(q)), color = colors_fate[n_q][1], linewidth =2, linestyle = '--', marker = '', ms = 15, alpha = .8)
+            #ax4.plot(Kds_array_data[:], max_clone_sizes_binned[0]*(Kds_array_data[:]/np.min(Kds_array_data))**((lambda_B/alpha)*(q)), color = colors_fate[n_q][1], linewidth =2, linestyle = ':', marker = '', ms = 15, alpha = .8)
+                
+            if(linear==1):
+                ax3.plot(Kds_array_data[:], 5e11*Kds_array_data[:]**(lambd_act), color = colors_fate[n_q][1], linewidth =3, linestyle = '--', marker = '', ms = 15)
+            
+        #ax3.vlines(np.exp(np.average(np.log(Kds))), 0, ax[n_q,3].get_ylim()[1], color = colors_fate[n_q][1], linewidth = 3, linestyle = '-')
+        #ax3.vlines(np.exp(np.average(np.log(Kds), weights = data_bcells_active[np.where(data_active[:,2]==0)[0],-1])), 0, ax[n_q,3].get_ylim()[1], color = colors_fate[n_q][1], linewidth = 3, linestyle = '--')
         my_plot_layout(ax = ax3, yscale = 'log', xscale = 'log', xlabel = r'$K_D$', ylabel = 'counts')
+        my_plot_layout(ax = ax4, yscale = 'log', xscale = 'log', xlabel = r'$K_D$', ylabel = 'Clone size')
         #ax3.legend(fontsize = 24, loc = 4)
 
         fig2.savefig("../../Figures/1_Dynamics/Trajectories/Plasma_vs_GC_linear-%d.pdf"%(linear))
-        fig3.savefig("../../Figures/1_Dynamics/Trajectories/Sera_linear-%d.pdf"%(linear))
+        fig3.savefig("../../Figures/1_Dynamics/Trajectories/Sera_%d.pdf"%(linear))
+        fig4.savefig("../../Figures/1_Dynamics/Trajectories/Sera_2_%d.pdf"%(linear))
 
 
-    fig.savefig('../../Figures/1_Dynamics/Trajectories/summary_2_single_trajectory_'+energy_model+'.png')
-    

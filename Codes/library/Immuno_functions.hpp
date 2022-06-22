@@ -13,6 +13,8 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <valarray>
+#include <numeric>
 #include <cmath>
 #include <time.h>
 #include <gsl/gsl_math.h>
@@ -429,7 +431,7 @@ void EF_dynamics(int linear, double const alpha, double const beta, double const
             for(int n = 0 ; n<n_naive ; n++){
                 //Time_series_Bcells[n][t] = Time_series_Bcells[n][t-1] + (beta*Time_series_Bcells[n][t-1])*dT*(Naive[n]->active);
                 if(Naive[n]->active ==0){
-                    r = ((double) rand() / (RAND_MAX));
+                    r = randX(0,1);
                     //Modulate this parameter promerly with \epsilon_MS
                     if(r < ( p_R_dT(dT, k_on, Antigen/N_A, gamma, q, Naive[n]->e) )){
                         Naive[n]->active = 1;
@@ -550,23 +552,59 @@ void EF_dynamics_ensemble(int linear, double const alpha, double const beta, dou
         N_final_active_linages.push_back(n_active_linages);
     } 
 }
-void EF_response(int linear, double const alpha, double const beta, double const gamma, double const q, long long NT, double dT, int n_naive, vector<bcell*> & Naive, long double Antigen, vector < double > & N_active_linages)
+void EF_response(int linear, double const alpha, double const beta, double gamma, double const q, double N_c, double To, double Tf, long long int NT, double dT, int n_naive, vector<bcell*> & Naive)
 {
+    double k_on = 1e6*24*3600; // M*days^-1
+    //double k_off = 1e-8*24*3600 days^-1;
+    double k_off;
+    gamma = gamma*24; // days^-1
+    double alpha2 = alpha;
+    int z;
+    double r;
+    double r_GC;
+    double p_GC = 0.1;
 
-    vector < double > tower;
-    tower.resize(NT);
+    long long int n_time = NT; //number of steps
 
+    // Time array 
+    valarray<double> time(n_time);
+    time[0] = To;
+    for (int t = 1; t < n_time; t++)
+    {   
+        time[t] = time[t-1] + dT;
+    }
+    // arrays for probability and cumulative probability for the time of recognition
+    valarray<long double> u_on(n_time);
+    valarray<long double> prob_recognition(n_time);
+    valarray<double> cum_prob_recognition(n_time);
+    
     for(int n = 0 ; n<n_naive ; n++){
-
-        //Here I want to create a sampling of the exponential distribution for the recognition time of B cells
-
+        //getting k_off from the energy
+        k_off = k_on*exp(Naive[n]->e);
+        u_on = (exp(alpha2*time)/N_A)*k_on*N_c;
+        double p_act = 1/(1+pow((k_off/gamma),q));
+        prob_recognition = (u_on*p_act) * exp(-((u_on/alpha2)*p_act)) * dT;
+        partial_sum(begin(prob_recognition), end(prob_recognition), begin(cum_prob_recognition));
+        r = randX(0,1);
+        z = 1;
+        while((cum_prob_recognition[z] < r) & (z < n_time)){
+            z++;
+        }
+        if(z<n_time){
+            Naive[n]->activation_time = time[z];
+            Naive[n]->active = 1;
+        }
+        r_GC = randX(0,1);
+        // Decide if the activated linage will have plasma or GC fate.
+        if(r_GC<p_GC){
+            Naive[n]->plasma = 0;
+        }
     }
 
-    double p_GC = 0.1;
-    double r;
+    
     //double N_active_bcells = 0; // To use if we want to kill antigen from B cells
     int n_active_linages = 0;
-    double k_on = 1e6;
+    
     if (linear==0) {
         
     } else {
