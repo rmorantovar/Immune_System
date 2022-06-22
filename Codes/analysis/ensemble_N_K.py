@@ -115,12 +115,12 @@ for q in [1, 2]:
 			clone_sizes = np.exp(lambda_B*(Tf - activations_times))
 
 			N_clones_active = np.array([], dtype = int)
-			N_ens = len(data2[0])
+			N_ens = len(N_clones)
 			counter = 0
 			for n in np.arange(N_ens):
-				temp_data = data[counter:counter+int(data2[0][n])]
+				temp_data = data[counter:counter+int(N_clones[n])]
 				N_clones_active = np.append(N_clones_active, int(len(np.array(temp_data.loc[temp_data[1]==1][0]))))
-				counter = counter + int(data2[0][n])
+				counter = counter + int(N_clones[n])
 
 
 			Kds0 = np.exp(data[0])
