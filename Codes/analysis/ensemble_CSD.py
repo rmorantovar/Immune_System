@@ -52,7 +52,7 @@ time = np.linspace(T0, Tf, int((Tf-T0)/dT))
 lambda_A = 6 #days^-1
 k_pr = .1 # hour^-1
 k_pr = k_pr*24 #days^-1
-q = 1
+q = 2
 lambda_B = .5*lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
 N_c = 1e3
@@ -131,7 +131,7 @@ for j, gm in enumerate(growth_models):
 		plaw_fit_csd2 = clone_size**(exponents2[j])#*(np.log(clone_size**(1/nu)))**(1-beta_act)
 		plaw_fit_csd2 /= (plaw_fit_csd2[-1]/(clone_size_counts[-1]))
 
-		ax.plot(clone_size[:], clone_size_counts[:], linestyle = '', marker = 's', ms = 8, linewidth = 5, color = 'orange', label = '%.1f'%(lambda_A/lambda_B))
+		ax.plot(clone_size[:], clone_size_counts[:], linestyle = '', marker = 's', ms = 8, linewidth = 5, color = 'orange', label = '%.1f'%(lambda_A/(lambda_B*q)))
 
 		if (gm=='exponential'):
 			ax.plot(clone_size[:], plaw_fit_csd[:], linestyle = '--', marker = '', ms = 5, linewidth = 3, alpha = .8, color = 'orange')
@@ -143,8 +143,8 @@ for j, gm in enumerate(growth_models):
 	my_plot_layout(ax = ax, xscale='log', yscale= 'log', y_fontsize=30 )
 	ax.set_xlim(clone_size[0]*.5, clone_size[-1]*2)
 	ax.set_ylim(clone_size_counts[-1]*.1, clone_size_counts[0]*10)
-	ax.legend(title=r'$\lambda_A/\lambda_B$', fontsize = 30, title_fontsize = 35)
-	fig.savefig('../../Figures/1_Dynamics/Ensemble/CSD_betas_'+gm+'.pdf')
+	ax.legend(title=r'$\lambda_A/(q\lambda_B)$', fontsize = 30, title_fontsize = 35)
+	fig.savefig('../../Figures/1_Dynamics/Ensemble/CSD_q-%d.pdf'%q)
 
 	#ax.text(x=text_pos[i][0], y=text_pos[i][1], s = text[i], fontsize=44, color = colors_fit[i])
 

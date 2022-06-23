@@ -78,80 +78,89 @@ Es, dE, Q0, lambdas = calculate_Q0(0.01, 50, PWM_data, E_ms, L)
 Kds = np.exp(Es[:-1])
 
 beta_r = lambdas[:-1][np.cumsum(Q0*dE)<(1/N_r)][-1]
-E_r = Es[:-1][np.cumsum(Q0*dE)<(1/(N_r*N_ens))][-1]
+E_r = Es[:-1][np.cumsum(Q0*dE)<(1/(N_r))][-1]
 Kd_r = np.exp(E_r)
-#----------------------------------------------------------------
 
-beta_q = lambdas[lambdas>q][-1]
-E_q = Es[lambdas>q][-1]
-K_d_q = np.exp(E_q)
-Kd_act = np.max([K_d_q, Kd_r])
-#----------------------------------------------------------------
 lambda_Bs = np.array([np.flip([.5])*lambda_A, np.flip([.5])*lambda_A], dtype=object)
 
 d=20
 energy_model = 'MJ'
 colors_gm = np.array([plt.cm.Oranges(np.linspace(0,1,len(lambda_Bs[0])+2)),plt.cm.Reds(np.linspace(0,1,len(lambda_Bs[1])+2)) ], dtype=object)
+for q in [1, 2]:
+	#----------------------------------------------------------------
+	beta_q = lambdas[lambdas>q][-1]
+	E_q = Es[lambdas>q][-1]
+	K_d_q = np.exp(E_q)
+	Kd_act = np.max([K_d_q, Kd_r])
+	#----------------------------------------------------------------
+	for j, gm in enumerate(growth_models):
+		fig0, ax0 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+		fig, ax = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+		for i, lambda_B in enumerate(lambda_Bs[j]):
+			parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_q-%d_linear-%d_'%(lambda_A, 0.5, k_pr/24, q, j)+energy_model
+			data = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/energies_ensemble.txt', sep = '\t', header=None)
+			data2 = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/summary_ensemble.txt', sep = '\t', header=None)
+			N_clones = np.array(data2[0])
+			
+			data_active = data.loc[data[1]==1]
+			activations_times = np.array(data_active[3])
 
-for j, gm in enumerate(growth_models):
-	fig0, ax0 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-	fig, ax = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-	for i, lambda_B in enumerate(lambda_Bs[j]):
-		parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_q-%d_linear-%d_'%(lambda_A, 0.5, k_pr/24, q, j)+energy_model
-		data = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/energies_ensemble.txt', sep = '\t', header=None)
-		data2 = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/summary_ensemble.txt', sep = '\t', header=None)
-		N_clones = np.array(data2[0])
+			N_active_clones = np.ones_like(N_clones)
+
+			counter = 0
+			for n, n_clones in enumerate(N_clones):
+				temp_data = data[counter:counter+n_clones]
+				N_active_clones[n] = len(temp_data.loc[temp_data[1]==1])
+				counter += n_clones
+
+
+			clone_sizes = np.exp(lambda_B*(Tf - activations_times))
+			min_e_data = np.min(data[0])
+			max_e_data = np.max(data[0])
+
+			Kds0 = np.exp(data[0])
+			data_Kds0 = ax0.hist(Kds0, bins = np.logspace(np.log10(np.exp(min_e_data)), np.log10(np.exp(max_e_data)), 20), density = False, histtype = 'step', zorder=10, align = 'mid', linewidth = 2, alpha = 0)
+			counts0 = data_Kds0[0][np.where(data_Kds0[0]!=0)]
+			Kds_array_data0 = (data_Kds0[1][np.where(data_Kds0[0]!=0)])
+			popt, pcov = curve_fit(f = my_linear_func , xdata = np.log(Kds_array_data0[0:4]), ydata= np.log(counts0)[0:4] )
+			print('beta = %.2f'%(popt[1]))
+			beta_act2 = popt[1]
+			beta_act = np.min([q, beta_r])
+			print(beta_act)
+
+			exponents = [(-((lambda_A*beta_act)/(lambda_B*q))-1), -1]
+			exponents2 = [(-((lambda_A*beta_act2)/(lambda_B))-1), -1]
+
+			n_ranking = 50
+			n_array = np.linspace(1, n_ranking, n_ranking)
+			Clone_relative_sizes = np.zeros(n_ranking)
+			n_ens = 0
+			counter = 0
+			for j, n_active_clones in enumerate(N_active_clones[:]):
+				if(n_active_clones>=n_ranking):
+				    n_ens +=1
+				    temp_array = np.flip(np.sort(clone_sizes[counter:counter+n_active_clones]))
+				    counter += n_active_clones
+				    for k in range(n_ranking):
+				        Clone_relative_sizes[k] += (temp_array[k]/temp_array[0])
+				if j%40==0:    
+				    ax.step(n_array, temp_array[:n_ranking]/temp_array[0], alpha=.2, color='orange')
+
+			print(n_ens)
+			if (gm=='exponential'):
+				ax.plot(n_array[:], Clone_relative_sizes[:]/n_ens, linestyle = '', marker = '*', ms = 10, linewidth = 3, alpha = .8, color = 'orange')
+				ax.plot(n_array[:], n_array**(-(q*lambda_B)/(beta_act*lambda_A)), linestyle = '--', marker = '', ms = 10, linewidth = 3, alpha = .8, color = 'orange', label = '%.1f'%(lambda_A/lambda_B))
+				#ax.plot(n_array[:], n_array**(-(q*lambda_B)/(beta_act2*lambda_A)), linestyle = ':', marker = '', ms = 10, linewidth = 3, alpha = .8, color = 'orange', label = '%.1f'%(lambda_A/lambda_B))
+			if (gm=='linear'):
+				ax.plot(n_array[:][:], Clone_relative_sizes[:]/n_ens, linestyle = '', marker = '*', ms = 10, linewidth = 3, alpha = .6, color = 'orange')
 		
-		data_active = data.loc[data[1]==1]
-		activations_times = np.array(data_active[3])
+		my_plot_layout(ax = ax, xscale='log', yscale= 'log', y_fontsize=30 )
+		#ax.set_xlim(clone_size[0]*.5, clone_size[-1]*2)
+		#ax.set_ylim(clone_size_counts[-1]*.1, clone_size_counts[0]*10)
+		ax.legend(title=r'$\lambda_A/\lambda_B$', fontsize = 30, title_fontsize = 35)
+		fig.savefig('../../Figures/1_Dynamics/Ensemble/ranking_q-%d.pdf'%q)
 
-		clone_sizes = np.exp(lambda_B*(Tf - activations_times))
-		min_e_data = np.min(data[0])
-		max_e_data = np.max(data[0])
-
-		N_final_active
-
-
-		Kds0 = np.exp(data[0])
-		data_Kds0 = ax0.hist(Kds0, bins = np.logspace(np.log10(np.exp(min_e_data)), np.log10(np.exp(max_e_data)), 20), density = False, histtype = 'step', zorder=10, align = 'mid', linewidth = 2, alpha = 0)
-		counts0 = data_Kds0[0][np.where(data_Kds0[0]!=0)]
-		Kds_array_data0 = (data_Kds0[1][np.where(data_Kds0[0]!=0)])
-		popt, pcov = curve_fit(f = my_linear_func , xdata = np.log(Kds_array_data0[0:4]), ydata= np.log(counts0)[0:4] )
-		print('beta = %.2f'%(popt[1]))
-		beta_act2 = popt[1]
-		beta_act = np.min([q, beta_r])
-
-		exponents = [(-((lambda_A*beta_act)/(lambda_B*q))-1), -1]
-		exponents2 = [(-((lambda_A*beta_act2)/(lambda_B))-1), -1]
-
-		N_clones = 10
-		n_array = np.linspace(1, N_clones, N_clones)
-		Clone_relative_sizes = np.zeros(N_clones)
-		N_ens = 0
-		for j, N_final in enumerate(N_final_active_cum[:-1]):
-		    if(N_final_active[j+1]>=N_clones):
-		        N_ens +=1
-		        temp_array = np.flip(np.sort(data_bcells_ensemble[int(N_final):int(N_final+N_final_active[j+1])]))
-		        for k in range(N_clones):
-		            Clone_relative_sizes[k] += (temp_array[k]/temp_array[0])
-		    if j%80==0:    
-		        ax.step(n_array, temp_array[:N_clones]/temp_array[0], alpha=.2, color=colors_fit[i])
-
-		
-		if (gm=='exponential'):
-			ax.plot(clone_size[:], plaw_fit_csd[:], linestyle = '--', marker = '', ms = 5, linewidth = 3, alpha = .8, color = 'orange')
-		if (gm=='linear'):
-			ax.plot(clone_size[:][:], plaw_fit_csd[:][:], linestyle = '--', marker = '', ms = 5, linewidth = 3, alpha = .6, color = 'orange')
-	#ax.plot(clone_size[:], (clone_size[:]**(-1)/clone_size[-1]**(-1))*clone_size_counts[-1], linestyle = '--', marker = '', ms = 5, linewidth = 4, alpha = .6, color = 'darkred')
-	
-	
-	my_plot_layout(ax = ax, xscale='log', yscale= 'log', y_fontsize=30 )
-	ax.set_xlim(clone_size[0]*.5, clone_size[-1]*2)
-	ax.set_ylim(clone_size_counts[-1]*.1, clone_size_counts[0]*10)
-	ax.legend(title=r'$\lambda_A/\lambda_B$', fontsize = 30, title_fontsize = 35)
-	fig.savefig('../../Figures/1_Dynamics/Ensemble/CSD_betas_'+gm+'.pdf')
-
-	#ax.text(x=text_pos[i][0], y=text_pos[i][1], s = text[i], fontsize=44, color = colors_fit[i])
+		#ax.text(x=text_pos[i][0], y=text_pos[i][1], s = text[i], fontsize=44, color = colors_fit[i])
 
 
 
