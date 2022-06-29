@@ -52,7 +52,7 @@ int main(int argc, char* argv[]) //argv
     if(ensemble_flag==0){
     	dT = 0.05;
     }
-    double N_ens = 1;
+    long long int N_ens = 1;
     long long A0;
     std::string energy_model;
     std::string Antigen_aa;
@@ -143,7 +143,7 @@ int main(int argc, char* argv[]) //argv
 			break;
 
 		case 'N':
-	    	N_ens = atof(optarg);
+	    	N_ens = atoi(optarg);
 			//printf ("option -N with value `%s'\n", optarg);
 			break;
 
@@ -226,7 +226,7 @@ int main(int argc, char* argv[]) //argv
     //-------Files-----
     //Output files
     if(ensemble_flag){ // ENSEMBLE OF TRAJECTORIES
-    	string parameters_path = "L-"+std::to_string(L_seq)+"_Nbc-"+ std::to_string(N_bcs)+"_Antigen-"+Antigen_aa+"_lambda_A-"+std::to_string(alpha)+"_lambda_B-"+std::to_string(beta)+"_k_pr-"+std::to_string(k_pr)+"_q-"+std::to_string(q)+"_Linear-"+std::to_string(linear_flag)+"_"+energy_model;
+    	string parameters_path = "L-"+std::to_string(L_seq)+"_Nbc-"+ std::to_string(N_bcs)+"_Antigen-"+Antigen_aa+"_lambda_A-"+std::to_string(alpha)+"_lambda_B-"+std::to_string(beta)+"_k_pr-"+std::to_string(k_pr)+"_q-"+std::to_string(q)+"_Linear-"+std::to_string(linear_flag)+"_N_ens-"+ std::to_string(N_ens)+"_"+energy_model;
     	fs::create_directories(Text_files_path+"Ensemble/"+parameters_path);
     	ofstream fout (Text_files_path+"Ensemble/"+parameters_path+"/energies_ensemble.txt"); // Energies
     	ofstream fout_2 (Text_files_path+"Ensemble/"+parameters_path+"/summary_ensemble.txt"); // Energies
@@ -235,7 +235,7 @@ int main(int argc, char* argv[]) //argv
 	    cout << "Running ensemble of trajectories ..." << endl;
 	    for(int i_ens = 0 ; i_ens<N_ens ; i_ens++){
 	    	// ----------------------------PRINTING PROGRESS BAR-----------------------------
-	    	float progress = i_ens/N_ens;
+	    	float progress = i_ens/(double)N_ens;
 	    	std::cout << "[";
 	    	int pos = barWidth * progress;
 	    	for (int i = 0; i < barWidth; ++i) {
@@ -276,7 +276,7 @@ int main(int argc, char* argv[]) //argv
 	    fout_2.close();
 
     }else{ // SINGLE TRAJECTORY
-    	string parameters_path = "L-"+std::to_string(L_seq)+"_Nbc-"+ std::to_string(N_bcs)+"_Antigen-"+Antigen_aa+"_lambda_A-"+std::to_string(alpha)+"_lambda_B-"+std::to_string(beta)+"_k_pr-"+std::to_string(k_pr)+"_q-"+std::to_string(q)+"_Linear-"+std::to_string(linear_flag)+"_"+energy_model;
+    	string parameters_path = "L-"+std::to_string(L_seq)+"_Nbc-"+ std::to_string(N_bcs)+"_Antigen-"+Antigen_aa+"_lambda_A-"+std::to_string(alpha)+"_lambda_B-"+std::to_string(beta)+"_k_pr-"+std::to_string(k_pr)+"_q-"+std::to_string(q)+"_Linear-"+std::to_string(linear_flag)+"_N_ens-"+ std::to_string(N_ens)+"_"+energy_model;
     	fs::create_directories(Text_files_path+"Trajectories/"+parameters_path);
     	cout<<">Running simulation of the EF dynamics ..."<< endl;
     	ofstream fout (Text_files_path+"Trajectories/"+parameters_path+"/energies.txt"); // Energies, activation, fate, sequence and activation time

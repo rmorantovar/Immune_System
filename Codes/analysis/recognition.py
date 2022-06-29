@@ -35,8 +35,10 @@ fig_p_a, ax_p_a = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right'
 file_name = 'PWM_Adams_etal_2016_1.pkl'
 
 N_r = 2e5
-T0 = 3
+N_r = 1e6
+T0 = 2
 Tf = 5.8
+Tf = 6
 dT = 0.1
 days = np.arange(0, Tf, 1)
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
@@ -141,13 +143,13 @@ for q in [1, 2]:
 
 fig_Q0_QR.savefig('../../Figures/7_Recognition/Q0_QR.pdf')
 fig_Q0_QR_n.savefig('../../Figures/7_Recognition/Q0_QR_n.pdf')
-fig_Q0_QR_n2.savefig('../../Figures/7_Recognition/Q0_QR_n2pdf')
+fig_Q0_QR_n2.savefig('../../Figures/7_Recognition/Q0_QR_n2.pdf')
 #---------------------------------
 
 #--------- Plot M_r --------------
 #K_d_array2 = Kd[[int(i) for i in np.logspace(0, np.log10(len(Kd)), 20)]]
 K_d_array2 = Kd[::50]
-for q in np.arange(1, 3):
+for q in np.arange(1, 4):
 	fig_M_r, ax_M_r = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 	rho_A_array = np.logspace(10, 15, 40)
 	rho_A_array = np.logspace(np.log10(np.exp(lambda_A*T0)), np.log10(np.exp(lambda_A*Tf)), 40)

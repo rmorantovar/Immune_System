@@ -80,14 +80,14 @@ print(E_r, beta_r)
 #----------------------------------------------------------------
 t_act = [3.8, 4.5]
 energy_model = 'MJ'
-for q in [1, 2]:
+for q in [1, 2, 3]:
 	beta_q = lambdas[lambdas>q][-1]
 	E_q = Es[lambdas>q][-1]
 	print(E_q, beta_q)
 	for j, gm in enumerate(growth_models):
 		fig, ax = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
 
-		parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_q-%d_linear-%d_'%(lambda_A, 0.5, k_pr/24, q, j)+energy_model
+		parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_q-%d_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, q, j, N_ens)+energy_model
 		data = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/energies_ensemble.txt', sep = '\t', header=None)
 		data2 = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/summary_ensemble.txt', sep = '\t', header=None)
 		N_clones = np.array(data2[0])
