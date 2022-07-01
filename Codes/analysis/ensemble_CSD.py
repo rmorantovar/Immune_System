@@ -112,9 +112,9 @@ for q in qs:
 			counts0 = data_Kds0[0][np.where(data_Kds0[0]!=0)]
 			Kds_array_data0 = (data_Kds0[1][np.where(data_Kds0[0]!=0)])
 			popt, pcov = curve_fit(f = my_linear_func , xdata = np.log(Kds_array_data0[0:4]), ydata= np.log(counts0)[0:4] )
-			print('beta = %.2f'%(popt[1]))
 			beta_act2 = popt[1]
 			beta_act = np.min([q, beta_r])
+			print('beta_act = %.2f'%(beta_act))
 
 			exponents = [(((lambda_A*beta_act)/(lambda_B*q))+1), -1]
 			exponents2 = [(((lambda_A*beta_act2)/(lambda_B))+1), -1]
@@ -132,7 +132,7 @@ for q in qs:
 			plaw_fit_csd2 = clone_size**(-exponents2[j])#*(np.log(clone_size**(1/nu)))**(1-beta_act)
 			plaw_fit_csd2 /= (plaw_fit_csd2[-1]/(clone_size_counts[-1]))
 
-			ax.plot(clone_size[:], clone_size_counts[:], linestyle = '', marker = 's', ms = 8, linewidth = 5, color = 'orange', label = '%.1f'%(lambda_A/(lambda_B*q)))
+			ax.plot(clone_size[:], clone_size_counts[:], linestyle = '', marker = '^', ms = 10, linewidth = 5, color = 'orange', label = '%.1f'%(lambda_A/(lambda_B*q)))
 
 			if (gm=='exponential'):
 				ax.plot(clone_size[:], plaw_fit_csd[:], linestyle = '--', marker = '', ms = 5, linewidth = 3, alpha = .8, color = 'orange')
@@ -144,7 +144,7 @@ for q in qs:
 		my_plot_layout(ax = ax, xscale='log', yscale= 'log', y_fontsize=30 )
 		ax.set_xlim(clone_size[0]*.5, clone_size[-1]*2)
 		ax.set_ylim(clone_size_counts[-1]*.1, clone_size_counts[0]*10)
-		ax.legend(title=r'$\lambda_A/(q\lambda_B)$', fontsize = 30, title_fontsize = 35)
+		ax.legend(title=r'$\frac{\lambda_A}{q\lambda_B}$', fontsize = 30, title_fontsize = 35)
 		fig.savefig('../../Figures/1_Dynamics/Ensemble/CSD_q-%d.pdf'%q)
 
 

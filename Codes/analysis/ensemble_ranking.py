@@ -52,7 +52,7 @@ time = np.linspace(T0, Tf, int((Tf-T0)/dT))
 lambda_A = 6 #days^-1
 k_pr = .1 # hour^-1
 k_pr = k_pr*24 #days^-1
-q = 1
+qs = [1, 2, 3]
 lambda_B = .5*lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
 N_c = 1e3
@@ -86,7 +86,7 @@ lambda_Bs = np.array([np.flip([.5])*lambda_A, np.flip([.5])*lambda_A], dtype=obj
 d=20
 energy_model = 'MJ'
 colors_gm = np.array([plt.cm.Oranges(np.linspace(0,1,len(lambda_Bs[0])+2)),plt.cm.Reds(np.linspace(0,1,len(lambda_Bs[1])+2)) ], dtype=object)
-for q in [1, 2, 3]:
+for q in qs:
 	#----------------------------------------------------------------
 	beta_q = lambdas[lambdas>q][-1]
 	E_q = Es[lambdas>q][-1]
@@ -130,7 +130,7 @@ for q in [1, 2, 3]:
 			exponents = [(((lambda_A*beta_act)/(lambda_B*q))+1), -1]
 			exponents2 = [(((lambda_A)/(lambda_B))+1), -1]
 
-			n_ranking = 11
+			n_ranking = 15
 			n_array = np.linspace(1, n_ranking, n_ranking)
 			Clone_relative_sizes = np.zeros(n_ranking)
 			n_ens = 0
@@ -149,7 +149,7 @@ for q in [1, 2, 3]:
 			Clone_relative_sizes = Clone_relative_sizes[:]/n_ens
 
 			plaw_fit_ranking = n_array**(-1/(exponents[j]-1))#
-			plaw_fit_ranking /= (plaw_fit_ranking[-1]/(Clone_relative_sizes[-1]))
+			plaw_fit_ranking /= (plaw_fit_ranking[0]/(Clone_relative_sizes[0]))
 
 			if (gm=='exponential'):
 				ax.plot(n_array[:], Clone_relative_sizes[:], linestyle = '', marker = '*', ms = 10, linewidth = 3, alpha = 1, color = 'orange', label = 'Simulation')

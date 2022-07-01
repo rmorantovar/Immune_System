@@ -44,7 +44,7 @@ antigen = 'TACNSEYPNTTK'
 
 L=len(antigen)
 
-N_ens = 100
+N_ens = 200
 N_r = 5e4
 #N_r = 1e6
 T0 = 0
@@ -160,8 +160,8 @@ for q in [1, 2, 3]:
 		 		max_clone_sizes_binned[i] += np.max(clone_sizes[(Kds>=data_Kds[1][i]) & (Kds<data_Kds[1][i+1]) ], initial=1)#/N_ens
 
 			max_clone_size = np.max(clone_sizes_binned)
-			ax.plot(Kds_array_data0, counts0/N_ens, color = colors_gm[j][n_lambda_B+2], alpha = .8, marker = 'o', ms = 10, linestyle = '')
-			ax.plot(Kds_array_data, counts/N_ens, color = colors_gm[j][n_lambda_B+2], alpha = .8, marker = '^', ms = 10, linestyle = '')
+			ax.plot(Kds_array_data0, counts0/N_ens, color = colors_gm[j][n_lambda_B+2], alpha = .8, marker = 'o', ms = 8, linestyle = '')
+			ax.plot(Kds_array_data, counts/N_ens, color = colors_gm[j][n_lambda_B+2], alpha = .8, marker = '^', ms = 8, linestyle = '')
 
 			popt, pcov = curve_fit(f = my_linear_func , xdata = np.log(Kds_array_data0[0:4]), ydata= np.log(counts0)[0:4] )
 			beta_act2 = popt[1]
@@ -173,8 +173,8 @@ for q in [1, 2, 3]:
 
 			ax.plot(np.exp(Es[:-1]), Q0*N_r, color = colors_gm[j][n_lambda_B+2])
 			ax.plot(np.exp(Es[:-1]), QR*N_r, color = colors_gm[j][n_lambda_B+2])
-			ax.plot(Kds_array_data0[0:5], (counts0[0]/N_ens)*(Kds_array_data0[0:5]/Kds_array_data0[0])**(beta_act), color = colors_gm[j][n_lambda_B+2], linewidth =5, linestyle = ':', marker = '', ms = 15, alpha = .8)
-			ax.plot(Kds_array_data0[0:5], (counts0[0]/N_ens)*(Kds_array_data0[0:5]/Kds_array_data0[0])**(beta_act2), color = colors_gm[j][n_lambda_B+2], linewidth =5, linestyle = ':', marker = '', ms = 15, alpha = .4)
+			ax.plot(Kds_array_data0[0:5], (counts0[0]/N_ens)*(Kds_array_data0[0:5]/Kds_array_data0[0])**(beta_act), color = colors_gm[j][n_lambda_B+2], linewidth = 5, linestyle = ':', marker = '', ms = 15, alpha = .8)
+			ax.plot(Kds_array_data0[0:5], (counts0[0]/N_ens)*(Kds_array_data0[0:5]/Kds_array_data0[0])**(beta_act2), color = colors_gm[j][n_lambda_B+2], linewidth = 5, linestyle = ':', marker = '', ms = 15, alpha = .4)
 
 			Kds_array_data = Kds_array_data[clone_sizes_binned!=0]
 			clone_sizes_binned = clone_sizes_binned[clone_sizes_binned!=0]
@@ -182,7 +182,7 @@ for q in [1, 2, 3]:
 
 			cross_over = np.where(clone_sizes_binned==max_clone_size)[0][0]
 			print(cross_over)
-			ax2.plot(Kds_array_data[0:cross_over+1], (clone_sizes_binned[cross_over]/max_clone_size)*(Kds_array_data[0:cross_over+1]/Kds_array_data[cross_over])**((lambda_B/lambda_A)*np.max([beta_r, beta_r])), color = 'orange', linewidth =3, linestyle = '--', marker = '', ms = 15, alpha = .8)
+			ax2.plot(Kds_array_data[0:cross_over+1], (clone_sizes_binned[cross_over]/max_clone_size)*(Kds_array_data[0:cross_over+1]/Kds_array_data[cross_over])**((lambda_B/lambda_A)), color = 'orange', linewidth =3, linestyle = '--', marker = '', ms = 15, alpha = .8)
 			ax2.plot(Kds_array_data[cross_over:], (clone_sizes_binned[cross_over]/max_clone_size)*(Kds_array_data[cross_over:]/Kds_array_data[cross_over])**((lambda_B/lambda_A)*(-q)), color = 'orange', linewidth =3, linestyle = '--', marker = '', ms = 15, alpha = .8)
 			ax2.vlines([Kd_pr, Kd_q, Kd_r], 4e-3, 1.5, linestyles = ['-',':', '--'], color = 'grey')
 
