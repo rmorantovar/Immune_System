@@ -184,7 +184,7 @@ for q in [1, 2, 3]:
 			print(cross_over)
 			ax2.plot(Kds_array_data[0:cross_over+1], (clone_sizes_binned[cross_over]/max_clone_size)*(Kds_array_data[0:cross_over+1]/Kds_array_data[cross_over])**((lambda_B/lambda_A)), color = 'orange', linewidth =3, linestyle = '--', marker = '', ms = 15, alpha = .8)
 			ax2.plot(Kds_array_data[cross_over:], (clone_sizes_binned[cross_over]/max_clone_size)*(Kds_array_data[cross_over:]/Kds_array_data[cross_over])**((lambda_B/lambda_A)*(-q)), color = 'orange', linewidth =3, linestyle = '--', marker = '', ms = 15, alpha = .8)
-			ax2.vlines([Kd_pr, Kd_q, Kd_r], 4e-3, 1.5, linestyles = ['-',':', '--'], color = 'grey')
+			#ax2.vlines([Kd_pr, Kd_q, Kd_r], 4e-3, 1.5, linestyles = ['-',':', '--'], color = 'grey')
 
 		my_plot_layout(ax = ax, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 		#ax.legend(title=r'$\lambda_A/\lambda_B$', fontsize = 30, title_fontsize = 35)
