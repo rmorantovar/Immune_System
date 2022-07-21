@@ -865,6 +865,7 @@ def calculate_Q0(Tmin, Tmax, E_matrix, E_ms, L):
 
 	P0 = 1/Omega
 	Q0 = np.exp(S)/np.sum(np.exp(S)*dE)
+	#Q0 = np.exp(S)/Omega
 
 	return Es, dE, Q0, lambdas
 

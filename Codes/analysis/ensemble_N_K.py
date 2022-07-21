@@ -44,7 +44,7 @@ antigen = 'TACNSEYPNTTK'
 
 L=len(antigen)
 
-N_ens = 200
+N_ens = 500
 N_r = 5e4
 #N_r = 1e6
 T0 = 0
@@ -173,8 +173,8 @@ for q in [1, 2, 3]:
 
 			ax.plot(np.exp(Es[:-1]), Q0*N_r, color = colors_gm[j][n_lambda_B+2])
 			ax.plot(np.exp(Es[:-1]), QR*N_r, color = colors_gm[j][n_lambda_B+2])
-			ax.plot(Kds_array_data0[0:5], (counts0[0]/N_ens)*(Kds_array_data0[0:5]/Kds_array_data0[0])**(beta_act), color = colors_gm[j][n_lambda_B+2], linewidth = 5, linestyle = ':', marker = '', ms = 15, alpha = .8)
-			ax.plot(Kds_array_data0[0:5], (counts0[0]/N_ens)*(Kds_array_data0[0:5]/Kds_array_data0[0])**(beta_act2), color = colors_gm[j][n_lambda_B+2], linewidth = 5, linestyle = ':', marker = '', ms = 15, alpha = .4)
+			ax.plot(Kds_array_data0[0:10], (counts0[0]/N_ens)*(Kds_array_data0[0:10]/Kds_array_data0[0])**(beta_act), color = colors_gm[j][n_lambda_B+2], linewidth = 5, linestyle = ':', marker = '', ms = 15, alpha = .8)
+			ax.plot(Kds_array_data0[0:10], (counts0[0]/N_ens)*(Kds_array_data0[0:10]/Kds_array_data0[0])**(beta_act2), color = colors_gm[j][n_lambda_B+2], linewidth = 5, linestyle = ':', marker = '', ms = 15, alpha = .4)
 
 			Kds_array_data = Kds_array_data[clone_sizes_binned!=0]
 			clone_sizes_binned = clone_sizes_binned[clone_sizes_binned!=0]
