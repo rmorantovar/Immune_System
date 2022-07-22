@@ -861,11 +861,11 @@ def calculate_Q0(Tmin, Tmax, E_matrix, E_ms, L):
 	dE = np.diff(Es)
 
 	Omega = 20**L
+	
 	S = np.cumsum(lambdas[:-1]*dE)
-
-	P0 = 1/Omega
-	Q0 = np.exp(S)/np.sum(np.exp(S)*dE)
-	#Q0 = np.exp(S)/Omega
+	Omega = np.sum(np.exp(S)*dE)
+	
+	Q0 = np.exp(S)/Omega
 
 	return Es, dE, Q0, lambdas
 

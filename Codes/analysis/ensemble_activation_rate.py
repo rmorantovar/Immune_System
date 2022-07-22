@@ -40,7 +40,7 @@ Tf = 6
 dT = .01
 days = np.arange(0, Tf, 1)
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
-time_bins = time[::15]
+time_bins = time[::5]
 lambda_A = 6 #days^-1
 k_pr = .1 # hour^-1
 k_pr = k_pr*24 #days^-1
@@ -73,13 +73,21 @@ for i in np.arange(L):
     PWM_data[:,i]-=np.min(PWM_data[:,i], axis=0)
 
 Es, dE, Q0, lambdas = calculate_Q0(0.01, 50, PWM_data, E_ms, L)
+S = np.cumsum(lambdas[:-1]*dE)
+Omega = np.sum(np.exp(S)*dE)
 Ks = np.exp(Es[:-1])
+
+beta_pr = lambdas[:-1][Es[:-1]<np.log(k_pr/k_on)][-1]
+E_pr = Es[:-1][Es[:-1]<np.log(k_pr/k_on)][-1]
+print('E_pr:%.2f'%E_pr, 'beta_pr:%.2f'%beta_pr)
 
 beta_r = lambdas[:-1][np.cumsum(Q0*dE)<(1/N_r)][-1]
 E_r = Es[:-1][np.cumsum(Q0*dE)<(1/(N_r))][-1]
 print('E_r:%.2f'%E_r, 'beta_r:%.2f'%beta_r)
+
 #----------------------------------------------------------------
 t_act = [3.8, 4.5]
+
 energy_model = 'MJ'
 for q in qs:
 	beta_q = lambdas[lambdas>q][-1]
@@ -107,21 +115,32 @@ for q in qs:
 
 		m_bar2 = np.array([N_r*(np.sum((1-np.exp(-(np.exp(lambda_A*t)/N_A)*k_on*p_a*N_c/lambda_A))*Q0*dE)) for t in time])
 
+		t_act = (1/lambda_A)*(np.log((lambda_A*N_A*Omega*beta_q)/(N_c*k_on*N_r)) - beta_q*E_q)
+		print(t_act)
+		t_act2 = (1/lambda_A)*np.log((lambda_A*N_A)/(N_c*k_on))
+		
+
 		delta_t = 0
+		delta_t2 = 0
 		if(E_r>E_q):
-			delta_t =  q*(E_r-E_q)/lambda_A
-		t_act = (1/lambda_A)*np.log((lambda_A*N_A)/(N_c*k_on)) + delta_t
+			delta_t =  q*(E_r-E_pr)/lambda_A
+			t_act2 =  q*(E_r-E_q-(1/q)*np.log((N_c*k_on)/(lambda_A*N_A)))/lambda_A
+		print(t_act2)
+		
+
+		t_act_data = time_bins[:-1][data_N_active_linages>1][0]
+		t_act_theory = time[m_bar2>1][0]
 
 		#Simulation
-		ax.plot(time_bins[:-1], data_N_active_linages, linestyle = '', marker = 'o', ms = 8, linewidth = 2, label = 'simulation', color = colors[j])
+		ax.plot(time_bins[:-1], data_N_active_linages, linestyle = '-', marker = 'o', ms = 4, linewidth = 1, label = 'simulation', color = colors[j])
 		#Exact analytics
-		ax.plot(time, m_bar, color = colors[j], label = growth_models[j] + ' growth', linestyle = '--', linewidth = 3, alpha = .6)
+		#ax.plot(time, m_bar, color = colors[j], label = growth_models[j] + ' growth', linestyle = '--', linewidth = 3, alpha = .6)
 		ax.plot(time, m_bar2, color = colors[j], label = growth_models[j] + ' growth', linestyle = '-', linewidth = 3, alpha = .6)
 		#approximations
-		ax.plot(time, data_N_active_linages[-10]*np.exp(lambda_A*(time))/np.exp(lambda_A*(time_bins[:-1][-10])), color = 'black', linestyle = ':', linewidth = 1, alpha = .6)
-		ax.plot(time, data_N_active_linages[-1]*np.exp((lambda_A*(np.min([beta_q, beta_r]))/q)*(time))/np.exp((lambda_A*(np.min([beta_q, beta_r]))/q)*(time_bins[:-1][-1])), color = 'black', linestyle = '--', linewidth = 1, alpha = .6)
+		#ax.plot(time, data_N_active_linages[-10]*np.exp(lambda_A*(time))/np.exp(lambda_A*(time_bins[:-1][-10])), color = 'black', linestyle = ':', linewidth = 1, alpha = .6)
+		#ax.plot(time, data_N_active_linages[-1]*np.exp((lambda_A*(np.min([beta_q, beta_r]))/q)*(time))/np.exp((lambda_A*(np.min([beta_q, beta_r]))/q)*(time_bins[:-1][-1])), color = 'black', linestyle = '--', linewidth = 1, alpha = .6)
 		
-		ax.vlines(t_act, 1e-6, N_r, color = 'black', linestyle = ':', linewidth = 1, alpha = .6)
+		ax.vlines([t_act, t_act2, t_act_data, t_act_theory], 1e-6, N_r, color = ['black', 'green', 'darkblue', 'darkblue'], linestyle = ['-', ':', '--', '-'], linewidth = [2, 2, 2, 2], alpha = .6)
 		ax.hlines(1, 0, Tf, linestyle = 'dashed', color = 'black', linewidth = 1, alpha = .6)
 		
 		my_plot_layout(ax = ax, xscale='linear', yscale= 'log', xlabel=r'time', ylabel = r'$\bar m(t)$', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )

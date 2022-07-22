@@ -55,7 +55,8 @@ time = np.linspace(T0, Tf, int((Tf-T0)/dT))
 lambda_A = 6 #days^-1
 k_pr = .1 # hour^-1
 k_pr = k_pr*24 #days^-1
-qs = [1, 2]
+qs = [1, 2, 3]
+colors_q = ['darkred', 'olive', 'navy']
 lambda_B = 1*lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
 N_c = 1e3
@@ -92,8 +93,8 @@ lambda_Bs = np.array([np.flip([.5])*lambda_A, np.flip([.5])*lambda_A], dtype=obj
 d=20
 energy_model = 'MJ'
 colors_gm = np.array([plt.cm.Oranges(np.linspace(0,1,len(lambda_Bs[0])+2)),plt.cm.Reds(np.linspace(0,1,len(lambda_Bs[1])+2)) ], dtype=object)
-
-for q in [1, 2, 3]:
+FIG, AX = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+for q in qs:
 	beta_q = lambdas[lambdas>q][-1]
 	E_q = Es[lambdas>q][-1]
 	Kd_q = np.exp(E_q)
@@ -166,6 +167,7 @@ for q in [1, 2, 3]:
 			popt, pcov = curve_fit(f = my_linear_func , xdata = np.log(Kds_array_data0[0:4]), ydata= np.log(counts0)[0:4] )
 			beta_act2 = popt[1]
 			beta_act = np.min([q, beta_r])
+
 			print('beta_act = %.2f'%(beta_act))
 			print(np.max([beta_r, beta_q]))
 
@@ -180,25 +182,38 @@ for q in [1, 2, 3]:
 			clone_sizes_binned = clone_sizes_binned[clone_sizes_binned!=0]
 			ax2.plot(Kds_array_data[:], clone_sizes_binned[:]/max_clone_size, color = 'orange', linewidth =5, linestyle = '', marker = 's', ms = 8)
 
+			AX.plot(Kds_array_data[:], clone_sizes_binned[:]/max_clone_size, linewidth =5, linestyle = '', marker = 's', ms = 8, label = '%d'%q, color = colors_q[q-1])
+
 			cross_over = np.where(clone_sizes_binned==max_clone_size)[0][0]
-			print(cross_over)
 			ax2.plot(Kds_array_data[0:cross_over+1], (clone_sizes_binned[cross_over]/max_clone_size)*(Kds_array_data[0:cross_over+1]/Kds_array_data[cross_over])**((lambda_B/lambda_A)), color = 'orange', linewidth =3, linestyle = '--', marker = '', ms = 15, alpha = .8)
 			ax2.plot(Kds_array_data[cross_over:], (clone_sizes_binned[cross_over]/max_clone_size)*(Kds_array_data[cross_over:]/Kds_array_data[cross_over])**((lambda_B/lambda_A)*(-q)), color = 'orange', linewidth =3, linestyle = '--', marker = '', ms = 15, alpha = .8)
 			#ax2.vlines([Kd_pr, Kd_q, Kd_r], 4e-3, 1.5, linestyles = ['-',':', '--'], color = 'grey')
 
-		my_plot_layout(ax = ax, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-		#ax.legend(title=r'$\lambda_A/\lambda_B$', fontsize = 30, title_fontsize = 35)
-		ax.set_xlim(left = np.exp(E_ms), right = np.exp(E_ms+25))
-		ax.set_ylim(bottom = 1e-6)
-		fig.savefig('../../Figures/1_Dynamics/Ensemble/Q_K_q-%d.pdf'%q)
+			#AX.plot(Kds_array_data[0:cross_over+1], (clone_sizes_binned[cross_over]/max_clone_size)*(Kds_array_data[0:cross_over+1]/Kds_array_data[cross_over])**((lambda_B/lambda_A)), linewidth =3, linestyle = '--', marker = '', ms = 15, alpha = .8)
+			AX.plot(Kds_array_data[cross_over:], (clone_sizes_binned[cross_over]/max_clone_size)*(Kds_array_data[cross_over:]/Kds_array_data[cross_over])**((lambda_B/lambda_A)*(-q)), linewidth =3, linestyle = '--', marker = '', ms = 15, alpha = .8, color = colors_q[q-1])
 
-		my_plot_layout(ax = ax2, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-		#ax2.legend(fontsize = 30, title_fontsize = 35)
-		ax2.set_xlim(left = np.exp(E_ms), right = np.exp(E_ms+25))
-		ax2.set_ylim(bottom = 4e-3, top = 2e0)
-		ax2.set_yticks([1, 0.1, 0.01])
-		ax2.set_yticklabels([1, 0.1, 0.01])
-		fig2.savefig('../../Figures/1_Dynamics/Ensemble/N_vs_K_q-%d.pdf'%q)
+	my_plot_layout(ax = ax, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+	#ax.legend(title=r'$\lambda_A/\lambda_B$', fontsize = 30, title_fontsize = 35)
+	ax.set_xlim(left = np.exp(E_ms), right = np.exp(E_ms+25))
+	ax.set_ylim(bottom = 1e-6)
+	fig.savefig('../../Figures/1_Dynamics/Ensemble/Q_K_q-%d.pdf'%q)
+
+	my_plot_layout(ax = ax2, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+	#ax2.legend(fontsize = 30, title_fontsize = 35)
+	ax2.set_xlim(left = np.exp(E_ms), right = np.exp(E_ms+25))
+	ax2.set_ylim(bottom = 4e-3, top = 2e0)
+	ax2.set_yticks([1, 0.1, 0.01])
+	ax2.set_yticklabels([1, 0.1, 0.01])
+	fig2.savefig('../../Figures/1_Dynamics/Ensemble/N_vs_K_q-%d.pdf'%q)
+
+
+my_plot_layout(ax = AX, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+AX.legend(fontsize = 30, title_fontsize = 35, title = r'$q$')
+AX.set_xlim(left = np.exp(E_ms), right = np.exp(E_ms+25))
+AX.set_ylim(bottom = 4e-3, top = 2e0)
+AX.set_yticks([1, 0.1, 0.01])
+AX.set_yticklabels([1, 0.1, 0.01])
+FIG.savefig('../../Figures/1_Dynamics/Ensemble/N_vs_K.pdf')
 
 
 

@@ -42,7 +42,7 @@ antigen = 'TACNSEYPNTTK'
 
 L=len(antigen)
 
-N_ens = 100
+N_ens = 500
 N_r = 5e4
 T0 = 0
 Tf = 6
@@ -53,6 +53,7 @@ lambda_A = 6 #days^-1
 k_pr = .1 # hour^-1
 k_pr = k_pr*24 #days^-1
 qs = [1, 2, 3]
+colors_q = ['darkred', 'olive', 'navy']
 lambda_B = .5*lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
 N_c = 1e3
@@ -87,6 +88,9 @@ lambda_Bs = np.array([np.flip([.5])*lambda_A, np.flip([.5])*lambda_A], dtype=obj
 d=20
 energy_model = 'MJ'
 colors_gm = np.array([plt.cm.Oranges(np.linspace(0,1,len(lambda_Bs[0])+2)),plt.cm.Reds(np.linspace(0,1,len(lambda_Bs[1])+2)) ], dtype=object)
+
+FIG, AX = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+
 for q in qs:
 
 	beta_q = lambdas[lambdas>q][-1]
@@ -134,19 +138,26 @@ for q in qs:
 
 			ax.plot(clone_size[:], clone_size_counts[:], linestyle = '', marker = '^', ms = 10, linewidth = 5, color = 'orange', label = '%.1f'%(lambda_A/(lambda_B*q)))
 
+			AX.plot(clone_size[:], clone_size_counts[:], linestyle = '', marker = '^', ms = 10, linewidth = 5, label = '%d'%q, color = colors_q[q-1])
+
 			if (gm=='exponential'):
 				ax.plot(clone_size[:], plaw_fit_csd[:], linestyle = '--', marker = '', ms = 5, linewidth = 3, alpha = .8, color = 'orange')
+				AX.plot(clone_size[:], plaw_fit_csd[:], linestyle = '--', marker = '', ms = 5, linewidth = 3, alpha = .8, color = colors_q[q-1])
 			if (gm=='linear'):
 				ax.plot(clone_size[:][:], plaw_fit_csd[:][:], linestyle = '--', marker = '', ms = 5, linewidth = 3, alpha = .6, color = 'orange')
 		#ax.plot(clone_size[:], (clone_size[:]**(-1)/clone_size[-1]**(-1))*clone_size_counts[-1], linestyle = '--', marker = '', ms = 5, linewidth = 4, alpha = .6, color = 'darkred')
 		
-		
-		my_plot_layout(ax = ax, xscale='log', yscale= 'log', y_fontsize=30 )
-		ax.set_xlim(clone_size[0]*.5, clone_size[-1]*2)
-		ax.set_ylim(clone_size_counts[-1]*.1, clone_size_counts[0]*10)
-		ax.legend(title=r'$\frac{\lambda_A}{q\lambda_B}$', fontsize = 30, title_fontsize = 35)
-		fig.savefig('../../Figures/1_Dynamics/Ensemble/CSD_q-%d.pdf'%q)
+	my_plot_layout(ax = ax, xscale='log', yscale= 'log', y_fontsize=30 )
+	ax.set_xlim(clone_size[0]*.5, clone_size[-1]*2)
+	ax.set_ylim(clone_size_counts[-1]*.1, clone_size_counts[0]*10)
+	ax.legend(title=r'$\frac{\lambda_A}{q\lambda_B}$', fontsize = 30, title_fontsize = 35)
+	fig.savefig('../../Figures/1_Dynamics/Ensemble/CSD_q-%d.pdf'%q)
 
+my_plot_layout(ax = AX, xscale='log', yscale= 'log', y_fontsize=30 )
+AX.set_xlim(1, right = 4e3)
+AX.set_ylim(top = 10, bottom = 1e-9)
+AX.legend(fontsize = 30, title_fontsize = 35)
+FIG.savefig('../../Figures/1_Dynamics/Ensemble/CSD.pdf')
 
 
 
