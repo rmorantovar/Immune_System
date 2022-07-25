@@ -35,8 +35,10 @@ if(Matrix == 'MJ2'):
 
 N_ens = 500
 N_r = 5e4
+N_r = 1e5
 T0 = 0
 Tf = 6
+Tf = 8
 dT = .01
 days = np.arange(0, Tf, 1)
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
@@ -48,11 +50,12 @@ qs = [1, 2, 3]
 lambda_B = 1*lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
 N_c = 1e3
-E_ms = -27
+E_ms = -28
 
 antigen = 'CMFILVWYAGTSQNEDHRKPFMRTP'
 antigen = 'FMLFMAVFVMTSWYC'
 antigen = 'TACNSEYPNTTK'
+antigen = 'TACNSEYPNTTKCGRWYC'
 #antigen = 'FTSENAYCGR'
 #antigen = 'MRTAYRNG'
 #antigen = 'MRTAY'

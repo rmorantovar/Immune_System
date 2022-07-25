@@ -38,6 +38,7 @@ if(Matrix == 'MJ2'):
 antigen = 'CMFILVWYAGTSQNEDHRKPFMRTP'
 antigen = 'FMLFMAVFVMTSWYC'
 antigen = 'TACNSEYPNTTK'
+antigen = 'TACNSEYPNTTKCGRWYC'
 #antigen = 'FTSENAYCGR'
 #antigen = 'MRTAYRNG'
 #antigen = 'MRTAY'
@@ -46,9 +47,11 @@ L=len(antigen)
 
 N_ens = 500
 N_r = 5e4
+N_r = 1e5
 #N_r = 1e6
 T0 = 0
 Tf = 6
+Tf = 8
 dT = .1
 days = np.arange(0, Tf, 1)
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
@@ -60,7 +63,7 @@ colors_q = ['darkred', 'olive', 'navy']
 lambda_B = 1*lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
 N_c = 1e3
-E_ms = -27
+E_ms = -28
 
 print('k_on/k_pr = %.1e'%(k_on/k_pr))
 
@@ -80,8 +83,8 @@ for i in np.arange(L):
 Es, dE, Q0, lambdas = calculate_Q0(0.01, 50, PWM_data, E_ms, L)
 Kds = np.exp(Es[:-1])
 
-beta_r = lambdas[:-1][np.cumsum(Q0*dE)<(1/(N_r*N_ens))][-1]
-E_r = Es[:-1][np.cumsum(Q0*dE)<(1/(N_r*N_ens))][-1]
+beta_r = lambdas[:-1][np.cumsum(Q0*dE)<(1/(N_r))][-1]
+E_r = Es[:-1][np.cumsum(Q0*dE)<(1/(N_r))][-1]
 Kd_r = np.exp(E_r)
 
 E_pr = Es[:-1][Kds<(k_pr/k_on)][-1]
@@ -186,7 +189,7 @@ for q in qs:
 
 			cross_over = np.where(clone_sizes_binned==max_clone_size)[0][0]
 			ax2.plot(Kds_array_data[0:cross_over+1], (clone_sizes_binned[cross_over]/max_clone_size)*(Kds_array_data[0:cross_over+1]/Kds_array_data[cross_over])**((lambda_B/lambda_A)), color = 'orange', linewidth =3, linestyle = '--', marker = '', ms = 15, alpha = .8)
-			ax2.plot(Kds_array_data[cross_over:], (clone_sizes_binned[cross_over]/max_clone_size)*(Kds_array_data[cross_over:]/Kds_array_data[cross_over])**((lambda_B/lambda_A)*(-q)), color = 'orange', linewidth =3, linestyle = '--', marker = '', ms = 15, alpha = .8)
+			ax2.plot(Kds_array_data[cross_over:], (clone_sizes_binned[cross_over+1]/max_clone_size)*(Kds_array_data[cross_over:]/Kds_array_data[cross_over+1])**((lambda_B/lambda_A)*(-q)), color = 'orange', linewidth =3, linestyle = '--', marker = '', ms = 15, alpha = .8)
 			#ax2.vlines([Kd_pr, Kd_q, Kd_r], 4e-3, 1.5, linestyles = ['-',':', '--'], color = 'grey')
 
 			#AX.plot(Kds_array_data[0:cross_over+1], (clone_sizes_binned[cross_over]/max_clone_size)*(Kds_array_data[0:cross_over+1]/Kds_array_data[cross_over])**((lambda_B/lambda_A)), linewidth =3, linestyle = '--', marker = '', ms = 15, alpha = .8)

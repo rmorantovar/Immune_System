@@ -36,6 +36,7 @@ if(Matrix == 'MJ2'):
 antigen = 'CMFILVWYAGTSQNEDHRKPFMRTP'
 antigen = 'FMLFMAVFVMTSWYC'
 antigen = 'TACNSEYPNTTK'
+antigen = 'TACNSEYPNTTKCGRWYC'
 #antigen = 'FTSENAYCGR'
 #antigen = 'MRTAYRNG'
 #antigen = 'MRTAY'
@@ -44,8 +45,10 @@ L=len(antigen)
 
 N_ens = 500
 N_r = 5e4
+N_r = 1e5
 T0 = 0
 Tf = 6
+Tf = 8
 dT = .1
 days = np.arange(0, Tf, 1)
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
@@ -57,7 +60,7 @@ colors_q = ['darkred', 'olive', 'navy']
 lambda_B = .5*lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
 N_c = 1e3
-E_ms = -27
+E_ms = -28
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
 
 print('k_on/k_pr = %.1e'%(k_on/k_pr))
@@ -78,8 +81,8 @@ for i in np.arange(L):
 Es, dE, Q0, lambdas = calculate_Q0(0.01, 50, PWM_data, E_ms, L)
 Kds = np.exp(Es[:-1])
 
-beta_r = lambdas[:-1][np.cumsum(Q0*dE)<(1/(N_r*N_ens))][-1]
-E_r = Es[:-1][np.cumsum(Q0*dE)<(1/(N_r*N_ens))][-1]
+beta_r = lambdas[:-1][np.cumsum(Q0*dE)<(1/(N_r))][-1]
+E_r = Es[:-1][np.cumsum(Q0*dE)<(1/(N_r))][-1]
 Kd_r = np.exp(E_r)
 #----------------------------------------------------------------
 
@@ -120,7 +123,7 @@ for q in qs:
 			beta_act = np.min([q, beta_r])
 			print('beta_act = %.2f'%(beta_act))
 
-			exponents = [(((lambda_A*beta_act)/(lambda_B*q))+1), -1]
+			exponents = [(((lambda_A*beta_act*)/(lambda_B*q))+1), -1]
 			exponents2 = [(((lambda_A*beta_act2)/(lambda_B))+1), -1]
 
 			clone_size_distribution = np.histogram(clone_sizes, bins = np.logspace(np.log10(np.min(clone_sizes)),np.log10(np.max(clone_sizes)),15), density = True)
@@ -136,9 +139,9 @@ for q in qs:
 			plaw_fit_csd2 = clone_size**(-exponents2[j])#*(np.log(clone_size**(1/nu)))**(1-beta_act)
 			plaw_fit_csd2 /= (plaw_fit_csd2[-1]/(clone_size_counts[-1]))
 
-			ax.plot(clone_size[:], clone_size_counts[:], linestyle = '', marker = '^', ms = 10, linewidth = 5, color = 'orange', label = '%.1f'%(lambda_A/(lambda_B*q)))
+			ax.plot(clone_size[:], clone_size_counts[:], linestyle = '', marker = '^', ms = 10, linewidth = 2, color = 'orange', label = '%.1f'%(lambda_A/(lambda_B*q)))
 
-			AX.plot(clone_size[:], clone_size_counts[:], linestyle = '', marker = '^', ms = 10, linewidth = 5, label = '%d'%q, color = colors_q[q-1])
+			AX.plot(clone_size[:], clone_size_counts[:], linestyle = '', marker = '^', ms = 10, linewidth = 2, label = '%d'%q, color = colors_q[q-1])
 
 			if (gm=='exponential'):
 				ax.plot(clone_size[:], plaw_fit_csd[:], linestyle = '--', marker = '', ms = 5, linewidth = 3, alpha = .8, color = 'orange')
@@ -154,8 +157,8 @@ for q in qs:
 	fig.savefig('../../Figures/1_Dynamics/Ensemble/CSD_q-%d.pdf'%q)
 
 my_plot_layout(ax = AX, xscale='log', yscale= 'log', y_fontsize=30 )
-AX.set_xlim(1, right = 4e3)
-AX.set_ylim(top = 10, bottom = 1e-9)
+AX.set_xlim(1, right = 1.5e4)
+AX.set_ylim(top = 5, bottom = 1e-11)
 AX.legend(fontsize = 30, title_fontsize = 35)
 FIG.savefig('../../Figures/1_Dynamics/Ensemble/CSD.pdf')
 

@@ -32,20 +32,21 @@ if(Matrix == 'MJ2'):
     Alphabet = np.loadtxt(Text_files_path + 'Alphabet.txt', dtype=bytes, delimiter='\t').astype(str)
     Alphabet_list = Alphabet.tolist()
 
-N_r = 5e4
+N_ens = 1
+N_r = 1e5
 T0 = 0
-Tf = 6
+Tf = 8
 dT = 0.05
 lambda_A = 6
 k_pr = 0.1 # hour^-1
 k_pr = k_pr*24 #days^-1
 
 #k_pr = 0.000277
-qs = [2]
+qs = [1, 2]
 lambda_B = 3
 k_on = 1e6*24*3600; #(M*days)^-1
-N_c = 1e3
-E_ms = -27
+N_c = 1e4
+E_ms = -28
 
 print('k_on/k_pr = %.1e'%(k_on/k_pr))
 
@@ -53,6 +54,7 @@ antigen = 'CMFILVWYAGTSQNEDHRKPFMRTP'
 antigen = 'FMLFMAVFVMTSWYC'
 antigen = 'FTSENAYCGR'
 antigen = 'TACNSEYPNTTK'
+antigen = 'TACNSEYPNTTKCGRWYC'
 #antigen = 'TANSEYPNTK'
 #antigen = 'MRTAYRNG'
 #antigen = 'MRTAY'
@@ -101,14 +103,11 @@ for energy_model in energy_models:
 
         for n_q, q in enumerate(qs):
 
-            parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_alpha-%.6f_beta-%.6f_gamma-%.6f_q-%d_linear-%d_'%(lambda_A, 0.5, k_pr/24, q, linear)+energy_model
-            #data_bcells = np.loadtxt(Text_files_path + 'Dynamics/Trajectories/'+parameters_path+'/bcells.txt')
+            parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_q-%d_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, q, l, N_ens)+energy_model
             data = pd.read_csv(Text_files_path + 'Dynamics/Trajectories/'+parameters_path+'/energies.txt', sep = '\t', header=None)
 
             min_e_data = np.min(data[0])
             max_e_data = np.max(data[0])
-
-            #print(min_e_data, max_e_data)
 
             energies_array = np.linspace(min_e_data-1, max_e_data, 50)
 
@@ -136,7 +135,7 @@ for energy_model in energy_models:
                 my_plot_layout(ax = ax_seq, xscale = 'log', yscale = 'log', xlabel = r'$K_D$', ylabel = r'$\Lambda(\epsilon)$')
                 #ax_seq.set_ylim(bottom = .8)
                 ax_seq.legend(title = r'$\beta$', fontsize = 30, title_fontsize = 33)
-                fig_seq.savefig('../../Figures/1_Dynamics/Trajectories/Sequences_expansion_'+energy_model+'.pdf')
+                fig_seq.savefig('../../Figures/1_Dynamics/Trajectories/Sequences_expansion_q-%d.pdf'%q)
 
             #---- DISTRIBUTION ACTIVATED ENERGIES ----
             #----------------------------------------------------------------
@@ -186,14 +185,14 @@ for energy_model in energy_models:
             if(linear==1):
                 ax3.plot(Kds_array_data[:], 5e11*Kds_array_data[:]**(lambd_act), color = colors_fate[n_q][1], linewidth =3, linestyle = '--', marker = '', ms = 15)
             
-        #ax3.vlines(np.exp(np.average(np.log(Kds))), 0, ax[n_q,3].get_ylim()[1], color = colors_fate[n_q][1], linewidth = 3, linestyle = '-')
-        #ax3.vlines(np.exp(np.average(np.log(Kds), weights = data_bcells_active[np.where(data_active[:,2]==0)[0],-1])), 0, ax[n_q,3].get_ylim()[1], color = colors_fate[n_q][1], linewidth = 3, linestyle = '--')
-        my_plot_layout(ax = ax3, yscale = 'log', xscale = 'log', xlabel = r'$K_D$', ylabel = 'counts')
-        my_plot_layout(ax = ax4, yscale = 'log', xscale = 'log', xlabel = r'$K_D$', ylabel = 'Clone size')
-        #ax3.legend(fontsize = 24, loc = 4)
+            #ax3.vlines(np.exp(np.average(np.log(Kds))), 0, ax[n_q,3].get_ylim()[1], color = colors_fate[n_q][1], linewidth = 3, linestyle = '-')
+            #ax3.vlines(np.exp(np.average(np.log(Kds), weights = data_bcells_active[np.where(data_active[:,2]==0)[0],-1])), 0, ax[n_q,3].get_ylim()[1], color = colors_fate[n_q][1], linewidth = 3, linestyle = '--')
+            my_plot_layout(ax = ax3, yscale = 'log', xscale = 'log', xlabel = r'$K_D$', ylabel = 'counts')
+            my_plot_layout(ax = ax4, yscale = 'log', xscale = 'log', xlabel = r'$K_D$', ylabel = 'Clone size')
+            #ax3.legend(fontsize = 24, loc = 4)
 
-        fig2.savefig("../../Figures/1_Dynamics/Trajectories/Plasma_vs_GC_linear-%d.pdf"%(linear))
-        fig3.savefig("../../Figures/1_Dynamics/Trajectories/Sera_%d.pdf"%(linear))
-        fig4.savefig("../../Figures/1_Dynamics/Trajectories/Sera_2_%d.pdf"%(linear))
+            fig2.savefig("../../Figures/1_Dynamics/Trajectories/Plasma_vs_GC_q-%d.pdf"%(q))
+            fig3.savefig("../../Figures/1_Dynamics/Trajectories/Sera_q-%d.pdf"%(q))
+            fig4.savefig("../../Figures/1_Dynamics/Trajectories/Sera_2_q-%d.pdf"%(q))
 
 

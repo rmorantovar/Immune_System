@@ -8,10 +8,12 @@ from Immuno_models import*
 import scipy.special as sc
 import pickle
 from matplotlib import style
+from matplotlib.collections import LineCollection
 from scipy.optimize import curve_fit
 
 Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/'
 
+fig_beta, ax_beta = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 fig0, ax0 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 fig1, ax1 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 fig2, ax2 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
@@ -41,11 +43,12 @@ antigen = 'CMFILVWYAGTSQNEDHRKPFMRTP'
 antigen = 'FMLFMAVFVMTSWYC'
 antigen = 'FTSENAYCGR'
 antigen = 'TACNSEYPNTTK'
+antigen = 'TACNSEYPNTTKCGRWYC'
 #antigen = 'TANSEYPNTK'
 #antigen = 'MRTAYRNG'
 #antigen = 'MRTAY'
 
-transparency_q = [1, .6, .3]
+transparency_q = [1, .6, .3, 0]
 colors_q = ['darkred', 'darkred', 'darkred']
 colors_q2 = ['darkred', 'indigo', 'darkred']
 colors_R = ['tab:olive', 'olive', 'olive']
@@ -56,13 +59,14 @@ colors_fit = ['darkblue', 'darkred']
 growth_models = [0]#, 1]
 
 L=len(antigen)
+print('L=%.d'%L)
 
-N_r = 2e5
+N_r = 1e5
 T0 = 3
-Tf = 8
+Tf = 7.9
 #Tf = 9
 dT = 0.1
-days = np.linspace(3, Tf, 3)
+days = np.linspace(3, Tf, 4)
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
 lambda_A = 6 #days^-1
 k_act = .1 # hour^-1
@@ -70,8 +74,10 @@ k_act = k_act*24 #days^-1
 qs = [1, 2]
 beta = 1*lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
-N_c = 1e3
-E_ms = -27
+N_c = 1e4
+E_ms = -28
+
+print('K_d_ms=%.1e'%np.exp(E_ms))
 
 print('max_u = %.2e'%(k_on*np.exp(Tf*lambda_A)/N_A))
 
@@ -96,20 +102,37 @@ Ks = np.exp(Es[:-1])
 beta_r = lambdas[:-1][np.cumsum(Q0*dE)<(1/N_r)][-1]
 E_r = Es[:-1][np.cumsum(Q0*dE)<(1/N_r)][-1]
 
+#----------------------------------------------------------------
+points = np.array([Ks, lambdas[:-1]]).T.reshape(-1, 1, 2)
+segments = np.concatenate([points[:-1], points[1:]], axis=1)
+norm = plt.Normalize(1, 8)
+lc = LineCollection(segments, cmap='jet_r', norm=norm)
+# Set the values used for colormapping
+lc.set_array(lambdas)
+lc.set_linewidth(5)
+line = ax_beta.add_collection(lc)
+# fig_beta.colorbar(line, ax=ax_beta)
+
+my_plot_layout(ax=ax_beta, yscale = 'linear', xscale = 'log', ticks_labelsize = 38)
+ax_beta.set_xticks([])
+ax_beta.set_ylim(top = 7, bottom = -1)
+fig_beta.savefig('../../Figures/Summary/beta.pdf')
+#----------------------------------------------------------------
+
 ax2.plot(Ks, Q0*N_r, alpha = transparency_q[0], color = 'grey', linewidth = 5, linestyle = '-')
 ax22.plot(Ks, Q0*N_r, alpha = transparency_q[0], color = 'grey', linewidth = 5, linestyle = '-')    
 for n_q, q in enumerate(qs):
     
     #--------------------------p_a(E, t)---------------------------
     #ax0.vlines(k_act/k_on, ax0.get_ylim()[0], 1, color = 'grey', linestyle = ':')
-    for n_t, t in enumerate(days[[-3, -2, -1]]):
+    for n_t, t in enumerate(days[[-4, -3, -2]]):
         u_on, p_a, R, QR = calculate_QR(Q0, k_on, k_act, np.exp(lambda_A*t)/N_A, Es, q, lambda_A, N_c, dE)
         M_r = N_r*N_c*np.sum(Q0*p_a*dE)
         #--------------------------R(E, t)---------------------------
         if q==2:
             ax1.plot(Ks, R, alpha = transparency_q[0], color = colors_R[n_t], linewidth = 5, linestyle = '-')
         #ax1.hlines(r_a[0]*N_c/lambda_A, ax1.get_xlim()[0], ax1.get_xlim()[1], alpha = transparency_q[n_q], color = colors_q[n_q], linestyle = ':' )
-        ax1.set_ylim(bottom = 1e-8, top = 2)
+        ax1.set_ylim(bottom = 1e-11, top = 2)
         #----------------------------------------------------------------
         #--------------------------QR(E, t)---------------------------
         #if q==1:
@@ -119,7 +142,7 @@ for n_q, q in enumerate(qs):
             #ax2.hlines([1, N_r], ax2.get_xlim()[0], ax2.get_xlim()[1], alpha = 1, color = 'black', linestyle = ':')
             #ax2.vlines(np.exp(Es)[lambdas[:-1] < q][0], ax2.get_ylim()[0], np.max(QR), color = colors_R[-1], linestyle = ':', linewidth = 2)
         if q==2:
-            ax2.plot(Ks, QR*N_r, alpha = transparency_q[0], color = colors_R[n_t], linewidth = 5, linestyle = '-')
+            ax2.plot(Ks, QR*N_r, alpha = transparency_q[-1], color = colors_R[n_t], linewidth = 5, linestyle = '-')
             #ax2.hlines([N_r], ax2.get_xlim()[0], ax2.get_xlim()[1], alpha = 1, color = 'black', linestyle = ':') 
             #-------FOR Q0--------- 
             #ax2.vlines(np.exp(E_r), ax2.get_ylim()[0], N_r*Q0[Ks<np.exp(E_r)][-1], color = 'black', linestyle = ':')       
@@ -127,8 +150,9 @@ for n_q, q in enumerate(qs):
             #---------------------- 
 
         #ax2.vlines(Ks[lambdas[:-1] < 1][0], ax2.get_ylim()[0], np.max(QR), color = 'brown', linestyle = ':', linewidth = 4)
-        ax2.set_ylim(bottom = 1e-8, top = 2*N_r)
+        ax2.set_ylim(bottom = 1e-11, top = 2*N_r)
     ax0.plot(Ks, p_a, color = colors_q[n_q], alpha = transparency_q[n_q], linewidth = 5, linestyle = '-', label = '%d'%(q))
+
     ax22.plot(Ks, QR*N_r, alpha = transparency_q[0], color = colors_q2[n_q], linewidth = 5, linestyle = '-')
     ax22.hlines([1, N_r], ax22.get_xlim()[0], ax22.get_xlim()[1], alpha = 1, color = 'black', linestyle = ':')
     #ax22.vlines(Ks[QR == np.max(QR)][0], ax22.get_ylim()[0], np.max(QR*N_r), color = colors_q2[n_q], linestyle = ':')
@@ -147,10 +171,13 @@ ax0.legend(title = '$q$', title_fontsize = 35, fontsize = 30)
 #ax0.legend(fontsize = 30, title_fontsize=33)
 fig0.savefig('../../Figures/Summary/p_a.pdf')
 
-my_plot_layout(ax=ax1, yscale = 'log', xscale = 'log', ticks_labelsize = 30)
+my_plot_layout(ax=ax1, yscale = 'log', xscale = 'log', ticks_labelsize = 38)
+ax1.set_xticks([])
 fig1.savefig('../../Figures/Summary/R_clone.pdf')
 
-my_plot_layout(ax=ax2, yscale = 'log', xscale = 'log', ticks_labelsize = 30)
+
+my_plot_layout(ax=ax2, yscale = 'log', xscale = 'log', ticks_labelsize = 38)
+ax2.set_xticks([])
 fig2.savefig('../../Figures/Summary/QR.pdf')
 my_plot_layout(ax=ax22, yscale = 'log', xscale = 'log', ticks_labelsize = 30)
 fig22.savefig('../../Figures/Summary/Q2.pdf')

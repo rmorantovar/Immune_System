@@ -36,23 +36,25 @@ N_ens = 1
 N_r = 5e4
 N_r = 1e5
 T0 = 0
-Tf = 6
+Tf = 8
 dT = 0.01
 lambda_A = 6
 k_pr = 0.1 # hour^-1
 k_pr = k_pr*24 #days^-1
 
 #k_pr= 0.000277
-qs = [1, 2]
+qs = [2, 1]
+colors_q = ['navy', 'darkred']
 lambda_B = 1*lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
-N_c = 1e3
-E_ms = -27
+N_c = 1e4
+E_ms = -28
 
 antigen = 'CMFILVWYAGTSQNEDHRKPFMRTP'
 antigen = 'FMLFMAVFVMTSWYC'
 antigen = 'FTSENAYCGR'
 antigen = 'TACNSEYPNTTK'
+antigen = 'TACNSEYPNTTKCGRWYC'
 #antigen = 'TANSEYPNTK'
 #antigen = 'MRTAYRNG'
 #antigen = 'MRTAY'
@@ -83,29 +85,28 @@ colors_fit = ['darkblue', 'darkred']
 growth_models = [0]
 
 lambd = 1.4
-for q in qs:
+for i_q, q in enumerate(qs):
     for energy_model in energy_models:
         
         fig, ax = plt.subplots(2,4,figsize=(40,18), gridspec_kw={'hspace':0.25, 'wspace':.25})
         fig_b, ax_b = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
         fig_a, ax_a = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
         fig_act, ax_act = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
-        fig_clones, ax_clones = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.06, 'right':.98, 'bottom':.1, 'top': 0.9})
+        fig_clones, ax_clones = plt.subplots(1, 4, figsize=(40,10), gridspec_kw={'left':0.06, 'right':.98, 'bottom':.1, 'top': 0.9})
         for j, linear in enumerate(growth_models):
 
             colors_activation = []
 
             parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_q-%d_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, q, j, N_ens)+energy_model
             data = pd.read_csv(Text_files_path + 'Dynamics/Trajectories/'+parameters_path+'/energies.txt', sep = '\t', header=None)
-            #data_antigen = np.loadtxt(Text_files_path + 'Dynamics/Trajectories/'+parameters_path+'/antigen.txt')
-            #data_bcells = np.loadtxt(Text_files_path + 'Dynamics/Trajectories/'+parameters_path+'/bcells.txt')
 
-            #data_N_active_linages = np.loadtxt(Text_files_path + 'Dynamics/Trajectories/'+parameters_path+'/m_bar.txt')
-            #data_bcells_active = np.transpose(data_bcells[:,np.where(data_bcells[-1,:]>1)[0]])
+            min_e_data = np.min(data[0])
+            max_e_data = np.max(data[0])
 
             data_active = data.loc[data[1]==1]
 
             activations_times = np.array(data_active[3])
+            energies  = np.array(data_active[0])
 
             ar1, ar2 = np.histogram(activations_times, bins = time)
 
@@ -151,7 +152,6 @@ for q in qs:
             if(linear == 0):
                 #ax_b.plot(time, expfit, color = 'indigo', linestyle = '--', linewidth = 4)
                 ax_b.text(x=5, y=3e3, s = r'$\sim e^{\lambda_B t}$', fontsize=48, color = 'indigo')
-
             my_plot_layout(ax = ax[0,1], yscale = 'log', xlabel = 'Time [days]', ylabel = 'Clone size')
             ax[0,1].set_ylim(bottom = .8)
             ax[0,1].set_xlim(left = 3.5, right = Tf)
@@ -191,11 +191,14 @@ for q in qs:
             #---- Entropy ----
             size_lim = 0
             if q==1:
-                size_lim=40
+                size_lim=150
             if q==2:
-                size_lim=2
+                size_lim=1
 
-            clone_sizes = clone_sizes[np.where(clone_sizes[:,-1]>(np.min(clone_sizes[:,-1])*size_lim))[0],:]
+            energies = energies[np.where((clone_sizes[:,-1]>=(np.min(clone_sizes[:,-1])*size_lim)))[0]]
+            activations_times = activations_times[np.where((clone_sizes[:,-1]>=(np.min(clone_sizes[:,-1])*size_lim)))[0]]
+            clone_sizes = clone_sizes[np.where((clone_sizes[:,-1]>=(np.min(clone_sizes[:,-1])*size_lim)))[0],:]
+
             total_pop = np.sum(clone_sizes, axis = 0)
             bcell_freqs = clone_sizes/total_pop
             entropy = -np.sum(bcell_freqs*np.log(bcell_freqs), axis = 0)
@@ -219,7 +222,7 @@ for q in qs:
             colors = []
             min_bell_freq = np.min(bcell_freqs[:,-1])
             for c in range(int(len(clone_sizes[:,0]))):
-                if bcell_freqs[c, -1]>(50*min_bell_freq):
+                if bcell_freqs[c, -1]>(50*min_bell_freq/q):
                     if q==1:
                         colors.append('indianred')
                     if q==2:
@@ -227,18 +230,29 @@ for q in qs:
                 else:
                     colors.append('silver')
 
-            ax_clones.stackplot(time, bcell_freqs, colors = colors);
+            days_plot = np.linspace(5.5, Tf, 4)
+            positions = np.random.random((len(energies), 2))
+            energies = energies - min_e_data
+            for i_plot in range(len(days_plot)):
+                print(i_plot)
+                for i_c in range(len(energies)):
+                    if activations_times[i_c]<=days_plot[i_plot]:
+                        #print(i_c, positions[i_c], int(days_plot[i_plot]*len(time)/8)-1, time[int(days_plot[i_plot]*len(time)/8)-1], clone_sizes[i_c, int(days_plot[i_plot]*len(time)/8)-1], activations_times[i_c])
+                        circle = plt.Circle(positions[i_c], np.sqrt(bcell_freqs[i_c, int(days_plot[i_plot]*len(time)/8)-1]/(np.pi*8)), color = colors_q[i_q], alpha = 1-(energies[i_c]/np.max(energies)))
+                        ax_clones[i_plot].add_patch(circle)
 
-            my_plot_layout(ax = ax[j, 3], ticks_labelsize=30, title=models_name[j], xlabel = 'time', ylabel = 'Clone frequency')
-            my_plot_layout(ax = ax_clones, ticks_labelsize=34)
-            ax_clones.set_xlim(left = 3.5, right = Tf)
-            ax_clones.set_ylim(0, 1)
-            ax_clones.set_yticks([])
-            ax_clones.set_xticks([3, 4, 5, 6])
+        my_plot_layout(ax = ax[j, 3], ticks_labelsize=30, title=models_name[j], xlabel = 'time', ylabel = 'Clone frequency')
+
+        for i_plot in range(len(days_plot)): 
+            my_plot_layout(ax = ax_clones[i_plot], ticks_labelsize=34)
+            ax_clones[i_plot].set_xlim(0, 1)
+            ax_clones[i_plot].set_ylim(0, 1)
+            ax_clones[i_plot].set_xticks([])
+            ax_clones[i_plot].set_yticks([])
         
         my_plot_layout(ax = ax_a, yscale = 'log', xlabel = 'Time', ylabel = r'$\bar m$')
         ax_a.set_xlim(left = 3.5, right = Tf)
-        ax_a.set_ylim(top=.5*N_r, bottom = 1e-6)
+        ax_a.set_ylim(top=2*N_r, bottom = 1e-6)
         fig_a.savefig('../../Figures/1_Dynamics/Trajectories/activation_q-%d.pdf'%q)
 
         my_plot_layout(ax = ax_b, yscale = 'log', xlabel = 'Time', ylabel = 'Clone size')
