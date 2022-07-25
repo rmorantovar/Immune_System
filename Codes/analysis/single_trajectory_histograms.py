@@ -43,7 +43,7 @@ k_pr = k_pr*24 #days^-1
 
 #k_pr = 0.000277
 qs = [1, 2]
-lambda_B = 3
+lambda_B = 1*lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
 N_c = 1e4
 E_ms = -28
@@ -72,7 +72,7 @@ growth_models = [0]#, 1]
 #fig2, ax2 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18})
 #fig3, ax3 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18})
 
-colors_fate = [['darkblue', 'royalblue'], ['darkred', 'indianred']]
+colors_fate = [['darkred', 'indianred'], ['navy', 'royalblue']]
 
 gauge_e = 0
 
@@ -96,12 +96,11 @@ for energy_model in energy_models:
     
     for l, linear in enumerate(growth_models):
 
-        fig2, ax2 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18})
-        fig3, ax3 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18})
-        fig4, ax4 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18})
-
-
         for n_q, q in enumerate(qs):
+
+            fig2, ax2 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18})
+            fig3, ax3 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18})
+            fig4, ax4 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18})
 
             parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_q-%d_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, q, l, N_ens)+energy_model
             data = pd.read_csv(Text_files_path + 'Dynamics/Trajectories/'+parameters_path+'/energies.txt', sep = '\t', header=None)
@@ -135,7 +134,7 @@ for energy_model in energy_models:
                 my_plot_layout(ax = ax_seq, xscale = 'log', yscale = 'log', xlabel = r'$K_D$', ylabel = r'$\Lambda(\epsilon)$')
                 #ax_seq.set_ylim(bottom = .8)
                 ax_seq.legend(title = r'$\beta$', fontsize = 30, title_fontsize = 33)
-                fig_seq.savefig('../../Figures/1_Dynamics/Trajectories/Sequences_expansion_q-%d.pdf'%q)
+                
 
             #---- DISTRIBUTION ACTIVATED ENERGIES ----
             #----------------------------------------------------------------
@@ -143,9 +142,9 @@ for energy_model in energy_models:
             QR2 = Q0*(1-np.exp(-u_on*p_a*N_c/lambda_A))
             #----------------------------------------------------------------
             #data_Kds = ax2.hist( data_active[0], bins = np.logspace(np.log10(np.exp(min_e_data-1)), np.log10(np.exp(max_e_data)), 22), color = colors_fate[n_q][0], alpha = .2, density = False)
-            data_Kds = ax2.hist([np.exp(data_GC[0]), np.exp(data_plasma[0])], bins = np.logspace(np.log10(np.exp(min_e_data-1)), np.log10(np.exp(max_e_data)), 20), color = colors_fate[n_q], alpha = .6, histtype = 'barstacked', label = ['GC', 'Plasma'], density = False)
-            ax2.plot(np.exp(Es[:-1]), QR2*N_r, linestyle = '--', linewidth = 2, marker = '', color = colors[n_q])
-            ax2.plot(np.exp(Es[:-1]), QR*N_r, linestyle = '-', linewidth = 2, marker = '', color = colors[n_q])
+            data_Kds = ax2.hist([np.exp(data_GC[0]), np.exp(data_plasma[0])], bins = np.logspace(np.log10(np.exp(min_e_data-1)), np.log10(np.exp(max_e_data)), 15), color = colors_fate[n_q], alpha = .6, histtype = 'barstacked', label = ['GC', 'Plasma'], density = False)
+            ax2.plot(np.exp(Es[:-1]), QR2*N_r, linestyle = '--', linewidth = 2, marker = '', color = colors_fate[n_q][0])
+            ax2.plot(np.exp(Es[:-1]), QR*N_r, linestyle = '-', linewidth = 2, marker = '', color = colors_fate[n_q][0])
             lambd_peak = lambdas[:-1][QR == np.max(QR)][0]
             print('beta = %.2f'%(lambd_peak))
             #ax2.vlines(np.exp(Es)[lambdas[:] < q][0], ax2.get_ylim()[0], np.max(QR), color = colors[n_q], linestyle = ':', linewidth = 2)
@@ -157,11 +156,11 @@ for energy_model in energy_models:
             clone_sizes = np.exp(lambda_B*(Tf-np.array(data_plasma[3])))
             Kds = np.exp(data_plasma[0]+gauge_e)
            
-            data_Kds = ax3.hist(Kds, bins = np.logspace(np.log10(np.exp(min_e_data-1+gauge_e)), np.log10(np.exp(max_e_data+gauge_e)), 12), density = False, color = colors_fate[n_q][1],histtype = 'step', zorder=10, align = 'mid', linewidth = 2, alpha = 0)
+            data_Kds = ax3.hist(Kds, bins = np.logspace(np.log10(np.exp(min_e_data-1+gauge_e)), np.log10(np.exp(max_e_data+gauge_e)), 15), density = False, color = colors_fate[n_q][1],histtype = 'step', zorder=10, align = 'mid', linewidth = 2, alpha = 0)
             counts = data_Kds[0][np.where(data_Kds[0]!=0)]
             Kds_array_data = (data_Kds[1][np.where(data_Kds[0]!=0)])#+data_Kds[1][1:])/2
             ax3.plot(Kds_array_data, counts, color = colors_fate[n_q][0], alpha = .8, marker = 'o', ms = 12, linestyle = '-')
-            ax3.hist(Kds, bins = np.logspace(np.log10(np.exp(min_e_data-1+gauge_e)), np.log10(np.exp(max_e_data+gauge_e)), 10), density = False, color = colors_fate[n_q][0], alpha = .2, histtype = 'step', weights = clone_sizes, zorder=0, align = 'left', linewidth = 2)
+            ax3.hist(Kds, bins = np.logspace(np.log10(np.exp(min_e_data-1+gauge_e)), np.log10(np.exp(max_e_data+gauge_e)), 15), density = False, color = colors_fate[n_q][0], alpha = .2, histtype = 'step', weights = clone_sizes, zorder=0, align = 'left', linewidth = 2)
             clone_sizes_binned = np.array([])
             var_clone_sizes_binned = np.array([])
             max_clone_sizes_binned = np.array([])
@@ -170,14 +169,9 @@ for energy_model in energy_models:
                 #var_clone_sizes_binned = np.append(var_clone_sizes_binned, np.var(clone_sizes[(Kds<data_Kds[1][i+1]) & (Kds>data_Kds[1][i])]))
                 max_clone_sizes_binned = np.append(max_clone_sizes_binned, np.max(clone_sizes[(Kds>=data_Kds[1][i]) & (Kds<data_Kds[1][i+1]) ], initial=1))
             ax4.plot(Kds_array_data, clone_sizes_binned, color = colors_fate[n_q][1], linewidth =3, linestyle = '', marker = 's', ms = 10, alpha = .4)
-            ax4.plot(Kds_array_data, max_clone_sizes_binned, color = colors_fate[n_q][1], linewidth =3, linestyle = '', marker = '*', ms = 12, alpha = .8)
-            #ax3.errorbar(x=Kds_array_data, y=clone_sizes_binned, yerr = np.sqrt(var_clone_sizes_binned) , capsize = 10, linestyle = '', color = 'dimgray', linewidth =2)
-
-            #ax3.plot(Kds_array_data[:], counts[0]*(Kds_array_data[:]/np.min(Kds_array_data))**(lambd_act), color = colors_fate[n_q][1], linewidth =2, linestyle = '--', marker = '', ms = 15, alpha = .8)
-            #ax3.plot(Kds_array_data[:], counts[-1]*(Kds_array_data[:]/np.max(Kds_array_data))**(lambd_act-q), color = colors_fate[n_q][1], linewidth =2, linestyle = ':', marker = '', ms = 15, alpha = .8)
-            
-            ax4.plot(Kds_array_data[:], clone_sizes_binned[0]*(Kds_array_data[:]/np.min(Kds_array_data))**((lambda_B/lambda_A)*(-lambd_act/q)), color = colors_fate[n_q][1], linewidth =2, linestyle = '--', marker = '', ms = 15, alpha = .8)
-            ax4.plot(Kds_array_data[:], max_clone_sizes_binned[0]*(Kds_array_data[:]/np.min(Kds_array_data))**((lambda_B/lambda_A)*(-lambd_act/q)), color = colors_fate[n_q][1], linewidth =2, linestyle = ':', marker = '', ms = 15, alpha = .8)
+            print(-(q*lambda_B/lambda_A))
+            ax4.plot(Kds_array_data[:-2], clone_sizes_binned[0]*(Kds_array_data[:-2]/Kds_array_data[0])**(-(q*lambda_B/lambda_A)), color = colors_fate[n_q][1], linewidth =2, linestyle = '--', marker = '', ms = 15, alpha = .8)
+            #ax4.plot(Kds_array_data[:], max_clone_sizes_binned[0]*(Kds_array_data[:]/np.min(Kds_array_data))**((lambda_B/lambda_A)*(-1/q)), color = colors_fate[n_q][1], linewidth =2, linestyle = ':', marker = '', ms = 15, alpha = .8)
             
             #ax4.plot(Kds_array_data[:-5], clone_sizes_binned[0]*(Kds_array_data[:-5]/np.min(Kds_array_data))**((lambda_B/alpha)*(q)), color = colors_fate[n_q][1], linewidth =2, linestyle = '--', marker = '', ms = 15, alpha = .8)
             #ax4.plot(Kds_array_data[:], max_clone_sizes_binned[0]*(Kds_array_data[:]/np.min(Kds_array_data))**((lambda_B/alpha)*(q)), color = colors_fate[n_q][1], linewidth =2, linestyle = ':', marker = '', ms = 15, alpha = .8)
@@ -191,6 +185,7 @@ for energy_model in energy_models:
             my_plot_layout(ax = ax4, yscale = 'log', xscale = 'log', xlabel = r'$K_D$', ylabel = 'Clone size')
             #ax3.legend(fontsize = 24, loc = 4)
 
+            fig_seq.savefig('../../Figures/1_Dynamics/Trajectories/Sequences_expansion_q-%d.pdf'%q)
             fig2.savefig("../../Figures/1_Dynamics/Trajectories/Plasma_vs_GC_q-%d.pdf"%(q))
             fig3.savefig("../../Figures/1_Dynamics/Trajectories/Sera_q-%d.pdf"%(q))
             fig4.savefig("../../Figures/1_Dynamics/Trajectories/Sera_2_q-%d.pdf"%(q))

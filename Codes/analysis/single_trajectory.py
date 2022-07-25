@@ -92,7 +92,7 @@ for i_q, q in enumerate(qs):
         fig_b, ax_b = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
         fig_a, ax_a = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
         fig_act, ax_act = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
-        fig_clones, ax_clones = plt.subplots(1, 4, figsize=(40,10), gridspec_kw={'left':0.06, 'right':.98, 'bottom':.1, 'top': 0.9})
+        fig_clones, ax_clones = plt.subplots(1, 3, figsize=(30,10), gridspec_kw={'left':0.06, 'right':.98, 'bottom':.1, 'top': 0.9})
         for j, linear in enumerate(growth_models):
 
             colors_activation = []
@@ -230,7 +230,7 @@ for i_q, q in enumerate(qs):
                 else:
                     colors.append('silver')
 
-            days_plot = np.linspace(5.5, Tf, 4)
+            days_plot = np.linspace(5.5, Tf, 3)
             positions = np.random.random((len(energies), 2))
             energies = energies - min_e_data
             for i_plot in range(len(days_plot)):
@@ -245,8 +245,8 @@ for i_q, q in enumerate(qs):
 
         for i_plot in range(len(days_plot)): 
             my_plot_layout(ax = ax_clones[i_plot], ticks_labelsize=34)
-            ax_clones[i_plot].set_xlim(0, 1)
-            ax_clones[i_plot].set_ylim(0, 1)
+            ax_clones[i_plot].set_xlim(-.1, 1.1)
+            ax_clones[i_plot].set_ylim(-.1, 1.1)
             ax_clones[i_plot].set_xticks([])
             ax_clones[i_plot].set_yticks([])
         
