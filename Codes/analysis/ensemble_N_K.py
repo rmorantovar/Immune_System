@@ -58,11 +58,11 @@ time = np.linspace(T0, Tf, int((Tf-T0)/dT))
 lambda_A = 6 #days^-1
 k_pr = .1 # hour^-1
 k_pr = k_pr*24 #days^-1
-qs = [1, 2, 3]
+qs = [1, 2]
 colors_q = ['darkred', 'olive', 'navy']
 lambda_B = 1*lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
-N_c = 1e3
+N_c = 1e4
 E_ms = -28
 
 print('k_on/k_pr = %.1e'%(k_on/k_pr))

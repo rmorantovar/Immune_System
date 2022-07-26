@@ -13,12 +13,7 @@ from scipy.optimize import curve_fit
 
 Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/'
 
-fig_beta, ax_beta = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-fig0, ax0 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-fig1, ax1 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-fig2, ax2 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-fig22, ax22 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-fig3, ax3 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+fig, ax = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 
 N_A = 6.02214076e23
 k_BT = 1.380649e-23*293
@@ -63,7 +58,7 @@ print('L=%.d'%L)
 
 N_r = 1e5
 T0 = 3
-Tf = 7.9
+Tf = 8
 #Tf = 9
 dT = 0.1
 days = np.linspace(3, Tf, 4)
@@ -71,7 +66,7 @@ time = np.linspace(T0, Tf, int((Tf-T0)/dT))
 lambda_A = 6 #days^-1
 k_pr = .1 # hour^-1
 k_pr = k_pr*24 #days^-1
-qs = np.linspace(1, 5, 100)
+qs = np.linspace(1, 2.2, 20)
 beta = 1*lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
 N_c = 1e4
@@ -111,5 +106,8 @@ for i_q, q in enumerate(qs):
 
     Ds[i_q] = D_KL
 
-ax0.plot(qs, Ds)
-plt.show()
+ax.plot(qs, Ds, marker = 'o')
+my_plot_layout(ax=ax, yscale = 'log', ylabel = r'$D_{KL}$', xlabel = 'Proof-reading strength, $q$')
+fig.savefig('../../Figures/7_Recognition/entropy.pdf')
+
+
