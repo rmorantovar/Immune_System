@@ -69,8 +69,8 @@ dT = 0.1
 days = np.linspace(3, Tf, 4)
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
 lambda_A = 6 #days^-1
-k_act = .1 # hour^-1
-k_act = k_act*24 #days^-1
+k_pr = .1 # hour^-1
+k_pr = k_pr*24 #days^-1
 qs = [1, 2]
 beta = 1*lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
@@ -81,7 +81,7 @@ print('K_d_ms=%.1e'%np.exp(E_ms))
 
 print('max_u = %.2e'%(k_on*np.exp(Tf*lambda_A)/N_A))
 
-print('k_on/k_act = %.1e'%(k_on/k_act))
+print('k_on/k_pr = %.1e'%(k_on/k_pr))
 
 
 #----------------------------------------------------------------
@@ -124,9 +124,9 @@ ax22.plot(Ks, Q0*N_r, alpha = transparency_q[0], color = 'grey', linewidth = 5, 
 for n_q, q in enumerate(qs):
     
     #--------------------------p_a(E, t)---------------------------
-    #ax0.vlines(k_act/k_on, ax0.get_ylim()[0], 1, color = 'grey', linestyle = ':')
+    #ax0.vlines(k_pr/k_on, ax0.get_ylim()[0], 1, color = 'grey', linestyle = ':')
     for n_t, t in enumerate(days[[-4, -3, -2]]):
-        u_on, p_a, R, QR = calculate_QR(Q0, k_on, k_act, np.exp(lambda_A*t)/N_A, Es, q, lambda_A, N_c, dE)
+        u_on, p_a, R, QR = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*t)/N_A, Es, q, lambda_A, N_c, dE)
         M_r = N_r*N_c*np.sum(Q0*p_a*dE)
         #--------------------------R(E, t)---------------------------
         if q==2:
