@@ -142,7 +142,7 @@ for energy_model in energy_models:
             QR2 = Q0*(1-np.exp(-u_on*p_a*N_c/lambda_A))
             #----------------------------------------------------------------
             #data_Kds = ax2.hist( data_active[0], bins = np.logspace(np.log10(np.exp(min_e_data-1)), np.log10(np.exp(max_e_data)), 22), color = colors_fate[n_q][0], alpha = .2, density = False)
-            data_Kds = ax2.hist([np.exp(data_GC[0]), np.exp(data_plasma[0])], bins = np.logspace(np.log10(np.exp(min_e_data-1)), np.log10(np.exp(max_e_data)), 15), color = colors_fate[n_q], alpha = .6, histtype = 'barstacked', label = ['GC', 'Plasma'], density = False)
+            data_Kds = ax2.hist([np.exp(data_GC[0]), np.exp(data_plasma[0])], bins = np.logspace(np.log10(np.exp(min_e_data-1)), np.log10(np.exp(max_e_data)), 12), color = colors_fate[n_q], alpha = .6, histtype = 'barstacked', label = ['GC', 'Plasma'], density = False)
             ax2.plot(np.exp(Es[:-1]), QR2*N_r, linestyle = '--', linewidth = 2, marker = '', color = colors_fate[n_q][0])
             ax2.plot(np.exp(Es[:-1]), QR*N_r, linestyle = '-', linewidth = 2, marker = '', color = colors_fate[n_q][0])
             lambd_peak = lambdas[:-1][QR == np.max(QR)][0]
@@ -156,11 +156,11 @@ for energy_model in energy_models:
             clone_sizes = np.exp(lambda_B*(Tf-np.array(data_plasma[3])))
             Kds = np.exp(data_plasma[0]+gauge_e)
            
-            data_Kds = ax3.hist(Kds, bins = np.logspace(np.log10(np.exp(min_e_data-1+gauge_e)), np.log10(np.exp(max_e_data+gauge_e)), 15), density = False, color = colors_fate[n_q][1],histtype = 'step', zorder=10, align = 'mid', linewidth = 2, alpha = 0)
+            data_Kds = ax3.hist(Kds, bins = np.logspace(np.log10(np.exp(min_e_data-1+gauge_e)), np.log10(np.exp(max_e_data+gauge_e)), 12), density = False, color = colors_fate[n_q][1],histtype = 'step', zorder=10, align = 'mid', linewidth = 2, alpha = 0)
             counts = data_Kds[0][np.where(data_Kds[0]!=0)]
             Kds_array_data = (data_Kds[1][np.where(data_Kds[0]!=0)])#+data_Kds[1][1:])/2
             ax3.plot(Kds_array_data, counts, color = colors_fate[n_q][0], alpha = .8, marker = 'o', ms = 12, linestyle = '-')
-            ax3.hist(Kds, bins = np.logspace(np.log10(np.exp(min_e_data-1+gauge_e)), np.log10(np.exp(max_e_data+gauge_e)), 15), density = False, color = colors_fate[n_q][0], alpha = .2, histtype = 'step', weights = clone_sizes, zorder=0, align = 'left', linewidth = 2)
+            ax3.hist(Kds, bins = np.logspace(np.log10(np.exp(min_e_data-1+gauge_e)), np.log10(np.exp(max_e_data+gauge_e)), 12), density = False, color = colors_fate[n_q][0], alpha = .2, histtype = 'step', weights = clone_sizes, zorder=0, align = 'left', linewidth = 2)
             clone_sizes_binned = np.array([])
             var_clone_sizes_binned = np.array([])
             max_clone_sizes_binned = np.array([])
