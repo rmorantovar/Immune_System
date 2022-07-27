@@ -55,11 +55,11 @@ time = np.linspace(T0, Tf, int((Tf-T0)/dT))
 lambda_A = 6 #days^-1
 k_pr = .1 # hour^-1
 k_pr = k_pr*24 #days^-1
-qs = [1, 2, 3]
+qs = [1, 2]
 colors_q = ['darkred', 'olive', 'navy']
 lambda_B = .5*lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
-N_c = 1e3
+N_c = 1e4
 E_ms = -28
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
 
@@ -155,7 +155,7 @@ for q in qs:
 					counter += n_active_clones
 					for k in range(n_ranking):
 						Clone_relative_sizes[k] += (temp_array[k]/temp_array[0])
-					if (n%40==0):
+					if (n%20==0):
 						ax.step(n_array, temp_array[:n_ranking]/temp_array[0], alpha=.1, color='orange')
 						AX.step(n_array, temp_array[:n_ranking]/temp_array[0], alpha=.1, color=colors_q[q-1])
 
@@ -184,7 +184,7 @@ for q in qs:
 
 my_plot_layout(ax = AX, xscale='log', yscale= 'log', y_fontsize=30 )
 #AX.set_xlim(clone_size[0]*.5, clone_size[-1]*2)
-AX.set_ylim(bottom = 1.5e-2, top = 1.5)
+AX.set_ylim(bottom = 5e-3, top = 1.5)
 #AX.legend(fontsize = 30, title_fontsize = 35, loc= 3)
 FIG.savefig('../../Figures/1_Dynamics/Ensemble/ranking.pdf')
 

@@ -55,11 +55,11 @@ time = np.linspace(T0, Tf, int((Tf-T0)/dT))
 lambda_A = 6 #days^-1
 k_pr = .1 # hour^-1
 k_pr = k_pr*24 #days^-1
-qs = [1, 2, 3]
+qs = [1, 2]
 colors_q = ['darkred', 'olive', 'navy']
 lambda_B = .5*lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
-N_c = 1e3
+N_c = 1e4
 E_ms = -28
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
 
@@ -123,10 +123,10 @@ for q in qs:
 			beta_act = np.min([q, beta_r])
 			print('beta_act = %.2f'%(beta_act))
 
-			exponents = [(((lambda_A*beta_act*)/(lambda_B*q))+1), -1]
+			exponents = [(((lambda_A*beta_act*.8)/(lambda_B*q))+1), -1]
 			exponents2 = [(((lambda_A*beta_act2)/(lambda_B))+1), -1]
 
-			clone_size_distribution = np.histogram(clone_sizes, bins = np.logspace(np.log10(np.min(clone_sizes)),np.log10(np.max(clone_sizes)),15), density = True)
+			clone_size_distribution = np.histogram(clone_sizes, bins = np.logspace(np.log10(np.min(clone_sizes)),np.log10(np.max(clone_sizes)),15), density = False)
 			clone_size = ((clone_size_distribution[1][:-1][np.where(clone_size_distribution[0]!=0)]+clone_size_distribution[1][1:][np.where(clone_size_distribution[0]!=0)]))/2
 			clone_size_counts = clone_size_distribution[0][np.where(clone_size_distribution[0]!=0)]
 
@@ -151,14 +151,14 @@ for q in qs:
 		#ax.plot(clone_size[:], (clone_size[:]**(-1)/clone_size[-1]**(-1))*clone_size_counts[-1], linestyle = '--', marker = '', ms = 5, linewidth = 4, alpha = .6, color = 'darkred')
 		
 	my_plot_layout(ax = ax, xscale='log', yscale= 'log', y_fontsize=30 )
-	ax.set_xlim(clone_size[0]*.5, clone_size[-1]*2)
-	ax.set_ylim(clone_size_counts[-1]*.1, clone_size_counts[0]*10)
+	#ax.set_xlim(clone_size[0]*.5, clone_size[-1]*2)
+	#ax.set_ylim(clone_size_counts[-1]*.1, clone_size_counts[0]*10)
 	ax.legend(title=r'$\frac{\lambda_A}{q\lambda_B}$', fontsize = 30, title_fontsize = 35)
 	fig.savefig('../../Figures/1_Dynamics/Ensemble/CSD_q-%d.pdf'%q)
 
 my_plot_layout(ax = AX, xscale='log', yscale= 'log', y_fontsize=30 )
-AX.set_xlim(1, right = 1.5e4)
-AX.set_ylim(top = 5, bottom = 1e-11)
+#AX.set_xlim(1, right = 1.5e4)
+#AX.set_ylim(top = 5, bottom = 1e-11)
 AX.legend(fontsize = 30, title_fontsize = 35)
 FIG.savefig('../../Figures/1_Dynamics/Ensemble/CSD.pdf')
 
