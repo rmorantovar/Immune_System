@@ -78,7 +78,7 @@ PWM_data = M2[:,antigen_seq]
 for i in np.arange(L):
     PWM_data[:,i]-=np.min(PWM_data[:,i], axis=0)
 
-Es, dE, Q0, lambdas = calculate_Q0(0.01, 50, PWM_data, E_ms, L)
+Es, dE, Q0, lambdas = calculate_Q0(0.01, 50, 200000, PWM_data, E_ms, L)
 Kds = np.exp(Es[:-1])
 
 beta_r = lambdas[:-1][np.cumsum(Q0*dE)<(1/(N_r))][-1]
@@ -126,7 +126,7 @@ for q in qs:
 			exponents = [(((lambda_A*beta_act*.8)/(lambda_B*q))+1), -1]
 			exponents2 = [(((lambda_A*beta_act2)/(lambda_B))+1), -1]
 
-			clone_size_distribution = np.histogram(clone_sizes, bins = np.logspace(np.log10(np.min(clone_sizes)),np.log10(np.max(clone_sizes)),15), density = False)
+			clone_size_distribution = np.histogram(clone_sizes, bins = np.logspace(np.log10(np.min(clone_sizes)),np.log10(np.max(clone_sizes)),12), density = False)
 			clone_size = ((clone_size_distribution[1][:-1][np.where(clone_size_distribution[0]!=0)]+clone_size_distribution[1][1:][np.where(clone_size_distribution[0]!=0)]))/2
 			clone_size_counts = clone_size_distribution[0][np.where(clone_size_distribution[0]!=0)]
 

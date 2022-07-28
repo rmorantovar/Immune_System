@@ -853,8 +853,8 @@ def Z_PWM_integral(T, lamda, k):
 def Z_PWM_integral2(T, lamda):
     return 2*np.exp(-lamda*min_E)*(np.exp(avg_E*(lamda-(1/T)))-np.exp(min_E*(lamda-(1/T))))/(lamda-(1/T))
 
-def calculate_Q0(Tmin, Tmax, E_matrix, E_ms, L):
-	Ts = np.linspace(Tmin, Tmax, 200000)
+def calculate_Q0(Tmin, Tmax, n_T, E_matrix, E_ms, L):
+	Ts = np.linspace(Tmin, Tmax, n_T)
 	lambdas = 1/Ts[:-1]
 	F_PWM = -Ts*np.log(Z_PWM(E_matrix, Ts))
 	Es = F_PWM[:-1]-Ts[:-1]*(np.diff(F_PWM)/np.diff(Ts)) + E_ms

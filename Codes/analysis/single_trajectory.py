@@ -74,7 +74,7 @@ PWM_data = M2[:,antigen_seq]
 for i in np.arange(L):
     PWM_data[:,i]-=np.min(PWM_data[:,i], axis=0)
 
-Es, dE, Q0, lambdas = calculate_Q0(0.01, 50, PWM_data, E_ms, L)
+Es, dE, Q0, lambdas = calculate_Q0(0.01, 50, 200000, PWM_data, E_ms, L)
 #----------------------------------------------------------------
 
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))

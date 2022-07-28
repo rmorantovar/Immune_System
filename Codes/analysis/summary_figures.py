@@ -97,7 +97,7 @@ PWM_data = M2[:,antigen_seq]
 for i in np.arange(L):
     PWM_data[:,i]-=np.min(PWM_data[:,i], axis=0)
 
-Es, dE, Q0, lambdas = calculate_Q0(0.01, 50, PWM_data, E_ms, L)
+Es, dE, Q0, lambdas = calculate_Q0(0.01, 50, 500000, PWM_data, E_ms, L)
 Ks = np.exp(Es[:-1])
 beta_r = lambdas[:-1][np.cumsum(Q0*dE)<(1/N_r)][-1]
 E_r = Es[:-1][np.cumsum(Q0*dE)<(1/N_r)][-1]
@@ -105,8 +105,8 @@ E_r = Es[:-1][np.cumsum(Q0*dE)<(1/N_r)][-1]
 #----------------------------------------------------------------
 points = np.array([Ks, lambdas[:-1]]).T.reshape(-1, 1, 2)
 segments = np.concatenate([points[:-1], points[1:]], axis=1)
-norm = plt.Normalize(1, 5)
-lc = LineCollection(segments, cmap='jet_r', norm=norm)
+norm = plt.Normalize(0, 5)
+lc = LineCollection(segments, cmap='turbo_r', norm=norm)
 # Set the values used for colormapping
 lc.set_array(lambdas)
 lc.set_linewidth(5)

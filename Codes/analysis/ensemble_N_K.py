@@ -75,7 +75,7 @@ PWM_data = M2[:,antigen_seq]
 for i in np.arange(L):
     PWM_data[:,i]-=np.min(PWM_data[:,i], axis=0)
 
-Es, dE, Q0, lambdas = calculate_Q0(0.01, 50, PWM_data, E_ms, L)
+Es, dE, Q0, lambdas = calculate_Q0(0.01, 50, 200000, PWM_data, E_ms, L)
 Kds = np.exp(Es[:-1])
 
 beta_r = lambdas[:-1][np.cumsum(Q0*dE)<(1/(N_r))][-1]
@@ -177,9 +177,9 @@ for q in qs:
 
 			#AX.plot(Kds_array_data[0:cross_over+1], (clone_sizes_binned[cross_over]/max_clone_size)*(Kds_array_data[0:cross_over+1]/Kds_array_data[cross_over])**((lambda_B/lambda_A)), linewidth =3, linestyle = '--', marker = '', ms = 15, alpha = .8)
 			AX.plot(Kds_array_data[cross_over:], (clone_sizes_binned[cross_over]/max_clone_size)*(Kds_array_data[cross_over:]/Kds_array_data[cross_over])**((lambda_B/lambda_A)*(-q)), linewidth =3, linestyle = '--', marker = '', ms = 15, alpha = .8, color = colors_q[q-1])
-			AX.vlines(Kd_q, AX.get_ylim()[0], AX.get_ylim()[1])
+			#AX.vlines(Kd_q, AX.get_ylim()[0], AX.get_ylim()[1])
 
-	AX.vlines(Kd_r, AX.get_ylim()[0], AX.get_ylim()[1])
+	#AX.vlines(Kd_r, AX.get_ylim()[0], AX.get_ylim()[1])
 	my_plot_layout(ax = ax, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 	#ax.legend(title=r'$\lambda_A/\lambda_B$', fontsize = 30, title_fontsize = 35)
 	ax.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))

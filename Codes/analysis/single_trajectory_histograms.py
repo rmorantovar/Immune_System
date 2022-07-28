@@ -89,7 +89,7 @@ PWM_data = M2[:,antigen_seq]
 for i in np.arange(L):
     PWM_data[:,i]-=np.min(PWM_data[:,i], axis=0)
 
-Es, dE, Q0, lambdas = calculate_Q0(0.01, 50, PWM_data, E_ms, L)
+Es, dE, Q0, lambdas = calculate_Q0(0.01, 50, 200000, PWM_data, E_ms, L)
 #----------------------------------------------------------------
 
 for energy_model in energy_models:
@@ -148,8 +148,8 @@ for energy_model in energy_models:
             lambd_peak = lambdas[:-1][QR == np.max(QR)][0]
             print('beta = %.2f'%(lambd_peak))
             #ax2.vlines(np.exp(Es)[lambdas[:] < q][0], ax2.get_ylim()[0], np.max(QR), color = colors[n_q], linestyle = ':', linewidth = 2)
-            my_plot_layout(ax = ax2, xscale = 'log', yscale = 'linear', xlabel = '$K_D$', ylabel = 'counts')
-            #ax2.set_ylim(bottom = ax2.get_ylim()[0], top=ax2.get_ylim()[1])
+            my_plot_layout(ax = ax2, xscale = 'log', yscale = 'log', ticks_labelsize = 32)
+            ax2.set_ylim(bottom = 1e-1)
             #ax2.legend(fontsize = 24)
 
             #---- SERA ----
@@ -181,7 +181,7 @@ for energy_model in energy_models:
             
             #ax3.vlines(np.exp(np.average(np.log(Kds))), 0, ax[n_q,3].get_ylim()[1], color = colors_fate[n_q][1], linewidth = 3, linestyle = '-')
             #ax3.vlines(np.exp(np.average(np.log(Kds), weights = data_bcells_active[np.where(data_active[:,2]==0)[0],-1])), 0, ax[n_q,3].get_ylim()[1], color = colors_fate[n_q][1], linewidth = 3, linestyle = '--')
-            my_plot_layout(ax = ax3, yscale = 'log', xscale = 'log', xlabel = r'$K_D$', ylabel = 'counts')
+            my_plot_layout(ax = ax3, yscale = 'log', xscale = 'log', xlabel = r'$K_D$', ylabel = 'counts', ticks_labelsize = 30)
             my_plot_layout(ax = ax4, yscale = 'log', xscale = 'log', xlabel = r'$K_D$', ylabel = 'Clone size')
             #ax3.legend(fontsize = 24, loc = 4)
 
