@@ -33,7 +33,7 @@ if(Matrix == 'MJ2'):
     Alphabet_list = Alphabet.tolist()
 
 N_ens = 1
-N_r = 1e5
+N_r = 1e6
 T0 = 0
 Tf = 8
 dT = 0.05
@@ -143,7 +143,7 @@ for energy_model in energy_models:
             #----------------------------------------------------------------
             #data_Kds = ax2.hist( data_active[0], bins = np.logspace(np.log10(np.exp(min_e_data-1)), np.log10(np.exp(max_e_data)), 22), color = colors_fate[n_q][0], alpha = .2, density = False)
             data_Kds = ax2.hist([np.exp(data_GC[0]), np.exp(data_plasma[0])], bins = np.logspace(np.log10(np.exp(min_e_data-1)), np.log10(np.exp(max_e_data)), 12), color = colors_fate[n_q], alpha = .6, histtype = 'barstacked', label = ['GC', 'Plasma'], density = False)
-            ax2.plot(np.exp(Es[:-1]), QR2*N_r, linestyle = '--', linewidth = 2, marker = '', color = colors_fate[n_q][0])
+            #ax2.plot(np.exp(Es[:-1]), QR2*N_r, linestyle = '--', linewidth = 2, marker = '', color = colors_fate[n_q][0])
             ax2.plot(np.exp(Es[:-1]), QR*N_r, linestyle = '-', linewidth = 2, marker = '', color = colors_fate[n_q][0])
             lambd_peak = lambdas[:-1][QR == np.max(QR)][0]
             print('beta = %.2f'%(lambd_peak))

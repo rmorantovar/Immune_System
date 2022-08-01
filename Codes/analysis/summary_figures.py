@@ -23,8 +23,8 @@ style.use('seaborn-paper')
 M1 = np.loadtxt(Text_files_path+'MJ.txt', skiprows= 1, usecols=range(1,21)).tolist()
 M2 = (np.loadtxt(Text_files_path+'MJ2.txt', skiprows= 1, usecols=range(1,21))).tolist()
 M3 = np.loadtxt(Text_files_path+'BLOSUM62.txt', skiprows= 1, max_rows = 23, usecols=range(1,24)).tolist()
-Alphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't']
-Alphabet2 = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w']
+Alphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'P_act', 's', 't']
+Alphabet2 = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'P_act', 's', 't', 'u', 'v', 'w']
 Alphabet = np.loadtxt(Text_files_path + 'Alphabet.txt', dtype=bytes, delimiter='\t').astype(str)
 
 Matrix = 'MJ2'
@@ -44,22 +44,23 @@ antigen = 'TACNSEYPNTTKCGRWYC'
 #antigen = 'MRTAYRNG'
 #antigen = 'MRTAY'
 
-transparency_q = [1, .6, .3, 0]
-colors_q = ['darkred', 'olive', 'darkred']
+transparency_q = [1, 1, .3, 0]
+colors_q = ['darkred', 'olive', 'darkblue']
+colors_q2 = ['tab:red', 'tab:olive', 'tab:blue']
 colors_R2= ['tab:olive', 'tab:olive', 'olive', 'olive']
 colors_R1 = ['tab:red', 'tab:red', 'darkred', 'darkred']
+colors_R2= ['tab:olive', 'tab:olive', 'tab:olive', 'olive']
+colors_R1 = ['tab:red', 'tab:red', 'tab:red', 'darkred']
 energy_models = ['MJ']
 models_name = ['exponential', 'linear', ]
-colors = ['tab:blue', 'tab:red']
-colors_fit = ['darkblue', 'darkred']
-growth_models = [0]#, 1]
+growth_models = [0] #, 1]
 
 L=len(antigen)
 print('L=%.d'%L)
 
-N_r = 5e5
+N_r = 1e7
 T0 = 3
-Tf = 7.8
+Tf = 7
 #Tf = 9
 dT = 0.1
 days = np.linspace(2, Tf, 5)
@@ -118,77 +119,109 @@ fig_beta.savefig('../../Figures/_Summary/beta.pdf')
 
 
 for n_q, q in enumerate(qs):
+    E_q = Es[lambdas>q][-1]
+    fig_P_act, ax_P_act = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+    fig_Q_act, ax_Q_act = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+    fig_Q_act2, ax_Q_act2 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+    fig_m, ax_m = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+    fig_H, ax_H = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 
-    fig1, ax1 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-    fig2, ax2 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-    fig22, ax22 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-    fig3, ax3 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-
-    ax2.plot(Ks, Q0*N_r, alpha = transparency_q[0], color = 'grey', linewidth = 5, linestyle = '-')
-    ax22.plot(Ks, Q0*N_r, alpha = transparency_q[0], color = 'grey', linewidth = 5, linestyle = '-')    
+    ax_Q_act.plot(Ks, Q0*N_r, alpha = transparency_q[0], color = 'grey', linewidth = 5, linestyle = '-')
+    ax_Q_act2.plot(Ks, Q0*N_r, alpha = transparency_q[0], color = 'grey', linewidth = 5, linestyle = '-')    
 
     print('q = %d'%q)
-    #--------------------------p_a(E, t)---------------------------
-    #ax0.vlines(k_pr/k_on, ax0.get_ylim()[0], 1, color = 'grey', linestyle = ':')
-    for n_t, t in enumerate(days[[-5, -4, -3, -2]]):
-        u_on, p_a, R, QR = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*t)/N_A, Es, q, lambda_A, N_c, dE)
-        M_r = N_r*N_c*np.sum(Q0*p_a*dE)            
-        #ax1.hlines(r_a[0]*N_c/lambda_A, ax1.get_xlim()[0], ax1.get_xlim()[1], alpha = transparency_q[n_q], color = colors_q[n_q], linestyle = ':' )
-        ax1.set_ylim(bottom = 1e-11, top = 2)
-        #----------------------------------------------------------------
-        #--------------------------QR(E, t)---------------------------
-        if q==1:
-            #--------------------------R(E, t)---------------------------
-            ax1.plot(Ks, R, alpha = transparency_q[0], color = colors_R1[n_t], linewidth = 5, linestyle = '-')
-
-            ax2.plot(Ks, QR*N_r, alpha = transparency_q[0], color = colors_R1[n_t], linewidth = 5, linestyle = '-')
-            #-------FOR Q0--------- 
-            #ax2.vlines(np.exp(E_r), ax2.get_ylim()[0], N_r*Q0[Ks<np.exp(E_r)][-1], color = 'black', linestyle = ':')       
-            #ax2.hlines(N_r*Q0[Ks<np.exp(E_r)][-1], ax2.get_xlim()[0], np.exp(E_r), alpha = 1, color = 'black', linestyle = ':')
-            #---------------------- 
-        if q==2:
-            #--------------------------R(E, t)---------------------------
-            ax1.plot(Ks, R, alpha = transparency_q[0], color = colors_R2[n_t], linewidth = 5, linestyle = '-')
-
-            ax2.plot(Ks, QR*N_r, alpha = transparency_q[0], color = colors_R2[n_t], linewidth = 5, linestyle = '-')
-            #-------FOR Q0--------- 
-            #ax2.vlines(np.exp(E_r), ax2.get_ylim()[0], N_r*Q0[Ks<np.exp(E_r)][-1], color = 'black', linestyle = ':')       
-            #ax2.hlines(N_r*Q0[Ks<np.exp(E_r)][-1], ax2.get_xlim()[0], np.exp(E_r), alpha = 1, color = 'black', linestyle = ':')
-            #---------------------- 
-        #ax2.vlines(Ks[lambdas[:-1] < 1][0], ax2.get_ylim()[0], np.max(QR), color = 'brown', linestyle = ':', linewidth = 4)
-        ax2.set_ylim(bottom = 1e-11, top = 2*N_r)
-    
-    ax0.plot(Ks, p_a, color = colors_q[n_q], alpha = transparency_q[n_q], linewidth = 5, linestyle = '-', label = '%d'%(q))
-
-    ax22.plot(Ks, QR*N_r, alpha = transparency_q[0], color = colors_q[n_q], linewidth = 5, linestyle = '-')
-    u_on, p_a, R, QR = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*days[-1])/N_A, Es, q, lambda_A, N_c, dE)
-    m = np.sum(dE*QR*N_r)
-    print('# of activated lineages : %d'%m)
-    ax22.hlines([1, N_r], ax22.get_xlim()[0], ax22.get_xlim()[1], alpha = 1, color = 'black', linestyle = ':')
-    #ax22.vlines(Ks[QR == np.max(QR)][0], ax22.get_ylim()[0], np.max(QR*N_r), color = colors_q2[n_q], linestyle = ':')
-    #ax22.vlines(Ks[lambdas[:-1] < q][0], ax22.get_ylim()[0], np.max(QR), color = colors_q2[n_q], linestyle = '--', linewidth = 2)
-        #----------------------------------------------------------------
     #--------------------------m(t)---------------------------
+    u_on, p_a, P_act, Q_act = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*time[0])/N_A, Es, q, lambda_A, N_c, dE)
+    M_r = N_r*N_c*np.sum(Q0*p_a*dE)
     m_bar = np.array([N_r*(1-np.sum(np.exp(-((p_a*(np.exp(lambda_A*t)/N_A*k_on*N_c))/lambda_A))*Q0*dE)) for t in time])
     m_bar_approx = ((k_on*M_r)/(N_A*lambda_A))*(np.exp(lambda_A*time))
 
-    ax3.plot(time, m_bar, linewidth = 4, linestyle = '-', color = colors_q[n_q])
-    ax3.plot(time, m_bar_approx, linewidth = 3, linestyle = '--', color = 'black')
-    ax3.hlines(1, T0, Tf, color = 'grey', linestyle = ':')
+    ax_m.plot(time, m_bar, linewidth = 4, linestyle = '-', color = colors_q[n_q])
+    ax_m.plot(time, m_bar_approx, linewidth = 3, linestyle = '--', color = 'black')
+    ax_m.hlines(1, T0, Tf, color = 'grey', linestyle = ':')
     #----------------------------------------------------------------
 
-    my_plot_layout(ax=ax1, yscale = 'log', xscale = 'log', ticks_labelsize = 38)
-    ax1.set_xticks([])
-    fig1.savefig('../../Figures/_Summary/R_clone.pdf')
+    t_act = time[m_bar>1][0]
 
-    my_plot_layout(ax=ax2, yscale = 'log', xscale = 'log', ticks_labelsize = 38)
-    #ax2.set_xticks([])
-    fig2.savefig('../../Figures/_Summary/QR_q-%d.pdf'%q)
-    my_plot_layout(ax=ax22, yscale = 'log', xscale = 'log', ticks_labelsize = 30)
-    fig22.savefig('../../Figures/_Summary/QR2_q-%d.pdf'%q)
+    print(t_act)
+    
+    days = np.linspace(2, t_act, 4)
+    for n_t, t in enumerate(days[[-4, -3, -2, -1]]):
+        u_on, p_a, P_act, Q_act = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*t)/N_A, Es, q, lambda_A, N_c, dE)
+        #ax_P_act.hlines(r_a[0]*N_c/lambda_A, ax_P_act.get_xlim()[0], ax_P_act.get_xlim()[1], alpha = transparency_q[n_q], color = colors_q[n_q], linestyle = ':' )
+        ax_P_act.set_ylim(bottom = 1e-11, top = 2)
+        #----------------------------------------------------------------
+        #--------------------------Q_act(E, t)---------------------------
+        if q==1:
+            #--------------------------P_act(E, t)---------------------------
+            ax_P_act.plot(Ks, P_act, alpha = transparency_q[0], color = colors_R1[n_t], linewidth = 5, linestyle = '-')
+            ax_Q_act.plot(Ks, Q_act*N_r, alpha = transparency_q[0], color = colors_R1[n_t], linewidth = 5, linestyle = '-')
+            #-------FOR Q0--------- 
+            ax_Q_act.vlines(np.exp(E_r), ax_Q_act.get_ylim()[0], N_r*Q0[Ks<np.exp(E_r)][-1], color = 'black', linestyle = ':')
+            ax_Q_act.vlines(np.exp(E_q), ax_Q_act.get_ylim()[0], N_r*Q0[Ks<np.exp(E_q)][-1], color = 'black', linestyle = ':')       
+            #ax_Q_act.hlines(N_r*Q0[Ks<np.exp(E_r)][-1], ax_Q_act.get_xlim()[0], np.exp(E_r), alpha = 1, color = 'black', linestyle = ':')
+            #---------------------- 
+        if q==2:
+            #--------------------------P_act(E, t)---------------------------
+            ax_P_act.plot(Ks, P_act, alpha = transparency_q[0], color = colors_R2[n_t], linewidth = 5, linestyle = '-')
 
-    my_plot_layout(ax=ax3, yscale = 'log', ticks_labelsize = 30)
-    fig3.savefig('../../Figures/_Summary/activation_rate_q-%d.pdf'%q)
+            ax_Q_act.plot(Ks, Q_act*N_r, alpha = transparency_q[0], color = colors_R2[n_t], linewidth = 5, linestyle = '-')
+            #-------FOR Q0--------- 
+            ax_Q_act.vlines(np.exp(E_r), ax_Q_act.get_ylim()[0], N_r*Q0[Ks<np.exp(E_r)][-1], color = 'black', linestyle = ':')
+            ax_Q_act.vlines(np.exp(E_q), ax_Q_act.get_ylim()[0], N_r*Q0[Ks<np.exp(E_q)][-1], color = 'black', linestyle = ':')      
+            #ax_Q_act.hlines(N_r*Q0[Ks<np.exp(E_r)][-1], ax_Q_act.get_xlim()[0], np.exp(E_r), alpha = 1, color = 'black', linestyle = ':')
+            #---------------------- 
+
+
+    for n_t, t in enumerate(time[::4]):
+        u_on, p_a, P_act, Q_act = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*t)/N_A, Es, q, lambda_A, N_c, dE)
+        # ------------ H ---------------
+        dE_temp = dE[Q_act!=0]
+        Q0_temp = Q0[Q_act!=0]
+        Ks_temp = Ks[Q_act!=0]
+        Q_act_temp = Q_act[Q_act!=0]
+        D_KL_t = np.sum(dE_temp*(Q_act_temp/np.sum(Q_act_temp*dE_temp))*(np.log((Q_act_temp/np.sum(Q_act_temp*dE_temp)))-np.log(Q0_temp)))
+        ax_H.plot(t, D_KL_t, marker = 's', ms = 12, color = colors_q2[n_q])
+        
+    u_on, p_a, P_act, Q_act = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*t_act)/N_A, Es, q, lambda_A, N_c, dE)
+    dE_temp = dE[Q_act!=0]
+    Q0_temp = Q0[Q_act!=0]
+    Ks_temp = Ks[Q_act!=0]
+    Q_act_temp = Q_act[Q_act!=0]
+    D_KL_t = np.sum(dE_temp*(Q_act_temp/np.sum(Q_act_temp*dE_temp))*(np.log((Q_act_temp/np.sum(Q_act_temp*dE_temp)))-np.log(Q0_temp)))
+    ax_H.plot(t_act, D_KL_t, marker = 's', ms = 16, color = colors_q[n_q])
+    # -----------------------------
+
+    ax_Q_act.set_ylim(bottom = 1e-11, top = 2*N_r)
+    
+    ax0.plot(Ks, p_a, color = colors_q[n_q], alpha = transparency_q[n_q], linewidth = 5, linestyle = '-', label = '%d'%(q))
+
+    ax_Q_act2.plot(Ks, Q_act*N_r, alpha = transparency_q[0], color = colors_q[n_q], linewidth = 5, linestyle = '-')
+    u_on, p_a, P_act, Q_act = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*days[-1])/N_A, Es, q, lambda_A, N_c, dE)
+    m = np.sum(dE*Q_act*N_r)
+
+    print('# of activated lineages : %d'%m , m_bar[-1])
+
+    ax_Q_act2.hlines([1, N_r], ax_Q_act2.get_xlim()[0], ax_Q_act2.get_xlim()[1], alpha = 1, color = 'black', linestyle = ':')
+    #ax_Q_act2.vlines(Ks[Q_act == np.max(Q_act)][0], ax_Q_act2.get_ylim()[0], np.max(Q_act*N_r), color = colors_q2[n_q], linestyle = ':')
+    #ax_Q_act2.vlines(Ks[lambdas[:-1] < q][0], ax_Q_act2.get_ylim()[0], np.max(Q_act), color = colors_q2[n_q], linestyle = '--', linewidth = 2)
+        #----------------------------------------------------------------
+
+    my_plot_layout(ax=ax_P_act, yscale = 'log', xscale = 'log', ticks_labelsize = 38)
+    ax_P_act.set_xticks([])
+    fig_P_act.savefig('../../Figures/_Summary/R_clone.pdf')
+
+    my_plot_layout(ax=ax_Q_act, yscale = 'log', xscale = 'log', ticks_labelsize = 38)
+    #ax_Q_act.set_xticks([])
+    fig_Q_act.savefig('../../Figures/_Summary/QR_q-%d.pdf'%q)
+    my_plot_layout(ax=ax_Q_act2, yscale = 'log', xscale = 'log', ticks_labelsize = 30)
+    fig_Q_act2.savefig('../../Figures/_Summary/QR2_q-%d.pdf'%q)
+
+    my_plot_layout(ax=ax_m, yscale = 'log', ticks_labelsize = 30)
+    fig_m.savefig('../../Figures/_Summary/activation_rate_q-%d.pdf'%q)
+
+    my_plot_layout(ax=ax_H, yscale = 'linear', ticks_labelsize = 30)
+    fig_H.savefig('../../Figures/_Summary/entropy_q-%d.pdf'%q)
 
 my_plot_layout(ax=ax0, yscale = 'log', xscale = 'log', ticks_labelsize = 30)
 ax0.legend(title = '$q$', title_fontsize = 35, fontsize = 30)

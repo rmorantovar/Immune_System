@@ -34,9 +34,11 @@ if(Matrix == 'MJ2'):
 
 N_ens = 1
 N_r = 5e4
-N_r = 1e5
+N_r = 5e5
+N_r = 1e7
 T0 = 0
 Tf = 8
+Tf = 7
 dT = 0.01
 lambda_A = 6
 k_pr = 0.1 # hour^-1
@@ -191,7 +193,7 @@ for i_q, q in enumerate(qs):
             #---- Entropy ----
             size_lim = 0
             if q==1:
-                size_lim=150
+                size_lim=1000
             if q==2:
                 size_lim=1
 
@@ -234,7 +236,6 @@ for i_q, q in enumerate(qs):
             positions = np.random.random((len(energies), 2))
             energies = energies - min_e_data
             for i_plot in range(len(days_plot)):
-                print(i_plot)
                 for i_c in range(len(energies)):
                     if activations_times[i_c]<=days_plot[i_plot]:
                         #print(i_c, positions[i_c], int(days_plot[i_plot]*len(time)/8)-1, time[int(days_plot[i_plot]*len(time)/8)-1], clone_sizes[i_c, int(days_plot[i_plot]*len(time)/8)-1], activations_times[i_c])
@@ -259,7 +260,7 @@ for i_q, q in enumerate(qs):
         ax_b.set_xlim(left = 3.5, right = Tf)
         ax_b.set_ylim(bottom = .8)
         fig_b.savefig('../../Figures/1_Dynamics/Trajectories/B_cells_expansion_q-%d.pdf'%q)
-        fig_clones.savefig('../../Figures/1_Dynamics/Trajectories/B_cell_clones_q-%.d.pdf'%(q))
+        fig_clones.savefig('../../Figures/1_Dynamics/Trajectories/B_cell_clones_q-%.d.pdf'%(q), dpi = 10)
 
         fig.savefig('../../Figures/1_Dynamics/Trajectories/summary_1_single_trajectory_q-%d.png'%q)
     
