@@ -15,10 +15,6 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 
 fig_beta, ax_beta = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 fig0, ax0 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-fig1, ax1 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-fig2, ax2 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-fig22, ax22 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-fig3, ax3 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 
 N_A = 6.02214076e23
 k_BT = 1.380649e-23*293
@@ -49,9 +45,9 @@ antigen = 'TACNSEYPNTTKCGRWYC'
 #antigen = 'MRTAY'
 
 transparency_q = [1, .6, .3, 0]
-colors_q = ['darkred', 'darkred', 'darkred']
-colors_q2 = ['darkred', 'indigo', 'darkred']
-colors_R = ['tab:olive', 'tab:olive', 'olive', 'olive']
+colors_q = ['darkred', 'olive', 'darkred']
+colors_R2= ['tab:olive', 'tab:olive', 'olive', 'olive']
+colors_R1 = ['tab:red', 'tab:red', 'darkred', 'darkred']
 energy_models = ['MJ']
 models_name = ['exponential', 'linear', ]
 colors = ['tab:blue', 'tab:red']
@@ -120,42 +116,51 @@ ax_beta.set_ylim(top = 5, bottom = -.2)
 fig_beta.savefig('../../Figures/_Summary/beta.pdf')
 #----------------------------------------------------------------
 
-ax2.plot(Ks, Q0*N_r, alpha = transparency_q[0], color = 'grey', linewidth = 5, linestyle = '-')
-ax22.plot(Ks, Q0*N_r, alpha = transparency_q[0], color = 'grey', linewidth = 5, linestyle = '-')    
+
 for n_q, q in enumerate(qs):
+
+    fig1, ax1 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+    fig2, ax2 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+    fig22, ax22 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+    fig3, ax3 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+
+    ax2.plot(Ks, Q0*N_r, alpha = transparency_q[0], color = 'grey', linewidth = 5, linestyle = '-')
+    ax22.plot(Ks, Q0*N_r, alpha = transparency_q[0], color = 'grey', linewidth = 5, linestyle = '-')    
+
     print('q = %d'%q)
     #--------------------------p_a(E, t)---------------------------
     #ax0.vlines(k_pr/k_on, ax0.get_ylim()[0], 1, color = 'grey', linestyle = ':')
     for n_t, t in enumerate(days[[-5, -4, -3, -2]]):
         u_on, p_a, R, QR = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*t)/N_A, Es, q, lambda_A, N_c, dE)
-        M_r = N_r*N_c*np.sum(Q0*p_a*dE)
-        #--------------------------R(E, t)---------------------------
-        if q==2:
-            ax1.plot(Ks, R, alpha = transparency_q[0], color = colors_R[n_t], linewidth = 5, linestyle = '-')
+        M_r = N_r*N_c*np.sum(Q0*p_a*dE)            
         #ax1.hlines(r_a[0]*N_c/lambda_A, ax1.get_xlim()[0], ax1.get_xlim()[1], alpha = transparency_q[n_q], color = colors_q[n_q], linestyle = ':' )
         ax1.set_ylim(bottom = 1e-11, top = 2)
         #----------------------------------------------------------------
         #--------------------------QR(E, t)---------------------------
-        #if q==1:
-            #ax2.plot(Ks, Q0*N_r, alpha = transparency_q[1], color = 'grey', linewidth = 5, linestyle = '-')
-            #ax2.plot(Ks, QR*N_r, alpha = transparency_q[1], color = colors_R[n_t], linewidth = 5, linestyle = '-')
-            #ax2.vlines(np.exp(Es)[QR == np.max(QR)][0], ax2.get_ylim()[0], np.max(QR*N_r), color = colors_R[n_t], linestyle = ':')
-            #ax2.hlines([1, N_r], ax2.get_xlim()[0], ax2.get_xlim()[1], alpha = 1, color = 'black', linestyle = ':')
-            #ax2.vlines(np.exp(Es)[lambdas[:-1] < q][0], ax2.get_ylim()[0], np.max(QR), color = colors_R[-1], linestyle = ':', linewidth = 2)
-        if q==2:
-            ax2.plot(Ks, QR*N_r, alpha = transparency_q[0], color = colors_R[n_t], linewidth = 5, linestyle = '-')
-            #ax2.hlines([N_r], ax2.get_xlim()[0], ax2.get_xlim()[1], alpha = 1, color = 'black', linestyle = ':') 
+        if q==1:
+            #--------------------------R(E, t)---------------------------
+            ax1.plot(Ks, R, alpha = transparency_q[0], color = colors_R1[n_t], linewidth = 5, linestyle = '-')
+
+            ax2.plot(Ks, QR*N_r, alpha = transparency_q[0], color = colors_R1[n_t], linewidth = 5, linestyle = '-')
             #-------FOR Q0--------- 
             #ax2.vlines(np.exp(E_r), ax2.get_ylim()[0], N_r*Q0[Ks<np.exp(E_r)][-1], color = 'black', linestyle = ':')       
             #ax2.hlines(N_r*Q0[Ks<np.exp(E_r)][-1], ax2.get_xlim()[0], np.exp(E_r), alpha = 1, color = 'black', linestyle = ':')
             #---------------------- 
+        if q==2:
+            #--------------------------R(E, t)---------------------------
+            ax1.plot(Ks, R, alpha = transparency_q[0], color = colors_R2[n_t], linewidth = 5, linestyle = '-')
 
+            ax2.plot(Ks, QR*N_r, alpha = transparency_q[0], color = colors_R2[n_t], linewidth = 5, linestyle = '-')
+            #-------FOR Q0--------- 
+            #ax2.vlines(np.exp(E_r), ax2.get_ylim()[0], N_r*Q0[Ks<np.exp(E_r)][-1], color = 'black', linestyle = ':')       
+            #ax2.hlines(N_r*Q0[Ks<np.exp(E_r)][-1], ax2.get_xlim()[0], np.exp(E_r), alpha = 1, color = 'black', linestyle = ':')
+            #---------------------- 
         #ax2.vlines(Ks[lambdas[:-1] < 1][0], ax2.get_ylim()[0], np.max(QR), color = 'brown', linestyle = ':', linewidth = 4)
         ax2.set_ylim(bottom = 1e-11, top = 2*N_r)
+    
     ax0.plot(Ks, p_a, color = colors_q[n_q], alpha = transparency_q[n_q], linewidth = 5, linestyle = '-', label = '%d'%(q))
 
-    ax22.plot(Ks, QR*N_r, alpha = transparency_q[0], color = colors_q2[n_q], linewidth = 5, linestyle = '-')
-
+    ax22.plot(Ks, QR*N_r, alpha = transparency_q[0], color = colors_q[n_q], linewidth = 5, linestyle = '-')
     u_on, p_a, R, QR = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*days[-1])/N_A, Es, q, lambda_A, N_c, dE)
     m = np.sum(dE*QR*N_r)
     print('# of activated lineages : %d'%m)
@@ -166,29 +171,29 @@ for n_q, q in enumerate(qs):
     #--------------------------m(t)---------------------------
     m_bar = np.array([N_r*(1-np.sum(np.exp(-((p_a*(np.exp(lambda_A*t)/N_A*k_on*N_c))/lambda_A))*Q0*dE)) for t in time])
     m_bar_approx = ((k_on*M_r)/(N_A*lambda_A))*(np.exp(lambda_A*time))
+
     ax3.plot(time, m_bar, linewidth = 4, linestyle = '-', color = colors_q[n_q])
     ax3.plot(time, m_bar_approx, linewidth = 3, linestyle = '--', color = 'black')
     ax3.hlines(1, T0, Tf, color = 'grey', linestyle = ':')
     #----------------------------------------------------------------
 
+    my_plot_layout(ax=ax1, yscale = 'log', xscale = 'log', ticks_labelsize = 38)
+    ax1.set_xticks([])
+    fig1.savefig('../../Figures/_Summary/R_clone.pdf')
+
+    my_plot_layout(ax=ax2, yscale = 'log', xscale = 'log', ticks_labelsize = 38)
+    #ax2.set_xticks([])
+    fig2.savefig('../../Figures/_Summary/QR_q-%d.pdf'%q)
+    my_plot_layout(ax=ax22, yscale = 'log', xscale = 'log', ticks_labelsize = 30)
+    fig22.savefig('../../Figures/_Summary/QR2_q-%d.pdf'%q)
+
+    my_plot_layout(ax=ax3, yscale = 'log', ticks_labelsize = 30)
+    fig3.savefig('../../Figures/_Summary/activation_rate_q-%d.pdf'%q)
+
 my_plot_layout(ax=ax0, yscale = 'log', xscale = 'log', ticks_labelsize = 30)
 ax0.legend(title = '$q$', title_fontsize = 35, fontsize = 30)
 #ax0.legend(fontsize = 30, title_fontsize=33)
 fig0.savefig('../../Figures/_Summary/p_a.pdf')
-
-my_plot_layout(ax=ax1, yscale = 'log', xscale = 'log', ticks_labelsize = 38)
-ax1.set_xticks([])
-fig1.savefig('../../Figures/_Summary/R_clone.pdf')
-
-
-my_plot_layout(ax=ax2, yscale = 'log', xscale = 'log', ticks_labelsize = 38)
-#ax2.set_xticks([])
-fig2.savefig('../../Figures/_Summary/QR.pdf')
-my_plot_layout(ax=ax22, yscale = 'log', xscale = 'log', ticks_labelsize = 30)
-fig22.savefig('../../Figures/_Summary/Q2.pdf')
-
-my_plot_layout(ax=ax3, yscale = 'log', ticks_labelsize = 30)
-fig3.savefig('../../Figures/_Summary/activation_rate.pdf')
 
 
 

@@ -65,14 +65,14 @@ L=len(antigen)
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
 energy_models = ['MJ']
 models_name = ['exponential', 'linear', ]
-colors = ['tab:blue', 'tab:red']
-colors_fit = ['darkblue', 'darkred']
+colors = ['darkred', 'olive']
+colors_fit = ['tab:red', 'tab:olive']
 growth_models = [0]#, 1]
 
 #fig2, ax2 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18})
 #fig3, ax3 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18})
 
-colors_fate = [['darkred', 'indianred'], ['navy', 'royalblue']]
+colors_fate = [['darkred', 'tab:red'], ['olive', 'tab:olive']]
 
 gauge_e = 0
 
@@ -98,9 +98,9 @@ for energy_model in energy_models:
 
         for n_q, q in enumerate(qs):
 
-            fig2, ax2 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18})
-            fig3, ax3 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18})
-            fig4, ax4 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18})
+            fig2, ax2 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+            fig3, ax3 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+            fig4, ax4 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 
             parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_q-%d_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, q, l, N_ens)+energy_model
             data = pd.read_csv(Text_files_path + 'Dynamics/Trajectories/'+parameters_path+'/energies.txt', sep = '\t', header=None)
@@ -148,7 +148,7 @@ for energy_model in energy_models:
             lambd_peak = lambdas[:-1][QR == np.max(QR)][0]
             print('beta = %.2f'%(lambd_peak))
             #ax2.vlines(np.exp(Es)[lambdas[:] < q][0], ax2.get_ylim()[0], np.max(QR), color = colors[n_q], linestyle = ':', linewidth = 2)
-            my_plot_layout(ax = ax2, xscale = 'log', yscale = 'log', ticks_labelsize = 32)
+            my_plot_layout(ax = ax2, xscale = 'log', yscale = 'log', ticks_labelsize = 38)
             ax2.set_ylim(bottom = 1e-1)
             #ax2.legend(fontsize = 24)
 
@@ -181,7 +181,7 @@ for energy_model in energy_models:
             
             #ax3.vlines(np.exp(np.average(np.log(Kds))), 0, ax[n_q,3].get_ylim()[1], color = colors_fate[n_q][1], linewidth = 3, linestyle = '-')
             #ax3.vlines(np.exp(np.average(np.log(Kds), weights = data_bcells_active[np.where(data_active[:,2]==0)[0],-1])), 0, ax[n_q,3].get_ylim()[1], color = colors_fate[n_q][1], linewidth = 3, linestyle = '--')
-            my_plot_layout(ax = ax3, yscale = 'log', xscale = 'log', xlabel = r'$K_D$', ylabel = 'counts', ticks_labelsize = 30)
+            my_plot_layout(ax = ax3, yscale = 'log', xscale = 'log', xlabel = r'$K_D$', ylabel = 'counts', ticks_labelsize = 38)
             my_plot_layout(ax = ax4, yscale = 'log', xscale = 'log', xlabel = r'$K_D$', ylabel = 'Clone size')
             #ax3.legend(fontsize = 24, loc = 4)
 

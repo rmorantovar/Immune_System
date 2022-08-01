@@ -44,7 +44,7 @@ k_pr = k_pr*24 #days^-1
 
 #k_pr= 0.000277
 qs = [2, 1]
-colors_q = ['navy', 'darkred']
+colors_q = ['olive', 'darkred']
 lambda_B = 1*lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
 N_c = 1e4
