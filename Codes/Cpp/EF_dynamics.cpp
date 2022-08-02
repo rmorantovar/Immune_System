@@ -37,10 +37,10 @@ int main(int argc, char* argv[]) //argv
     int barWidth = 70;
 	//-----------------------------------------------------------------------------
     //Parameters:
-    double alpha;
-    double beta;
+    double lambda_A;
+    double lambda_B;
     double k_pr;
-    int q;
+    double theta;
     int L_seq; //length of the sequence
     double N_c;
     int L_alphabet (20); //length of the alphabet
@@ -68,8 +68,8 @@ int main(int argc, char* argv[]) //argv
 	      {"ensemble", no_argument,  &ensemble_flag, 1},
 	      /* These options don’t set a flag.
 	         We distinguish them by their indices. */
-	      {"alpha", required_argument, 0, 'a'},
-	      {"beta",  required_argument, 0, 'b'},
+	      {"lambda_A", required_argument, 0, 'a'},
+	      {"lambda_B",  required_argument, 0, 'b'},
 	      {"k_pr",required_argument, 0, 'k'},
 	      {"proof_reading",required_argument, 0, 'q'},
 	      {"To",    required_argument, 0, 't'},
@@ -103,11 +103,11 @@ int main(int argc, char* argv[]) //argv
 	      break;
 
 	    case 'a':
-	    	alpha = atof(optarg);
+	    	lambda_A = atof(optarg);
 	      	break;
 
 	    case 'b':
-	    	beta = atof(optarg);
+	    	lambda_B = atof(optarg);
 	    	break;
 
 	    case 'k':
@@ -115,7 +115,7 @@ int main(int argc, char* argv[]) //argv
 	    	break;
 
 	    case 'q':
-	    	q = atof(optarg);
+	    	theta = atof(optarg);
 	    	break;
 
 	    case 't':
@@ -173,7 +173,7 @@ int main(int argc, char* argv[]) //argv
 	}
 	NT = (Tf-To)/dT; //number of steps
 	L_seq = Antigen_aa.length();
-	A0 = exp(alpha*To);
+	A0 = exp(lambda_A*To);
 
 	//------------Energy Matrix------------------------------------------------------
     vector < vector < double > > MJ;
@@ -226,7 +226,7 @@ int main(int argc, char* argv[]) //argv
     //-------Files-----
     //Output files
     if(ensemble_flag){ // ENSEMBLE OF TRAJECTORIES
-    	string parameters_path = "L-"+std::to_string(L_seq)+"_Nbc-"+ std::to_string(N_bcs)+"_Antigen-"+Antigen_aa+"_lambda_A-"+std::to_string(alpha)+"_lambda_B-"+std::to_string(beta)+"_k_pr-"+std::to_string(k_pr)+"_q-"+std::to_string(q)+"_Linear-"+std::to_string(linear_flag)+"_N_ens-"+ std::to_string(N_ens)+"_"+energy_model;
+    	string parameters_path = "L-"+std::to_string(L_seq)+"_Nbc-"+ std::to_string(N_bcs)+"_Antigen-"+Antigen_aa+"_lambda_A-"+std::to_string(lambda_A)+"_lambda_B-"+std::to_string(lambda_B)+"_k_pr-"+std::to_string(k_pr)+"_theta-"+std::to_string(theta)+"_Linear-"+std::to_string(linear_flag)+"_N_ens-"+ std::to_string(N_ens)+"_"+energy_model;
     	fs::create_directories(Text_files_path+"Ensemble/"+parameters_path);
     	ofstream fout (Text_files_path+"Ensemble/"+parameters_path+"/energies_ensemble.txt"); // Energies
     	ofstream fout_2 (Text_files_path+"Ensemble/"+parameters_path+"/summary_ensemble.txt"); // Energies
@@ -255,7 +255,7 @@ int main(int argc, char* argv[]) //argv
 	        choose_naive_Bcells2(N_bcs, L_seq, L_alphabet, MJ, Antigen, Bcells, Naive, n_naive, energy_model, r);
 
 	        // Run EF dynamics
-	        EF_response(linear_flag, alpha, beta, k_pr, q, N_c, To, Tf, NT, dT, n_naive, Naive);
+	        EF_response(linear_flag, lambda_A, lambda_B, k_pr, theta, N_c, To, Tf, NT, dT, n_naive, Naive);
 
 	        for (int n= 0; n<n_naive; n++)
 		    {
@@ -276,7 +276,7 @@ int main(int argc, char* argv[]) //argv
 	    fout_2.close();
 
     }else{ // SINGLE TRAJECTORY
-    	string parameters_path = "L-"+std::to_string(L_seq)+"_Nbc-"+ std::to_string(N_bcs)+"_Antigen-"+Antigen_aa+"_lambda_A-"+std::to_string(alpha)+"_lambda_B-"+std::to_string(beta)+"_k_pr-"+std::to_string(k_pr)+"_q-"+std::to_string(q)+"_Linear-"+std::to_string(linear_flag)+"_N_ens-"+ std::to_string(N_ens)+"_"+energy_model;
+    	string parameters_path = "L-"+std::to_string(L_seq)+"_Nbc-"+ std::to_string(N_bcs)+"_Antigen-"+Antigen_aa+"_lambda_A-"+std::to_string(lambda_A)+"_lambda_B-"+std::to_string(lambda_B)+"_k_pr-"+std::to_string(k_pr)+"_theta-"+std::to_string(theta)+"_Linear-"+std::to_string(linear_flag)+"_N_ens-"+ std::to_string(N_ens)+"_"+energy_model;
     	fs::create_directories(Text_files_path+"Trajectories/"+parameters_path);
     	cout<<">Running simulation of the EF dynamics ..."<< endl;
     	ofstream fout (Text_files_path+"Trajectories/"+parameters_path+"/energies.txt"); // Energies, activation, fate, sequence and activation time
@@ -293,7 +293,7 @@ int main(int argc, char* argv[]) //argv
     	cout << "e_min: " << MS_energy(L_seq, L_alphabet, MJ, Antigen) << endl;
 
 	    // Run EF dynamics
-	    EF_response(linear_flag, alpha, beta, k_pr, q, N_c, To, Tf, NT, dT, n_naive, Naive);
+	    EF_response(linear_flag, lambda_A, lambda_B, k_pr, theta, N_c, To, Tf, NT, dT, n_naive, Naive);
 	    
 	    for (int n= 0; n<n_naive; n++)
 	    {
