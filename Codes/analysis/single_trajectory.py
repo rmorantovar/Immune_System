@@ -46,6 +46,7 @@ k_pr = k_pr*24 #days^-1
 
 #k_pr= 0.000277
 thetas = [2, 1.5, 1]
+#thetas = [2, 1.5]
 colors_q = ['darkblue', 'olive', 'darkred']
 lambda_B = 1*lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
@@ -77,6 +78,11 @@ for i in np.arange(L):
     PWM_data[:,i]-=np.min(PWM_data[:,i], axis=0)
 
 Es, dE, Q0, lambdas = calculate_Q0(0.01, 50, 200000, PWM_data, E_ms, L)
+Kds = np.exp(Es[:-1])
+
+beta_r = lambdas[:-1][np.cumsum(Q0*dE)<(1/(N_r))][-1]
+E_r = Es[:-1][np.cumsum(Q0*dE)<(1/(N_r))][-1]
+Kd_r = np.exp(E_r)
 #----------------------------------------------------------------
 
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
@@ -88,9 +94,12 @@ growth_models = [0]
 
 lambd = 1.4
 for i_theta, theta in enumerate(thetas):
+
+    beta_theta = lambdas[lambdas>theta][-1]
+    E_theta = Es[lambdas>theta][-1]
+    Kd_theta = np.exp(E_theta)
     for energy_model in energy_models:
         
-        fig, ax = plt.subplots(2,4,figsize=(40,18), gridspec_kw={'hspace':0.25, 'wspace':.25})
         fig_b, ax_b = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
         fig_a, ax_a = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
         fig_act, ax_act = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
@@ -129,64 +138,33 @@ for i_theta, theta in enumerate(thetas):
 
             #---- Antigen ----
 
-            if(linear == 0):
-                expfit = np.exp(lambda_A*time)
-                ax[0,0].plot(time, expfit, color = colors[j], label = models_name[j] + ' growth', linewidth = 4, linestyle  = '-', marker = '', ms = 10)
-                #ax_a.plot(time, expfit, color = colors_fit[j], linestyle = '--', linewidth = 4)
-                #ax_a.text(x=7, y=5e7, s = r'$\sim e^{\lambda_A t}$', fontsize=48, color = colors_fit[j])
-            if(linear == 1):
-                ax[0,0].plot(time, 1 + time*alpha_lin, color = colors[j], label = models_name[j] + ' growth', linewidth = 4, linestyle  = '-', marker = '', ms = 10)
-                #ax_a.plot(time, 1 + time*alpha_lin, color = colors[j], label = models_name[j] + ' growth', linestyle = '--', linewidth = 3)
-                #ax_a.text(x=16, y=1e2, s = r'$\sim \lambda_A t$', fontsize=48, color = colors_fit[j])
-            my_plot_layout(ax = ax[0,0], yscale = 'log', xlabel = 'Time', ylabel = 'Antigen')
-            ax[0,0].set_ylim(bottom = 1)
-            ax[0,0].set_xlim(3, Tf)
-
             #---- B cell linages ----
             expfit = 1e-5*np.exp(lambda_B*time)
             clone_sizes = np.ones((int(data_N_active_linages[-1]), len(time)))
             for i in np.arange(0, int(data_N_active_linages[-1])):
                 clone_sizes[i, int(activations_times[i]/dT):] = np.exp(lambda_B*(time[int(activations_times[i]/dT):] - activations_times[i] ))
-                ax[0,1].plot(time, expfit, color = 'indigo', linestyle = '--', linewidth = 4)
                 if(i%100==0):
-                    ax[0,1].plot(time, clone_sizes[i,:], color = colors[j], linewidth = 2, linestyle  = '-', marker = '', ms = 12, alpha = .6);
                     ax_b.plot(time, clone_sizes[i,:], color = colors[j], linewidth = 1, linestyle  = '-', marker = '', ms = 5, alpha = .6);
             if(linear == 0):
                 #ax_b.plot(time, expfit, color = 'indigo', linestyle = '--', linewidth = 4)
                 ax_b.text(x=5, y=3e3, s = r'$\sim e^{\lambda_B t}$', fontsize=48, color = 'indigo')
-            my_plot_layout(ax = ax[0,1], yscale = 'log', xlabel = 'Time [days]', ylabel = 'Clone size')
-            ax[0,1].set_ylim(bottom = .8)
-            ax[0,1].set_xlim(left = 3.5, right = Tf)
 
             #---- Activation rate ----
             #----------------------------------------------------------------
             u_on, p_a, R, QR = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*Tf)/N_A, Es, theta, lambda_A, N_c, dE)
             psi = ((k_on*N_c)/(N_A))*p_a
             M_r = N_r*N_c*np.sum(Q0*p_a*dE)
-            ax[1, 2].plot(Es[:-1], p_a)
-            ax[1, 2].plot(Es[:-1], N_r*Q0)
-            ax[1, 2].plot(Es[:-1], N_r*Q0*p_a)
-            my_plot_layout(ax = ax[1,2], xlabel = 'Energy', yscale = 'log')
             print(M_r)
             #----------------------------------------------------------------
-            ax[1,0].plot(time[:-1], data_N_active_linages[:], linestyle = '', marker = 'o', ms = 5, linewidth = 2, label = 'simulation', color = colors[j], alpha = .6)
             ax_a.plot(time[:-1], data_N_active_linages[:], linestyle = '', marker = 'o', ms = 5, linewidth = 2, label = 'simulation', color = colors[j], alpha = .6)
             if(linear == 0):
                 m_bar = np.array([N_r*(1-np.sum(np.exp(-(psi/lambda_A)*(np.exp(lambda_A*t)-1))*Q0*dE)) for t in time])
                 m_bar_approx = ((k_on*M_r)/(N_A*lambda_A))*(np.exp(lambda_A*time))
-                ax[1,0].plot(time, m_bar, color = colors[j], label = models_name[j] + ' growth', linestyle = '--', linewidth = 3)
-                ax[1,0].plot(time, m_bar_approx, color = 'grey', label = models_name[j] + ' growth', linestyle = '--', linewidth = 3)
-                ax[1,0].plot(time, m_bar_approx, color = 'grey', label = models_name[j] + ' growth', linestyle = '--', linewidth = 3)
                 ax_a.plot(time, np.ones_like(time), color = 'black', linestyle = '-', linewidth = 1)
                 ax_a.plot(time, m_bar, color = colors[j], label = models_name[j] + ' growth', linestyle = '--', linewidth = 3)
                 ax_a.plot(time, m_bar_approx, color = 'grey', label = models_name[j] + ' growth', linestyle = ':', linewidth = 3)
-                #ax[1,0].bar(time[:-1], ar1, alpha = .5)
             if(linear == 1):
                 theory = ((k_on*M_r)/(N_A))*(1e8*time + 0.5*lambda_A*time**2)
-                ax[1,0].plot(time[time>=t0], m_bar_approx[time>=t0], color = colors[j], label = models_name[j] + ' growth', linestyle = '--', linewidth = 3)
-            my_plot_layout(ax = ax[1,0], xscale = 'linear', yscale = 'log', xlabel = 'Time', ylabel = r'$m(t)$')
-            ax[1,0].set_ylim(top=.5*N_r, bottom = 1e-6)
-            ax[1,0].set_xlim(3, Tf)
             #ax_a.set_ylim(top=.5*N_r)
 
 
@@ -204,22 +182,12 @@ for i_theta, theta in enumerate(thetas):
             total_pop = np.sum(clone_sizes, axis = 0)
             bcell_freqs = clone_sizes/total_pop
             entropy = -np.sum(bcell_freqs*np.log(bcell_freqs), axis = 0)
-            ax[1,1].plot(time, entropy/entropy[0], color = colors[j], linewidth = 3)
-            my_plot_layout(ax = ax[1,1], yscale = 'log', xlabel = 'Time', ylabel = 'Entropy')
-            ax[1,1].set_xlim(left = 3.5, right = Tf)
 
             #---- Total Pop size ----
-            ax[0,2].plot(time, total_pop, color = colors[j], linewidth = 3)
-            my_plot_layout(ax = ax[0,2], xlabel = 'Time', ylabel = 'Total Pop. size', yscale = 'log')
-            ax[0,2].set_xlim(left = 3.5, right = Tf)
 
             #---- Relative clone sizes ----
-            #ax[1,2].plot(range(1,int(8+1)), final_clone_sizes_sorted[:8]/final_clone_sizes_sorted[0], color = colors[j], linewidth = .5, linestyle = '--', marker = '^', ms = 15)
-            #my_plot_layout(ax = ax[1,2], xlabel = 'Clone', ylabel = 'Relative size', yscale = 'log')
-            #ax[1,2].set_xlim(right = 8)
 
             #---- Stackplots ----
-            #ax[j, 3].stackplot(time, bcell_freqs);
             #ax_clones.stackplot(time[400:], bcell_freqs[np.where(bcell_freqs[:, -1]>.01)[0], 400:]);
             # colors = []
             # min_bell_freq = np.min(bcell_freqs[:,-1])
@@ -232,9 +200,9 @@ for i_theta, theta in enumerate(thetas):
             #     else:
             #         colors.append('silver')
 
-            days_plot = np.linspace(Tf-2, Tf, 3)
+            days_plot = np.linspace(Tf-1.5, Tf, 3)
             filter_size = clone_sizes[:, -1].argsort()
-            filter_factor = 10**(2*(2-theta))
+            filter_factor = 10**(2.2*(2-theta))
             bcell_freqs = bcell_freqs[filter_size, :][-int(100*filter_factor):, :]
             energies = energies[filter_size][-int(100*filter_factor):]
             activations_times = activations_times[filter_size][-int(100*filter_factor):]
@@ -245,21 +213,23 @@ for i_theta, theta in enumerate(thetas):
             radious = ((energies/(30)))*4
 
             for i_plot in range(len(days_plot)):
-                circle = plt.Circle((0, 0), 4, edgecolor = colors_q[i_theta], facecolor = 'white')
-                ax_clones[i_plot].add_patch(circle)
                 for i_c in range(len(energies)):
                     if (activations_times[i_c]<=days_plot[i_plot]):
                         #print(i_c, positions[i_c], int(days_plot[i_plot]*len(time)/8)-1, time[int(days_plot[i_plot]*len(time)/8)-1], clone_sizes[i_c, int(days_plot[i_plot]*len(time)/8)-1], activations_times[i_c])
                         #circle = plt.Circle(positions[i_c], np.sqrt(bcell_freqs[i_c, int(days_plot[i_plot]*len(time)/Tf)-1]/(np.pi*Tf)), color = colors_q[i_theta], alpha = 1-(energies[i_c]/np.max(energies)))
                         circle = plt.Circle((radious[i_c]*np.cos(angles[i_c]), radious[i_c]*np.sin(angles[i_c])), np.sqrt(bcell_freqs[i_c, int(days_plot[i_plot]*len(time)/Tf)-1]/(np.pi)), color = colors_q[i_theta], alpha = .8)
                         ax_clones[i_plot].add_patch(circle)
-                       
-        my_plot_layout(ax = ax[j, 3], ticks_labelsize=30, title=models_name[j], xlabel = 'time', ylabel = 'Clone frequency')
+                circle = plt.Circle((0, 0), 3, edgecolor = colors_q[i_theta], facecolor = 'none')
+                ax_clones[i_plot].add_patch(circle)
+                circle = plt.Circle((0, 0), 4*((E_r-E_ms)/30), edgecolor = 'grey', facecolor = 'none', linestyle = 'dashed', linewidth = 4)
+                ax_clones[i_plot].add_patch(circle)
+                circle = plt.Circle((0, 0), 4*((E_theta-E_ms)/30), edgecolor = 'grey', facecolor = 'none', linestyle = 'dotted', linewidth = 4)
+                ax_clones[i_plot].add_patch(circle)
 
         for i_plot in range(len(days_plot)): 
             my_plot_layout(ax = ax_clones[i_plot], ticks_labelsize=34)
-            ax_clones[i_plot].set_xlim(-4.01, 4.01)
-            ax_clones[i_plot].set_ylim(-4.01, 4.01)
+            ax_clones[i_plot].set_xlim(-3.01, 3.01)
+            ax_clones[i_plot].set_ylim(-3.01, 3.01)
             ax_clones[i_plot].set_xticks([])
             ax_clones[i_plot].set_yticks([])
         
@@ -273,7 +243,5 @@ for i_theta, theta in enumerate(thetas):
         ax_b.set_ylim(bottom = .8)
         fig_b.savefig('../../Figures/1_Dynamics/Trajectories/B_cells_expansion_theta-%.1f.pdf'%theta)
         fig_clones.savefig('../../Figures/1_Dynamics/Trajectories/B_cell_clones_theta-%.1f.pdf'%(theta), dpi = 10)
-
-        fig.savefig('../../Figures/1_Dynamics/Trajectories/summary_1_single_trajectory_theta-%.1f.png'%theta)
     
 

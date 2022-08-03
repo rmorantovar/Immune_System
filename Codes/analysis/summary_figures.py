@@ -156,8 +156,8 @@ for n_thetas, theta in enumerate(thetas):
             ax_P_act.plot(Ks, P_act, alpha = transparency_q[0], color = colors_R[n_thetas][n_t], linewidth = 5, linestyle = '-')
             ax_Q_act.plot(Ks, Q_act*N_r, alpha = transparency_q[0], color = colors_R[n_thetas][n_t], linewidth = 5, linestyle = '-')
             #-------FOR Q0--------- 
-            ax_Q_act.vlines(np.exp(E_r), ax_Q_act.get_ylim()[0], N_r*Q0[Ks<np.exp(E_r)][-1], color = 'black', linestyle = ':')
-            ax_Q_act.vlines(np.exp(E_theta), ax_Q_act.get_ylim()[0], N_r*Q0[Ks<np.exp(E_theta)][-1], color = 'black', linestyle = ':')       
+            #ax_Q_act.vlines(np.exp(E_r), ax_Q_act.get_ylim()[0], N_r*Q0[Ks<np.exp(E_r)][-1], color = 'black', linestyle = 'dashed')
+            ax_Q_act.vlines(np.exp(E_theta), ax_Q_act.get_ylim()[0], N_r*Q0[Ks<np.exp(E_theta)][-1], color = 'grey', linestyle = 'dotted', linewidth = 4)       
             #ax_Q_act.hlines(N_r*Q0[Ks<np.exp(E_r)][-1], ax_Q_act.get_xlim()[0], np.exp(E_r), alpha = 1, color = 'black', linestyle = ':')
             #---------------------- 
         # if theta==2:
