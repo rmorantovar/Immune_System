@@ -196,7 +196,7 @@ for q in qs:
 
 
 my_plot_layout(ax = AX, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-AX.legend(fontsize = 30, title_fontsize = 35, title = r'$q$')
+AX.legend(fontsize = 30, title_fontsize = 35, title = r'$\theta$')
 #AX.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
 #AX.set_ylim(bottom = 5e-5, top = 2e0)
 #AX.set_yticks([1, 0.1, 0.01, 0.001])

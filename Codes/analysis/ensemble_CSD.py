@@ -123,10 +123,10 @@ for q in qs:
 			beta_act = np.min([q, beta_r])
 			print('beta_act = %.2f'%(beta_act))
 
-			exponents = [(((lambda_A*beta_act*.8)/(lambda_B*q))+1), -1]
+			exponents = [(((lambda_A*beta_act*1)/(lambda_B*q))+1), -1]
 			exponents2 = [(((lambda_A*beta_act2)/(lambda_B))+1), -1]
 
-			clone_size_distribution = np.histogram(clone_sizes, bins = np.logspace(np.log10(np.min(clone_sizes)),np.log10(np.max(clone_sizes)),12), density = False)
+			clone_size_distribution = np.histogram(clone_sizes, bins = np.logspace(np.log10(np.min(clone_sizes)),np.log10(np.max(clone_sizes)),12), density = True)
 			clone_size = ((clone_size_distribution[1][:-1][np.where(clone_size_distribution[0]!=0)]+clone_size_distribution[1][1:][np.where(clone_size_distribution[0]!=0)]))/2
 			clone_size_counts = clone_size_distribution[0][np.where(clone_size_distribution[0]!=0)]
 
@@ -139,13 +139,13 @@ for q in qs:
 			plaw_fit_csd2 = clone_size**(-exponents2[j])#*(np.log(clone_size**(1/nu)))**(1-beta_act)
 			plaw_fit_csd2 /= (plaw_fit_csd2[-1]/(clone_size_counts[-1]))
 
-			ax.plot(clone_size[:], clone_size_counts[:], linestyle = '', marker = '^', ms = 10, linewidth = 2, color = 'orange', label = '%.1f'%(lambda_A/(lambda_B*q)))
+			ax.plot(clone_size[:], clone_size_counts[:], linestyle = '', marker = '^', ms = 10, linewidth = 2, color = 'orange', label = '%.1f'%(lambda_A/(lambda_B*q)), alpha = .8)
 
-			AX.plot(clone_size[:], clone_size_counts[:], linestyle = '', marker = '^', ms = 10, linewidth = 2, label = '%d'%q, color = colors_q[q-1])
+			AX.plot(clone_size[:], clone_size_counts[:], linestyle = '', marker = '^', ms = 10, linewidth = 2, label = '%d'%q, color = colors_q[q-1], alpha = .8)
 
 			if (gm=='exponential'):
-				ax.plot(clone_size[:], plaw_fit_csd[:], linestyle = '--', marker = '', ms = 5, linewidth = 3, alpha = .8, color = 'orange')
-				AX.plot(clone_size[:], plaw_fit_csd[:], linestyle = '--', marker = '', ms = 5, linewidth = 3, alpha = .8, color = colors_q[q-1])
+				ax.plot(clone_size[:], plaw_fit_csd[:], linestyle = '--', marker = '', ms = 5, linewidth = 3, alpha = 1, color = 'orange')
+				AX.plot(clone_size[:], plaw_fit_csd[:], linestyle = '--', marker = '', ms = 5, linewidth = 3, alpha = 1, color = colors_q[q-1])
 			if (gm=='linear'):
 				ax.plot(clone_size[:][:], plaw_fit_csd[:][:], linestyle = '--', marker = '', ms = 5, linewidth = 3, alpha = .6, color = 'orange')
 		#ax.plot(clone_size[:], (clone_size[:]**(-1)/clone_size[-1]**(-1))*clone_size_counts[-1], linestyle = '--', marker = '', ms = 5, linewidth = 4, alpha = .6, color = 'darkred')
@@ -159,7 +159,7 @@ for q in qs:
 my_plot_layout(ax = AX, xscale='log', yscale= 'log', y_fontsize=30 )
 #AX.set_xlim(1, right = 1.5e4)
 #AX.set_ylim(top = 5, bottom = 1e-11)
-AX.legend(fontsize = 30, title_fontsize = 35)
+#AX.legend(fontsize = 30, title_fontsize = 35)
 FIG.savefig('../../Figures/1_Dynamics/Ensemble/CSD.pdf')
 
 
