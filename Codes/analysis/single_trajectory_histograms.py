@@ -152,6 +152,7 @@ for energy_model in energy_models:
             #ax2.vlines(np.exp(Es)[lambdas[:] < theta][0], ax2.get_ylim()[0], np.max(QR), color = colors[n_theta], linestyle = ':', linewidth = 2)
             my_plot_layout(ax = ax2, xscale = 'log', yscale = 'log', ticks_labelsize = 38)
             ax2.set_ylim(bottom = 1e-1)
+            ax2.set_xlim(right = 1e-3)
             #ax2.legend(fontsize = 24)
 
             #---- SERA ----
