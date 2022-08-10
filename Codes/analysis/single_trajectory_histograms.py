@@ -49,6 +49,7 @@ lambda_B = 1*lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
 N_c = 1e4
 E_ms = -27.63
+C = 5e3
 
 print('k_on/k_pr = %.1e'%(k_on/k_pr))
 
@@ -93,6 +94,7 @@ for i in np.arange(L):
 
 Es, dE, Q0, lambdas = calculate_Q0(0.01, 50, 200000, PWM_data, E_ms, L)
 #----------------------------------------------------------------
+fig_H, ax_H = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
 
 for energy_model in energy_models:
     
@@ -107,15 +109,34 @@ for energy_model in energy_models:
             parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, theta, l, N_ens)+energy_model
             data = pd.read_csv(Text_files_path + 'Dynamics/Trajectories/'+parameters_path+'/energies.txt', sep = '\t', header=None)
 
-            min_e_data = np.min(data[0])
-            max_e_data = np.max(data[0])
-
-            energies_array = np.linspace(min_e_data-1, max_e_data, 50)
-
             data_active = data.loc[data[1]==1]
+
+            energies  = np.array(data_active[0])
+            min_e_data = np.min(energies)
+            max_e_data = np.max(energies)
+            energies_array = np.linspace(min_e_data-1, max_e_data, 50)
 
             data_plasma = data_active.loc[data_active[2]==1]
             data_GC = data_active.loc[data_active[2]==0]
+
+            #-------Carrying capacity -------
+            activations_times = np.array(data_active[3])
+            ar1, ar2 = np.histogram(activations_times, bins = time)
+            data_N_active_linages = np.cumsum(ar1)
+            print('Activated clones:',data_N_active_linages[-1], np.shape(data_active))
+            t0 = np.where(data_N_active_linages==0)[0][-1]*dT
+            clone_sizes = np.ones((int(data_N_active_linages[-1]), len(time)))
+            for i in np.arange(0, int(data_N_active_linages[-1])):
+                clone_sizes[i, int(activations_times[i]/dT):] = np.exp(lambda_B*(time[int(activations_times[i]/dT):] - activations_times[i] ))
+            #---- Total Pop size ----
+            total_pop = np.sum(clone_sizes, axis = 0)
+            total_pop_active = total_pop - total_pop[0]
+            t_C = time[total_pop_active<C][-1] # Calculate time for reaching carrying capacity
+
+            filter_C = activations_times<t_C
+            clone_sizes_C = clone_sizes[filter_C, :]
+            activations_times_C = activations_times[filter_C]
+            energies_C = energies[filter_C]
 
             #---- DISTRIBUTION ENERGIES ----
             
@@ -123,34 +144,35 @@ for energy_model in energy_models:
                 fig_seq, ax_seq = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18})
                 hist = ax_seq.hist(np.exp(data[0]), bins = np.logspace(np.log10(np.exp(min_e_data-1)), np.log10(np.exp(max_e_data)), 20), color = colors[n_theta], alpha = 0, histtype = 'bar')
                 counts = hist[0][np.where(hist[0]!=0)]
-                energies = np.log(hist[1][np.where(hist[0]!=0)])
+                energies_array = np.log(hist[1][np.where(hist[0]!=0)])
                 
-                ax_seq.plot(np.exp(energies), counts, color = 'indigo', alpha = 1, linestyle = '', marker = '^', ms = 10)
-
-                # popt, pcov = curve_fit(f = my_linear_func , xdata = energies[:4], ydata= np.log(counts)[:4] )
-                # print('beta = %.2f'%(popt[1]))
-                # lambd_act = popt[1]
-                # expfit = (np.exp(lambd_act*energies)/np.exp(lambd_act*energies[0]))*counts[0]
-                # ax_seq.plot(np.exp(energies[:8]), np.exp(my_linear_func(energies[:8], *popt)), color = 'indigo', linestyle = '--', linewidth = 4, alpha = .5, label = '%.2f'%(popt[1]))
+                ax_seq.plot(np.exp(energies_array), counts, color = 'indigo', alpha = 1, linestyle = '', marker = '^', ms = 10)
 
                 my_plot_layout(ax = ax_seq, xscale = 'log', yscale = 'log', xlabel = r'$K_D$', ylabel = r'$\Lambda(\epsilon)$')
                 #ax_seq.set_ylim(bottom = .8)
                 ax_seq.legend(title = r'$\beta$', fontsize = 30, title_fontsize = 33)
                 
-
             #---- DISTRIBUTION ACTIVATED ENERGIES ----
             #----------------------------------------------------------------
-            u_on, p_a, R, QR = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*Tf)/N_A, Es, theta, lambda_A, N_c, dE)
-            QR2 = Q0*(1-np.exp(-u_on*p_a*N_c/lambda_A))
+            u_on, p_a, P_act, Q_act = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*t_C)/N_A, Es, theta, lambda_A, N_c, dE)
+            Q_act2 = Q0*(1-np.exp(-u_on*p_a*N_c/lambda_A))
             #----------------------------------------------------------------
-            #data_Kds = ax2.hist( data_active[0], bins = np.logspace(np.log10(np.exp(min_e_data-1)), np.log10(np.exp(max_e_data)), 22), color = colors_fate[n_theta][0], alpha = .2, density = False)
-            data_Kds = ax2.hist([np.exp(data_GC[0]), np.exp(data_plasma[0])], bins = np.logspace(np.log10(np.exp(min_e_data-1)), np.log10(np.exp(max_e_data)), 12), color = colors_fate[n_theta], alpha = .6, histtype = 'barstacked', label = ['GC', 'Plasma'], density = False)
-            #ax2.plot(np.exp(Es[:-1]), QR2*N_r, linestyle = '--', linewidth = 2, marker = '', color = colors_fate[n_theta][0])
-            ax2.plot(np.exp(Es[:-1]), QR*N_r, linestyle = '-', linewidth = 2, marker = '', color = colors_fate[n_theta][0])
-            lambd_peak = lambdas[:-1][QR == np.max(QR)][0]
+            data_Kds = ax2.hist( np.exp(energies_C), bins = np.logspace(np.log10(np.exp(min_e_data-1)), np.log10(np.exp(max_e_data)), 10), color = colors_fate[n_theta][0], alpha = .6, density = False)
+            #data_Kds = ax2.hist([np.exp(data_GC[0]), np.exp(data_plasma[0])], bins = np.logspace(np.log10(np.exp(min_e_data-1)), np.log10(np.exp(max_e_data)), 12), color = colors_fate[n_theta], alpha = .6, histtype = 'barstacked', label = ['GC', 'Plasma'], density = False)
+            #ax2.plot(np.exp(Es[:-1]), Q_act2*N_r, linestyle = '--', linewidth = 2, marker = '', color = colors_fate[n_theta][0])
+            ax2.plot(np.exp(Es[:-1]), Q_act*N_r, linestyle = '-', linewidth = 2, marker = '', color = colors_fate[n_theta][0])
+
+            
+            dE_temp = dE[Q_act!=0]
+            Q0_temp = Q0[Q_act!=0]
+            Q_act_temp = Q_act[Q_act!=0]
+            D_KL = np.sum(dE_temp*(Q_act_temp/np.sum(Q_act_temp*dE_temp))*(np.log((Q_act_temp/np.sum(Q_act_temp*dE_temp)))-np.log(Q0_temp)))
+            ax_H.plot(theta, D_KL, marker = 's', ms = 16, color = colors[n_theta], linestyle = '')
+
+            lambd_peak = lambdas[:-1][Q_act == np.max(Q_act)][0]
             print('beta = %.2f'%(lambd_peak))
-            #ax2.vlines(np.exp(Es)[lambdas[:] < theta][0], ax2.get_ylim()[0], np.max(QR), color = colors[n_theta], linestyle = ':', linewidth = 2)
-            my_plot_layout(ax = ax2, xscale = 'log', yscale = 'log', ticks_labelsize = 38)
+            #ax2.vlines(np.exp(Es)[lambdas[:] < theta][0], ax2.get_ylim()[0], np.max(Q_act), color = colors[n_theta], linestyle = ':', linewidth = 2)
+            my_plot_layout(ax = ax2, xscale = 'log', yscale = 'linear', ticks_labelsize = 38)
             ax2.set_ylim(bottom = 1e-1)
             ax2.set_xlim(right = 1e-3)
             #ax2.legend(fontsize = 24)
@@ -193,4 +215,6 @@ for energy_model in energy_models:
             fig3.savefig("../../Figures/1_Dynamics/Trajectories/Sera_theta-%.1f.pdf"%(theta))
             fig4.savefig("../../Figures/1_Dynamics/Trajectories/Sera_2_theta-%.1f.pdf"%(theta))
 
+my_plot_layout(ax=ax_H, xlabel = r'$\theta$', ylabel = r'$D_{KL}$', ticks_labelsize = 38)
+fig_H.savefig('../../Figures/1_Dynamics/Trajectories/H_theta.pdf')
 

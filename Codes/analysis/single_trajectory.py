@@ -52,6 +52,7 @@ lambda_B = 1*lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
 N_c = 1e4
 E_ms = -27.63
+C = 5e3
 
 antigen = 'CMFILVWYAGTSQNEDHRKPFMRTP'
 antigen = 'FMLFMAVFVMTSWYC'
@@ -93,6 +94,12 @@ colors_fit = ['darkblue', 'darkred']
 growth_models = [0]
 
 lambd = 1.4
+fig_total_pop, ax_total_pop = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
+
+fig_H, ax_H = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
+fig_time, ax_time = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
+fig_inhibition, ax_inhibition = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
+
 for i_theta, theta in enumerate(thetas):
 
     beta_theta = lambdas[lambdas>theta][-1]
@@ -104,6 +111,7 @@ for i_theta, theta in enumerate(thetas):
         fig_a, ax_a = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
         fig_act, ax_act = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
         fig_clones, ax_clones = plt.subplots(1, 3, figsize=(30,10), gridspec_kw={'left':0.06, 'right':.98, 'bottom':.1, 'top': 0.9})
+        fig_clones2, ax_clones2 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
         for j, linear in enumerate(growth_models):
 
             colors_activation = []
@@ -175,49 +183,61 @@ for i_theta, theta in enumerate(thetas):
             if theta==2:
                 size_lim=1
 
-            #energies = energies[np.where((clone_sizes[:,-1]>=(np.min(clone_sizes[:,-1])*size_lim)))[0]]
-            #activations_times = activations_times[np.where((clone_sizes[:,-1]>=(np.min(clone_sizes[:,-1])*size_lim)))[0]]
-            #clone_sizes = clone_sizes[np.where((clone_sizes[:,-1]>=(np.min(clone_sizes[:,-1])*size_lim)))[0],:]
-
+            #---- Total Pop size ----
             total_pop = np.sum(clone_sizes, axis = 0)
-            bcell_freqs = clone_sizes/total_pop
+            total_pop_active = total_pop - total_pop[0] + 1
+            t_C = time[total_pop_active<C][-1] # Calculate time for reaching carrying capacity
+
+            filter_C = activations_times<t_C
+            n_C = np.sum(filter_C)
+            growth_time = time<t_C
+            i_t_C = np.sum(growth_time)
+            no_growth_time  = time>t_C
+            i_t_C2 = np.sum(no_growth_time)
+            clone_sizes_C = clone_sizes[filter_C, :]
+            print(i_t_C, len(time), n_C)
+            if(i_t_C<(len(time)-1)):
+                print('freezing clone sizes...')
+                final_sizes = clone_sizes_C[:, i_t_C].reshape((n_C, 1))
+                final_sizes_list = final_sizes.tolist()
+                clone_sizes_C[:,i_t_C+1:] = np.hstack([final_sizes_list]*i_t_C2)
+            activations_times_C = activations_times[filter_C]
+            energies_C = energies[filter_C]
+            total_pop_active = np.sum(clone_sizes_C, axis = 0)
+            ax_total_pop.plot(time, total_pop_active, color = colors_q[i_theta])
+
+            bcell_freqs = clone_sizes_C/total_pop_active
             entropy = -np.sum(bcell_freqs*np.log(bcell_freqs), axis = 0)
 
-            #---- Total Pop size ----
-
-            #---- Relative clone sizes ----
 
             #---- Stackplots ----
-            #ax_clones.stackplot(time[400:], bcell_freqs[np.where(bcell_freqs[:, -1]>.01)[0], 400:]);
-            # colors = []
-            # min_bell_freq = np.min(bcell_freqs[:,-1])
-            # for c in range(int(len(clone_sizes[:,0]))):
-            #     if bcell_freqs[c, -1]>(50*min_bell_freq/theta):
-            #         if theta==1:
-            #             colors.append('indianred')
-            #         if theta==2:
-            #             colors.append('dodgerblue')
-            #     else:
-            #         colors.append('silver')
+            colors_muller = []
+            min_bell_freq = np.min(bcell_freqs[:,-1])
+            for c in range(int(len(clone_sizes_C[:,0]))):
+                if bcell_freqs[c, -1]>(10*min_bell_freq/theta):
+                    colors_muller.append(colors_q[i_theta])
+                else:
+                    colors_muller.append('silver')
+            ax_clones2.stackplot(time, bcell_freqs, colors = colors_muller);
 
             days_plot = np.linspace(Tf-1.5, Tf, 3)
-            filter_size = clone_sizes[:, -1].argsort()
-            filter_factor = 10**(2.2*(2-theta))
-            bcell_freqs = bcell_freqs[filter_size, :][-int(100*filter_factor):, :]
-            energies = energies[filter_size][-int(100*filter_factor):]
-            activations_times = activations_times[filter_size][-int(100*filter_factor):]
+            #filter_size = clone_sizes[:, -1].argsort()
+            #filter_factor = 10**(2.2*(2-theta))
+            #bcell_freqs = bcell_freqs[filter_size, :][-int(100*filter_factor):, :]
+            #energies = energies[filter_size][-int(100*filter_factor):]
+            #activations_times = activations_times[filter_size][-int(100*filter_factor):]
 
             #positions = np.random.random((len(energies), 2))
-            angles = np.random.random(len(energies))*2*np.pi
-            energies = energies - (E_ms)
-            radious = ((energies/(30)))*4
+            angles = np.random.random(len(energies_C))*2*np.pi
+            energies_C = energies_C - (E_ms)
+            radious = ((energies_C/(30)))*4
 
             for i_plot in range(len(days_plot)):
-                for i_c in range(len(energies)):
-                    if (activations_times[i_c]<=days_plot[i_plot]):
+                for i_c in range(len(energies_C)):
+                    if (activations_times_C[i_c]<=days_plot[i_plot]):
                         #print(i_c, positions[i_c], int(days_plot[i_plot]*len(time)/8)-1, time[int(days_plot[i_plot]*len(time)/8)-1], clone_sizes[i_c, int(days_plot[i_plot]*len(time)/8)-1], activations_times[i_c])
                         #circle = plt.Circle(positions[i_c], np.sqrt(bcell_freqs[i_c, int(days_plot[i_plot]*len(time)/Tf)-1]/(np.pi*Tf)), color = colors_q[i_theta], alpha = 1-(energies[i_c]/np.max(energies)))
-                        circle = plt.Circle((radious[i_c]*np.cos(angles[i_c]), radious[i_c]*np.sin(angles[i_c])), np.sqrt(bcell_freqs[i_c, int(days_plot[i_plot]*len(time)/Tf)-1]/(np.pi)), color = colors_q[i_theta], alpha = .8)
+                        circle = plt.Circle((radious[i_c]*np.cos(angles[i_c]), radious[i_c]*np.sin(angles[i_c])), np.sqrt(clone_sizes_C[i_c, int(days_plot[i_plot]*len(time)/Tf)-1]/(C*np.pi)), color = colors_q[i_theta], alpha = .8)
                         ax_clones[i_plot].add_patch(circle)
                 circle = plt.Circle((0, 0), 3, edgecolor = colors_q[i_theta], facecolor = 'none')
                 ax_clones[i_plot].add_patch(circle)
@@ -232,16 +252,28 @@ for i_theta, theta in enumerate(thetas):
             ax_clones[i_plot].set_ylim(-3.01, 3.01)
             ax_clones[i_plot].set_xticks([])
             ax_clones[i_plot].set_yticks([])
-        
-        my_plot_layout(ax = ax_a, yscale = 'log', xlabel = 'Time', ylabel = r'$\bar m$')
-        ax_a.set_xlim(left = 3.5, right = Tf)
-        ax_a.set_ylim(top=2*N_r, bottom = 1e-6)
-        fig_a.savefig('../../Figures/1_Dynamics/Trajectories/activation_theta-%.1f.pdf'%theta)
 
-        my_plot_layout(ax = ax_b, yscale = 'log', xlabel = 'Time', ylabel = 'Clone size')
-        ax_b.set_xlim(left = 3.5, right = Tf)
-        ax_b.set_ylim(bottom = .8)
-        fig_b.savefig('../../Figures/1_Dynamics/Trajectories/B_cells_expansion_theta-%.1f.pdf'%theta)
-        fig_clones.savefig('../../Figures/1_Dynamics/Trajectories/B_cell_clones_theta-%.1f.pdf'%(theta), dpi = 10)
+        my_plot_layout(ax = ax_clones2, ticks_labelsize=34)
+        ax_clones2.set_xlim(0, 6)
+        ax_clones2.set_ylim(0, 1)
+        ax_clones2.set_yticks([])
+        
+    my_plot_layout(ax = ax_a, yscale = 'log', xlabel = 'Time', ylabel = r'$\bar m$')
+    ax_a.set_xlim(left = 3.5, right = Tf)
+    ax_a.set_ylim(top=2*N_r, bottom = 1e-6)
+    fig_a.savefig('../../Figures/1_Dynamics/Trajectories/activation_theta-%.1f.pdf'%theta)
+
+    my_plot_layout(ax = ax_b, yscale = 'log', xlabel = 'Time', ylabel = 'Clone size')
+    ax_b.set_xlim(left = 3.5, right = Tf)
+    ax_b.set_ylim(bottom = .8)
+    fig_b.savefig('../../Figures/1_Dynamics/Trajectories/B_cells_expansion_theta-%.1f.pdf'%theta)
+    fig_clones.savefig('../../Figures/1_Dynamics/Trajectories/B_cell_clones_theta-%.1f.pdf'%(theta), dpi = 10)
+    fig_clones2.savefig('../../Figures/1_Dynamics/Trajectories/B_cell_clones_2_theta-%.1f.pdf'%(theta), dpi = 10)
+
+
+my_plot_layout(ax = ax_total_pop, yscale = 'linear', xlabel = 'Time', ylabel = r'$N_t$')
+#ax_a.set_xlim(left = 3.5, right = Tf)
+#ax_a.set_ylim(top=2*N_r, bottom = 1e-6)
+fig_total_pop.savefig('../../Figures/1_Dynamics/Trajectories/total_pop.pdf') 
     
 

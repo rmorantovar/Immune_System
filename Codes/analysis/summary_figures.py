@@ -184,6 +184,8 @@ for n_thetas, theta in enumerate(thetas):
     D_KL_t = np.sum(dE_temp*(Q_act_temp/np.sum(Q_act_temp*dE_temp))*(np.log((Q_act_temp/np.sum(Q_act_temp*dE_temp)))-np.log(Q0_temp)))
     ax_H.plot(t_act, D_KL_t, marker = 's', ms = 16, color = colors_theta[n_thetas], linestyle = '', label = r'$%.1f$'%theta)
     ax_H.hlines(L*np.log(20) - np.sum(betas[:-1][betas[:-1]>theta]*dE[betas[:-1]>theta]) - 5, 3, Tf, color = colors_theta[n_thetas])
+    ax_H.hlines(-np.log(Q0[Es[:-1]<E_theta][-1])-2.5, 3, Tf, color = colors_theta[n_thetas], linestyle = '--')
+    print(L*np.log(20) - np.sum(betas[:-1][betas[:-1]>theta]*dE[betas[:-1]>theta]), - np.log(Q0[Es[:-1]<E_theta][-1]))
     # -----------------------------
 
     ax_Q_act.set_ylim(bottom = 1e-11, top = 2*N_r)
@@ -223,7 +225,7 @@ ax_H.legend(fontsize = 28, title = r'$\theta$', title_fontsize = 32, loc = 3)
 fig_H.savefig('../../Figures/_Summary/entropy.pdf')
 
 my_plot_layout(ax=ax0, yscale = 'log', xscale = 'log', ticks_labelsize = 30)
-ax0.legend(title = '$theta$', title_fontsize = 35, fontsize = 30)
+ax0.legend(title = '$\theta$', title_fontsize = 35, fontsize = 30)
 #ax0.legend(fontsize = 30, title_fontsize=33)
 fig0.savefig('../../Figures/_Summary/p_a.pdf')
 
