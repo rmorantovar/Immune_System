@@ -13,7 +13,7 @@ from scipy.optimize import curve_fit
 
 Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/'
 
-fig_beta, ax_beta = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+#fig_beta, ax_beta = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 fig0, ax0 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 
 N_A = 6.02214076e23
@@ -96,33 +96,53 @@ for i in np.arange(L):
     PWM_data[:,i]-=np.min(PWM_data[:,i], axis=0)
 
 Es, dE, Q0, betas = calculate_Q0(0.01, 50, 200000, PWM_data, E_ms, L)
+S = np.log(Q0)
 Ks = np.exp(Es[:-1])
 beta_r = betas[:-1][np.cumsum(Q0*dE)<(1/N_r)][-1]
 E_r = Es[:-1][np.cumsum(Q0*dE)<(1/N_r)][-1]
 Ks_r = np.exp(E_r)
 
+E_pr = Es[:-1][Ks<(k_pr/k_on)][-1]
+Kd_pr = np.exp(E_pr)
+t_prime = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*N_c))
 #----------------------------------------------------------------
-points = np.array([Ks, betas[:-1]]).T.reshape(-1, 1, 2)
-segments = np.concatenate([points[:-1], points[1:]], axis=1)
-norm = plt.Normalize(0, 5)
-lc = LineCollection(segments, cmap='turbo_r', norm=norm)
-# Set the values used for colormapping
-lc.set_array(betas)
-lc.set_linewidth(5)
-line = ax_beta.add_collection(lc)
-# fig_beta.colorbar(line, ax=ax_beta)
+# points = np.array([Ks, betas[:-1]]).T.reshape(-1, 1, 2)
+# segments = np.concatenate([points[:-1], points[1:]], axis=1)
+# norm = plt.Normalize(0, 5)
+# lc = LineCollection(segments, cmap='turbo_r', norm=norm)
+# # Set the values used for colormapping
+# lc.set_array(betas)
+# lc.set_linewidth(5)
+# line = ax_beta.add_collection(lc)
+# # fig_beta.colorbar(line, ax=ax_beta)
 
-my_plot_layout(ax=ax_beta, yscale = 'linear', xscale = 'log', ticks_labelsize = 38)
-ax_beta.set_xticks([])
-ax_beta.set_yticks(np.arange(0, 6))
-ax_beta.set_ylim(top = 5, bottom = -.2)
-ax_beta.set_xlim(right = 1e-3)
-fig_beta.savefig('../../Figures/_Summary/beta.pdf')
+# my_plot_layout(ax=ax_beta, yscale = 'linear', xscale = 'log', ticks_labelsize = 38)
+# ax_beta.set_xticks([])
+# ax_beta.set_yticks(np.arange(0, 6))
+# ax_beta.set_ylim(top = 5, bottom = -.2)
+# ax_beta.set_xlim(right = 1e-3)
+# fig_beta.savefig('../../Figures/_Summary/beta.pdf')
 #----------------------------------------------------------------
 
 fig_H, ax_H = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-for n_thetas, theta in enumerate(thetas):
+
+for i_theta, theta in enumerate(thetas):
+
+    E_t = lambda t, theta:lambda_A*t/theta - np.log((lambda_A*N_A)/(k_on*N_c))/theta + np.log(k_pr/k_on) 
+    
+    beta_theta = betas[betas>theta][-1]
     E_theta = Es[betas>theta][-1]
+    Kd_theta = np.exp(E_theta)
+
+    delta_t_theta = (E_theta-E_pr)*theta/lambda_A
+    t_theta = t_prime + delta_t_theta
+
+    time1 = np.linspace(0, t_theta, 100)
+    time2 = np.linspace(t_theta, Tf, 100)
+
+    ax_H.plot(time1, -1*np.ones_like(time1)*S[Es[:-1]<E_theta][-1]-2.5, color = colors_theta[i_theta])
+    ax_H.plot(time2, np.array([-S[Es[:-1]<E][-1] for E in E_t(time2, theta)]) -2.5, color = colors_theta[i_theta])
+
     fig_P_act, ax_P_act = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
     fig_Q_act, ax_Q_act = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
     fig_Q_act2, ax_Q_act2 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
@@ -139,27 +159,24 @@ for n_thetas, theta in enumerate(thetas):
     m_bar = np.array([N_r*(1-np.sum(np.exp(-((p_a*(np.exp(lambda_A*t)/N_A*k_on*N_c))/lambda_A))*Q0*dE)) for t in time])
     m_bar_approx = ((k_on*M_r)/(N_A*lambda_A))*(np.exp(lambda_A*time))
 
-    ax_m.plot(time, m_bar, linewidth = 4, linestyle = '-', color = colors_theta[n_thetas])
+    ax_m.plot(time, m_bar, linewidth = 4, linestyle = '-', color = colors_theta[i_theta])
     ax_m.plot(time, m_bar_approx, linewidth = 3, linestyle = '--', color = 'black')
     ax_m.hlines(1, T0, Tf, color = 'grey', linestyle = ':')
-    #----------------------------------------------------------------
-
     t_act = time[m_bar>1][0]
-
-    print(t_act)
+    #----------------------------------------------------------------   
     
     days = np.linspace(2, t_act, 4)
     days = np.linspace(2, Tf, 4)
     for n_t, t in enumerate(days[[-4, -3, -2, -1]]):
         u_on, p_a, P_act, Q_act = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*t)/N_A, Es, theta, lambda_A, N_c, dE)
-        #ax_P_act.hlines(r_a[0]*N_c/lambda_A, ax_P_act.get_xlim()[0], ax_P_act.get_xlim()[1], alpha = transparency_q[n_thetas], color = colors_theta[n_thetas], linestyle = ':' )
+        #ax_P_act.hlines(r_a[0]*N_c/lambda_A, ax_P_act.get_xlim()[0], ax_P_act.get_xlim()[1], alpha = transparency_q[i_theta], color = colors_theta[i_theta], linestyle = ':' )
         ax_P_act.set_ylim(bottom = 1e-11, top = 2)
         #----------------------------------------------------------------
         #--------------------------Q_act(E, t)---------------------------
         if theta!=0:
             #--------------------------P_act(E, t)---------------------------
-            ax_P_act.plot(Ks, P_act, alpha = transparency_q[0], color = colors_R[n_thetas][n_t], linewidth = 5, linestyle = '-')
-            ax_Q_act.plot(Ks, Q_act*N_r, alpha = transparency_q[0], color = colors_R[n_thetas][n_t], linewidth = 5, linestyle = '-')
+            ax_P_act.plot(Ks, P_act, alpha = transparency_q[0], color = colors_R[i_theta][n_t], linewidth = 5, linestyle = '-')
+            ax_Q_act.plot(Ks, Q_act*N_r, alpha = transparency_q[0], color = colors_R[i_theta][n_t], linewidth = 5, linestyle = '-')
             #-------FOR Q0--------- 
             #ax_Q_act.vlines(np.exp(E_r), ax_Q_act.get_ylim()[0], N_r*Q0[Ks<np.exp(E_r)][-1], color = 'black', linestyle = 'dashed')
             #ax_Q_act.vlines(np.exp(E_theta), ax_Q_act.get_ylim()[0], N_r*Q0[Ks<np.exp(E_theta)][-1], color = 'grey', linestyle = 'dotted', linewidth = 4)       
@@ -174,7 +191,7 @@ for n_thetas, theta in enumerate(thetas):
         Ks_temp = Ks[Q_act!=0]
         Q_act_temp = Q_act[Q_act!=0]
         D_KL_t = np.sum(dE_temp*(Q_act_temp/np.sum(Q_act_temp*dE_temp))*(np.log((Q_act_temp/np.sum(Q_act_temp*dE_temp)))-np.log(Q0_temp)))
-        ax_H.plot(t, D_KL_t, marker = 's', ms = 12, color = colors_theta2[n_thetas])
+        ax_H.plot(t, D_KL_t, marker = 's', ms = 12, color = colors_theta2[i_theta])
         
     u_on, p_a, P_act, Q_act = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*t_act)/N_A, Es, theta, lambda_A, N_c, dE)
     dE_temp = dE[Q_act!=0]
@@ -182,17 +199,16 @@ for n_thetas, theta in enumerate(thetas):
     Ks_temp = Ks[Q_act!=0]
     Q_act_temp = Q_act[Q_act!=0]
     D_KL_t = np.sum(dE_temp*(Q_act_temp/np.sum(Q_act_temp*dE_temp))*(np.log((Q_act_temp/np.sum(Q_act_temp*dE_temp)))-np.log(Q0_temp)))
-    ax_H.plot(t_act, D_KL_t, marker = 's', ms = 16, color = colors_theta[n_thetas], linestyle = '', label = r'$%.1f$'%theta)
-    ax_H.hlines(L*np.log(20) - np.sum(betas[:-1][betas[:-1]>theta]*dE[betas[:-1]>theta]) - 5, 3, Tf, color = colors_theta[n_thetas])
-    ax_H.hlines(-np.log(Q0[Es[:-1]<E_theta][-1])-2.5, 3, Tf, color = colors_theta[n_thetas], linestyle = '--')
-    print(L*np.log(20) - np.sum(betas[:-1][betas[:-1]>theta]*dE[betas[:-1]>theta]), - np.log(Q0[Es[:-1]<E_theta][-1]))
+    ax_H.plot(t_act, D_KL_t, marker = 's', ms = 16, color = colors_theta[i_theta], linestyle = '', label = r'$%.1f$'%theta)
+    #ax_H.hlines(L*np.log(20) - np.sum(betas[:-1][betas[:-1]>theta]*dE[betas[:-1]>theta]) - 5, 3, Tf, color = colors_theta[i_theta])
+    #ax_H.hlines(-np.log(Q0[Es[:-1]<E_theta][-1])-2.5, 3, Tf, color = colors_theta[i_theta], linestyle = '--')
     # -----------------------------
 
     ax_Q_act.set_ylim(bottom = 1e-11, top = 2*N_r)
     
-    ax0.plot(Ks, p_a, color = colors_theta[n_thetas], alpha = transparency_q[n_thetas], linewidth = 5, linestyle = '-', label = '%.1f'%(theta))
+    ax0.plot(Ks, p_a, color = colors_theta[i_theta], alpha = 1, linewidth = 5, linestyle = '-', label = '%.1f'%(theta))
 
-    ax_Q_act2.plot(Ks, Q_act*N_r, alpha = transparency_q[0], color = colors_theta[n_thetas], linewidth = 5, linestyle = '-')
+    ax_Q_act2.plot(Ks, Q_act*N_r, alpha = transparency_q[0], color = colors_theta[i_theta], linewidth = 5, linestyle = '-')
     u_on, p_a, P_act, Q_act = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*days[-1])/N_A, Es, theta, lambda_A, N_c, dE)
     m = np.sum(dE*Q_act*N_r)
 
@@ -221,11 +237,12 @@ for n_thetas, theta in enumerate(thetas):
 
 my_plot_layout(ax=ax_H, yscale = 'linear', ticks_labelsize = 30)
 ax_H.set_ylim(bottom = -1, top = 18)
+ax_H.set_xlim(left = 2.5, right = Tf)
 ax_H.legend(fontsize = 28, title = r'$\theta$', title_fontsize = 32, loc = 3)
 fig_H.savefig('../../Figures/_Summary/entropy.pdf')
 
 my_plot_layout(ax=ax0, yscale = 'log', xscale = 'log', ticks_labelsize = 30)
-ax0.legend(title = '$\theta$', title_fontsize = 35, fontsize = 30)
+ax0.legend(title = r'$\theta$', title_fontsize = 35, fontsize = 30)
 #ax0.legend(fontsize = 30, title_fontsize=33)
 fig0.savefig('../../Figures/_Summary/p_a.pdf')
 

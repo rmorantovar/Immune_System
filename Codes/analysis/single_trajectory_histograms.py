@@ -92,7 +92,7 @@ PWM_data = M2[:,antigen_seq]
 for i in np.arange(L):
     PWM_data[:,i]-=np.min(PWM_data[:,i], axis=0)
 
-Es, dE, Q0, lambdas = calculate_Q0(0.01, 50, 200000, PWM_data, E_ms, L)
+Es, dE, Q0, betas = calculate_Q0(0.01, 50, 200000, PWM_data, E_ms, L)
 #----------------------------------------------------------------
 fig_H, ax_H = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
 
@@ -169,9 +169,9 @@ for energy_model in energy_models:
             D_KL = np.sum(dE_temp*(Q_act_temp/np.sum(Q_act_temp*dE_temp))*(np.log((Q_act_temp/np.sum(Q_act_temp*dE_temp)))-np.log(Q0_temp)))
             ax_H.plot(theta, D_KL, marker = 's', ms = 16, color = colors[n_theta], linestyle = '')
 
-            lambd_peak = lambdas[:-1][Q_act == np.max(Q_act)][0]
+            lambd_peak = betas[:-1][Q_act == np.max(Q_act)][0]
             print('beta = %.2f'%(lambd_peak))
-            #ax2.vlines(np.exp(Es)[lambdas[:] < theta][0], ax2.get_ylim()[0], np.max(Q_act), color = colors[n_theta], linestyle = ':', linewidth = 2)
+            #ax2.vlines(np.exp(Es)[betas[:] < theta][0], ax2.get_ylim()[0], np.max(Q_act), color = colors[n_theta], linestyle = ':', linewidth = 2)
             my_plot_layout(ax = ax2, xscale = 'log', yscale = 'linear', ticks_labelsize = 38)
             ax2.set_ylim(bottom = 1e-1)
             ax2.set_xlim(right = 1e-3)
