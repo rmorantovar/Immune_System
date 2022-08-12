@@ -44,7 +44,7 @@ k_pr = 0.1 # hour^-1
 k_pr = k_pr*24 #days^-1
 
 #k_pr = 0.000277
-thetas = [1, 1.5, 2]
+thetas = [1, 1.8, 2.2]
 lambda_B = 1*lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
 N_c = 1e4

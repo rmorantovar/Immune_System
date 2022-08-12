@@ -45,9 +45,9 @@ k_pr = 0.1 # hour^-1
 k_pr = k_pr*24 #days^-1
 
 #k_pr= 0.000277
-thetas = [2, 1.5, 1]
+thetas = [2.2, 2.0, 1.8, 1.5, 1]
 #thetas = [2, 1.5]
-colors_theta = ['darkblue', 'olive', 'darkred']
+colors_theta = ['lightblue','darkblue', 'olive', 'orange', 'darkred']
 lambda_B = 1*lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
 N_c = 1e4
@@ -59,9 +59,6 @@ antigen = 'FMLFMAVFVMTSWYC'
 antigen = 'FTSENAYCGR'
 antigen = 'TACNSEYPNTTK'
 antigen = 'TACNSEYPNTTKCGRWYC'
-#antigen = 'TANSEYPNTK'
-#antigen = 'MRTAYRNG'
-#antigen = 'MRTAY'
 
 
 L=len(antigen)
@@ -83,6 +80,7 @@ S = np.log(Q0)
 Kds = np.exp(Es[:-1])
 
 beta_r = betas[:-1][np.cumsum(Q0*dE)<(1/(N_r))][-1]
+print('beta_r = %.1f'%beta_r)
 E_r = Es[:-1][np.cumsum(Q0*dE)<(1/(N_r))][-1]
 Kd_r = np.exp(E_r)
 
@@ -103,7 +101,7 @@ linear = 0
 fig_total_pop, ax_total_pop = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
 fig_H, ax_H = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
 fig_time, ax_time = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
-fig_inhibition, ax_inhibition = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
+#fig_inhibition, ax_inhibition = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
 
 for i_theta, theta in enumerate(thetas):
 
@@ -122,9 +120,8 @@ for i_theta, theta in enumerate(thetas):
     ax_H.plot(time1, -1*np.ones_like(time1)*S[Es[:-1]<E_theta][-1], color = colors_theta[i_theta])
     ax_H.plot(time2, [-S[Es[:-1]<E][-1] for E in E_t(time2, theta)] , label = '%d'%theta, color = colors_theta[i_theta])
         
-    fig_b, ax_b = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
     fig_a, ax_a = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
-    fig_act, ax_act = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
+    #fig_act, ax_act = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
     fig_clones, ax_clones = plt.subplots(1, 3, figsize=(30,10), gridspec_kw={'left':0.06, 'right':.98, 'bottom':.1, 'top': 0.9})
     fig_clones2, ax_clones2 = plt.subplots(figsize=(12,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 
@@ -248,6 +245,7 @@ for i_theta, theta in enumerate(thetas):
                 #circle = plt.Circle(positions[i_c], np.sqrt(bcell_freqs[i_c, int(days_plot[i_plot]*len(time)/Tf)-1]/(np.pi*Tf)), color = colors_theta[i_theta], alpha = 1-(energies[i_c]/np.max(energies)))
                 circle = plt.Circle((radious[i_c]*np.cos(angles[i_c]), radious[i_c]*np.sin(angles[i_c])), np.sqrt(clone_sizes_C[i_c, int(days_plot[i_plot]*len(time)/Tf)-1]/(C*np.pi)), color = colors_theta[i_theta], alpha = .8)
                 ax_clones[i_plot].add_patch(circle)
+
         circle = plt.Circle((0, 0), 3, edgecolor = colors_theta[i_theta], facecolor = 'none')
         ax_clones[i_plot].add_patch(circle)
         circle = plt.Circle((0, 0), 4*((E_r-E_ms)/30), edgecolor = 'grey', facecolor = 'none', linestyle = 'dashed', linewidth = 4)
@@ -272,10 +270,11 @@ for i_theta, theta in enumerate(thetas):
     ax_a.set_ylim(top=2*N_r, bottom = 1e-6)
     fig_a.savefig('../../Figures/1_Dynamics/Trajectories/activation_theta-%.1f.pdf'%theta)
 
-    my_plot_layout(ax = ax_b, yscale = 'log', xlabel = 'Time', ylabel = 'Clone size')
     fig_clones.savefig('../../Figures/1_Dynamics/Trajectories/B_cell_clones_theta-%.1f.pdf'%(theta), dpi = 10)
     fig_clones2.savefig('../../Figures/1_Dynamics/Trajectories/B_cell_clones_2_theta-%.1f.pdf'%(theta), dpi = 10)
 
+    ax_time.scatter(np.exp(energies_C + (E_ms)), activations_times_C, color = colors_theta[i_theta])
+    ax_time.vlines([Kd_pr, Kd_r, Kd_theta], 4, Tf, linestyle = ['-', '--', ':'], color = ['black', 'gray', colors_theta[i_theta]])
 
 my_plot_layout(ax = ax_total_pop, yscale = 'linear', xlabel = 'Time', ylabel = r'$N_t$')
 #ax_a.set_xlim(left = 3.5, right = Tf)
@@ -286,5 +285,10 @@ my_plot_layout(ax = ax_H, yscale = 'linear', xlabel = 'Time', ylabel = r'$D_{KL}
 ax_H.set_xlim(left = 3.5, right = Tf)
 #ax_H.set_ylim(top=2*N_r, bottom = 1e-6)
 fig_H.savefig('../../Figures/1_Dynamics/Trajectories/entropy.pdf') 
+
+my_plot_layout(ax = ax_time, yscale = 'linear', xscale = 'log', xlabel = r'$K_d$', ylabel = r'times')
+#ax_time.set_xlim(left = 3.5, right = Tf)
+#ax_time.set_ylim(top=2*N_r, bottom = 1e-6)
+fig_time.savefig('../../Figures/1_Dynamics/Trajectories/times.pdf') 
     
 

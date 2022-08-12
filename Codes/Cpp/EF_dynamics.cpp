@@ -259,7 +259,7 @@ int main(int argc, char* argv[]) //argv
 
 	        for (int n= 0; n<n_naive; n++)
 		    {
-		        fout << Naive[n]->e << "\t" << Naive[n]->active << "\t" << Naive[n]->plasma << "\t" << Naive[n]->activation_time << "\t";
+		        fout << Naive[n]->e << "\t" << Naive[n]->active << "\t" << Naive[n]->plasma << "\t" << Naive[n]->activation_time << "\t" << i_ens << "\t";
 		        for (int i=0; i<L_seq; i++){
 		        	fout  << Alphabet[Naive[n]->seq[i]];
 		        }

@@ -593,15 +593,16 @@ void EF_response(int linear, double const alpha, double const beta, double gamma
         if(z<n_time){
             Naive[n]->activation_time = time[z];
             Naive[n]->active = 1;
+
+            r_GC = randX(0,1);
+            // Decide if the activated linage will have plasma or GC fate.
+            if(r_GC<p_GC){
+                Naive[n]->plasma = 0;
+            }
         }
-        r_GC = randX(0,1);
-        // Decide if the activated linage will have plasma or GC fate.
-        if(r_GC<p_GC){
-            Naive[n]->plasma = 0;
-        }
+        
     }
 
-    
     //double N_active_bcells = 0; // To use if we want to kill antigen from B cells
     int n_active_linages = 0;
     
