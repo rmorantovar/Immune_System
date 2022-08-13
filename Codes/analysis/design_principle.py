@@ -64,7 +64,7 @@ dT = 0.05
 days = np.linspace(2, Tf, 5)
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
 lambda_A = 6 #days^-1
-k_pr = .1 # hour^-1
+k_pr = .5 # hour^-1
 k_pr = k_pr*24 #days^-1
 
 beta = 1*lambda_A
@@ -122,6 +122,7 @@ for i_N_r, N_r in enumerate(N_rs):
     Ks_r = np.exp(E_r)
 
     thetas = np.linspace(1, 2.8, 10)
+
 
     for i_theta, theta in enumerate(thetas):
 
@@ -222,6 +223,8 @@ for i_N_r, N_r in enumerate(N_rs):
             ax_Q_act.set_xlim(right = 1e-3)
             fig_Q_act.savefig('../../Figures/9_Desing_principle/QR_theta-%.1f_Nr-%.0e.pdf'%(theta, N_r))
         
+    k_act = np.min([Ks_r+k_on, Kd_theta*k_on])
+    ax_t_C.plot(thetas, t_C+(2*(thetas-thetas[-1])/(k_pr+k_act)), color = colors_N_r[i_N_r])
 
 my_plot_layout(ax=ax_m_t_C, yscale = 'log', ticks_labelsize = 30)
 ax_m_t_C.set_ylim(bottom = .5)

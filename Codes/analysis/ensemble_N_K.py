@@ -96,6 +96,7 @@ energy_model = 'MJ'
 colors_gm = np.array([plt.cm.Oranges(np.linspace(0,1,len(lambda_Bs[0])+2)),plt.cm.Reds(np.linspace(0,1,len(lambda_Bs[1])+2)) ], dtype=object)
 FIG, AX = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 FIG2, AX2 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+FIG3, AX3 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 for i_theta, theta in enumerate(thetas):
 	beta_q = betas[betas>theta][-1]
 	E_q = Es[betas>theta][-1]
@@ -192,14 +193,17 @@ for i_theta, theta in enumerate(thetas):
 
 			#-------Simulations-------
 			ax2.plot(np.exp(Es_array_data[:]), clone_sizes_binned[:]/max_clone_size, color = 'orange', linewidth =5, linestyle = '', marker = 's', ms = 8)
-			ax2.plot(np.exp(Es_array_data[:]), max_clone_sizes_binned[:]/max_clone_size, linewidth =5, linestyle = '', marker = '*', ms = 8,  color = colors_theta[i_theta])
+			#ax2.plot(np.exp(Es_array_data[:]), max_clone_sizes_binned[:]/max_clone_size, linewidth =5, linestyle = '', marker = '*', ms = 8,  color = colors_theta[i_theta])
 
 			AX.plot(np.exp(Es_array_data[:]), clone_sizes_binned[:]/max_clone_size, linewidth =5, linestyle = '', marker = 's', ms = 8, label = '%.1f'%theta, color = colors_theta[i_theta])
-			AX.plot(np.exp(Es_array_data[:]), max_clone_sizes_binned[:]/max_clone_size, linewidth =5, linestyle = '', marker = '*', ms = 8,  color = colors_theta[i_theta])
-			#AX2.plot(np.exp(Es_array_data[:]), act_times_binned[:]/max_clone_size, linewidth =5, linestyle = '', marker = 's', ms = 8, label = '%.1f'%theta, color = colors_theta[i_theta])
+			#AX.plot(np.exp(Es_array_data[:]), max_clone_sizes_binned[:]/max_clone_size, linewidth =5, linestyle = '', marker = '*', ms = 8,  color = colors_theta[i_theta])
+			AX.vlines([Kd_pr, Kd_q, Kd_r], 1, 1e2, linestyles = ['-',':', '--'], color = ['grey', colors_theta[i_theta], 'gray'])
+
 			AX2.scatter(np.exp(energies), activations_times, color = colors_theta[i_theta])
-			#AX.vlines([Kd_pr, Kd_q, Kd_r], 4e-3, 1.5, linestyles = ['-',':', '--'], color = ['grey', colors_theta[i_theta], 'gray'])
 			AX2.vlines([Kd_pr, Kd_q, Kd_r], 4, 6, linestyles = ['-',':', '--'], color = ['grey', colors_theta[i_theta], 'gray'])
+
+			AX3.scatter(np.exp(energies), clone_sizes, color = colors_theta[i_theta])
+			AX3.vlines([Kd_pr, Kd_q, Kd_r], 4, 6, linestyles = ['-',':', '--'], color = ['grey', colors_theta[i_theta], 'gray'])
 
 			#-------Theory-------
 			cross_over = 1# np.where(clone_sizes_binned==max_clone_size)[0][0]
@@ -242,6 +246,15 @@ AX2.legend(fontsize = 30, title_fontsize = 35, title = r'$\theta$')
 #AX2.set_yticks([1, 0.1, 0.01, 0.001])
 #AX2.set_yticklabels([1, 0.1, 0.01])
 FIG2.savefig('../../Figures/1_Dynamics/Ensemble/act_T_vs_K.pdf')
+
+my_plot_layout(ax = AX3, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+AX3.legend(fontsize = 30, title_fontsize = 35, title = r'$\theta$')
+#AX3.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
+#AX3.set_ylim(bottom = 5e-5, top = 2e0)
+#AX3.set_yticks([1, 0.1, 0.01, 0.001])
+#AX3.set_yticklabels([1, 0.1, 0.01])
+FIG3.savefig('../../Figures/1_Dynamics/Ensemble/clone_sizes_vs_K.pdf')
+
 
 
 

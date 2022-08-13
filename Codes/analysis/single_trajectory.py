@@ -46,7 +46,8 @@ k_pr = k_pr*24 #days^-1
 
 #k_pr= 0.000277
 thetas = [2.2, 2.0, 1.8, 1.5, 1]
-#thetas = [2, 1.5]
+#thetas = [2.2, 2.0, 1.8]
+
 colors_theta = ['lightblue','darkblue', 'olive', 'orange', 'darkred']
 lambda_B = 1*lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
@@ -101,7 +102,9 @@ linear = 0
 fig_total_pop, ax_total_pop = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
 fig_H, ax_H = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
 fig_time, ax_time = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
-#fig_inhibition, ax_inhibition = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
+fig_clone_size, ax_clone_size = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
+fig_m, ax_m = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
+fig_NC, ax_NC = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
 
 for i_theta, theta in enumerate(thetas):
 
@@ -175,10 +178,14 @@ for i_theta, theta in enumerate(thetas):
     print(M_r)
     #----------------------------------------------------------------
     ax_a.plot(time[:-1], data_N_active_linages[:], linestyle = '', marker = 'o', ms = 5, linewidth = 2, label = 'simulation', color = colors_theta[i_theta], alpha = .6)
+    ax_m.plot(time[:-1], data_N_active_linages[:], linestyle = '', marker = 'o', ms = 5, linewidth = 2, label = 'simulation', color = colors_theta[i_theta], alpha = .6)
     if(linear == 0):
         ax_a.plot(time, np.ones_like(time), color = 'black', linestyle = '-', linewidth = 1)
         ax_a.plot(time, m_bar, color = colors_theta[i_theta], label = models_name[0] + ' growth', linestyle = '--', linewidth = 3)
         ax_a.plot(time, m_bar_approx, color = 'grey', label = models_name[0] + ' growth', linestyle = ':', linewidth = 3)
+        ax_m.plot(time, np.ones_like(time), color = 'black', linestyle = '-', linewidth = 1)
+        ax_m.plot(time, m_bar, color = colors_theta[i_theta], label = models_name[0] + ' growth', linestyle = '--', linewidth = 3)
+        ax_m.plot(time, m_bar_approx, color = 'grey', label = models_name[0] + ' growth', linestyle = ':', linewidth = 3)
     if(linear == 1):
         theory = ((k_on*M_r)/(N_A))*(1e8*time + 0.5*lambda_A*time**2)
     #ax_a.set_ylim(top=.5*N_r)
@@ -273,12 +280,22 @@ for i_theta, theta in enumerate(thetas):
     fig_clones.savefig('../../Figures/1_Dynamics/Trajectories/B_cell_clones_theta-%.1f.pdf'%(theta), dpi = 10)
     fig_clones2.savefig('../../Figures/1_Dynamics/Trajectories/B_cell_clones_2_theta-%.1f.pdf'%(theta), dpi = 10)
 
-    ax_time.scatter(np.exp(energies_C + (E_ms)), activations_times_C, color = colors_theta[i_theta])
-    ax_time.vlines([Kd_pr, Kd_r, Kd_theta], 4, Tf, linestyle = ['-', '--', ':'], color = ['black', 'gray', colors_theta[i_theta]])
+    ax_time.scatter(activations_times_C, np.exp(energies_C + (E_ms)), color = colors_theta[i_theta], alpha = .8)
+    ax_time.hlines([Kd_pr, Kd_r, Kd_theta], 3.5, Tf, linestyle = ['-', '--', ':'], color = ['black', 'gray', colors_theta[i_theta]])
+
+    ax_clone_size.scatter(clone_sizes_C[:,-1], np.exp(energies_C + (E_ms)), color = colors_theta[i_theta], alpha = .8)
+    ax_clone_size.hlines([Kd_pr, Kd_r, Kd_theta], 1, 1e4, linestyle = ['-', '--', ':'], color = ['black', 'gray', colors_theta[i_theta]])
+
+    Kds_C = np.exp(energies_C)
+    NC = 1-np.array([np.product(1-1/(1+(Kds_C/((1e12*(clone_sizes_C[:,t]-1))/N_A)))) for t in np.arange(len(time))])
+    ax_NC.plot(time, NC, color = colors_theta[i_theta])
+
+my_plot_layout(ax = ax_m, yscale = 'log', xlabel = 'Time', ylabel = r'$\bar m$')
+ax_m.set_xlim(left = 3., right = Tf)
+ax_m.set_ylim(top=2*N_r, bottom = 1e-6)
+fig_m.savefig('../../Figures/1_Dynamics/Trajectories/activation.pdf')
 
 my_plot_layout(ax = ax_total_pop, yscale = 'linear', xlabel = 'Time', ylabel = r'$N_t$')
-#ax_a.set_xlim(left = 3.5, right = Tf)
-#ax_a.set_ylim(top=2*N_r, bottom = 1e-6)
 fig_total_pop.savefig('../../Figures/1_Dynamics/Trajectories/total_pop.pdf') 
 
 my_plot_layout(ax = ax_H, yscale = 'linear', xlabel = 'Time', ylabel = r'$D_{KL}$')
@@ -286,9 +303,19 @@ ax_H.set_xlim(left = 3.5, right = Tf)
 #ax_H.set_ylim(top=2*N_r, bottom = 1e-6)
 fig_H.savefig('../../Figures/1_Dynamics/Trajectories/entropy.pdf') 
 
-my_plot_layout(ax = ax_time, yscale = 'linear', xscale = 'log', xlabel = r'$K_d$', ylabel = r'times')
-#ax_time.set_xlim(left = 3.5, right = Tf)
+my_plot_layout(ax = ax_time, yscale = 'log', xscale = 'linear', ylabel = r'$K_d$', xlabel = r'times')
+ax_time.set_xlim(left = 3.5, right = Tf+0.5)
 #ax_time.set_ylim(top=2*N_r, bottom = 1e-6)
 fig_time.savefig('../../Figures/1_Dynamics/Trajectories/times.pdf') 
+
+my_plot_layout(ax = ax_clone_size, yscale = 'log', xscale = 'log', ylabel = r'$K_d$', xlabel = r'Clone size')
+#ax_clone_size.set_xlim(left = 3.5, right = Tf)
+#ax_clone_size.set_ylim(top=2*N_r, bottom = 1e-6)
+fig_clone_size.savefig('../../Figures/1_Dynamics/Trajectories/clone_sizes.pdf') 
+
+my_plot_layout(ax = ax_NC, yscale = 'log', xscale = 'linear', xlabel = r'times [days]', ylabel = r'Neutralization capacity')
+ax_NC.set_xlim(left = 3.5, right = Tf+0.5)
+#ax_NC.set_ylim(top=2*N_r, bottom = 1e-6)
+fig_NC.savefig('../../Figures/1_Dynamics/Trajectories/Neutralization.pdf') 
     
 
