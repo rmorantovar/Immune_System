@@ -49,7 +49,7 @@ lambda_B = 1*lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
 N_c = 1e4
 E_ms = -27.63
-C = 5e3
+C = 1e4
 
 print('k_on/k_pr = %.1e'%(k_on/k_pr))
 
