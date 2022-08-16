@@ -1,14 +1,8 @@
 import sys
 sys.path.append('../library/')
-import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
-plt.rcParams['text.usetex'] = True
 from Immuno_models import*
-import scipy.special as sc
-import pickle
-from matplotlib import style
-from scipy.optimize import curve_fit
+plt.rcParams['text.usetex'] = True
+
 
 Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/'
 
@@ -36,17 +30,18 @@ N_ens = 1
 N_r = 5e4
 N_r = 5e5
 N_r = 1e8
-T0 = 0
+T0 = 3
 Tf = 8
-#Tf = 6
+Tf = 7
 dT = 0.05
 lambda_A = 6
+lambda_A = 8
 k_pr = 0.1 # hour^-1
 k_pr = k_pr*24 #days^-1
 
 #k_pr= 0.000277
 thetas = [2.2, 2.0, 1.8, 1.5]#, 1]
-#thetas = [2.2]
+thetas = [2.0, 1.8, 1.6]
 
 colors_theta = ['tab:blue','darkblue', 'olive', 'orange', 'darkred']
 lambda_B = .5*lambda_A
@@ -110,7 +105,7 @@ fig_NC, ax_NC = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.
 fig_total_pop, ax_total_pop = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
 
 for i_theta, theta in enumerate(thetas):
-    
+    print('theta = %.2f...'%theta)
     E_t = lambda t, theta:lambda_A*t/theta - np.log((lambda_A*N_A)/(k_on*N_c))/theta + np.log(k_pr/k_on) 
     
     beta_theta = betas[betas>theta][-1]
@@ -124,7 +119,7 @@ for i_theta, theta in enumerate(thetas):
     time2 = np.linspace(t_theta, Tf, 100)
 
     ax_H.plot(time1, -1*np.ones_like(time1)*S[Es[:-1]<E_theta][-1], color = colors_theta[i_theta])
-    ax_H.plot(time2, [-S[Es[:-1]<E][-1] for E in E_t(time2, theta)] , label = '%d'%theta, color = colors_theta[i_theta])
+    ax_H.plot(time2, [-S[Es[:-1]<E][-1] for E in E_t(time2, theta)] , label = '%.2f'%theta, color = colors_theta[i_theta])
         
     fig_a, ax_a = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
     #fig_act, ax_act = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
@@ -180,7 +175,7 @@ for i_theta, theta in enumerate(thetas):
     t_act = time[m_bar>1][0]
     #---------------------------------------------------------------- 
     #----------------------------------------------------------------
-    u_on, p_a, R, QR = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*Tf)/N_A, Es, theta, lambda_A, N_c, dE)
+    u_on, p_a, R, QR = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*4)/N_A, Es, theta, lambda_A, N_c, dE)
     psi = ((k_on*N_c)/(N_A))*p_a
     M_r = N_r*N_c*np.sum(Q0*p_a*dE)
     print(M_r)
@@ -210,7 +205,7 @@ for i_theta, theta in enumerate(thetas):
     total_pop_active = total_pop - total_pop[0] + 1
     t_C = time[total_pop_active<(C-1)][-1] # Calculate time for reaching carrying capacity
 
-    print('Delta_t = %.1f'%(t_C-t_act))
+    #print('Delta_t = %.1f'%(t_C-t_act))
 
     #-----t_C filter-------
     # filter_C = activation_times<t_C
@@ -239,9 +234,9 @@ for i_theta, theta in enumerate(thetas):
     entropy = -np.sum(bcell_freqs*np.log(bcell_freqs), axis = 0)
 
     if(t_C<t_theta):
-        ax_H.plot(t_C, -S[Es[:-1]<E_t(t_theta, theta)][-1] , label = '%d'%theta, color = colors_theta[i_theta], linestyle = '', marker = 's', ms = 12)
+        ax_H.plot(t_C, -S[Es[:-1]<E_t(t_theta, theta)][-1] , label = '%.2f'%theta, color = colors_theta[i_theta], linestyle = '', marker = 's', ms = 12)
     else:
-        ax_H.plot(t_C, -S[Es[:-1]<E_t(t_C, theta)][-1]  , label = '%d'%theta, color = colors_theta[i_theta], linestyle = '', marker = 's', ms = 12)
+        ax_H.plot(t_C, -S[Es[:-1]<E_t(t_C, theta)][-1]  , label = '%.2f'%theta, color = colors_theta[i_theta], linestyle = '', marker = 's', ms = 12)
 
     #---- Stackplots ----
     colors_muller = []
@@ -289,10 +284,10 @@ for i_theta, theta in enumerate(thetas):
     my_plot_layout(ax = ax_a, yscale = 'log', xlabel = 'Time', ylabel = r'$\bar m$')
     ax_a.set_xlim(left = 3.5, right = Tf)
     ax_a.set_ylim(top=2*N_r, bottom = 1e-6)
-    fig_a.savefig('../../Figures/1_Dynamics/Trajectories/activation_theta-%.1f.pdf'%theta)
+    fig_a.savefig('../../Figures/1_Dynamics/Trajectories/activation_theta-%.2f.pdf'%theta)
 
-    fig_clones.savefig('../../Figures/1_Dynamics/Trajectories/B_cell_clones_theta-%.1f.pdf'%(theta), dpi = 10)
-    fig_clones2.savefig('../../Figures/1_Dynamics/Trajectories/B_cell_clones_2_theta-%.1f.pdf'%(theta), dpi = 10)
+    fig_clones.savefig('../../Figures/1_Dynamics/Trajectories/B_cell_clones_theta-%.2f.pdf'%(theta), dpi = 10)
+    fig_clones2.savefig('../../Figures/1_Dynamics/Trajectories/B_cell_clones_2_theta-%.2f.pdf'%(theta), dpi = 10)
 
     ax_time.scatter(activation_times_C, np.exp(energies_C + (E_ms)), color = colors_theta[i_theta], alpha = .8)
     ax_time.hlines([Kd_pr, Kd_r, Kd_theta], 3.5, Tf, linestyle = ['-', '--', ':'], color = ['black', 'gray', colors_theta[i_theta]])
@@ -302,7 +297,7 @@ for i_theta, theta in enumerate(thetas):
 
     Kds_C = np.exp(energies_C)
     NC = 1-np.array([np.product(1-1/(1+(Kds_C/((1e12*(clone_sizes_C[:,t]-1))/N_A)))) for t in np.arange(len(time))])
-    ax_NC.plot(time, np.log(NC), color = colors_theta[i_theta])
+    ax_NC.plot(time, np.log(NC), color = colors_theta[i_theta], label = r'$%.2f$'%(theta))
 
 my_plot_layout(ax = ax_total_pop, yscale = 'linear', xlabel = 'Time', ylabel = r'$N_t$')
 fig_total_pop.savefig('../../Figures/1_Dynamics/Trajectories/total_pop.pdf')
@@ -313,12 +308,12 @@ ax_m.set_ylim(top=2*N_r, bottom = 1e-6)
 fig_m.savefig('../../Figures/1_Dynamics/Trajectories/activation.pdf')
 
 my_plot_layout(ax = ax_H, yscale = 'linear', xlabel = 'Time', ylabel = r'$D_{KL}$')
-ax_H.set_xlim(left = 3.5, right = Tf)
+ax_H.set_xlim(left = T0, right = Tf)
 #ax_H.set_ylim(top=2*N_r, bottom = 1e-6)
 fig_H.savefig('../../Figures/1_Dynamics/Trajectories/entropy.pdf') 
 
 my_plot_layout(ax = ax_time, yscale = 'log', xscale = 'linear', ylabel = r'$K_d$', xlabel = r'times')
-ax_time.set_xlim(left = 3.5, right = Tf+0.5)
+ax_time.set_xlim(left = T0, right = 4+0.5)
 #ax_time.set_ylim(top=2*N_r, bottom = 1e-6)
 fig_time.savefig('../../Figures/1_Dynamics/Trajectories/times.pdf') 
 
@@ -328,7 +323,8 @@ my_plot_layout(ax = ax_clone_size, yscale = 'log', xscale = 'log', ylabel = r'$K
 fig_clone_size.savefig('../../Figures/1_Dynamics/Trajectories/clone_sizes.pdf') 
 
 my_plot_layout(ax = ax_NC, yscale = 'linear', xscale = 'linear', xlabel = r'times [days]', ylabel = r'Neutralization capacity')
-ax_NC.set_xlim(left = 3.5, right = Tf+0.5)
+ax_NC.legend(title = r'$\theta$')
+ax_NC.set_xlim(left = T0, right = Tf)
 #ax_NC.set_ylim(top=2*N_r, bottom = 1e-6)
 fig_NC.savefig('../../Figures/1_Dynamics/Trajectories/Neutralization.pdf') 
     

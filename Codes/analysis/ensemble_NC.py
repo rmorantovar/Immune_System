@@ -1,12 +1,9 @@
 import sys
 sys.path.append('../library/')
-from Immuno_models import *
-import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
+from Immuno_models import*
 plt.rcParams['text.usetex'] = True
-import scipy as scipy
-import pickle
+
+warnings.filterwarnings("ignore")
 
 N_A = 6.02214076e23
 colors = ['tab:blue','tab:red']
@@ -40,29 +37,28 @@ antigen = 'TACNSEYPNTTKCGRWYC'
 
 L=len(antigen)
 
-N_ens = 10
+N_ens = 100
 N_r = 5e4
 N_r = 1e6
 #N_r = 1e6
-T0 = 0
-Tf = 10
+T0 = 3
+Tf = 12
 #Tf = 8
-dT = .01
+dT = .2
 days = np.arange(0, Tf, 1)
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
 lambda_A = 6 #days^-1
 k_pr = .1 # hour^-1
 k_pr = k_pr*24 #days^-1
-thetas = [2, 1.5, 1.0]
-thetas = [2, 1.5]
+thetas = [1.8, 1.65, 1.5, 1.35, 1.15, 1.0]
+#thetas = [2, 1.5]
 colors_theta = ['darkred', 'olive', 'navy']
 colors_theta = ['darkred', 'olive', 'darkblue']
-colors_theta = ['tab:blue','darkblue', 'olive', 'orange', 'darkred']
-lambda_B = 1*lambda_A
+colors_theta = ['tab:blue','darkblue', 'olive', 'orange', 'tab:red', 'darkred']
 k_on = 1e6*24*3600; #(M*days)^-1
 N_c = 1e4
 E_ms = -28
-C = 1e4
+C = 2e4
 
 print('k_pr/k_on = %.1e'%(k_on/k_pr)**(-1))
 
@@ -92,7 +88,7 @@ E_pr = Es[:-1][Kds<(k_pr/k_on)][-1]
 Kd_pr = np.exp(E_pr)
 #----------------------------------------------------------------
 
-lambda_Bs = np.array([np.flip([.5])*lambda_A, np.flip([.5])*lambda_A], dtype=object)
+lambda_Bs = np.array([np.flip([1/3])*lambda_A, np.flip([1/3])*lambda_A], dtype=object) #days^-1
 delta_Nb = lambda t, tb, Nb, N, lambda_B, C: lambda_B*Nb*(1-(N/C))*np.heaviside(t-tb, 1)
 
 d=20
@@ -102,15 +98,12 @@ FIG, AX = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'b
 FIG2, AX2 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 FIG3, AX3 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 for i_theta, theta in enumerate(thetas):
-	print('theta = %.1f...'%theta)
+	print('theta = %.2f...'%theta)
 	beta_q = betas[betas>theta][-1]
 	E_q = Es[betas>theta][-1]
 	Kd_q = np.exp(E_q)
 	Kd_act = np.max([Kd_q, Kd_r])
 	for j, gm in enumerate(growth_models):
-		fig0, ax0 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-		fig, ax = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-		fig2, ax2 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 		for n_lambda_B, lambda_B in enumerate(lambda_Bs[j]):
 
 			#--------------------------m(t)---------------------------
@@ -132,21 +125,26 @@ for i_theta, theta in enumerate(thetas):
 
 			Kds0 = np.exp(data[0])	
 			NC = np.zeros_like(time)
-			for i_ens in np.arange(N_ens):
+			for i_ens in tqdm(np.arange(N_ens)):
 
 				data_i = data.loc[data[4]==i_ens]
 				data_active = data_i.loc[data_i[1]==1]
 				#data_active = data_active.loc[data_active[3]<t_C]
 				energies = data_active[0]
-				data_plasma = data_active.loc[data_active[2]==1]
-				data_GC = data_active.loc[data_active[2]==0]
+				#data_plasma = data_active.loc[data_active[2]==1]
+				#data_GC = data_active.loc[data_active[2]==0]
 				activation_times = np.array(data_active[3]) #Can be changed for data_plasma
 				
 				clone_sizes = np.ones((len(activation_times), len(time)))
 
+				#-----t_C filter-------
+				filter_C = activation_times<t_C
+				clone_sizes = clone_sizes[filter_C, :]
+				activation_times = activation_times[filter_C]
+				energies = energies[filter_C]
+
 				for i_t, t in enumerate(time[:-1]):
 					for i in np.arange(0, len(activation_times)):
-						#clone_sizes[i, int(activation_times[i]/dT):] = np.exp(lambda_B*(time[int(activation_times[i]/dT):] - activation_times[i] ))
 						tb = activation_times[i]
 						Nb = clone_sizes[i, i_t]# * np.heaviside(tb-t)
 						N = np.sum(clone_sizes[:, i_t]) - np.sum(clone_sizes[:, 0])
@@ -164,21 +162,18 @@ for i_theta, theta in enumerate(thetas):
 
 				#-------Simulations-------
 				Kds_C = np.exp(energies_C)
-				NC_i = 1-np.array([np.product(1-1/(1+(Kds_C/((1e5*(clone_sizes_C[:,t]-1))/N_A)))) for t in np.arange(len(time))])
-				NC += NC_i/N_ens
-				if(i_ens%2==0):
-					AX.plot(time, NC_i, color = colors_theta[i_theta], alpha = .1)
-
-			AX.plot(time, NC, color = colors_theta[i_theta], alpha = 1)
+				NC_i = np.log(1-np.array([np.product(1-1/(1+(Kds_C/((1e7*(clone_sizes_C[:,t]-1))/N_A)))) for t in np.arange(len(time))]))
+				NC += NC_i
+				if(i_ens%1==0):
+					AX.plot(time, NC_i, color = colors_theta[i_theta], alpha = .05, linewidth = 1)
+			NC = NC/N_ens		
+			AX.plot(time, NC, color = colors_theta[i_theta], alpha = 1, label = r'$%.2f$'%theta, linewidth = 3)
 			#-------Theory-------
 
-
-
-
-my_plot_layout(ax = AX, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-#AX.legend(fontsize = 30, title_fontsize = 35, title = r'$\theta$')
+my_plot_layout(ax = AX, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+AX.legend(fontsize = 30, title_fontsize = 35, title = r'$\theta$')
 #AX.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
-#AX.set_ylim(bottom = 5e-5, top = 2e0)
+AX.set_ylim(bottom = -15)
 #AX.set_yticks([1, 0.1, 0.01, 0.001])
 #AX.set_yticklabels([1, 0.1, 0.01])
 FIG.savefig('../../Figures/1_Dynamics/Ensemble/NC.pdf')

@@ -1,14 +1,20 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
+import scipy.special as sc
+
+import pickle
+import json
+import warnings
+
 from io import StringIO
 from matplotlib.lines import Line2D
 from datetime import datetime, timedelta
-import scipy.special as sc
-import seaborn as sns
-import pickle
-import json
+from tqdm import tqdm
 from scipy.optimize import curve_fit
-
+from matplotlib import style
+from matplotlib.collections import LineCollection
 
 #----------------- Classes -----------------
 class Sequence():

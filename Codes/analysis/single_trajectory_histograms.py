@@ -1,14 +1,8 @@
 import sys
 sys.path.append('../library/')
-import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
-plt.rcParams['text.usetex'] = True
 from Immuno_models import*
-import scipy.special as sc
-import pickle
-from matplotlib import style
-from scipy.optimize import curve_fit
+plt.rcParams['text.usetex'] = True
+
 
 Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/'
 
