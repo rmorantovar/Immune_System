@@ -30,7 +30,7 @@ N_ens = 1
 N_r = 5e4
 N_r = 5e5
 N_r = 1e8
-T0 = 3
+T0 = 1
 Tf = 8
 Tf = 7
 dT = 0.05
@@ -41,7 +41,7 @@ k_pr = k_pr*24 #days^-1
 
 #k_pr= 0.000277
 thetas = [2.2, 2.0, 1.8, 1.5]#, 1]
-thetas = [2.0, 1.8, 1.6]
+thetas = [2.0, 1.8, 1.6, 1.4]
 
 colors_theta = ['tab:blue','darkblue', 'olive', 'orange', 'darkred']
 lambda_B = .5*lambda_A
@@ -323,7 +323,7 @@ my_plot_layout(ax = ax_clone_size, yscale = 'log', xscale = 'log', ylabel = r'$K
 fig_clone_size.savefig('../../Figures/1_Dynamics/Trajectories/clone_sizes.pdf') 
 
 my_plot_layout(ax = ax_NC, yscale = 'linear', xscale = 'linear', xlabel = r'times [days]', ylabel = r'Neutralization capacity')
-ax_NC.legend(title = r'$\theta$')
+ax_NC.legend(title = r'$\theta$', fontsize = 30, title_fontsize = 32)
 ax_NC.set_xlim(left = T0, right = Tf)
 #ax_NC.set_ylim(top=2*N_r, bottom = 1e-6)
 fig_NC.savefig('../../Figures/1_Dynamics/Trajectories/Neutralization.pdf') 

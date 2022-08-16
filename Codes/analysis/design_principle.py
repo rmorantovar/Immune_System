@@ -113,7 +113,8 @@ for i_N_r, N_r in enumerate(N_rs):
     beta_r = betas[:-1][np.cumsum(Q0*dE)<(1/N_r)][-1]
     E_r = Es[:-1][np.cumsum(Q0*dE)<(1/N_r)][-1]
     Ks_r = np.exp(E_r)
-
+    print('beta_r = %.2f'%beta_r)
+    
     thetas = np.linspace(1, 2.8, 10)
 
 

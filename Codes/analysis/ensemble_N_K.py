@@ -56,6 +56,7 @@ lambda_B = 1*lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
 N_c = 1e4
 E_ms = -28
+C = 2e4
 
 print('k_pr/k_on = %.1e'%(k_on/k_pr)**(-1))
 
@@ -86,14 +87,18 @@ Kd_pr = np.exp(E_pr)
 #----------------------------------------------------------------
 
 lambda_Bs = np.array([np.flip([.5])*lambda_A, np.flip([.5])*lambda_A], dtype=object)
-
+n_bins = 15
 d=20
 energy_model = 'MJ'
 colors_gm = np.array([plt.cm.Oranges(np.linspace(0,1,len(lambda_Bs[0])+2)),plt.cm.Reds(np.linspace(0,1,len(lambda_Bs[1])+2)) ], dtype=object)
 FIG, AX = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 FIG2, AX2 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 FIG3, AX3 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+
+delta_Nb = lambda t, tb, Nb, N, lambda_B, C: lambda_B*Nb*(1-(N/C))*np.heaviside(t-tb, 1)
+
 for i_theta, theta in enumerate(thetas):
+	print('theta = %.2f...'%theta)
 	beta_q = betas[betas>theta][-1]
 	E_q = Es[betas>theta][-1]
 	Kd_q = np.exp(E_q)
@@ -117,59 +122,18 @@ for i_theta, theta in enumerate(thetas):
 			data = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/energies_ensemble.txt', sep = '\t', header=None)
 			data2 = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/summary_ensemble.txt', sep = '\t', header=None)
 
-
-			N_clones = np.array(data2[0])
-
-			data_active = data.loc[data[1]==1]
-			data_active = data_active.loc[data_active[3]<t_C]
-			energies = data_active[0]
-			data_plasma = data_active.loc[data_active[2]==1]
-			data_GC = data_active.loc[data_active[2]==0]
-			activations_times = np.array(data_active[3]) #Can be changed for data_plasma
 			min_e_data = np.min(data[0])
 			max_e_data = np.max(data[0])
-			clone_sizes = np.exp(lambda_B*(Tf - activations_times))
 
-			N_active_clones_plasma = np.ones_like(N_clones)
-			counter = 0
+			energies0 = data[0]
+			data_Es0 = ax0.hist(energies0, bins = np.linspace(min_e_data, max_e_data, n_bins), density = False, color = colors_gm[j][n_lambda_B+2],histtype = 'step', zorder=10, align = 'mid', linewidth = 2, alpha = 0)
+			counts0 = data_Es0[0]
+			Es_array_data0 = data_Es0[1][:-1][counts0!=0]
+			counts0 = counts0[counts0!=0]
 
-			for n, n_clones in enumerate(N_clones):
-				temp_data = data[counter:counter+n_clones]
-				temp_data2 = temp_data.loc[temp_data[1]==1]
-				N_active_clones_plasma[n] = len(temp_data2.loc[temp_data2[2]==1])
-				counter += n_clones
-
-			Kds0 = np.exp(data[0])
-			data_Kds0 = ax0.hist(Kds0, bins = np.logspace(np.log10(np.exp(min_e_data)), np.log10(np.exp(max_e_data)), 20), density = False, color = colors_gm[j][n_lambda_B+2],histtype = 'step', zorder=10, align = 'mid', linewidth = 2, alpha = 0)
-			counts0 = data_Kds0[0][np.where(data_Kds0[0]!=0)]
-			Kds_array_data0 = (data_Kds0[1][np.where(data_Kds0[0]!=0)])
-
-			Kds = np.exp(data_active[0]) #Can be changed for data_plasma
-
-			data_Es = ax0.hist(energies, bins = np.linspace(min_e_data, max_e_data, 20), density = False, color = colors_gm[j][n_lambda_B+2],histtype = 'step', zorder=10, align = 'mid', linewidth = 2, alpha = 0)
-			counts = data_Es[0]
-			Es_array_data = (data_Es[1][:-1][counts!=0])
-			counts = data_Es[0][counts!=0]
-
-			clone_sizes_binned = np.zeros([len(counts)])
-			act_times_binned = np.zeros([len(counts)])
-			clone_sizes_binned_2= np.zeros([len(counts)])
-			var_clone_sizes_binned = np.zeros([len(counts)])
-			max_clone_sizes_binned = np.zeros([len(counts)])
-
-			print(int(len(counts)), len(Es_array_data))
-			for i in np.arange(int(len(counts))-1):
-					clone_sizes_binned[i] = np.mean( np.concatenate((clone_sizes[(energies>=Es_array_data[i]) & (energies<Es_array_data[i+1])], np.array([0]) )) )#/N_ens
-					act_times_binned[i] = np.mean( np.concatenate((activations_times[(energies>=Es_array_data[i]) & (energies<Es_array_data[i+1])], np.array([0]) )) )#/N_ens
-					clone_sizes_binned_2[i] += np.mean( np.concatenate(((clone_sizes[(energies>=Es_array_data[i]) & (energies<Es_array_data[i+1])])**2, np.array([0]) )) )#/N_ens
-					max_clone_sizes_binned[i] = np.max(clone_sizes[(energies>=Es_array_data[i]) & (energies<Es_array_data[i+1]) ], initial=1)#/N_ens
-
-			max_clone_size = 1# np.max(clone_sizes_binned)
-			ax.plot(Kds_array_data0, counts0/N_ens, color = colors_gm[j][n_lambda_B+2], alpha = .8, marker = 'o', ms = 8, linestyle = '')
-			ax.plot(np.exp(Es_array_data), counts/N_ens, color = colors_gm[j][n_lambda_B+2], alpha = .8, marker = '^', ms = 8, linestyle = '')
-
-			popt, pcov = curve_fit(f = my_linear_func , xdata = np.log(Kds_array_data0[0:4]), ydata= np.log(counts0)[0:4] )
-			beta_act2 = popt[1]
+			ax.plot(np.exp(Es_array_data0), counts0/N_ens, color = colors_gm[j][n_lambda_B+2], alpha = .8, marker = 'o', ms = 8, linestyle = '')
+			#popt, pcov = curve_fit(f = my_linear_func , xdata = np.log(Es_array_data0[0:4]), ydata= np.log(counts0)[0:4] )
+			#beta_act2 = popt[1]
 			beta_act = np.min([theta, beta_r])
 
 			print('beta_q = %.2f'%beta_q)
@@ -179,36 +143,100 @@ for i_theta, theta in enumerate(thetas):
 
 			ax.plot(np.exp(Es[:-1]), Q0*N_r, color = colors_gm[j][n_lambda_B+2])
 			ax.plot(np.exp(Es[:-1]), QR*N_r, color = colors_gm[j][n_lambda_B+2])
-			ax.plot(Kds_array_data0[0:10], (counts0[0]/N_ens)*(Kds_array_data0[0:10]/Kds_array_data0[0])**(beta_act), color = colors_gm[j][n_lambda_B+2], linewidth = 5, linestyle = ':', marker = '', ms = 15, alpha = .8)
-			ax.plot(Kds_array_data0[0:10], (counts0[0]/N_ens)*(Kds_array_data0[0:10]/Kds_array_data0[0])**(beta_act2), color = colors_gm[j][n_lambda_B+2], linewidth = 5, linestyle = ':', marker = '', ms = 15, alpha = .4)
+			ax.plot(np.exp(Es_array_data0[0:10]), (counts0[0]/N_ens)*(np.exp(Es_array_data0[0:10])/np.exp(Es_array_data0[0]))**(beta_act), color = colors_gm[j][n_lambda_B+2], linewidth = 5, linestyle = ':', marker = '', ms = 15, alpha = .8)
+			#ax.plot(np.exp(Es_array_data0[0:10]), (counts0[0]/N_ens)*(np.exp(Es_array_data0[0:10])/np.exp(Es_array_data0[0]))**(beta_act2), color = colors_gm[j][n_lambda_B+2], linewidth = 5, linestyle = ':', marker = '', ms = 15, alpha = .4)
+			
+			clone_sizes_binned = np.zeros(n_bins-1)
+			var_clone_sizes_binned = np.zeros(n_bins-1)
+			max_clone_sizes_binned = np.zeros(n_bins-1)
 
-			Es_array_data = Es_array_data[clone_sizes_binned!=0]
-			act_times_binned = act_times_binned[clone_sizes_binned!=0]
-			max_clone_sizes_binned = max_clone_sizes_binned[clone_sizes_binned!=0]
-			clone_sizes_binned = clone_sizes_binned[clone_sizes_binned!=0]
+			for i_ens in tqdm(np.arange(N_ens)):
 
-			#-------Simulations-------
-			ax2.plot(np.exp(Es_array_data[:]), clone_sizes_binned[:]/max_clone_size, color = 'orange', linewidth =5, linestyle = '', marker = 's', ms = 8)
-			#ax2.plot(np.exp(Es_array_data[:]), max_clone_sizes_binned[:]/max_clone_size, linewidth =5, linestyle = '', marker = '*', ms = 8,  color = colors_theta[i_theta])
+				data_i = data.loc[data[4]==i_ens]
+				data_active = data_i.loc[data_i[1]==1]
 
-			AX.plot(np.exp(Es_array_data[:]), clone_sizes_binned[:]/max_clone_size, linewidth =5, linestyle = '', marker = 's', ms = 8, label = '%.1f'%theta, color = colors_theta[i_theta])
-			#AX.plot(np.exp(Es_array_data[:]), max_clone_sizes_binned[:]/max_clone_size, linewidth =5, linestyle = '', marker = '*', ms = 8,  color = colors_theta[i_theta])
-			AX.vlines([Kd_pr, Kd_q, Kd_r], 1, 1e2, linestyles = ['-',':', '--'], color = ['grey', colors_theta[i_theta], 'gray'])
+				data_active = data_active.loc[data_active[3]<t_C]
+				energies = data_active[0]
+				data_plasma = data_active.loc[data_active[2]==1]
+				data_GC = data_active.loc[data_active[2]==0]
+				activation_times = np.array(data_active[3]) #Can be changed for data_plasma
+				
+				#clone_sizes = np.exp(lambda_B*(Tf - activation_times))
+				clone_sizes = np.ones((len(activation_times), len(time)))
 
-			AX2.scatter(np.exp(energies), activations_times, color = colors_theta[i_theta])
-			AX2.vlines([Kd_pr, Kd_q, Kd_r], 4, 6, linestyles = ['-',':', '--'], color = ['grey', colors_theta[i_theta], 'gray'])
+				# #-----t_C filter-------
+				filter_C = activation_times<t_C
+				clone_sizes = clone_sizes[filter_C, :]
+				activation_times = activation_times[filter_C]
+				energies = energies[filter_C]
 
-			AX3.scatter(np.exp(energies), clone_sizes, color = colors_theta[i_theta])
-			AX3.vlines([Kd_pr, Kd_q, Kd_r], 4, 6, linestyles = ['-',':', '--'], color = ['grey', colors_theta[i_theta], 'gray'])
+				for i_t, t in enumerate(time[:-1]):
+					for i in np.arange(0, len(activation_times)):
+						tb = activation_times[i]
+						Nb = clone_sizes[i, i_t]# * np.heaviside(tb-t)
+						N = np.sum(clone_sizes[:, i_t]) - np.sum(clone_sizes[:, 0])
+						clone_sizes[i, i_t+1] = Nb + delta_Nb(t, tb, Nb, N, lambda_B, C)*dT
+
+				clone_sizes_f = clone_sizes[:,-1]
+
+				Kds = np.exp(data_active[0]) #Can be changed for data_plasma
+
+				data_Es = ax0.hist(energies, bins = np.linspace(min_e_data, max_e_data, n_bins), density = False, color = colors_gm[j][n_lambda_B+2],histtype = 'step', zorder=10, align = 'mid', linewidth = 2, alpha = 0)
+				counts = data_Es[0]
+				Es_array_data = data_Es[1][:-1]#[counts!=0]
+				#counts = counts[counts!=0]
+
+				clone_sizes_binned_i = np.zeros([len(counts)])
+				act_times_binned = np.zeros([len(counts)])
+				clone_sizes_binned_2= np.zeros([len(counts)])
+				var_clone_sizes_binned_i = np.zeros([len(counts)])
+				max_clone_sizes_binned_i = np.zeros([len(counts)])
+
+				#print(int(len(counts)), len(Es_array_data))
+				for i in np.arange(int(len(counts))-1):
+						clone_sizes_binned_i[i] = np.mean( np.concatenate((clone_sizes_f[(energies>=Es_array_data[i]) & (energies<Es_array_data[i+1])], np.array([0]) )) )#/N_ens
+						var_clone_sizes_binned_i[i] = np.var( np.concatenate((clone_sizes_f[(energies>=Es_array_data[i]) & (energies<Es_array_data[i+1])], np.array([0]) )) )#/N_ens
+						#act_times_binned[i] = np.mean( np.concatenate((activation_times[(energies>=Es_array_data[i]) & (energies<Es_array_data[i+1])], np.array([0]) )) )#/N_ens
+						#clone_sizes_binned_2[i] += np.mean( np.concatenate(((clone_sizes[(energies>=Es_array_data[i]) & (energies<Es_array_data[i+1])])**2, np.array([0]) )) )#/N_ens
+						max_clone_sizes_binned_i[i] = np.max(clone_sizes_f[(energies>=Es_array_data[i]) & (energies<Es_array_data[i+1]) ], initial=1)#/N_ens
+
+				clone_sizes_binned += clone_sizes_binned_i/N_ens
+				var_clone_sizes_binned += var_clone_sizes_binned_i/N_ens
+				max_clone_sizes_binned += max_clone_sizes_binned_i/N_ens
+
+				max_clone_size = 1# np.max(clone_sizes_binned_i)
+				
+				ax.plot(np.exp(Es_array_data), counts, color = colors_gm[j][n_lambda_B+2], alpha = .8, marker = '^', ms = 5, linestyle = '')
+			
+				#Es_array_data = Es_array_data[clone_sizes_binned_i!=0]
+				#act_times_binned = act_times_binned[clone_sizes_binned_i!=0]
+				#max_clone_sizes_binned_i = max_clone_sizes_binned_i[clone_sizes_binned_i!=0]
+				#clone_sizes_binned_i = clone_sizes_binned_i[clone_sizes_binned_i!=0]
+
+				#-------Simulations-------
+				ax2.plot(np.exp(Es_array_data[:]), clone_sizes_binned_i[:]/max_clone_size, color = 'orange', linewidth =5, linestyle = '', marker = 's', ms = 5, alpha = .05)
+				#ax2.plot(np.exp(Es_array_data[:]), max_clone_sizes_binned_i[:]/max_clone_size, linewidth =5, linestyle = '', marker = '*', ms = 8,  color = colors_theta[i_theta])
+				AX.plot(np.exp(Es_array_data[:]), clone_sizes_binned_i[:]/max_clone_size, linewidth = 5, linestyle = '', marker = 's', ms = 5, color = colors_theta[i_theta], alpha = .05)
+				#AX.plot(np.exp(Es_array_data[:]), max_clone_sizes_binned_i[:]/max_clone_size, linewidth =5, linestyle = '', marker = '*', ms = 8,  color = colors_theta[i_theta])
+				AX.vlines([Kd_pr, Kd_q, Kd_r], 1, 1e2, linestyles = ['-',':', '--'], color = ['grey', colors_theta[i_theta], 'gray'])
+
+				AX2.scatter(np.exp(energies), activation_times, color = colors_theta[i_theta])
+				AX2.vlines([Kd_pr, Kd_q, Kd_r], 4, 6, linestyles = ['-',':', '--'], color = ['grey', colors_theta[i_theta], 'gray'])
+
+				AX3.scatter(np.exp(energies), clone_sizes_f, color = colors_theta[i_theta])
+				AX3.vlines([Kd_pr, Kd_q, Kd_r], 4, 6, linestyles = ['-',':', '--'], color = ['grey', colors_theta[i_theta], 'gray'])
+
+			ax2.plot(np.exp(Es_array_data[:]), clone_sizes_binned[:]/max_clone_size, color = 'orange', linewidth =3, linestyle = '-', marker = 's', ms = 4, alpha = 1, label = r'$%.2f$'%theta)
+			AX.plot(np.exp(Es_array_data[:]), clone_sizes_binned[:]/max_clone_size, linewidth =3, linestyle = '-', marker = 's', ms = 4, color = colors_theta[i_theta], alpha = 1, label = r'$%.2f$'%theta)
 
 			#-------Theory-------
-			cross_over = 1# np.where(clone_sizes_binned==max_clone_size)[0][0]
-			ax2.plot(np.exp(Es_array_data[0:cross_over+1]), (clone_sizes_binned[cross_over]/max_clone_size)*(np.exp(Es_array_data[0:cross_over+1])/np.exp(Es_array_data[cross_over]))**((lambda_B/lambda_A)), color = 'orange', linewidth =3, linestyle = '--', marker = '', ms = 15, alpha = .8)
-			ax2.plot(np.exp(Es_array_data[cross_over:]), (clone_sizes_binned[cross_over]/max_clone_size)*(np.exp(Es_array_data[cross_over:])/np.exp(Es_array_data[cross_over]))**((lambda_B/lambda_A)*(-theta)), color = 'orange', linewidth =3, linestyle = '--', marker = '', ms = 15, alpha = .8)
+			cross_over = 0# np.where(clone_sizes_binned_i==max_clone_size)[0][0]
+			#ax2.plot(np.exp(Es_array_data[0:cross_over+1]), (clone_sizes_binned_i[cross_over]/max_clone_size)*(np.exp(Es_array_data[0:cross_over+1])/np.exp(Es_array_data[cross_over]))**((lambda_B/lambda_A)), color = 'orange', linewidth =3, linestyle = '--', marker = '', ms = 15, alpha = .8)
+			#ax2.plot(np.exp(Es_array_data[:]), (clone_sizes_binned_i[-1]/max_clone_size)*(np.exp(Es_array_data[:])/np.exp(Es_array_data[-1]))**((lambda_B/lambda_A)*(-theta)), color = 'orange', linewidth =3, linestyle = '--', marker = '', ms = 15, alpha = .8)
 			ax2.vlines([Kd_pr, Kd_q, Kd_r], 4e-3, 1.5, linestyles = ['-',':', '--'], color = 'grey')
 
-			#AX.plot(Kds_array_data[0:cross_over+1], (clone_sizes_binned[cross_over]/max_clone_size)*(Kds_array_data[0:cross_over+1]/Kds_array_data[cross_over])**((lambda_B/lambda_A)), linewidth =3, linestyle = '--', marker = '', ms = 15, alpha = .8)
-			#AX.plot(Kds_array_data[cross_over:], (clone_sizes_binned[cross_over]/max_clone_size)*(Kds_array_data[cross_over:]/Kds_array_data[cross_over])**((lambda_B/lambda_A)*(-theta)), linewidth =3, linestyle = '--', marker = '', ms = 15, alpha = .8, color = colors_theta[i_theta])
+			#AX.plot(Kds_array_data[0:cross_over+1], (clone_sizes_binned_i[cross_over]/max_clone_size)*(Kds_array_data[0:cross_over+1]/Kds_array_data[cross_over])**((lambda_B/lambda_A)), linewidth =3, linestyle = '--', marker = '', ms = 15, alpha = .8)
+			#AX.plot(Kds_array_data[cross_over:], (clone_sizes_binned_i[cross_over]/max_clone_size)*(Kds_array_data[cross_over:]/Kds_array_data[cross_over])**((lambda_B/lambda_A)*(-theta)), linewidth =3, linestyle = '--', marker = '', ms = 15, alpha = .8, color = colors_theta[i_theta])
 			#AX.vlines(Kd_q, AX.get_ylim()[0], AX.get_ylim()[1])
 
 	#AX.vlines(Kd_r, AX.get_ylim()[0], AX.get_ylim()[1])
@@ -236,7 +264,7 @@ AX.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
 FIG.savefig('../../Figures/1_Dynamics/Ensemble/N_vs_K.pdf')
 
 my_plot_layout(ax = AX2, xscale='log', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-AX2.legend(fontsize = 30, title_fontsize = 35, title = r'$\theta$')
+#AX2.legend(fontsize = 30, title_fontsize = 35, title = r'$\theta$')
 #AX2.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
 #AX2.set_ylim(bottom = 5e-5, top = 2e0)
 #AX2.set_yticks([1, 0.1, 0.01, 0.001])
@@ -244,7 +272,7 @@ AX2.legend(fontsize = 30, title_fontsize = 35, title = r'$\theta$')
 FIG2.savefig('../../Figures/1_Dynamics/Ensemble/act_T_vs_K.pdf')
 
 my_plot_layout(ax = AX3, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-AX3.legend(fontsize = 30, title_fontsize = 35, title = r'$\theta$')
+#AX3.legend(fontsize = 30, title_fontsize = 35, title = r'$\theta$')
 #AX3.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
 #AX3.set_ylim(bottom = 5e-5, top = 2e0)
 #AX3.set_yticks([1, 0.1, 0.01, 0.001])
