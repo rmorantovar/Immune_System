@@ -33,6 +33,7 @@ antigen = 'FMLFMAVFVMTSWYC'
 antigen = 'FTSENAYCGR'
 antigen = 'TACNSEYPNTTK'
 antigen = 'TACNSEYPNTTKCGRWYC'
+antigen = 'EYTACNSEYPNTTKCGRWYCGRYPN'
 #antigen = 'TANSEYPNTK'
 #antigen = 'MRTAYRNG'
 #antigen = 'MRTAY'
@@ -53,19 +54,23 @@ print('L=%.d'%L)
 
 N_r = 1e7
 N_r = 1e8
-T0 = 3
+N_r = 2e10
+
+T0 = 0
 Tf = 6
-#Tf = 9
+Tf = 3.0
 dT = 0.1
 days = np.linspace(2, Tf, 5)
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
 lambda_A = 6 #days^-1
-k_pr = .1 # hour^-1
-k_pr = k_pr*24 #days^-1
+lambda_A = 8 #days^-1
+k_pr = 1/20 # (M*seg)^-1
+k_pr = k_pr*3600 # (M*hour)^-1
+k_pr = k_pr*24 #(M*days)^-1
 thetas = [1, 1.5, 2]
 beta = 1*lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
-N_c = 1e4
+N_c = 2e5
 E_ms = -27.63
 
 print('K_d_ms=%.1e'%np.exp(E_ms))
@@ -74,7 +79,7 @@ print('max_u = %.2e'%(k_on*np.exp(Tf*lambda_A)/N_A))
 
 print('k_pr/k_on = %.1e'%(k_on/k_pr)**(-1))
 
-
+print('final antigen concetration = %.2e'%(np.exp(lambda_A*Tf)/1e3))
 #----------------------------------------------------------------
 
 antigen_list = [i for i in antigen]
@@ -95,8 +100,12 @@ beta_r = betas[:-1][np.cumsum(Q0*dE)<(1/N_r)][-1]
 E_r = Es[:-1][np.cumsum(Q0*dE)<(1/N_r)][-1]
 Ks_r = np.exp(E_r)
 
+
 E_pr = Es[:-1][Ks<(k_pr/k_on)][-1]
 Kd_pr = np.exp(E_pr)
+beta_pr = betas[:-1][Ks<Kd_pr][-1]
+print('beta_pr = %.2f'%beta_pr)
+
 t_prime = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*N_c))
 #----------------------------------------------------------------
 # points = np.array([Ks, betas[:-1]]).T.reshape(-1, 1, 2)
@@ -158,8 +167,8 @@ for i_theta, theta in enumerate(thetas):
     t_act = time[m_bar>1][0]
     #----------------------------------------------------------------   
     
-    days = np.linspace(2, t_act, 4)
-    days = np.linspace(2, Tf, 4)
+    days = np.linspace(0, t_act, 4)
+    days = np.linspace(0, Tf, 4)
     for n_t, t in enumerate(days[[-4, -3, -2, -1]]):
         u_on, p_a, P_act, Q_act = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*t)/N_A, Es, theta, lambda_A, N_c, dE)
         #ax_P_act.hlines(r_a[0]*N_c/lambda_A, ax_P_act.get_xlim()[0], ax_P_act.get_xlim()[1], alpha = transparency_q[i_theta], color = colors_theta[i_theta], linestyle = ':' )
@@ -230,7 +239,7 @@ for i_theta, theta in enumerate(thetas):
 
 my_plot_layout(ax=ax_H, yscale = 'linear', ticks_labelsize = 30)
 ax_H.set_ylim(bottom = -1, top = 18)
-ax_H.set_xlim(left = 2.5, right = Tf)
+ax_H.set_xlim(left = 0, right = Tf)
 ax_H.legend(fontsize = 28, title = r'$\theta$', title_fontsize = 32, loc = 3)
 fig_H.savefig('../../Figures/_Summary/entropy.pdf')
 

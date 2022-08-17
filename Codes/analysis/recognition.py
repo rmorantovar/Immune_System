@@ -1,13 +1,7 @@
 import sys
 sys.path.append('../library/')
-import numpy as np
-import matplotlib.pyplot as plt
-plt.rcParams['text.usetex'] = True
-import pandas as pd
 from Immuno_models import*
-import scipy.special as sc
-import pickle
-from tqdm import tqdm
+plt.rcParams['text.usetex'] = True
 
 Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/'
 

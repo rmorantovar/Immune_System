@@ -37,21 +37,22 @@ antigen = 'TACNSEYPNTTKCGRWYC'
 
 L=len(antigen)
 
-N_ens = 100
+N_ens = 10
 N_r = 5e4
-N_r = 1e6
+N_r = 1e8
 #N_r = 1e6
-T0 = 3
+T0 = 2
 Tf = 12
 #Tf = 8
 dT = .2
 days = np.arange(0, Tf, 1)
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
 lambda_A = 6 #days^-1
+lambda_A = 8 #days^-1
 k_pr = .1 # hour^-1
 k_pr = k_pr*24 #days^-1
 thetas = [1.8, 1.65, 1.5, 1.35, 1.15, 1.0]
-#thetas = [2, 1.5]
+thetas = [2, 1.8, 1.6]
 colors_theta = ['darkred', 'olive', 'navy']
 colors_theta = ['darkred', 'olive', 'darkblue']
 colors_theta = ['tab:blue','darkblue', 'olive', 'orange', 'tab:red', 'darkred']
@@ -84,8 +85,12 @@ Kd_r = np.exp(E_r)
 
 print('beta_r = %.2f'%beta_r)
 
-E_pr = Es[:-1][Kds<(k_pr/k_on)][-1]
+
+E_pr = Es[:-1][Ks<(k_pr/k_on)][-1]
 Kd_pr = np.exp(E_pr)
+beta_pr = betas[Ks<Kd_pr][-1]
+print('beta_pr = %.2f'%beta_pr)
+
 #----------------------------------------------------------------
 
 lambda_Bs = np.array([np.flip([1/3])*lambda_A, np.flip([1/3])*lambda_A], dtype=object) #days^-1
@@ -162,7 +167,7 @@ for i_theta, theta in enumerate(thetas):
 
 				#-------Simulations-------
 				Kds_C = np.exp(energies_C)
-				NC_i = np.log(1-np.array([np.product(1-1/(1+(Kds_C/((1e7*(clone_sizes_C[:,t]-1))/N_A)))) for t in np.arange(len(time))]))
+				NC_i = np.log(1-np.array([np.product(1-1/(1+(Kds_C/((1e8*(clone_sizes_C[:,t]-1))/N_A)))) for t in np.arange(len(time))]))
 				NC += NC_i
 				if(i_ens%1==0):
 					AX.plot(time, NC_i, color = colors_theta[i_theta], alpha = .05, linewidth = 1)

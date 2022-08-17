@@ -82,8 +82,11 @@ Kd_r = np.exp(E_r)
 
 print('beta_r = %.2f'%beta_r)
 
-E_pr = Es[:-1][Kds<(k_pr/k_on)][-1]
+
+E_pr = Es[:-1][Ks<(k_pr/k_on)][-1]
 Kd_pr = np.exp(E_pr)
+beta_pr = betas[Ks<Kd_pr][-1]
+print('beta_pr = %.2f'%beta_pr)
 #----------------------------------------------------------------
 
 lambda_Bs = np.array([np.flip([.5])*lambda_A, np.flip([.5])*lambda_A], dtype=object)

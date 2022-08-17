@@ -31,13 +31,12 @@ antigen = 'FMLFMAVFVMTSWYC'
 antigen = 'FTSENAYCGR'
 antigen = 'TACNSEYPNTTK'
 antigen = 'TACNSEYPNTTKCGRWYC'
-#antigen = 'TANSEYPNTK'
-#antigen = 'MRTAYRNG'
-#antigen = 'MRTAY'
+antigen = 'EYTACNSEYPNTTKCGRWYCGRYPN'
+
 
 transparency_q = [1, 1, .3, 0]
-colors_N_r = ['darkred', 'olive', 'darkblue']
-colors_N_r = ['tab:red', 'tab:olive', 'tab:blue']
+colors_N_r = ['darkred', 'darkorange', 'olive', 'darkblue']
+colors_N_r = ['tab:red', 'darkorange', 'tab:olive', 'tab:blue']
 
 colors_R = [['tab:red', 'tab:red', 'tab:red', 'darkred'], ['tab:olive', 'tab:olive', 'tab:olive', 'olive'], ['tab:blue', 'tab:blue', 'tab:blue', 'darkblue']]
 colors_R = [['tab:red', 'tab:red', 'darkred', 'darkred'], ['tab:olive', 'tab:olive', 'olive', 'olive'], ['tab:blue', 'tab:blue', 'darkblue', 'darkblue']]
@@ -49,20 +48,23 @@ growth_models = [0] #, 1]
 L=len(antigen)
 print('L=%.d'%L)
 
-N_rs = [1e6, 1e7, 1e8]
-T0 = 3
-Tf = 8
-#Tf = 9
-dT = 0.05
+N_rs = [1e9, 1e10, 1e11]
+
+T0 = 0
+Tf = 6
+Tf = 3.0
+dT = 0.1
 days = np.linspace(2, Tf, 5)
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
 lambda_A = 6 #days^-1
-k_pr = .5 # hour^-1
-k_pr = k_pr*24 #days^-1
-
+lambda_A = 8 #days^-1
+k_pr = 1/20 # (M*seg)^-1
+k_pr = k_pr*3600 # (M*hour)^-1
+k_pr = k_pr*24 #(M*days)^-1
+thetas = [1, 1.5, 2]
 beta = 1*lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
-N_c = 1e4
+N_c = 2e5
 E_ms = -27.63
 
 print('K_d_ms=%.1e'%np.exp(E_ms))
@@ -87,8 +89,11 @@ Es, dE, Q0, betas = calculate_Q0(0.01, 50, 200000, PWM_data, E_ms, L)
 S = np.log(Q0)
 Ks = np.exp(Es[:-1])
 
+
 E_pr = Es[:-1][Ks<(k_pr/k_on)][-1]
 Kd_pr = np.exp(E_pr)
+beta_pr = betas[:-1][Ks<Kd_pr][-1]
+print('beta_pr = %.2f'%beta_pr)
 t_prime = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*N_c))
 
 #----------------------------------------------------------------
@@ -115,7 +120,7 @@ for i_N_r, N_r in enumerate(N_rs):
     Ks_r = np.exp(E_r)
     print('beta_r = %.2f'%beta_r)
     
-    thetas = np.linspace(1, 2.8, 10)
+    thetas = np.linspace(1, 2, 10)
 
 
     for i_theta, theta in enumerate(thetas):
@@ -164,7 +169,7 @@ for i_N_r, N_r in enumerate(N_rs):
         
         #----------------------------------------------------------------
         
-        if((i_N_r==1) and (i_theta%3==0)):
+        if((i_N_r==2) and (i_theta%3==0)):
 
             fig_Q_act, ax_Q_act = plt.subplots(figsize=(20,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
         
@@ -210,7 +215,7 @@ for i_N_r, N_r in enumerate(N_rs):
         ax_best_E_C.plot(theta, Es_C[0], marker = '^', ms = 12, color = colors_N_r[i_N_r], linestyle = '')
         #----------------------------------------------------------------
 
-        if((i_N_r==1) and (i_theta%3==0)):
+        if((i_N_r==2) and (i_theta%3==0)):
             ax_Q_act.set_ylim(bottom = 1e-11, top = 2*N_r)
             my_plot_layout(ax=ax_Q_act, yscale = 'log', xscale = 'log', ticks_labelsize = 38)
             #ax_Q_act.set_xticks([])
@@ -218,7 +223,7 @@ for i_N_r, N_r in enumerate(N_rs):
             fig_Q_act.savefig('../../Figures/9_Desing_principle/QR_theta-%.1f_Nr-%.0e.pdf'%(theta, N_r))
         
     k_act = np.min([Ks_r+k_on, Kd_theta*k_on])
-    ax_t_C.plot(thetas, t_C+(2*(thetas-thetas[-1])/(k_pr+k_act)), color = colors_N_r[i_N_r])
+    ax_t_act.plot(thetas, t_act + (2*(thetas-thetas[-1])/(k_pr+k_act)), color = colors_N_r[i_N_r])
 
 my_plot_layout(ax=ax_m_t_C, yscale = 'log', ticks_labelsize = 30)
 ax_m_t_C.set_ylim(bottom = .5)

@@ -36,17 +36,19 @@ Tf = 7
 dT = 0.05
 lambda_A = 6
 lambda_A = 8
-k_pr = 0.1 # hour^-1
+k_pr = 180 # hour^-1
 k_pr = k_pr*24 #days^-1
 
 #k_pr= 0.000277
 thetas = [2.2, 2.0, 1.8, 1.5]#, 1]
 thetas = [2.0, 1.8, 1.6, 1.4]
+thetas = [1.0]
 
 colors_theta = ['tab:blue','darkblue', 'olive', 'orange', 'darkred']
 lambda_B = .5*lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
 N_c = 1e4
+N_c = 1e5
 E_ms = -27.63
 C = 1e4
 
@@ -55,6 +57,7 @@ antigen = 'FMLFMAVFVMTSWYC'
 antigen = 'FTSENAYCGR'
 antigen = 'TACNSEYPNTTK'
 antigen = 'TACNSEYPNTTKCGRWYC'
+antigen = 'EYTACNSEYPNTTKCGRWYCGRYPN'
 
 
 L=len(antigen)
@@ -80,8 +83,12 @@ print('beta_r = %.1f'%beta_r)
 E_r = Es[:-1][np.cumsum(Q0*dE)<(1/(N_r))][-1]
 Kd_r = np.exp(E_r)
 
+
 E_pr = Es[:-1][Kds<(k_pr/k_on)][-1]
 Kd_pr = np.exp(E_pr)
+beta_pr = betas[:-1][Kds<Kd_pr][-1]
+print('beta_pr = %.2f'%beta_pr)
+
 t_prime = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*N_c))
 #----------------------------------------------------------------
 
@@ -137,6 +144,7 @@ for i_theta, theta in enumerate(thetas):
     data_active = data.loc[data[1]==1]
 
     activation_times = np.array(data_active[3])
+    print(len(activation_times))
     energies  = np.array(data_active[0])
 
     ar1, ar2 = np.histogram(activation_times, bins = time)
