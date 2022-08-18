@@ -31,7 +31,7 @@ antigen = 'FMLFMAVFVMTSWYC'
 antigen = 'FTSENAYCGR'
 antigen = 'TACNSEYPNTTK'
 antigen = 'TACNSEYPNTTKCGRWYC'
-antigen = 'EYTACNSEYPNTTKCGRWYCGRYPN'
+#antigen = 'EYTACNSEYPNTTKCGRWYCGRYPN'
 
 
 transparency_q = [1, 1, .3, 0]
@@ -58,8 +58,8 @@ days = np.linspace(2, Tf, 5)
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
 lambda_A = 6 #days^-1
 lambda_A = 8 #days^-1
-k_pr = 1/20 # (M*seg)^-1
-k_pr = k_pr*3600 # (M*hour)^-1
+k_pr = 0.1 # (M*hour)^-1
+k_pr = 180 # (M*hour)^-1
 k_pr = k_pr*24 #(M*days)^-1
 thetas = [1, 1.5, 2]
 beta = 1*lambda_A

@@ -34,9 +34,7 @@ antigen = 'FTSENAYCGR'
 antigen = 'TACNSEYPNTTK'
 antigen = 'TACNSEYPNTTKCGRWYC'
 antigen = 'EYTACNSEYPNTTKCGRWYCGRYPN'
-#antigen = 'TANSEYPNTK'
-#antigen = 'MRTAYRNG'
-#antigen = 'MRTAY'
+
 
 transparency_q = [1, 1, .3, 0]
 colors_theta = ['darkred', 'olive', 'darkblue']
@@ -54,18 +52,18 @@ print('L=%.d'%L)
 
 N_r = 1e7
 N_r = 1e8
-N_r = 2e10
+N_r = 2e11
 
 T0 = 0
-Tf = 6
-Tf = 3.0
+Tf = 7
+Tf = 3.6
 dT = 0.1
 days = np.linspace(2, Tf, 5)
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
 lambda_A = 6 #days^-1
 lambda_A = 8 #days^-1
-k_pr = 1/20 # (M*seg)^-1
-k_pr = k_pr*3600 # (M*hour)^-1
+k_pr = 2 # (M*hour)^-1
+#k_pr = 180 # (M*hour)^-1
 k_pr = k_pr*24 #(M*days)^-1
 thetas = [1, 1.5, 2]
 beta = 1*lambda_A
@@ -99,7 +97,7 @@ Ks = np.exp(Es[:-1])
 beta_r = betas[:-1][np.cumsum(Q0*dE)<(1/N_r)][-1]
 E_r = Es[:-1][np.cumsum(Q0*dE)<(1/N_r)][-1]
 Ks_r = np.exp(E_r)
-
+print('beta_r = %.2f'%beta_r)
 
 E_pr = Es[:-1][Ks<(k_pr/k_on)][-1]
 Kd_pr = np.exp(E_pr)
@@ -238,7 +236,7 @@ for i_theta, theta in enumerate(thetas):
     fig_m.savefig('../../Figures/_Summary/activation_rate_theta-%.1f.pdf'%theta)
 
 my_plot_layout(ax=ax_H, yscale = 'linear', ticks_labelsize = 30)
-ax_H.set_ylim(bottom = -1, top = 18)
+#ax_H.set_ylim(bottom = -1, top = 18)
 ax_H.set_xlim(left = 0, right = Tf)
 ax_H.legend(fontsize = 28, title = r'$\theta$', title_fontsize = 32, loc = 3)
 fig_H.savefig('../../Figures/_Summary/entropy.pdf')
