@@ -39,19 +39,20 @@ antigen = 'TACNSEYPNTTKCGRWYC'
 
 L=len(antigen)
 
-N_ens = 500
+N_ens = 10
 N_r = 5e4
-N_r = 1e5
+N_r = 1e8
 T0 = 0
 Tf = 6
-Tf = 8
+#Tf = 8
 dT = .1
 days = np.arange(0, Tf, 1)
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
 lambda_A = 6 #days^-1
 k_pr = .1 # hour^-1
 k_pr = k_pr*24 #days^-1
-qs = [1, 2]
+thetas = [1, 2]
+thetas = [1.8]
 colors_q = ['darkred', 'olive', 'navy']
 lambda_B = .5*lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
@@ -74,10 +75,10 @@ PWM_data = M2[:,antigen_seq]
 for i in np.arange(L):
     PWM_data[:,i]-=np.min(PWM_data[:,i], axis=0)
 
-Es, dE, Q0, lambdas = calculate_Q0(0.01, 50, PWM_data, E_ms, L)
+Es, dE, Q0, betas = calculate_Q0(0.01, 50, 200000, PWM_data, E_ms, L)
 Kds = np.exp(Es[:-1])
 
-beta_r = lambdas[:-1][np.cumsum(Q0*dE)>(1/(N_r))][0]
+beta_r = betas[:-1][np.cumsum(Q0*dE)>(1/(N_r))][0]
 E_r = Es[:-1][np.cumsum(Q0*dE)>(1/(N_r))][0]
 Kd_r = np.exp(E_r)
 
@@ -89,10 +90,10 @@ colors_gm = np.array([plt.cm.Oranges(np.linspace(0,1,len(lambda_Bs[0])+2)),plt.c
 
 FIG, AX = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 
-for q in qs:
+for i_theta, theta in enumerate(thetas):
 	#----------------------------------------------------------------
-	beta_q = lambdas[lambdas>q][-1]
-	E_q = Es[lambdas>q][-1]
+	beta_q = betas[betas>theta][-1]
+	E_q = Es[betas>theta][-1]
 	K_d_q = np.exp(E_q)
 	Kd_act = np.max([K_d_q, Kd_r])
 	#----------------------------------------------------------------
@@ -100,7 +101,7 @@ for q in qs:
 		fig0, ax0 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 		fig, ax = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 		for i, lambda_B in enumerate(lambda_Bs[j]):
-			parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_q-%d_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, q, j, N_ens)+energy_model
+			parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, theta, j, N_ens)+energy_model
 			data = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/energies_ensemble.txt', sep = '\t', header=None)
 			data2 = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/summary_ensemble.txt', sep = '\t', header=None)
 			N_clones = np.array(data2[0])
@@ -127,18 +128,18 @@ for q in qs:
 			Kds_array_data0 = (data_Kds0[1][np.where(data_Kds0[0]!=0)])
 			popt, pcov = curve_fit(f = my_linear_func , xdata = np.log(Kds_array_data0[0:4]), ydata= np.log(counts0)[0:4] )
 			beta_act2 = popt[1]
-			beta_act = np.min([q, beta_r])
+			beta_act = np.min([theta, beta_r])
 			print('beta_act = %.2f'%(beta_act))
 
-			exponents = [(((lambda_A*beta_act*.8)/(lambda_B*q))+1), -1]
+			exponents = [(((lambda_A*beta_act*.8)/(lambda_B*theta))+1), -1]
 			exponents2 = [(((lambda_A)/(lambda_B))+1), -1]
 
 			n_ranking = 80
-			if(q==1):
+			if(theta==1):
 				n_ranking = 200
-			if(q==2):
+			if(theta==2):
 				n_ranking = 80
-			if(q==3):
+			if(theta==3):
 				n_ranking = 10
 			n_array = np.linspace(1, n_ranking, n_ranking)
 			Clone_relative_sizes = np.zeros(n_ranking)
@@ -151,9 +152,9 @@ for q in qs:
 					counter += n_active_clones
 					for k in range(n_ranking):
 						Clone_relative_sizes[k] += (temp_array[k]/temp_array[0])
-					if (n%20==0):
+					if (n%1==0):
 						ax.step(n_array, temp_array[:n_ranking]/temp_array[0], alpha=.1, color='orange')
-						AX.step(n_array, temp_array[:n_ranking]/temp_array[0], alpha=.1, color=colors_q[q-1])
+						AX.step(n_array, temp_array[:n_ranking]/temp_array[0], alpha=.1, color=colors_q[i_theta])
 
 			
 			Clone_relative_sizes = Clone_relative_sizes[:]/n_ens
@@ -162,13 +163,13 @@ for q in qs:
 			plaw_fit_ranking /= (plaw_fit_ranking[-1]/(Clone_relative_sizes[-1]))
 
 			if (gm=='exponential'):
-				ax.plot(n_array[:], Clone_relative_sizes[:], linestyle = '', marker = '*', ms = 8, linewidth = 3, alpha = 1, color = 'orange', label = 'Simulation')
-				ax.plot(n_array[:], plaw_fit_ranking, linestyle = '--', marker = '', ms = 10, linewidth = 3, alpha = .8, color = 'orange', label = 'Theory')
+				ax.plot(n_array[:], Clone_relative_sizes[:], linestyle = '', marker = '*', ms = 8, linewidth = 3, alpha = 1, color = 'orange')
+				ax.plot(n_array[:], plaw_fit_ranking, linestyle = '--', marker = '', ms = 10, linewidth = 3, alpha = .8, color = 'orange')
 
-				AX.plot(n_array[:], Clone_relative_sizes[:], linestyle = '', marker = '*', ms = 8, linewidth = 3, alpha = 1, color = colors_q[q-1])
-				AX.plot(n_array[:], plaw_fit_ranking, linestyle = '--', marker = '', ms = 10, linewidth = 3, alpha = .8, color = colors_q[q-1] )
+				AX.plot(n_array[:], Clone_relative_sizes[:], linestyle = '', marker = '*', ms = 8, linewidth = 3, alpha = 1, color = colors_q[i_theta])
+				AX.plot(n_array[:], plaw_fit_ranking, linestyle = '--', marker = '', ms = 10, linewidth = 3, alpha = .8, color = colors_q[i_theta] )
 
-				#ax.plot(n_array[:], n_array**(-(q*lambda_B)/(beta_act2*lambda_A)), linestyle = ':', marker = '', ms = 10, linewidth = 3, alpha = .8, color = 'orange', label = '%.1f'%(lambda_A/lambda_B))
+				#ax.plot(n_array[:], n_array**(-(theta*lambda_B)/(beta_act2*lambda_A)), linestyle = ':', marker = '', ms = 10, linewidth = 3, alpha = .8, color = 'orange', label = '%.1f'%(lambda_A/lambda_B))
 			if (gm=='linear'):
 				ax.plot(n_array[:][:], Clone_relative_sizes[:]/n_ens, linestyle = '', marker = '*', ms = 10, linewidth = 3, alpha = .6, color = 'orange')
 		
@@ -176,7 +177,7 @@ for q in qs:
 	#ax.set_xlim(clone_size[0]*.5, clone_size[-1]*2)
 	ax.set_ylim(bottom = 5e-2, top = 1.05)
 	ax.legend(fontsize = 30, title_fontsize = 35, loc= 3)
-	fig.savefig('../../Figures/1_Dynamics/Ensemble/ranking_q-%d.pdf'%q)
+	fig.savefig('../../Figures/1_Dynamics/Ensemble/ranking_q-%.2f.pdf'%theta)
 
 my_plot_layout(ax = AX, xscale='log', yscale= 'log', y_fontsize=30 )
 #AX.set_xlim(clone_size[0]*.5, clone_size[-1]*2)

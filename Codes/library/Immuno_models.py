@@ -885,7 +885,13 @@ def calculate_QR(Q0, k_on, k_act, rho_A, Es, q, lambda_A, N_c, dE):
 
 	return u_on, p_a, R, QR
 
+def P_e_gaussian(avg_E, var_E, Es):
 
+    return (2*np.pi*var_E)**(-0.5)*np.exp(-(Es-avg_E)**2/(2*var_E))
+
+def P_min_e(N, avg_E, var_E, Es, dE):
+
+    return (N*(1-np.cumsum(P_e_gaussian(avg_E, var_E, Es)*dE))**(N-1)*(P_e_gaussian(avg_E, var_E, Es)))
 
 def my_plot_layout(ax, yscale = 'linear', xscale = 'linear', ticks_labelsize = 24, xlabel = '', ylabel = '', title = '', x_fontsize=24, y_fontsize = 24, t_fontsize = 24):
     ax.tick_params(labelsize = ticks_labelsize)

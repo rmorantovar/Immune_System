@@ -30,34 +30,34 @@ N_ens = 1
 N_r = 5e4
 N_r = 5e5
 N_r = 1e8
-T0 = 1
+T0 = 0
 Tf = 8
-Tf = 7
+Tf = 10
 dT = 0.05
 lambda_A = 6
-lambda_A = 8
-k_pr = 180 # hour^-1
+#lambda_A = 8
+k_pr = 0.1
+#k_pr = 180 # hour^-1
 k_pr = k_pr*24 #days^-1
 
-#k_pr= 0.000277
 thetas = [2.2, 2.0, 1.8, 1.5]#, 1]
-thetas = [2.0, 1.8, 1.6, 1.4]
-thetas = [1.0]
+thetas = [1.4, 1.8, 2.2]
 
 colors_theta = ['tab:blue','darkblue', 'olive', 'orange', 'darkred']
+colors_theta = np.flip(['tab:blue', 'olive', 'darkred'])
 lambda_B = .5*lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
 N_c = 1e4
-N_c = 1e5
+#N_c = 1e5
 E_ms = -27.63
-C = 1e4
+C = 2e4
 
 antigen = 'CMFILVWYAGTSQNEDHRKPFMRTP'
 antigen = 'FMLFMAVFVMTSWYC'
 antigen = 'FTSENAYCGR'
 antigen = 'TACNSEYPNTTK'
 antigen = 'TACNSEYPNTTKCGRWYC'
-antigen = 'EYTACNSEYPNTTKCGRWYCGRYPN'
+#antigen = 'EYTACNSEYPNTTKCGRWYCGRYPN'
 
 
 L=len(antigen)
@@ -105,10 +105,10 @@ delta_Nb = lambda t, tb, Nb, N, lambda_B, C: lambda_B*Nb*(1-(N/C))*np.heaviside(
 
 
 fig_H, ax_H = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
-fig_time, ax_time = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
+fig_time, ax_time = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 fig_clone_size, ax_clone_size = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
 fig_m, ax_m = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
-fig_NC, ax_NC = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
+fig_NC, ax_NC = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 fig_total_pop, ax_total_pop = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
 
 for i_theta, theta in enumerate(thetas):
@@ -131,6 +131,7 @@ for i_theta, theta in enumerate(thetas):
     fig_a, ax_a = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
     #fig_act, ax_act = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.18, 'right':.95, 'bottom':.15})
     fig_clones, ax_clones = plt.subplots(1, 3, figsize=(30,10), gridspec_kw={'left':0.06, 'right':.98, 'bottom':.1, 'top': 0.9})
+    fig_clones_Tf, ax_clones_Tf = plt.subplots(figsize=(10,10), gridspec_kw={'left':0.02, 'right':.98, 'bottom':.02, 'top': 0.98})
     fig_clones2, ax_clones2 = plt.subplots(figsize=(12,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 
     colors_activation = []
@@ -269,6 +270,9 @@ for i_theta, theta in enumerate(thetas):
                 #circle = plt.Circle(positions[i_c], np.sqrt(bcell_freqs[i_c, int(days_plot[i_plot]*len(time)/Tf)-1]/(np.pi*Tf)), color = colors_theta[i_theta], alpha = 1-(energies[i_c]/np.max(energies)))
                 circle = plt.Circle((radious[i_c]*np.cos(angles[i_c]), radious[i_c]*np.sin(angles[i_c])), 2*np.sqrt(clone_sizes_C[i_c, int(days_plot[i_plot]*len(time)/Tf)-1]/(C*np.pi)), color = colors_theta[i_theta], alpha = .8)
                 ax_clones[i_plot].add_patch(circle)
+                if i_plot==2:
+                    circle = plt.Circle((radious[i_c]*np.cos(angles[i_c]), radious[i_c]*np.sin(angles[i_c])), 2*np.sqrt(clone_sizes_C[i_c, int(days_plot[i_plot]*len(time)/Tf)-1]/(C*np.pi)), color = colors_theta[i_theta], alpha = .8)
+                    ax_clones_Tf.add_patch(circle)
 
         circle = plt.Circle((0, 0), 3, edgecolor = colors_theta[i_theta], facecolor = 'none')
         ax_clones[i_plot].add_patch(circle)
@@ -276,6 +280,14 @@ for i_theta, theta in enumerate(thetas):
         ax_clones[i_plot].add_patch(circle)
         circle = plt.Circle((0, 0), 4*((E_theta-E_ms)/30), edgecolor = 'grey', facecolor = 'none', linestyle = 'dotted', linewidth = 4)
         ax_clones[i_plot].add_patch(circle)
+        if i_plot==2:
+            circle = plt.Circle((0, 0), 3, edgecolor = colors_theta[i_theta], facecolor = 'none')
+            ax_clones_Tf.add_patch(circle)
+            circle = plt.Circle((0, 0), 4*((E_r-E_ms)/30), edgecolor = 'grey', facecolor = 'none', linestyle = 'dashed', linewidth = 4)
+            ax_clones_Tf.add_patch(circle)
+            circle = plt.Circle((0, 0), 4*((E_theta-E_ms)/30), edgecolor = 'grey', facecolor = 'none', linestyle = 'dotted', linewidth = 4)
+            ax_clones_Tf.add_patch(circle)
+
 
     for i_plot in range(len(days_plot)): 
         my_plot_layout(ax = ax_clones[i_plot], ticks_labelsize=34)
@@ -283,6 +295,12 @@ for i_theta, theta in enumerate(thetas):
         ax_clones[i_plot].set_ylim(-3.01, 3.01)
         ax_clones[i_plot].set_xticks([])
         ax_clones[i_plot].set_yticks([])
+
+    my_plot_layout(ax = ax_clones_Tf, ticks_labelsize=34)
+    ax_clones_Tf.set_xlim(-3.01, 3.01)
+    ax_clones_Tf.set_ylim(-3.01, 3.01)
+    ax_clones_Tf.set_xticks([])
+    ax_clones_Tf.set_yticks([])
 
     my_plot_layout(ax = ax_clones2, ticks_labelsize=34)
     ax_clones2.set_xlim(0, 6)
@@ -295,6 +313,7 @@ for i_theta, theta in enumerate(thetas):
     fig_a.savefig('../../Figures/1_Dynamics/Trajectories/activation_theta-%.2f.pdf'%theta)
 
     fig_clones.savefig('../../Figures/1_Dynamics/Trajectories/B_cell_clones_theta-%.2f.pdf'%(theta), dpi = 10)
+    fig_clones_Tf.savefig('../../Figures/1_Dynamics/Trajectories/B_cell_clones_Tf_theta-%.2f.pdf'%(theta), dpi = 10)
     fig_clones2.savefig('../../Figures/1_Dynamics/Trajectories/B_cell_clones_2_theta-%.2f.pdf'%(theta), dpi = 10)
 
     ax_time.scatter(activation_times_C, np.exp(energies_C + (E_ms)), color = colors_theta[i_theta], alpha = .8)
@@ -304,7 +323,7 @@ for i_theta, theta in enumerate(thetas):
     ax_clone_size.hlines([Kd_pr, Kd_r, Kd_theta], 1, 1e4, linestyle = ['-', '--', ':'], color = ['black', 'gray', colors_theta[i_theta]])
 
     Kds_C = np.exp(energies_C)
-    NC = 1-np.array([np.product(1-1/(1+(Kds_C/((1e12*(clone_sizes_C[:,t]-1))/N_A)))) for t in np.arange(len(time))])
+    NC = 1-np.array([np.product(1-1/(1+(Kds_C/((1e18*(clone_sizes_C[:,t]-1))/N_A)))) for t in np.arange(len(time))])
     ax_NC.plot(time, np.log(NC), color = colors_theta[i_theta], label = r'$%.2f$'%(theta))
 
 my_plot_layout(ax = ax_total_pop, yscale = 'linear', xlabel = 'Time', ylabel = r'$N_t$')
@@ -320,8 +339,8 @@ ax_H.set_xlim(left = T0, right = Tf)
 #ax_H.set_ylim(top=2*N_r, bottom = 1e-6)
 fig_H.savefig('../../Figures/1_Dynamics/Trajectories/entropy.pdf') 
 
-my_plot_layout(ax = ax_time, yscale = 'log', xscale = 'linear', ylabel = r'$K_d$', xlabel = r'times')
-ax_time.set_xlim(left = T0, right = 4+0.5)
+my_plot_layout(ax = ax_time, yscale = 'log', xscale = 'linear')
+ax_time.set_xlim(left = T0+4, right = 6+0.5)
 #ax_time.set_ylim(top=2*N_r, bottom = 1e-6)
 fig_time.savefig('../../Figures/1_Dynamics/Trajectories/times.pdf') 
 
@@ -330,7 +349,7 @@ my_plot_layout(ax = ax_clone_size, yscale = 'log', xscale = 'log', ylabel = r'$K
 #ax_clone_size.set_ylim(top=2*N_r, bottom = 1e-6)
 fig_clone_size.savefig('../../Figures/1_Dynamics/Trajectories/clone_sizes.pdf') 
 
-my_plot_layout(ax = ax_NC, yscale = 'linear', xscale = 'linear', xlabel = r'times [days]', ylabel = r'Neutralization capacity')
+my_plot_layout(ax = ax_NC, yscale = 'linear', xscale = 'linear')
 ax_NC.legend(title = r'$\theta$', fontsize = 30, title_fontsize = 32)
 ax_NC.set_xlim(left = T0, right = Tf)
 #ax_NC.set_ylim(top=2*N_r, bottom = 1e-6)

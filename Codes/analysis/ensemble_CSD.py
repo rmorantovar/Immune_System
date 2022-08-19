@@ -40,19 +40,21 @@ antigen = 'TACNSEYPNTTKCGRWYC'
 L=len(antigen)
 
 N_ens = 500
+N_ens = 10
 N_r = 5e4
 N_r = 1e5
+N_r = 1e8
 T0 = 0
 Tf = 6
-Tf = 8
+#Tf = 8
 dT = .1
 days = np.arange(0, Tf, 1)
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
 lambda_A = 6 #days^-1
 k_pr = .1 # hour^-1
 k_pr = k_pr*24 #days^-1
-qs = [1, 2]
-colors_q = ['darkred', 'olive', 'navy']
+thetas = [1.8]
+colors_theta = np.flip(['tab:blue', 'olive', 'darkred'])
 lambda_B = .5*lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
 N_c = 1e4
@@ -74,17 +76,17 @@ PWM_data = M2[:,antigen_seq]
 for i in np.arange(L):
     PWM_data[:,i]-=np.min(PWM_data[:,i], axis=0)
 
-Es, dE, Q0, lambdas = calculate_Q0(0.01, 50, 200000, PWM_data, E_ms, L)
+Es, dE, Q0, betas = calculate_Q0(0.01, 50, 200000, PWM_data, E_ms, L)
 Kds = np.exp(Es[:-1])
 
-beta_r = lambdas[:-1][np.cumsum(Q0*dE)<(1/(N_r))][-1]
+beta_r = betas[:-1][np.cumsum(Q0*dE)<(1/(N_r))][-1]
 E_r = Es[:-1][np.cumsum(Q0*dE)<(1/(N_r))][-1]
 Kd_r = np.exp(E_r)
+print('beta_r = %.2f'%(beta_r))
 
-
-E_pr = Es[:-1][Ks<(k_pr/k_on)][-1]
+E_pr = Es[:-1][Kds<(k_pr/k_on)][-1]
 Kd_pr = np.exp(E_pr)
-beta_pr = betas[Ks<Kd_pr][-1]
+beta_pr = betas[:-1][Kds<Kd_pr][-1]
 print('beta_pr = %.2f'%beta_pr)
 #----------------------------------------------------------------
 
@@ -96,18 +98,18 @@ colors_gm = np.array([plt.cm.Oranges(np.linspace(0,1,len(lambda_Bs[0])+2)),plt.c
 
 FIG, AX = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 
-for q in qs:
+for i_theta, theta in enumerate(thetas):
 
-	beta_q = lambdas[lambdas>q][-1]
-	E_q = Es[lambdas>q][-1]
-	K_d_q = np.exp(E_q)
-	Kd_act = np.max([K_d_q, Kd_r])
+	beta_theta = betas[betas>theta][-1]
+	E_theta = Es[betas>theta][-1]
+	K_d_theta = np.exp(E_theta)
+	Kd_act = np.max([K_d_theta, Kd_r])
 	#----------------------------------------------------------------
 	for j, gm in enumerate(growth_models):
 		fig0, ax0 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 		fig, ax = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 		for i, lambda_B in enumerate(lambda_Bs[j]):
-			parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_q-%d_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, q, j, N_ens)+energy_model
+			parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, theta, j, N_ens)+energy_model
 			data = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/energies_ensemble.txt', sep = '\t', header=None)
 			data_active = data.loc[data[1]==1]
 			activations_times = np.array(data_active[3])
@@ -122,11 +124,13 @@ for q in qs:
 			Kds_array_data0 = (data_Kds0[1][np.where(data_Kds0[0]!=0)])
 			popt, pcov = curve_fit(f = my_linear_func , xdata = np.log(Kds_array_data0[0:4]), ydata= np.log(counts0)[0:4] )
 			beta_act2 = popt[1]
-			beta_act = np.min([q, beta_r])
+			beta_act = np.min([theta, beta_r])
 			print('beta_act = %.2f'%(beta_act))
 
-			exponents = [(((lambda_A*beta_act*1)/(lambda_B*q))+1), -1]
+			exponents = [(((lambda_A*beta_act*.8)/(lambda_B*theta))+1), -1]
 			exponents2 = [(((lambda_A*beta_act2)/(lambda_B))+1), -1]
+
+			print('Exponent = %.2f'%(exponents[j]))
 
 			clone_size_distribution = np.histogram(clone_sizes, bins = np.logspace(np.log10(np.min(clone_sizes)),np.log10(np.max(clone_sizes)),12), density = True)
 			clone_size = ((clone_size_distribution[1][:-1][np.where(clone_size_distribution[0]!=0)]+clone_size_distribution[1][1:][np.where(clone_size_distribution[0]!=0)]))/2
@@ -136,18 +140,18 @@ for q in qs:
 			cumsum_clone_size_counts = np.cumsum(clone_size_counts*delta_clone_size)
 			
 			plaw_fit_csd = clone_size**(-exponents[j])#*(np.log(clone_size**(1/nu)))**(1-beta_act)
-			plaw_fit_csd /= (plaw_fit_csd[-3]/(clone_size_counts[-3]))
+			plaw_fit_csd /= (plaw_fit_csd[1]/(clone_size_counts[1]))
 
 			plaw_fit_csd2 = clone_size**(-exponents2[j])#*(np.log(clone_size**(1/nu)))**(1-beta_act)
 			plaw_fit_csd2 /= (plaw_fit_csd2[-1]/(clone_size_counts[-1]))
 
-			ax.plot(clone_size[:], clone_size_counts[:], linestyle = '', marker = '^', ms = 10, linewidth = 2, color = 'orange', label = '%.1f'%(lambda_A/(lambda_B*q)), alpha = .8)
+			ax.plot(clone_size[:], clone_size_counts[:], linestyle = '', marker = '^', ms = 10, linewidth = 2, color = 'orange' , label = '%.2f'%(lambda_A/(lambda_B*theta)), alpha = .8)
 
-			AX.plot(clone_size[:], clone_size_counts[:], linestyle = '', marker = '^', ms = 10, linewidth = 2, label = '%d'%q, color = colors_q[q-1], alpha = .8)
+			AX.plot(clone_size[:], clone_size_counts[:], linestyle = '', marker = '^', ms = 10, linewidth = 2, label = '%d'%theta, color = colors_theta[i_theta], alpha = .8)
 
 			if (gm=='exponential'):
 				ax.plot(clone_size[:], plaw_fit_csd[:], linestyle = '--', marker = '', ms = 5, linewidth = 3, alpha = 1, color = 'orange')
-				AX.plot(clone_size[:], plaw_fit_csd[:], linestyle = '--', marker = '', ms = 5, linewidth = 3, alpha = 1, color = colors_q[q-1])
+				AX.plot(clone_size[:], plaw_fit_csd[:], linestyle = '--', marker = '', ms = 5, linewidth = 3, alpha = 1, color = colors_theta[i_theta])
 			if (gm=='linear'):
 				ax.plot(clone_size[:][:], plaw_fit_csd[:][:], linestyle = '--', marker = '', ms = 5, linewidth = 3, alpha = .6, color = 'orange')
 		#ax.plot(clone_size[:], (clone_size[:]**(-1)/clone_size[-1]**(-1))*clone_size_counts[-1], linestyle = '--', marker = '', ms = 5, linewidth = 4, alpha = .6, color = 'darkred')
@@ -155,8 +159,8 @@ for q in qs:
 	my_plot_layout(ax = ax, xscale='log', yscale= 'log', y_fontsize=30 )
 	#ax.set_xlim(clone_size[0]*.5, clone_size[-1]*2)
 	#ax.set_ylim(clone_size_counts[-1]*.1, clone_size_counts[0]*10)
-	ax.legend(title=r'$\frac{\lambda_A}{q\lambda_B}$', fontsize = 30, title_fontsize = 35)
-	fig.savefig('../../Figures/1_Dynamics/Ensemble/CSD_q-%d.pdf'%q)
+	ax.legend(title=r'$\frac{\lambda_A}{\theta\lambda_B}$', fontsize = 30, title_fontsize = 35)
+	fig.savefig('../../Figures/1_Dynamics/Ensemble/CSD_theta-%.2f.pdf'%theta)
 
 my_plot_layout(ax = AX, xscale='log', yscale= 'log', y_fontsize=30 )
 #AX.set_xlim(1, right = 1.5e4)
