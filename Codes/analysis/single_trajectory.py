@@ -29,7 +29,7 @@ if(Matrix == 'MJ2'):
 N_ens = 1
 N_r = 5e4
 N_r = 5e5
-N_r = 1e8
+N_r = 1e7
 T0 = 0
 Tf = 8
 Tf = 10
@@ -42,6 +42,7 @@ k_pr = k_pr*24 #days^-1
 
 thetas = [2.2, 2.0, 1.8, 1.5]#, 1]
 thetas = [1.4, 1.8, 2.2]
+thetas = [2]
 
 colors_theta = ['tab:blue','darkblue', 'olive', 'orange', 'darkred']
 colors_theta = np.flip(['tab:blue', 'olive', 'darkred'])
@@ -137,7 +138,7 @@ for i_theta, theta in enumerate(thetas):
     colors_activation = []
 
     parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, theta, linear, N_ens)+energy_model
-    data = pd.read_csv(Text_files_path + 'Dynamics/Trajectories/'+parameters_path+'/energies.txt', sep = '\t', header=None)
+    data = pd.read_csv(Text_files_path + 'Dynamics/Trajectories/'+parameters_path+'/energies0.txt', sep = '\t', header=None)
 
     min_e_data = np.min(data[0])
     max_e_data = np.max(data[0])
@@ -323,7 +324,7 @@ for i_theta, theta in enumerate(thetas):
     ax_clone_size.hlines([Kd_pr, Kd_r, Kd_theta], 1, 1e4, linestyle = ['-', '--', ':'], color = ['black', 'gray', colors_theta[i_theta]])
 
     Kds_C = np.exp(energies_C)
-    NC = 1-np.array([np.product(1-1/(1+(Kds_C/((1e18*(clone_sizes_C[:,t]-1))/N_A)))) for t in np.arange(len(time))])
+    NC = 1-np.array([np.product(1-1/(1+(Kds_C/((1e22*(clone_sizes_C[:,t]-1))/N_A)))) for t in np.arange(len(time))])
     ax_NC.plot(time, np.log(NC), color = colors_theta[i_theta], label = r'$%.2f$'%(theta))
 
 my_plot_layout(ax = ax_total_pop, yscale = 'linear', xlabel = 'Time', ylabel = r'$N_t$')

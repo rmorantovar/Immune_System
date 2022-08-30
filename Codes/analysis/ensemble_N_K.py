@@ -36,12 +36,12 @@ antigen = 'TACNSEYPNTTKCGRWYC'
 
 L=len(antigen)
 
-N_ens = 100
+N_ens = 20
 N_r = 5e4
-N_r = 1e6
+N_r = 1e7
 #N_r = 1e6
 T0 = 0
-Tf = 6
+Tf = 10
 #Tf = 8
 dT = .1
 days = np.arange(0, Tf, 1)
@@ -50,9 +50,11 @@ lambda_A = 6 #days^-1
 k_pr = .1 # hour^-1
 k_pr = k_pr*24 #days^-1
 thetas = [1.4, 1.8, 2.2]
+thetas = [2.0, 1.0]
 colors_theta = ['darkred', 'olive', 'navy']
-colors_theta = ['darkred', 'olive', 'darkblue']
-lambda_B = 1*lambda_A
+colors_theta = ['darkred', 'tab:green', 'tab:green']
+transparency_q = [1, .4, .3, 0]
+
 k_on = 1e6*24*3600; #(M*days)^-1
 N_c = 1e4
 E_ms = -28
@@ -83,9 +85,9 @@ Kd_r = np.exp(E_r)
 print('beta_r = %.2f'%beta_r)
 
 
-E_pr = Es[:-1][Ks<(k_pr/k_on)][-1]
+E_pr = Es[:-1][Kds<(k_pr/k_on)][-1]
 Kd_pr = np.exp(E_pr)
-beta_pr = betas[Ks<Kd_pr][-1]
+beta_pr = betas[:-1][Kds<Kd_pr][-1]
 print('beta_pr = %.2f'%beta_pr)
 #----------------------------------------------------------------
 
@@ -221,7 +223,7 @@ for i_theta, theta in enumerate(thetas):
 				#ax2.plot(np.exp(Es_array_data[:]), max_clone_sizes_binned_i[:]/max_clone_size, linewidth =5, linestyle = '', marker = '*', ms = 8,  color = colors_theta[i_theta])
 				AX.plot(np.exp(Es_array_data[:]), clone_sizes_binned_i[:]/max_clone_size, linewidth = 5, linestyle = '', marker = 's', ms = 5, color = colors_theta[i_theta], alpha = .05)
 				#AX.plot(np.exp(Es_array_data[:]), max_clone_sizes_binned_i[:]/max_clone_size, linewidth =5, linestyle = '', marker = '*', ms = 8,  color = colors_theta[i_theta])
-				AX.vlines([Kd_pr, Kd_q, Kd_r], 1, 1e2, linestyles = ['-',':', '--'], color = ['grey', colors_theta[i_theta], 'gray'])
+				#AX.vlines([Kd_pr, Kd_q, Kd_r], 1, 1e2, linestyles = ['-',':', '--'], color = ['grey', colors_theta[i_theta], 'gray'])
 
 				AX2.scatter(np.exp(energies), activation_times, color = colors_theta[i_theta])
 				AX2.vlines([Kd_pr, Kd_q, Kd_r], 4, 6, linestyles = ['-',':', '--'], color = ['grey', colors_theta[i_theta], 'gray'])
@@ -230,13 +232,16 @@ for i_theta, theta in enumerate(thetas):
 				AX3.vlines([Kd_pr, Kd_q, Kd_r], 4, 6, linestyles = ['-',':', '--'], color = ['grey', colors_theta[i_theta], 'gray'])
 
 			ax2.plot(np.exp(Es_array_data[:]), clone_sizes_binned[:]/max_clone_size, color = 'orange', linewidth =3, linestyle = '-', marker = 's', ms = 4, alpha = 1, label = r'$%.2f$'%theta)
-			AX.plot(np.exp(Es_array_data[:]), clone_sizes_binned[:]/max_clone_size, linewidth =3, linestyle = '-', marker = 's', ms = 4, color = colors_theta[i_theta], alpha = 1, label = r'$%.2f$'%theta)
+			AX.plot(np.exp(Es_array_data[:]), clone_sizes_binned[:]/max_clone_size, linewidth =3, linestyle = '', marker = 's', ms = 4, color = colors_theta[i_theta], alpha = transparency_q[i_theta], label = r'$%.2f$'%theta)
+			fit = np.exp(Es_array_data[:])**(-theta*lambda_B/lambda_A)
+			fit = (fit/fit[0])*clone_sizes_binned[0]/max_clone_size
+			AX.plot(np.exp(Es_array_data[:]), fit, linewidth =3, linestyle = '-', marker = '', ms = 4, color = colors_theta[i_theta], alpha = transparency_q[i_theta], label = r'$%.2f$'%theta)
 
 			#-------Theory-------
 			cross_over = 0# np.where(clone_sizes_binned_i==max_clone_size)[0][0]
 			#ax2.plot(np.exp(Es_array_data[0:cross_over+1]), (clone_sizes_binned_i[cross_over]/max_clone_size)*(np.exp(Es_array_data[0:cross_over+1])/np.exp(Es_array_data[cross_over]))**((lambda_B/lambda_A)), color = 'orange', linewidth =3, linestyle = '--', marker = '', ms = 15, alpha = .8)
 			#ax2.plot(np.exp(Es_array_data[:]), (clone_sizes_binned_i[-1]/max_clone_size)*(np.exp(Es_array_data[:])/np.exp(Es_array_data[-1]))**((lambda_B/lambda_A)*(-theta)), color = 'orange', linewidth =3, linestyle = '--', marker = '', ms = 15, alpha = .8)
-			ax2.vlines([Kd_pr, Kd_q, Kd_r], 4e-3, 1.5, linestyles = ['-',':', '--'], color = 'grey')
+			#ax2.vlines([Kd_pr, Kd_q, Kd_r], 4e-3, 1.5, linestyles = ['-',':', '--'], color = 'grey')
 
 			#AX.plot(Kds_array_data[0:cross_over+1], (clone_sizes_binned_i[cross_over]/max_clone_size)*(Kds_array_data[0:cross_over+1]/Kds_array_data[cross_over])**((lambda_B/lambda_A)), linewidth =3, linestyle = '--', marker = '', ms = 15, alpha = .8)
 			#AX.plot(Kds_array_data[cross_over:], (clone_sizes_binned_i[cross_over]/max_clone_size)*(Kds_array_data[cross_over:]/Kds_array_data[cross_over])**((lambda_B/lambda_A)*(-theta)), linewidth =3, linestyle = '--', marker = '', ms = 15, alpha = .8, color = colors_theta[i_theta])

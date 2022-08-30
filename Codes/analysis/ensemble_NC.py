@@ -37,28 +37,29 @@ antigen = 'TACNSEYPNTTKCGRWYC'
 
 L=len(antigen)
 
-N_ens = 10
+N_ens = 20
 N_r = 5e4
 N_r = 1e8
-#N_r = 1e6
 T0 = 2
 Tf = 12
-#Tf = 8
-dT = .2
+Tf = 10
+dT = .05
 days = np.arange(0, Tf, 1)
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
 lambda_A = 6 #days^-1
-lambda_A = 8 #days^-1
+#lambda_A = 8 #days^-1
 k_pr = .1 # hour^-1
 k_pr = k_pr*24 #days^-1
 thetas = [1.8, 1.65, 1.5, 1.35, 1.15, 1.0]
 thetas = [2, 1.8, 1.6]
+thetas = [2.0, 1.0]
 colors_theta = ['darkred', 'olive', 'navy']
 colors_theta = ['darkred', 'olive', 'darkblue']
-colors_theta = ['tab:blue','darkblue', 'olive', 'orange', 'tab:red', 'darkred']
+colors_theta = ['tab:green','tab:green', 'olive', 'orange', 'tab:red', 'darkred']
+transparency_q = [1, .4, .3, 0]
 k_on = 1e6*24*3600; #(M*days)^-1
 N_c = 1e4
-E_ms = -28
+E_ms = -27.63
 C = 2e4
 
 print('k_pr/k_on = %.1e'%(k_on/k_pr)**(-1))
@@ -85,10 +86,9 @@ Kd_r = np.exp(E_r)
 
 print('beta_r = %.2f'%beta_r)
 
-
-E_pr = Es[:-1][Ks<(k_pr/k_on)][-1]
+E_pr = Es[:-1][Kds<(k_pr/k_on)][-1]
 Kd_pr = np.exp(E_pr)
-beta_pr = betas[Ks<Kd_pr][-1]
+beta_pr = betas[:-1][Kds<Kd_pr][-1]
 print('beta_pr = %.2f'%beta_pr)
 
 #----------------------------------------------------------------
@@ -167,16 +167,16 @@ for i_theta, theta in enumerate(thetas):
 
 				#-------Simulations-------
 				Kds_C = np.exp(energies_C)
-				NC_i = np.log(1-np.array([np.product(1-1/(1+(Kds_C/((1e8*(clone_sizes_C[:,t]-1))/N_A)))) for t in np.arange(len(time))]))
+				NC_i = np.log(1-np.array([np.product(1-1/(1+(Kds_C/((1e10*(clone_sizes_C[:,t]-1))/N_A)))) for t in np.arange(len(time))]))
 				NC += NC_i
 				if(i_ens%1==0):
 					AX.plot(time, NC_i, color = colors_theta[i_theta], alpha = .05, linewidth = 1)
 			NC = NC/N_ens		
-			AX.plot(time, NC, color = colors_theta[i_theta], alpha = 1, label = r'$%.2f$'%theta, linewidth = 3)
+			AX.plot(time, NC, color = colors_theta[i_theta], alpha = transparency_q[i_theta], label = r'$%.2f$'%theta, linewidth = 3)
 			#-------Theory-------
 
 my_plot_layout(ax = AX, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-AX.legend(fontsize = 30, title_fontsize = 35, title = r'$\theta$')
+AX.legend(fontsize = 30, title_fontsize = 35, title = r'$q$')
 #AX.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
 AX.set_ylim(bottom = -15)
 #AX.set_yticks([1, 0.1, 0.01, 0.001])

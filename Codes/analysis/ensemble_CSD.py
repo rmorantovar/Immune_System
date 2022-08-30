@@ -40,12 +40,12 @@ antigen = 'TACNSEYPNTTKCGRWYC'
 L=len(antigen)
 
 N_ens = 500
-N_ens = 10
+N_ens = 20
 N_r = 5e4
 N_r = 1e5
-N_r = 1e8
+N_r = 1e7
 T0 = 0
-Tf = 6
+Tf = 10
 #Tf = 8
 dT = .1
 days = np.arange(0, Tf, 1)
@@ -54,7 +54,10 @@ lambda_A = 6 #days^-1
 k_pr = .1 # hour^-1
 k_pr = k_pr*24 #days^-1
 thetas = [1.8]
-colors_theta = np.flip(['tab:blue', 'olive', 'darkred'])
+thetas = [2.0, 1.0]
+colors_theta = np.flip(['tab:blue', 'tab:green', 'tab:green'])
+transparency_q = [1, .4, .3, 0]
+
 lambda_B = .5*lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
 N_c = 1e4
@@ -145,13 +148,13 @@ for i_theta, theta in enumerate(thetas):
 			plaw_fit_csd2 = clone_size**(-exponents2[j])#*(np.log(clone_size**(1/nu)))**(1-beta_act)
 			plaw_fit_csd2 /= (plaw_fit_csd2[-1]/(clone_size_counts[-1]))
 
-			ax.plot(clone_size[:], clone_size_counts[:], linestyle = '', marker = '^', ms = 10, linewidth = 2, color = 'orange' , label = '%.2f'%(lambda_A/(lambda_B*theta)), alpha = .8)
+			ax.plot(clone_size[:], clone_size_counts[:], linestyle = '', marker = '^', ms = 10, linewidth = 2, color = colors_theta[i_theta] , label = '%.2f'%(lambda_A/(lambda_B*theta)), alpha = .8)
 
-			AX.plot(clone_size[:], clone_size_counts[:], linestyle = '', marker = '^', ms = 10, linewidth = 2, label = '%d'%theta, color = colors_theta[i_theta], alpha = .8)
+			AX.plot(clone_size[:], clone_size_counts[:], linestyle = '', marker = '^', ms = 10, linewidth = 2, label = '%d'%theta, color = colors_theta[i_theta], alpha = transparency_q[i_theta])
 
 			if (gm=='exponential'):
-				ax.plot(clone_size[:], plaw_fit_csd[:], linestyle = '--', marker = '', ms = 5, linewidth = 3, alpha = 1, color = 'orange')
-				AX.plot(clone_size[:], plaw_fit_csd[:], linestyle = '--', marker = '', ms = 5, linewidth = 3, alpha = 1, color = colors_theta[i_theta])
+				ax.plot(clone_size[:], plaw_fit_csd[:], linestyle = '--', marker = '', ms = 5, linewidth = 3, alpha = 1, color = colors_theta[i_theta])
+				AX.plot(clone_size[:], plaw_fit_csd[:], linestyle = '--', marker = '', ms = 5, linewidth = 3, alpha = transparency_q[i_theta], color = colors_theta[i_theta])
 			if (gm=='linear'):
 				ax.plot(clone_size[:][:], plaw_fit_csd[:][:], linestyle = '--', marker = '', ms = 5, linewidth = 3, alpha = .6, color = 'orange')
 		#ax.plot(clone_size[:], (clone_size[:]**(-1)/clone_size[-1]**(-1))*clone_size_counts[-1], linestyle = '--', marker = '', ms = 5, linewidth = 4, alpha = .6, color = 'darkred')
