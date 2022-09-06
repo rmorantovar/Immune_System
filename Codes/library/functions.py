@@ -25,6 +25,8 @@ k_BT = 1.380649e-23*293
 
 delta_Nb = lambda t, tb, Nb, N, lambda_B, C: lambda_B*Nb*(1-(N/C))*np.heaviside(t-tb, 1)
 
+E_t = lambda t, theta:lambda_A*t/theta - np.log((lambda_A*N_A)/(k_on*N_c))/theta + np.log(k_pr/k_on) 
+
 def get_clones_sizes_C(n_act, time, activation_times, lambda_B, C, dT):
 	clone_sizes = np.ones((n_act, len(time)))
 	for i_t, t in enumerate(time[:-1]):
@@ -38,8 +40,24 @@ def get_clones_sizes_C(n_act, time, activation_times, lambda_B, C, dT):
 
 def get_motif(antigen, Matrix, Text_files_path):
 
-	Matrix = 'MJ2'
-
+	if(Matrix == 'TCRen'):
+		TCRen = pd.read_csv('../Input_files/TCRen_potential.csv')
+		Alphabet = ["C", "S", "T", "P", "A", "G", "N", "D", "E", "Q", "H", "R", "K", "M", "I", "L", "V", "F", "Y", "W"]
+		Alphabet_list = Alphabet
+		TCRen_dict = dict()
+		alphabet_from  = np.unique(TCRen['residue.aa.from'])
+		alphabet_to  = np.unique(TCRen['residue.aa.to'])
+		for i in range(len(alphabet_from)):
+			TCRen_dict[alphabet_from[i]] = dict()
+		for i in range(len(TCRen)):
+			residue_from = TCRen['residue.aa.from'][i]
+			residue_to = TCRen['residue.aa.to'][i]
+			TCRen_dict[residue_from][residue_to] = TCRen['TCRen'][i]
+		TCR_matrix = np.zeros((20, 20))
+		for i, aa1 in enumerate(Alphabet_list):
+			for j, aa2 in enumerate(Alphabet_list):
+				TCR_matrix[i, j] = TCRen_dict[aa1][aa2]
+		M = TCR_matrix
 	if(Matrix == 'MJ2'):
 		M = np.loadtxt(Text_files_path + Matrix + '.txt', skiprows= 1, usecols=range(1,21))
 		Alphabet = np.loadtxt(Text_files_path + 'Alphabet.txt', dtype=bytes, delimiter='\t').astype(str)
@@ -67,7 +85,7 @@ def get_proofreading_properties(betas, Q0, Es, dE, k_pr, k_on):
 
 	return beta_pr, E_pr, Kd_pr
 
-def get_theta_properties(betas, Q0, Es, dE, theta):
+def get_n_properties(betas, Q0, Es, dE, theta):
 
 	beta_theta = betas[betas>theta][-1]
 	E_theta = Es[betas>theta][-1]
@@ -163,6 +181,7 @@ def calculate_Q0(Tmin, Tmax, n_T, E_matrix, E_ms, L):
 	S = np.cumsum(lambdas[:-1]*dE)
 
 	Omega = 20**L
+	Omega = np.sum(np.exp(S)*dE)
 	Omega = 2*np.sum(np.exp(S)*dE)
 	
 	Q0 = np.exp(S)/Omega

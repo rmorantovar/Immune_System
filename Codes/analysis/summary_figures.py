@@ -1,6 +1,6 @@
 import sys
 sys.path.append('../library/')
-from Immuno_models import*
+from functions import*
 plt.rcParams['text.usetex'] = True
 
 
@@ -84,7 +84,7 @@ print('k_pr/k_on = %.1e'%(k_on/k_pr)**(-1))
 print('final antigen concetration = %.2e'%(np.exp(lambda_A*Tf)/1e3))
 #----------------------------------------------------------------
 
-PWM_data = get_motif(antigen, M2, Alphabet_list)
+PWM_data = get_motif(antigen, 'MJ2', Text_files_path)
 
 #Change values by the minimum
 for i in np.arange(L):

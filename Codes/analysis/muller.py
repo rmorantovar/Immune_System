@@ -1,6 +1,6 @@
 import sys
 sys.path.append('../library/')
-from Immuno_models import*
+#from Immuno_models import*
 from functions import*
 plt.rcParams['text.usetex'] = True
 
@@ -54,7 +54,7 @@ L=len(antigen)
 #----------------------------------------------------------------
 
 #--------------------------Energy Motif--------------------------
-PWM_data = get_motif(antigen, 'MJ2', Alphabet_list, Text_files_path)
+PWM_data = get_motif(antigen, 'TCRen', Text_files_path)
 #Change values by the minimum
 for i in np.arange(L):
     PWM_data[:,i]-=np.min(PWM_data[:,i], axis=0)
