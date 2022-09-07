@@ -7,7 +7,7 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 
 #--------------- PARAMETERS ---------------------
 N_ens = 1
-N_rs = [1e8]
+N_rs = [1e9]
 T0 = 0
 Tf = 10
 Tf_sim = 6.5

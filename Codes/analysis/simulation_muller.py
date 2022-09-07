@@ -123,24 +123,26 @@ for i_n, n in enumerate(ns):
 
 		total_pop_active = np.sum(clone_sizes_C, axis = 0) #C
 		bcell_freqs = clone_sizes_C/total_pop_active
+		bcell_freqs = clone_sizes_C/C
 		entropy = -np.sum(bcell_freqs*np.log(bcell_freqs), axis = 0)
 
 		#------------------------- Stackplots -------------------------
 		colors_muller = []
 		min_bell_freq = np.min(bcell_freqs[:,-1])
 		for c in range(int(len(clone_sizes_C[:,0]))):
-		    if bcell_freqs[c, -1]>(20*min_bell_freq/n):
+		    #if bcell_freqs[c, -1]>(30*min_bell_freq):
+		    if bcell_freqs[c, -1]>(0.05):
 		        colors_muller.append(colors_theta[i_n])
 		    else:
-		        colors_muller.append('silver')
+		        colors_muller.append('lightgray')
 
 		ax_muller.stackplot(time, bcell_freqs, colors = colors_muller);
 
 		cumsum_freqs = np.cumsum(bcell_freqs, axis = 0)
 
-		if(i_n==4):
-		    for j in range(len(activation_times_C)):
-		        ax_muller.plot(time, cumsum_freqs[j, :], linewidth = .2, color = 'black')
+		if(i_n!=4):
+			for c in range(int(len(clone_sizes_C[:,0]))):
+				ax_muller.plot(time, cumsum_freqs[c, :], linewidth = .001*n, color = 'black')
 
 			
 		my_plot_layout(ax = ax_muller, ticks_labelsize=38)
