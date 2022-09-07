@@ -22,10 +22,10 @@ k_pr = k_pr*24 #days^-1
 
 ns = [2.2, 2.0, 1.8, 1.5]#, 1]
 ns = [1.4, 1.8, 2.2]
-ns = [3, 2, 1]
+ns = [4]
 
 colors_theta = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
-colors_theta = ['tab:cyan','green', 'tab:orange', 'orange', 'darkred']
+colors_theta = ['tab:cyan','tab:green', 'tab:orange', 'orange', 'darkred']
 colors_R = [['tab:purple', 'tab:cyan', 'tab:cyan'], ['tab:blue', 'tab:green', 'tab:green'], ['tab:red', 'tab:orange', 'tab:orange'], ['tab:red', 'tab:orange', 'tab:orange']]
 
 lambda_B = lambda_A
@@ -82,7 +82,7 @@ for i_n, n in enumerate(ns):
 	print('n = %.2f...'%n)
 	beta_n, E_n, Kd_n = get_n_properties(betas, Q0, Es, dE, n)
 	for rep in range(1):
-		fig_muller, ax_muller = plt.subplots(figsize=(30,10), gridspec_kw={'left':0.06, 'right':.98, 'bottom':.1, 'top': 0.96})
+		fig_muller, ax_muller = plt.subplots(figsize=(18,6), gridspec_kw={'left':0.06, 'right':.98, 'bottom':.1, 'top': 0.96}, dpi = 600)
 
 		#-----------------Loading data----------------------------
 		parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, n, linear, N_ens)+energy_model
@@ -123,7 +123,7 @@ for i_n, n in enumerate(ns):
 
 		#--------------------------t_C filter-------------------------
 		print('Applying filter...')
-		lim_size = 2
+		lim_size = 1
 		clone_sizes_C, activation_times_C, energies_C, filter_C, n_C = apply_filter_C(clone_sizes, activation_times, energies, lim_size)
 		print('Activated clones:', np.shape(clone_sizes_C))
 
@@ -141,7 +141,7 @@ for i_n, n in enumerate(ns):
 		    if bcell_freqs[c, -1]>(0.05):
 		        colors_muller.append(colors_theta[i_n])
 		    else:
-		        colors_muller.append(greys(np.random.randint(1, 50)))
+		        colors_muller.append(greys(np.random.randint(10, 40)))
 
 		ax_muller.stackplot(time, bcell_freqs, colors = colors_muller);
 
@@ -152,11 +152,11 @@ for i_n, n in enumerate(ns):
 		# 		ax_muller.plot(time, cumsum_freqs[c, :], linewidth = .00001*n, color = 'black')
 
 			
-		my_plot_layout(ax = ax_muller, ticks_labelsize=38)
+		my_plot_layout(ax = ax_muller, ticks_labelsize=38, yscale = 'linear')
 		ax_muller.set_yticks([])
 		#ax_muller.set_xticks(np.arange(Tf))
 		ax_muller.set_xticks([])
 		ax_muller.set_xlim(T0, Tf-2)
 		ax_muller.set_ylim(0, 1)
-		fig_muller.savefig('../../Figures/1_Dynamics/Trajectories/Muller/B_cell_clones_n-%.2f_%d_'%(n, rep)+energy_model+'.pdf', dpi = 10)
-
+		fig_muller.savefig('../../Figures/1_Dynamics/Trajectories/Muller/B_cell_clones_n-%.2f_%d_'%(n, rep)+energy_model+'.png')
+		plt.close(fig_muller)

@@ -1,6 +1,6 @@
 import sys
 sys.path.append('../library/')
-from Immuno_models import*
+from functions import*
 plt.rcParams['text.usetex'] = True
 
 warnings.filterwarnings("ignore")
@@ -37,10 +37,10 @@ antigen = 'TACNSEYPNTTKCGRWYC'
 
 L=len(antigen)
 
-N_ens = 20
+N_ens = 10
 N_r = 5e4
 N_r = 1e8
-T0 = 2
+T0 = 0
 Tf = 12
 Tf = 10
 dT = .05
@@ -100,27 +100,28 @@ d=20
 energy_model = 'MJ'
 colors_gm = np.array([plt.cm.Oranges(np.linspace(0,1,len(lambda_Bs[0])+2)),plt.cm.Reds(np.linspace(0,1,len(lambda_Bs[1])+2)) ], dtype=object)
 FIG, AX = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-FIG2, AX2 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-FIG3, AX3 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-for i_theta, theta in enumerate(thetas):
-	print('theta = %.2f...'%theta)
-	beta_q = betas[betas>theta][-1]
-	E_q = Es[betas>theta][-1]
+
+for i_theta, n in enumerate(thetas):
+	print('n = %.2f...'%n)
+	beta_q = betas[betas>n][-1]
+	E_q = Es[betas>n][-1]
 	Kd_q = np.exp(E_q)
 	Kd_act = np.max([Kd_q, Kd_r])
 	for j, gm in enumerate(growth_models):
 		for n_lambda_B, lambda_B in enumerate(lambda_Bs[j]):
 
 			#--------------------------m(t)---------------------------
-			u_on, p_a, P_act, Q_act = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*time[0])/N_A, Es, theta, lambda_A, N_c, dE)
+			u_on, p_a, P_act, Q_act = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*time[0])/N_A, Es, n, lambda_A, N_c, dE)
 			M_r = N_r*N_c*np.sum(Q0*p_a*dE)
-			m_bar = np.array([N_r*(1-np.sum(np.exp(-((p_a*(np.exp(lambda_A*t)/N_A*k_on*N_c))/lambda_A))*Q0*dE)) for t in time])
+			#m_bar = np.array([N_r*(1-np.sum(np.exp(-((p_a*(np.exp(lambda_A*t)/N_A*k_on*N_c))/lambda_A))*Q0*dE)) for t in time])
+			m_bar = np.array([np.sum(N_r*calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*(t))/N_A, Es, n, lambda_A, N_c, dE)[3]*dE) for t in time]) 
 
 			t_act = time[m_bar>1][0]
+			print('t_act: %.2f'%t_act)
 			t_C = t_act+1.2
 			#--------------------------------------------------------
 
-			parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, theta, j, N_ens)+energy_model
+			parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, n, j, N_ens)+energy_model
 			data = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/energies_ensemble.txt', sep = '\t', header=None)
 			data2 = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/summary_ensemble.txt', sep = '\t', header=None)
 			N_clones = np.array(data2[0])
@@ -172,15 +173,15 @@ for i_theta, theta in enumerate(thetas):
 				if(i_ens%1==0):
 					AX.plot(time, NC_i, color = colors_theta[i_theta], alpha = .05, linewidth = 1)
 			NC = NC/N_ens		
-			AX.plot(time, NC, color = colors_theta[i_theta], alpha = transparency_q[i_theta], label = r'$%.2f$'%theta, linewidth = 3)
+			AX.plot(time, NC, color = colors_theta[i_theta], alpha = transparency_q[i_theta], label = r'$%.2f$'%n, linewidth = 3)
 			#-------Theory-------
 
 my_plot_layout(ax = AX, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 AX.legend(fontsize = 30, title_fontsize = 35, title = r'$q$')
 #AX.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
-AX.set_ylim(bottom = -15)
 #AX.set_yticks([1, 0.1, 0.01, 0.001])
 #AX.set_yticklabels([1, 0.1, 0.01])
+AX.set_ylim(bottom = -15)
 FIG.savefig('../../Figures/1_Dynamics/Ensemble/NC.pdf')
 
 
