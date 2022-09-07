@@ -41,26 +41,33 @@ def get_clones_sizes_C(n_act, time, activation_times, lambda_B, C, dT):
 def get_motif(antigen, Matrix, Text_files_path):
 
 	if(Matrix == 'TCRen'):
-		TCRen = pd.read_csv('../Input_files/TCRen_potential.csv')
-		Alphabet = ["C", "S", "T", "P", "A", "G", "N", "D", "E", "Q", "H", "R", "K", "M", "I", "L", "V", "F", "Y", "W"]
-		Alphabet_list = Alphabet
-		TCRen_dict = dict()
-		alphabet_from  = np.unique(TCRen['residue.aa.from'])
-		alphabet_to  = np.unique(TCRen['residue.aa.to'])
-		for i in range(len(alphabet_from)):
-			TCRen_dict[alphabet_from[i]] = dict()
-		for i in range(len(TCRen)):
-			residue_from = TCRen['residue.aa.from'][i]
-			residue_to = TCRen['residue.aa.to'][i]
-			TCRen_dict[residue_from][residue_to] = TCRen['TCRen'][i]
-		TCR_matrix = np.zeros((20, 20))
-		for i, aa1 in enumerate(Alphabet_list):
-			for j, aa2 in enumerate(Alphabet_list):
-				TCR_matrix[i, j] = TCRen_dict[aa1][aa2]
-		M = TCR_matrix
+		# TCRen = pd.read_csv('../Input_files/TCRen_potential.csv')
+		# Alphabet = ["C", "S", "T", "P", "A", "G", "N", "D", "E", "Q", "H", "R", "K", "M", "I", "L", "V", "F", "Y", "W"]
+		# Alphabet_list = Alphabet
+		# TCRen_dict = dict()
+		# alphabet_from  = np.unique(TCRen['residue.aa.from'])
+		# alphabet_to  = np.unique(TCRen['residue.aa.to'])
+		# for i in range(len(alphabet_from)):
+		# 	TCRen_dict[alphabet_from[i]] = dict()
+		# for i in range(len(TCRen)):
+		# 	residue_from = TCRen['residue.aa.from'][i]
+		# 	residue_to = TCRen['residue.aa.to'][i]
+		# 	TCRen_dict[residue_from][residue_to] = TCRen['TCRen'][i]
+		# TCR_matrix = np.zeros((20, 20))
+		# for i, aa1 in enumerate(Alphabet_list):
+		# 	for j, aa2 in enumerate(Alphabet_list):
+		# 		TCR_matrix[i, j] = TCRen_dict[aa1][aa2]
+		# M = TCR_matrix
+		# df = pd.DataFrame(M, index=Alphabet, columns=Alphabet)
+		# df.to_csv('../Input_files/TCRen.txt', header=Alphabet, index=Alphabet, sep='\t', mode = 'w')
+
+		M = np.loadtxt('../Input_files/' + Matrix + '.txt', skiprows= 0, usecols=range(0,20))
+		#Alphabet = ["C", "S", "T", "P", "A", "G", "N", "D", "E", "Q", "H", "R", "K", "M", "I", "L", "V", "F", "Y", "W"]
+		Alphabet = np.loadtxt('../Input_files/Alphabet_'+Matrix+'.txt', dtype=bytes, delimiter='\t').astype(str)
+		Alphabet_list = Alphabet.tolist()
 	if(Matrix == 'MJ2'):
-		M = np.loadtxt(Text_files_path + Matrix + '.txt', skiprows= 1, usecols=range(1,21))
-		Alphabet = np.loadtxt(Text_files_path + 'Alphabet.txt', dtype=bytes, delimiter='\t').astype(str)
+		M = np.loadtxt('../Input_files/' + Matrix + '.txt', skiprows= 0, usecols=range(0,20))
+		Alphabet = np.loadtxt('../Input_files/Alphabet_'+Matrix+'.txt', dtype=bytes, delimiter='\t').astype(str)
 		Alphabet_list = Alphabet.tolist()
 
 	antigen_list = [i for i in antigen]

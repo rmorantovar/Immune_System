@@ -7,7 +7,7 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 
 #--------------- PARAMETERS ---------------------
 N_ens = 1
-N_rs = [1e9]
+N_rs = [1e8]
 T0 = 0
 Tf = 10
 Tf_sim = 6.5
@@ -20,13 +20,13 @@ k_pr = k_pr*24 #days^-1
 
 ns = [2.2, 2.0, 1.8, 1.5]#, 1]
 ns = [1.4, 1.8, 2.2]
-ns = [4, 2, 1]
+ns = [3, 2, 1]
 
 transparency_n = [1]
 
 colors_theta = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
 colors_theta = ['tab:cyan','green', 'tab:orange', 'orange', 'darkred']
-colors_R = [['tab:purple', 'tab:cyan', 'tab:cyan'], ['tab:blue', 'tab:green', 'tab:green'], ['tab:red', 'tab:orange', 'tab:orange']]
+colors_R = [['tab:purple', 'tab:purple', 'tab:cyan', 'tab:cyan'], ['tab:blue', 'tab:blue', 'tab:green', 'tab:green'], ['tab:red', 'tab:red', 'tab:orange', 'tab:orange'], ['tab:red', 'tab:red', 'tab:orange', 'tab:orange']]
 
 lambda_B = lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
@@ -46,14 +46,18 @@ linear = 0
 # antigen = 'FMLFMAVFVMTSWYC'
 # antigen = 'FTSENAYCGR'
 # antigen = 'TACNSEYPNTTK'
-# antigen = 'EYTACNSEYPNTTKCGRWYCGRYPN'
-antigen = 'TACNSEYPNTTKCGRWYC'
+antigen = 'EYTACNSEYPNTTKCGRWYCGRYPN'
+#antigen = 'TACNSEYPNTTKCGRWYC'
 L=len(antigen)
+print('--------')
+print('L=%d'%(L))
 #----------------------------------------------------------------
 model = 'TCRen'
-model = 'MJ2'
+#model = 'MJ2'
 #--------------------------Energy Motif--------------------------
 PWM_data = get_motif(antigen, model, Text_files_path)
+print('min_e_PWM=%.4f'%(np.sum([np.min(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))])))
+print('mean_e_PWM=%.4f'%(np.sum([np.mean(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))])))
 #Change values by the minimum
 for i in np.arange(L):
     PWM_data[:,i]-=np.min(PWM_data[:,i], axis=0)
@@ -70,12 +74,15 @@ beta_pr, E_pr, Kd_pr = get_proofreading_properties(betas, Q0, Es, dE, k_pr, k_on
 print('beta_pr = %.2f'%beta_pr)
 
 t_prime = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*N_c))
-
+print('--------')
 #--------------------------Loops--------------------------
-
+print('Loops...')
 for N_r in N_rs:
+    print('________')
     print('N_r = %.0e'%N_r)
     fig_Q0, ax_Q0 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+    fig_QR_all, ax_QR_all = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+
     #--------------------------Repertoire properties--------------------------
     beta_r, E_r, Kd_r = get_repertoire_properties(betas, Q0, Es, dE, N_r)
     print('beta_r = %.1f'%beta_r)
@@ -84,8 +91,9 @@ for N_r in N_rs:
     ax_Q0.plot(Kds, P_min_e(N_r, avg_E, var_E, Es[:-1], dE), linestyle = '--', marker = '',  color = 'black', ms = 2, linewidth = 4)
     #ax_Q0.plot(Kds, Kds**(beta_r)/(Ks[P_min_e(N_r, avg_E, var_E, Es[:-1], dE)==np.max(P_min_e(N_r, avg_E, var_E, Es[:-1], dE))]**(beta_r))*np.max(P_min_e(N_r, avg_E, var_E, Es[:-1], dE)), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 4 )
 
+    ax_QR_all.plot(Kds, Q0*N_r, alpha = 1, color = 'grey', linewidth = 5, linestyle = '-')
     for i_n, n in enumerate(ns):
-
+        print('--------')
         print('n = %.2f...'%n)
 
         fig_R, ax_R = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
@@ -122,24 +130,27 @@ for N_r in N_rs:
         m_f_expected = np.sum(N_r*QR*dE)
         print('Activated clones expected:%.d'%m_f_expected)
 
-        days = [t_act-1.3, t_act, t_act+1.3]
+        days = [t_act-2*1.5, t_act-1.5, t_act, t_act+1.5]
         #days = np.linspace(1, Tf-0.5, 3)
-        for n_t, t in enumerate(days):
+        for i_t, t in enumerate(days):
             u_on, p_a, R, QR = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*t)/N_A, Es, n, lambda_A, N_c, dE)
             #ax_P_act.hlines(r_a[0]*N_c/lambda_A, ax_P_act.get_xlim()[0], ax_P_act.get_xlim()[1], alpha = transparency_q[i_n], color = colors_theta[i_n], linestyle = ':' )
             ax_R.set_ylim(bottom = 1e-11, top = 2)
             #----------------------------------------------------------------
-            #--------------------------Q_act(E, t)---------------------------
-            if n!=0:
-                #--------------------------P_act(E, t)---------------------------
-                ax_R.plot(Kds, R, alpha = transparency_n[0], color = colors_R[i_n][n_t], linewidth = 5, linestyle = '-')
-                ax_QR.plot(Kds, QR*N_r, alpha = transparency_n[0], color = colors_R[i_n][n_t], linewidth = 5, linestyle = '-')
-                #-------FOR Q0--------- 
-                ax_QR.vlines(Kd_r, 0, .5, color = 'black', linestyle = 'dashed')
-                ax_QR.vlines([Kd_n, Kd_1], ax_QR.get_ylim()[0], N_r*Q0[Kds<np.exp(E_n)][-1], color = 'grey', linestyle = 'dotted', linewidth = 4)       
-                #ax_Q_act.hlines(N_r*Q0[Ks<np.exp(E_r)][-1], ax_Q_act.get_xlim()[0], np.exp(E_r), alpha = 1, color = 'black', linestyle = ':')
+            #--------------------------QR_all(E, t)---------------------------
+            if i_t==2:
+                ax_QR_all.plot(Kds, QR*N_r, alpha = transparency_n[0], color = colors_R[i_n][i_t], linewidth = 5, linestyle = '-', label = r'$%d$'%(n))
+                ax_QR_all.plot(Kds[QR==np.max(QR)], (Q0*N_r)[QR==np.max(QR)], alpha = transparency_n[0], color = colors_R[i_n][i_t], marker = 'o', ms = 10)
+            #--------------------------R(E, t) and QR(E, t)---------------------------
+            ax_R.plot(Kds, R, alpha = transparency_n[0], color = colors_R[i_n][i_t], linewidth = 5, linestyle = '-')
+            ax_QR.plot(Kds, QR*N_r, alpha = transparency_n[0], color = colors_R[i_n][i_t], linewidth = 5, linestyle = '-')
+            #-------FOR Q0--------- 
+            #ax_QR.vlines(Kd_r, 0, .5, color = 'black', linestyle = 'dashed')
+            #ax_QR.vlines([Kd_n, Kd_1], ax_QR.get_ylim()[0], N_r*Q0[Kds<np.exp(E_n)][-1], color = 'grey', linestyle = 'dotted', linewidth = 4)       
+            #ax_Q_act.hlines(N_r*Q0[Ks<np.exp(E_r)][-1], ax_Q_act.get_xlim()[0], np.exp(E_r), alpha = 1, color = 'black', linestyle = ':')
 
-        ax_QR2.plot(Kds, QR/np.sum(QR*dE), alpha = transparency_n[0], color = colors_R[i_n][n_t], linewidth = 5, linestyle = '-')
+        
+        ax_QR2.plot(Kds, QR/np.sum(QR*dE), alpha = transparency_n[0], color = colors_R[i_n][i_t], linewidth = 5, linestyle = '-')
 
         my_plot_layout(ax=ax_R, yscale = 'log', xscale = 'log', ticks_labelsize = 38)
         ax_R.set_xticks([])
@@ -163,7 +174,15 @@ for N_r in N_rs:
         my_plot_layout(ax=ax_m_bar, yscale = 'log', ticks_labelsize = 30)
         fig_m_bar.savefig('../../Figures/_Summary/single/m_bar_n-%.1f_Nr-%.0e_'%(n, N_r)+model+'.pdf')
         plt.close(fig_m_bar)
-        
+    
+    my_plot_layout(ax=ax_QR_all, yscale = 'log', xscale = 'log', ticks_labelsize = 38)
+    #ax_QR_all.set_xticks([])
+    ax_QR_all.set_xlim(right = 1e-2, left = 1e-11) #use 1e-3 for other plots
+    ax_QR_all.set_ylim(bottom = 1e-9, top = 1.5*N_r)
+    ax_QR_all.legend(title = r'$n$', title_fontsize = 34, fontsize = 32)
+    fig_QR_all.savefig('../../Figures/_Summary/single/QR_all_Nr-%.0e_'%(N_r)+model+'.pdf')
+    plt.close(fig_QR_all)
+
     my_plot_layout(ax=ax_Q0, yscale = 'log', xscale = 'log', ticks_labelsize = 38)
     #ax_Q_act.set_xticks([])
     ax_Q0.set_xlim(right = 1e1) #use 1e-3 for other plots

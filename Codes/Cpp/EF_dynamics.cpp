@@ -176,25 +176,26 @@ int main(int argc, char* argv[]) //argv
 	A0 = exp(lambda_A*To);
 
 	//------------Energy Matrix------------------------------------------------------
-    vector < vector < double > > MJ;
-    MJ.resize(L_alphabet);
+    vector < vector < double > > E_matrix_t;
+    E_matrix_t.resize(L_alphabet);
     for (int k= 0; k<L_alphabet; k++)
     {
-        (MJ[k]).resize(L_alphabet);
+        (E_matrix_t[k]).resize(L_alphabet);
     };
-
-    ifstream file("../Input_files/MJ2.txt");
+    
+    ifstream file("../Input_files/"+energy_model+".txt");
     for (unsigned int i = 0; i < L_alphabet; i++) {
         for (unsigned int j = 0; j < L_alphabet; j++) {
-            file >> MJ[i][j];   
+            file >> E_matrix_t[i][j];   
         }
     }
     file.close();
+    vector < vector < double > > E_matrix = transpose(E_matrix_t);
     //------------ Alphabet ----------------------------------------------------------
     //Array with the Alphabet
     vector < string > Alphabet;
     Alphabet.resize(L_alphabet);
-    ifstream file2("../Input_files/Alphabet.txt");
+    ifstream file2("../Input_files/Alphabet_"+energy_model+".txt");
     cout << "The Alphabet is :";
     for (int k = 0; k < L_alphabet; k++) {
 
@@ -247,12 +248,12 @@ int main(int argc, char* argv[]) //argv
 	    	std::cout.flush();			
 	        //--------------------------------------------------------------------------------
 	        //-----------------Generate bcells-----------------
-	        generate_Bcells_with_e(N_bcs, L_seq, L_alphabet, Bcells, MJ, Antigen, energy_model, r);
+	        generate_Bcells_with_e(N_bcs, L_seq, L_alphabet, Bcells, E_matrix, Antigen, energy_model, r);
 	        
 	        //-----------------Choose the antigen-specific bcells-----------------
 	        vector < bcell* > Naive;
 	        int n_naive = 0;
-	        choose_naive_Bcells2(N_bcs, L_seq, L_alphabet, MJ, Antigen, Bcells, Naive, n_naive, energy_model, r);
+	        choose_naive_Bcells2(N_bcs, L_seq, L_alphabet, E_matrix, Antigen, Bcells, Naive, n_naive, energy_model, r);
 
 	        // Run EF dynamics
 	        EF_response(linear_flag, lambda_A, lambda_B, k_pr, theta, N_c, To, Tf, NT, dT, n_naive, Naive);
@@ -282,15 +283,15 @@ int main(int argc, char* argv[]) //argv
     	ofstream fout (Text_files_path+"Trajectories/"+parameters_path+"/energies.txt"); // Energies, activation, fate, sequence and activation time
 
     	//Generate bcells
-        generate_Bcells_with_e(N_bcs, L_seq, L_alphabet, Bcells, MJ, Antigen, energy_model, r);
+        generate_Bcells_with_e(N_bcs, L_seq, L_alphabet, Bcells, E_matrix, Antigen, energy_model, r);
         
         // Choose the antigen-specific bcells
         vector < bcell* > Naive;
         int n_naive = 0;
-        choose_naive_Bcells2(N_bcs, L_seq, L_alphabet, MJ, Antigen, Bcells, Naive, n_naive, energy_model, r);
+        choose_naive_Bcells2(N_bcs, L_seq, L_alphabet, E_matrix, Antigen, Bcells, Naive, n_naive, energy_model, r);
         
-    	cout << "e_bar: " << mean_energy(L_seq, L_alphabet, MJ, Antigen) << endl;
-    	cout << "e_min: " << MS_energy(L_seq, L_alphabet, MJ, Antigen) << endl;
+    	cout << "e_bar: " << mean_energy(L_seq, L_alphabet, E_matrix, Antigen) << endl;
+    	cout << "e_min: " << MS_energy(L_seq, L_alphabet, E_matrix, Antigen) << endl;
 
 	    // Run EF dynamics
 	    EF_response(linear_flag, lambda_A, lambda_B, k_pr, theta, N_c, To, Tf, NT, dT, n_naive, Naive);

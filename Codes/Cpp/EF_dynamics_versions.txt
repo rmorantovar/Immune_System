@@ -1,0 +1,3 @@
+EF_dynamics.x versions
+
+_v3: Can choose the energy model to use (07.09.22)
