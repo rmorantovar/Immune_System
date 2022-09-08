@@ -78,6 +78,7 @@ print('beta_pr = %.2f'%beta_pr)
 
 t_prime = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*N_c))
 print('--------')
+print('Loops...')
 #--------------------------Loops--------------------------
 fig_NC, ax_NC = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 for i_n, n in enumerate(ns):

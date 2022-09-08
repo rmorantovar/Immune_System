@@ -22,11 +22,12 @@ k_pr = k_pr*24 #days^-1
 
 ns = [2.2, 2.0, 1.8, 1.5]#, 1]
 ns = [1.4, 1.8, 2.2]
-ns = [4]
+ns = [3, 2, 1]
 
-colors_theta = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
-colors_theta = ['tab:cyan','tab:green', 'tab:orange', 'orange', 'darkred']
+colors_n = ['tab:cyan','tab:green', 'tab:orange', 'orange', 'darkred']
+#colors_n = ['tab:orange']
 colors_R = [['tab:purple', 'tab:cyan', 'tab:cyan'], ['tab:blue', 'tab:green', 'tab:green'], ['tab:red', 'tab:orange', 'tab:orange'], ['tab:red', 'tab:orange', 'tab:orange']]
+#colors_R = [['tab:red', 'tab:orange', 'tab:orange']]
 
 lambda_B = lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
@@ -76,6 +77,7 @@ print('beta_pr = %.2f'%beta_pr)
 
 t_prime = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*N_c))
 print('--------')
+print('Loops...')
 #--------------------------Loops--------------------------
 for i_n, n in enumerate(ns):
 	print('--------')
@@ -123,27 +125,28 @@ for i_n, n in enumerate(ns):
 
 		#--------------------------t_C filter-------------------------
 		print('Applying filter...')
-		lim_size = 1
+		lim_size = 10
 		clone_sizes_C, activation_times_C, energies_C, filter_C, n_C = apply_filter_C(clone_sizes, activation_times, energies, lim_size)
 		print('Activated clones:', np.shape(clone_sizes_C))
 
 		total_pop_active = np.sum(clone_sizes_C, axis = 0) #C
 		bcell_freqs = clone_sizes_C/total_pop_active
-		bcell_freqs = clone_sizes_C/(C+len(clone_sizes_C[:,0]))
+		bcell_freqs = clone_sizes_C/(np.sum(clone_sizes_C[:,-1]))
 		entropy = -np.sum(bcell_freqs*np.log(bcell_freqs), axis = 0)
 
 		#------------------------- Stackplots -------------------------
 		greys = plt.cm.get_cmap('Greys', 50)
-		colors_muller = []
 		min_bell_freq = np.min(bcell_freqs[:,-1])
-		for c in range(int(len(clone_sizes_C[:,0]))):
-		    #if bcell_freqs[c, -1]>(30*min_bell_freq):
-		    if bcell_freqs[c, -1]>(0.05):
-		        colors_muller.append(colors_theta[i_n])
-		    else:
-		        colors_muller.append(greys(np.random.randint(10, 40)))
+		
+		for c in np.invert(range(len(clone_sizes_C[:,0]))):
+			if bcell_freqs[c, -1]>(0.05):
+				ax_muller.stackplot(time, [(bcell_freqs[c, -1] - bcell_freqs[c, :])/2 + np.ones_like(bcell_freqs[0, :])*np.sum(bcell_freqs[:c, -1]), bcell_freqs[c, :], (bcell_freqs[c, -1] - bcell_freqs[c, :])/2], colors = ['white', colors_n[i_n], 'white']);
+				ax_muller.scatter(activation_times_C[c], (bcell_freqs[c, -1] - bcell_freqs[c, 0])/2 + np.sum(bcell_freqs[:c, -1]), marker = 'D', edgecolor='black', linewidth=1, facecolor = colors_n[i_n], s = 40)
 
-		ax_muller.stackplot(time, bcell_freqs, colors = colors_muller);
+			else:
+				col = greys(np.random.randint(10, 40))
+				ax_muller.stackplot(time, [(bcell_freqs[c, -1] - bcell_freqs[c, :])/2 + np.ones_like(bcell_freqs[0, :])*np.sum(bcell_freqs[:c, -1]), bcell_freqs[c, :], (bcell_freqs[c, -1] - bcell_freqs[c, :])/2], colors = ['white', col, 'white']);
+
 
 		cumsum_freqs = np.cumsum(bcell_freqs, axis = 0)
 
@@ -158,5 +161,6 @@ for i_n, n in enumerate(ns):
 		ax_muller.set_xticks([])
 		ax_muller.set_xlim(T0, Tf-2)
 		ax_muller.set_ylim(0, 1)
+		fig_muller.savefig('../../Figures/1_Dynamics/Trajectories/Muller/B_cell_clones_n-%.2f_%d_'%(n, rep)+energy_model+'.pdf')
 		fig_muller.savefig('../../Figures/1_Dynamics/Trajectories/Muller/B_cell_clones_n-%.2f_%d_'%(n, rep)+energy_model+'.png')
 		plt.close(fig_muller)
