@@ -1,10 +1,17 @@
+import sys
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import scipy.special as sc
 
-import pickle
+
+if(sys.version_info[1]<= 7):
+    import pickle5 as pickle
+else:
+    import pickle
+
 import json
 import warnings
 
@@ -26,6 +33,32 @@ k_BT = 1.380649e-23*293
 delta_Nb = lambda t, tb, Nb, N, lambda_B, C: lambda_B*Nb*(1-(N/C))*np.heaviside(t-tb, 1)
 
 E_t = lambda t, theta:lambda_A*t/theta - np.log((lambda_A*N_A)/(k_on*N_c))/theta + np.log(k_pr/k_on) 
+
+def get_data(folder_path, rep):
+	if os.path.exists(folder_path+'/energies%d.pkl'%rep):
+		print('Object exists already, loading it ...')
+		f = open(folder_path+'/energies%d.pkl'%rep, 'rb')
+		data = pickle.load(f) 
+		return data
+	else:
+		print(f'Pickling data ...')
+		data = pd.read_csv(folder_path+'/energies%d.txt'%rep, sep = '\t', header=None)
+		f = open(folder_path+'/energies%d.pkl'%rep, 'wb')
+		pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
+		return data
+
+def get_data_ensemble(folder_path):
+	if os.path.exists(folder_path+'/energies_ensemble.pkl'):
+		print('Object exists already, loading it ...')
+		f = open(folder_path+'/energies_ensemble.pkl', 'rb')
+		data = pickle.load(f) 
+		return data
+	else:
+		print(f'Pickling data ...')
+		data = pd.read_csv(folder_path+'/energies_ensemble.txt', sep = '\t', header=None)
+		f = open(folder_path+'/energies_ensemble.pkl', 'wb')
+		pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
+		return data
 
 def get_clones_sizes_C(n_act, time, activation_times, lambda_B, C, dT):
 	clone_sizes = np.ones((n_act, len(time)))
@@ -92,7 +125,7 @@ def get_proofreading_properties(betas, Q0, Es, dE, k_pr, k_on):
 
 	return beta_pr, E_pr, Kd_pr
 
-def get_n_properties(betas, Q0, Es, dE, theta):
+def get_kappa_properties(betas, Q0, Es, dE, theta):
 
 	beta_theta = betas[betas>theta][-1]
 	E_theta = Es[betas>theta][-1]

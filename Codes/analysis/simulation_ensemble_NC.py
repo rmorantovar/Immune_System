@@ -19,16 +19,16 @@ k_pr = 1
 #k_pr = 180 # hour^-1
 k_pr = k_pr*24 #days^-1
 
-ns = [2.2, 2.0, 1.8, 1.5]#, 1]
-ns = [1.4, 1.8, 2.2]
-ns = [3, 2, 1]
+kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
+kappas = [1.4, 1.8, 2.2]
+kappas = [3, 2, 1]
 
 transparency_n = [1]
 
-colors_theta = ['lightskyblue', 'tab:cyan','tab:green', 'tab:orange']
-colors_theta = ['tab:cyan','tab:green', 'tab:orange']
-colors_R = [['deepskyblue', 'lightskyblue', 'lightskyblue'], ['tab:purple', 'tab:cyan', 'tab:cyan'], ['tab:blue', 'tab:green', 'tab:green'], ['tab:red', 'tab:orange', 'tab:orange']]
-colors_R = [['tab:purple', 'tab:cyan', 'tab:cyan'], ['tab:blue', 'tab:green', 'tab:green'], ['tab:red', 'tab:orange', 'tab:orange']]
+colors_kappa = ['lightskyblue', 'tab:cyan','tab:green', 'tab:red']
+colors_kappa = ['tab:cyan','tab:green', 'tab:red']
+colors_R = [['deepskyblue', 'lightskyblue', 'lightskyblue'], ['tab:purple', 'tab:cyan', 'tab:cyan'], ['tab:blue', 'tab:green', 'tab:green'], ['tab:red', 'tab:red', 'tab:red']]
+colors_R = [['tab:purple', 'tab:cyan', 'tab:cyan'], ['tab:blue', 'tab:green', 'tab:green'], ['tab:red', 'tab:red', 'tab:red']]
 
 lambda_B = lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
@@ -81,15 +81,16 @@ print('--------')
 print('Loops...')
 #--------------------------Loops--------------------------
 fig_NC, ax_NC = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-for i_n, n in enumerate(ns):
+for i_kappa, kappa in enumerate(np.flip(kappas)):
 
 	print('--------')
-	print('n = %.2f...'%n)
-	beta_n, E_n, Kd_n = get_n_properties(betas, Q0, Es, dE, n)
+	print('kappa = %.2f...'%kappa)
+	beta_kappa, E_kappa, Kd_kappa = get_kappa_properties(betas, Q0, Es, dE, kappa)
 
 	#-----------------Loading data----------------------------
-	parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, n, linear, N_ens)+energy_model
-	data = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/energies_ensemble.txt', sep = '\t', header=None)
+	parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, kappa, linear, N_ens)+energy_model
+	#data = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/energies_ensemble.txt', sep = '\t', header=None)
+	data = get_data_ensemble(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
 
 	NC = np.zeros_like(time)
 	for i_ens in tqdm(np.arange(N_ens)):
@@ -112,13 +113,13 @@ for i_n, n in enumerate(ns):
 		NC_i = np.log(1-np.array([np.product(1-1/(1+(Kds_C/((1e12*(clone_sizes_C[:,t]-1))/N_A)))) for t in np.arange(len(time))]))
 		NC += NC_i
 		if(i_ens%1==0):
-			ax_NC.plot(time, NC_i, color = colors_theta[i_n], alpha = .1, linewidth = 1)
+			ax_NC.plot(time, NC_i, color = colors_kappa[2-i_kappa], alpha = .1, linewidth = 1)
 
 	NC = NC/N_ens		
-	ax_NC.plot(time, NC, color = colors_theta[i_n], alpha = transparency_n[0], label = r'$%d$'%n, linewidth = 5)
+	ax_NC.plot(time, NC, color = colors_kappa[2-i_kappa], alpha = transparency_n[0], label = r'$%d$'%kappa, linewidth = 5)
 
 my_plot_layout(ax = ax_NC, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-ax_NC.legend(fontsize = 32, title_fontsize = 34, title = r'$n$')
+ax_NC.legend(fontsize = 32, title_fontsize = 34, title = r'$\kappa$')
 #ax_NC.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
 ax_NC.set_ylim(bottom = -10)
 #ax_NC.set_yticks([1, 0.1, 0.01, 0.001])
