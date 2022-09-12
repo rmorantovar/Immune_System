@@ -7,7 +7,7 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 
 #--------------- PARAMETERS ---------------------
 N_ens = 1
-N_rs = [1e8]
+N_rs = [2e8]
 T0 = 0
 Tf = 10
 Tf_sim = 6.5
@@ -26,11 +26,11 @@ transparency_n = [1]
 
 colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
 colors_kappa = ['tab:cyan','green', 'tab:red', 'orange', 'darkred']
-colors_R = [['tab:purple', 'tab:purple', 'tab:cyan', 'tab:cyan'], ['tab:blue', 'tab:blue', 'tab:green', 'tab:green'], ['tab:red', 'tab:red', 'tab:red', 'tab:red'], ['tab:red', 'tab:red', 'tab:red', 'tab:red']]
+colors_R = [['tab:grey', 'tab:grey', 'tab:blue', 'tab:blue'], ['tab:grey', 'tab:grey', 'tab:green', 'tab:green'], ['tab:grey', 'tab:grey', 'tab:red', 'tab:red'], ['tab:red', 'tab:red', 'tab:red', 'tab:red']]
 
 lambda_B = lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
-N_c = 1e4
+N_c = 1e5
 #N_c = 1e5
 E_ms = -27.63
 C = 3e4
@@ -87,11 +87,11 @@ for N_r in N_rs:
     beta_r, E_r, Kd_r = get_repertoire_properties(betas, Q0, Es, dE, N_r)
     print('beta_r = %.1f'%beta_r)
 
-    ax_Q0.plot(Kds, Q0, alpha = 1, color = 'grey', linewidth = 5, linestyle = '-')
+    ax_Q0.plot(Kds, Q0, alpha = 1, color = 'grey', linewidth = 5, linestyle = '--')
     ax_Q0.plot(Kds, P_min_e(N_r, avg_E, var_E, Es[:-1], dE), linestyle = '--', marker = '',  color = 'black', ms = 2, linewidth = 4)
     #ax_Q0.plot(Kds, Kds**(beta_r)/(Ks[P_min_e(N_r, avg_E, var_E, Es[:-1], dE)==np.max(P_min_e(N_r, avg_E, var_E, Es[:-1], dE))]**(beta_r))*np.max(P_min_e(N_r, avg_E, var_E, Es[:-1], dE)), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 4 )
 
-    ax_QR_all.plot(Kds, Q0*N_r, alpha = 1, color = 'grey', linewidth = 5, linestyle = '-')
+    ax_QR_all.plot(Kds, Q0*N_r, alpha = 1, color = 'grey', linewidth = 5, linestyle = '--')
     for i_kappa, kappa in enumerate(kappas):
         print('--------')
         print('kappa = %.2f...'%kappa)
@@ -181,9 +181,9 @@ for N_r in N_rs:
     
     my_plot_layout(ax=ax_QR_all, yscale = 'log', xscale = 'log', ticks_labelsize = 38)
     #ax_QR_all.set_xticks([])
-    ax_QR_all.set_xlim(right = 1e-2, left = 1e-11) #use 1e-3 for other plots
+    ax_QR_all.set_xlim(right = 1e-0, left = 1e-11) #use 1e-3 for other plots
     ax_QR_all.set_ylim(bottom = 1e-9, top = 1.5*N_r)
-    ax_QR_all.legend(title = r'$\kappa$', title_fontsize = 34, fontsize = 32)
+    ax_QR_all.legend(title = r'$p$', title_fontsize = 34, fontsize = 32)
     fig_QR_all.savefig('../../Figures/_Summary/affinity/QR_all_Nr-%.0e_'%(N_r)+model+'.pdf')
     plt.close(fig_QR_all)
 

@@ -227,7 +227,7 @@ int main(int argc, char* argv[]) //argv
     //-------Files-----
     //Output files
     if(ensemble_flag){ // ENSEMBLE OF TRAJECTORIES
-    	string parameters_path = "L-"+std::to_string(L_seq)+"_Nbc-"+ std::to_string(N_bcs)+"_Antigen-"+Antigen_aa+"_lambda_A-"+std::to_string(lambda_A)+"_lambda_B-"+std::to_string(lambda_B)+"_k_pr-"+std::to_string(k_pr)+"_theta-"+std::to_string(theta)+"_Linear-"+std::to_string(linear_flag)+"_N_ens-"+ std::to_string(N_ens)+"_"+energy_model;
+    	string parameters_path = "L-"+std::to_string(L_seq)+"_Nbc-"+ std::to_string(N_bcs)+"_Antigen-"+Antigen_aa+"_lambda_A-"+std::to_string(lambda_A)+"_lambda_B-"+std::to_string(lambda_B)+"_k_pr-"+std::to_string(k_pr)+"_theta-"+std::to_string(theta)+"_Nc-"+std::to_string(N_c)+"_Linear-"+std::to_string(linear_flag)+"_N_ens-"+ std::to_string(N_ens)+"_"+energy_model;
     	fs::create_directories(Text_files_path+"Ensemble/"+parameters_path);
     	ofstream fout (Text_files_path+"Ensemble/"+parameters_path+"/energies_ensemble.txt"); // Energies
     	ofstream fout_2 (Text_files_path+"Ensemble/"+parameters_path+"/summary_ensemble.txt"); // Energies
@@ -277,7 +277,7 @@ int main(int argc, char* argv[]) //argv
 	    fout_2.close();
 
     }else{ // SINGLE TRAJECTORY
-    	string parameters_path = "L-"+std::to_string(L_seq)+"_Nbc-"+ std::to_string(N_bcs)+"_Antigen-"+Antigen_aa+"_lambda_A-"+std::to_string(lambda_A)+"_lambda_B-"+std::to_string(lambda_B)+"_k_pr-"+std::to_string(k_pr)+"_theta-"+std::to_string(theta)+"_Linear-"+std::to_string(linear_flag)+"_N_ens-"+ std::to_string(N_ens)+"_"+energy_model;
+    	string parameters_path = "L-"+std::to_string(L_seq)+"_Nbc-"+ std::to_string(N_bcs)+"_Antigen-"+Antigen_aa+"_lambda_A-"+std::to_string(lambda_A)+"_lambda_B-"+std::to_string(lambda_B)+"_k_pr-"+std::to_string(k_pr)+"_theta-"+std::to_string(theta)+"_Nc-"+std::to_string(N_c)+"_Linear-"+std::to_string(linear_flag)+"_N_ens-"+ std::to_string(N_ens)+"_"+energy_model;
     	fs::create_directories(Text_files_path+"Trajectories/"+parameters_path);
     	cout<<">Running simulation of the EF dynamics ..."<< endl;
     	ofstream fout (Text_files_path+"Trajectories/"+parameters_path+"/energies.txt"); // Energies, activation, fate, sequence and activation time

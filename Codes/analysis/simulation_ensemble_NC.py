@@ -25,10 +25,9 @@ kappas = [3, 2, 1]
 
 transparency_n = [1]
 
-colors_kappa = ['lightskyblue', 'tab:cyan','tab:green', 'tab:red']
-colors_kappa = ['tab:cyan','tab:green', 'tab:red']
-colors_R = [['deepskyblue', 'lightskyblue', 'lightskyblue'], ['tab:purple', 'tab:cyan', 'tab:cyan'], ['tab:blue', 'tab:green', 'tab:green'], ['tab:red', 'tab:red', 'tab:red']]
-colors_R = [['tab:purple', 'tab:cyan', 'tab:cyan'], ['tab:blue', 'tab:green', 'tab:green'], ['tab:red', 'tab:red', 'tab:red']]
+colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
+colors_kappa = ['tab:cyan','green', 'tab:red', 'orange', 'darkred']
+colors_R = [['tab:grey', 'tab:grey', 'tab:blue', 'tab:blue'], ['tab:grey', 'tab:grey', 'tab:green', 'tab:green'], ['tab:grey', 'tab:grey', 'tab:red', 'tab:red'], ['tab:red', 'tab:red', 'tab:red', 'tab:red']]
 
 lambda_B = lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1

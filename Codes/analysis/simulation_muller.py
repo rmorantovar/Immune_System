@@ -9,9 +9,9 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 # ./EF_response_v3.x -a 6 -b 0.5 -k 1 -t 0 -T 7.5 -E TCRen -C 10000 -B 100000000 -s EYTACNSEYPNTTKCGRWYCGRYPN -q 2.0 --ensemble -N 10
 #--------------- PARAMETERS ---------------------
 N_ens = 1
-N_r = 1e8
+N_r = 2e8
 T0 = 3
-Tf = 10
+Tf = 8
 Tf_sim = 7
 #Tf = 10
 dT = 0.005
@@ -24,14 +24,13 @@ kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
 kappas = [3, 2, 1]
 
-colors_kappa = ['tab:cyan','tab:green', 'tab:red', 'orange', 'darkred']
-#colors_kappa = ['tab:red']
-colors_R = [['tab:purple', 'tab:cyan', 'tab:cyan'], ['tab:blue', 'tab:green', 'tab:green'], ['tab:red', 'tab:red', 'tab:red'], ['tab:red', 'tab:red', 'tab:red']]
-#colors_R = [['tab:red', 'tab:red', 'tab:red']]
+colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
+colors_kappa = ['tab:blue','tab:green','tab:red']
+colors_R = [['tab:grey', 'tab:green', 'tab:green', 'tab:green'], ['tab:grey', 'tab:green', 'tab:green', 'tab:green'], ['tab:grey', 'tab:red', 'tab:red', 'tab:red']]
 
 lambda_B = lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
-N_c = 1e4
+N_c = 1e5
 #N_c = 1e5
 E_ms = -27.63
 C = 3e4
@@ -78,6 +77,28 @@ print('beta_pr = %.2f'%beta_pr)
 t_prime = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*N_c))
 print('--------')
 print('Loops...')
+
+
+min_E = -17.3
+max_E = -8
+
+fig, ax = plt.subplots(figsize = (18, 1), gridspec_kw={'left':0.06, 'right':.94, 'bottom':.01, 'top': .44})
+col_map = plt.get_cmap('turbo')
+#mpl.colorbar.ColorbarBase(ax, cmap=col_map, orientation = 'vertical')
+
+# As for a more fancy example, you can also give an axes by hand:
+#c_map_ax = fig.add_axes([0.2, 0.8, 0.6, 0.02])
+#c_map_ax.axes.get_xaxis().set_visible(False)
+#c_map_ax.axes.get_yaxis().set_visible(False)
+
+# and create another colorbar with:
+mpl.colorbar.ColorbarBase(ax, cmap=col_map, orientation = 'horizontal')
+ax.xaxis.tick_top()
+ax.set_xticks(np.linspace(0, 1, 5))
+ax.set_xticklabels([r'$%.0e$'%(np.exp(min_E + i*(max_E - min_E)/4)) for i in np.arange(0, 5, 1)], fontsize = 38)
+fig.savefig("../../Figures/1_Dynamics/Trajectories/Muller/colorbar.pdf")
+
+quit()
 #--------------------------Loops--------------------------
 for i_kappa, kappa in enumerate(kappas):
 	print('--------')
@@ -87,7 +108,7 @@ for i_kappa, kappa in enumerate(kappas):
 		fig_muller, ax_muller = plt.subplots(figsize=(18,6), gridspec_kw={'left':0.06, 'right':.98, 'bottom':.1, 'top': 0.96}, dpi = 600)
 
 		#-----------------Loading data----------------------------
-		parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, kappa, linear, N_ens)+energy_model
+		parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
 		#data = pd.read_csv(Text_files_path + 'Dynamics/Trajectories/'+parameters_path+'/energies%d.txt'%rep, sep = '\t', header=None)
 		data = get_data(folder_path = Text_files_path + 'Dynamics/Trajectories/'+parameters_path, rep = rep)
 		#-----------------Filtering data----------------------------
@@ -135,17 +156,16 @@ for i_kappa, kappa in enumerate(kappas):
 		entropy = -np.sum(bcell_freqs*np.log(bcell_freqs), axis = 0)
 
 		#------------------------- Stackplots -------------------------
-		greys = plt.cm.get_cmap('YlOrBr', 50)
+		greys = plt.cm.get_cmap('turbo_r', 50)
 		min_bell_freq = np.min(bcell_freqs[:,-1])
 		
-		min_E = -17.3
-		max_E = -8
+		
 		delta_E = max_E - min_E
 		for c in np.flip(range(len(clone_sizes_C[:,0]))):
 			color_c = greys(int(50*(1-abs((energies_C[c]-min_E)/max_E))))
 			ax_muller.stackplot(time, [(bcell_freqs[c, -1] - bcell_freqs[c, :])/2 + np.ones_like(bcell_freqs[0, :])*np.sum(bcell_freqs[:c, -1]), bcell_freqs[c, :], (bcell_freqs[c, -1] - bcell_freqs[c, :])/2], colors = ['white', color_c, 'white']);
 			if bcell_freqs[c, -1]>(0.10):
-								ax_muller.scatter(activation_times_C[c], (bcell_freqs[c, -1] - bcell_freqs[c, 0])/2 + np.sum(bcell_freqs[:c, -1]), marker = 'D', edgecolor='black', linewidth=1, facecolor = colors_kappa[i_kappa], s = 40)
+				ax_muller.scatter(activation_times_C[c], (bcell_freqs[c, -1] - bcell_freqs[c, 0])/2 + np.sum(bcell_freqs[:c, -1]), marker = 'D', edgecolor='black', linewidth=1, facecolor = colors_kappa[i_kappa], s = 40)
 
 		# for c in np.invert(range(len(clone_sizes_C[:,0]))):
 		# 	if bcell_freqs[c, -1]>(0.05):
@@ -168,8 +188,11 @@ for i_kappa, kappa in enumerate(kappas):
 		ax_muller.set_yticks([])
 		#ax_muller.set_xticks(np.arange(Tf))
 		ax_muller.set_xticks([])
-		ax_muller.set_xlim(T0, Tf-2)
+		ax_muller.set_xlim(T0, Tf)
 		ax_muller.set_ylim(0, 1)
 		fig_muller.savefig('../../Figures/1_Dynamics/Trajectories/Muller/B_cell_clones_kappa-%.2f_%d_'%(kappa, rep)+energy_model+'.pdf')
 		fig_muller.savefig('../../Figures/1_Dynamics/Trajectories/Muller/B_cell_clones_kappa-%.2f_%d_'%(kappa, rep)+energy_model+'.png')
 		plt.close(fig_muller)
+
+
+
