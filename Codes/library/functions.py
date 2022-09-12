@@ -237,6 +237,15 @@ def calculate_QR(Q0, k_on, k_act, rho_A, Es, q, lambda_A, N_c, dE):
 
 	return u_on, p_a, R, QR
 
+def calculate_QR_t(Q0, k_on, k_act, E, rho_A_t, Es, q, lambda_A, N_c, dE):
+
+	p_a = (1/(1 + (k_on*np.exp(Es[Es<E][-1])/k_act)**q) )
+	u_on = rho_A_t*k_on
+	R_t = 1-np.exp(-u_on*p_a*N_c/lambda_A)
+	QR_t = R_t*Q0[Es[:-1]<E][-1]
+
+	return u_on, p_a, R_t, QR_t
+
 def get_t_act(time, N_r, Q0, k_on, k_pr, lambda_A, Es, dE, theta, N_c):
 	u_on, p_a, P_act, Q_act = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*time[0])/N_A, Es, theta, lambda_A, N_c, dE)
 	m_bar = np.array([N_r*(1-np.sum(np.exp(-((p_a*(np.exp(lambda_A*t)/N_A*k_on*N_c))/lambda_A))*Q0*dE)) for t in time])

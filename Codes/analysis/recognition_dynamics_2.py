@@ -12,7 +12,7 @@ T0 = 0
 Tf = 10
 Tf_sim = 6.5
 #Tf = 10
-dT = 0.01
+dT = 0.1
 lambda_A = 6
 k_pr = 1 # hour^-1
 #k_pr = 180 # hour^-1
@@ -80,25 +80,19 @@ print('Loops...')
 for N_r in N_rs:
     print('________')
     print('N_r = %.0e'%N_r)
-    fig_Q0, ax_Q0 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
     fig_QR_all, ax_QR_all = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 
     #--------------------------Repertoire properties--------------------------
     beta_r, E_r, Kd_r = get_repertoire_properties(betas, Q0, Es, dE, N_r)
     print('beta_r = %.1f'%beta_r)
 
-    ax_Q0.plot(Kds, Q0, alpha = 1, color = 'grey', linewidth = 5, linestyle = '-')
-    ax_Q0.plot(Kds, P_min_e(N_r, avg_E, var_E, Es[:-1], dE), linestyle = '--', marker = '',  color = 'black', ms = 2, linewidth = 4)
-    #ax_Q0.plot(Kds, Kds**(beta_r)/(Ks[P_min_e(N_r, avg_E, var_E, Es[:-1], dE)==np.max(P_min_e(N_r, avg_E, var_E, Es[:-1], dE))]**(beta_r))*np.max(P_min_e(N_r, avg_E, var_E, Es[:-1], dE)), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 4 )
-
-    ax_QR_all.plot(Kds, Q0*N_r, alpha = 1, color = 'grey', linewidth = 5, linestyle = '-')
     for i_kappa, kappa in enumerate(kappas):
         print('--------')
         print('kappa = %.2f...'%kappa)
 
         fig_R, ax_R = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
         fig_QR, ax_QR = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-        fig_QR2, ax_QR2 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+        #fig_QR2, ax_QR2 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
         fig_m_bar, ax_m_bar = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 
         beta_kappa, E_kappa, Kd_kappa = get_kappa_properties(betas, Q0, Es, dE, kappa)
@@ -108,10 +102,6 @@ for N_r in N_rs:
         time1 = np.linspace(0, t_n, 100)
         time2 = np.linspace(t_n, Tf, 100)
 
-        ax_QR.plot(Kds, Q0*N_r, alpha = transparency_n[0], color = 'grey', linewidth = 5, linestyle = '-')
-
-        ax_QR2.plot(Kds, Q0, alpha = .8, color = 'grey', linewidth = 5, linestyle = '-')
-        ax_QR2.vlines([Kd_r], 0, 0.355, alpha = 1, color = 'black', linestyle = '--', linewidth = 5)
 
         #--------------------------m_bar(t)---------------------------
         u_on, p_a, R, QR = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*time[0])/N_A, Es, kappa, lambda_A, N_c, dE)
@@ -130,69 +120,67 @@ for N_r in N_rs:
         m_f_expected = np.sum(N_r*QR*dE)
         print('Activated clones expected:%.d'%m_f_expected)
 
-        days = [t_act-2*1.5, t_act-1.5, t_act, t_act+1.5]
+        Kds_plot = [Kd_r]
         #days = np.linspace(1, Tf-0.5, 3)
-        for i_t, t in enumerate(days):
+        for i_Kd, Kd in enumerate(Kds_plot):
+            rho_A_t = np.exp(lambda_A*time)/N_A
+            u_on, p_a, R_t, QR_t = calculate_QR_t(Q0, k_on, k_pr, np.log(Kd), rho_A_t, Es, kappa, lambda_A, N_c, dE)
 
-            u_on, p_a, R, QR = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*t)/N_A, Es, kappa, lambda_A, N_c, dE)
             #----------------------------------------------------------------
             #--------------------------QR_all(E, t)---------------------------
-            if i_t==2:
-                ax_R.plot(Kds, R, alpha = transparency_n[0], color = colors_R[i_kappa][i_t], linewidth = 5, linestyle = '-')
-                ax_QR.plot(Kds, QR*N_r, alpha = transparency_n[0], color = colors_R[i_kappa][i_t], linewidth = 5, linestyle = '-')
+            if i_Kd==0:
+                ax_R.plot(time, R_t, alpha = transparency_n[0], color = colors_R[i_kappa][i_Kd], linewidth = 5, linestyle = '-')
+                ax_QR.plot(time, QR_t*N_r, alpha = transparency_n[0], color = colors_R[i_kappa][i_Kd], linewidth = 5, linestyle = '-')
 
-                ax_QR_all.plot(Kds, QR*N_r, alpha = transparency_n[0], color = colors_R[i_kappa][i_t], linewidth = 5, linestyle = '-', label = r'$%d$'%(kappa))
-                ax_QR_all.plot(Kds[QR==np.max(QR)], (Q0*N_r)[QR==np.max(QR)], alpha = transparency_n[0], color = colors_R[i_kappa][i_t], marker = 'o', ms = 10)
+                ax_QR_all.plot(time, QR_t*N_r, alpha = transparency_n[0], color = colors_R[i_kappa][i_Kd], linewidth = 5, linestyle = '-', label = r'$%d$'%(kappa))
+                #ax_QR_all.plot(Kds[QR==np.max(QR)], (Q0*N_r)[QR==np.max(QR)], alpha = transparency_n[0], color = colors_R[i_kappa][i_Kd], marker = 'o', ms = 10)
 
-            else:
+            #else:
                 #--------------------------R(E, t) and QR(E, t)---------------------------
-                ax_R.plot(Kds, R, alpha = transparency_n[0], color = colors_R[i_kappa][i_t], linewidth = 4, linestyle = '--')
-                ax_QR.plot(Kds, QR*N_r, alpha = transparency_n[0], color = colors_R[i_kappa][i_t], linewidth = 4, linestyle = '--')
+                #ax_R.plot(Kds, R, alpha = transparency_n[0], color = colors_R[i_kappa][i_Kd], linewidth = 4, linestyle = '--')
+                #ax_QR.plot(Kds, QR*N_r, alpha = transparency_n[0], color = colors_R[i_kappa][i_Kd], linewidth = 4, linestyle = '--')
                 #-------FOR Q0--------- 
                 #ax_QR.vlines(Kd_r, 0, .5, color = 'black', linestyle = 'dashed')
                 #ax_QR.vlines([Kd_kappa, Kd_1], ax_QR.get_ylim()[0], N_r*Q0[Kds<np.exp(E_n)][-1], color = 'grey', linestyle = 'dotted', linewidth = 4)       
                 #ax_Q_act.hlines(N_r*Q0[Ks<np.exp(E_r)][-1], ax_Q_act.get_xlim()[0], np.exp(E_r), alpha = 1, color = 'black', linestyle = ':')
 
-        
-        ax_QR2.plot(Kds, QR/np.sum(QR*dE), alpha = transparency_n[0], color = colors_R[i_kappa][i_t], linewidth = 5, linestyle = '-')
-
-        my_plot_layout(ax=ax_R, yscale = 'log', xscale = 'log', ticks_labelsize = 38)
+        my_plot_layout(ax=ax_R, yscale = 'log', xscale = 'linear', ticks_labelsize = 38)
         ax_R.set_xticks([])
-        ax_R.set_xlim(right = 1e-2)
+        #ax_R.set_xlim(right = 1e-2)
         ax_R.set_ylim(top = 1.5, bottom = 1e-8)
-        fig_R.savefig('../../Figures/_Summary/affinity/R_kappa-%.1f_Nr-%.0e_'%(kappa, N_r)+model+'.pdf')
+        fig_R.savefig('../../Figures/_Summary/time/R_kappa-%.1f_Nr-%.0e_'%(kappa, N_r)+model+'.pdf')
         plt.close(fig_R)
 
-        my_plot_layout(ax=ax_QR, yscale = 'log', xscale = 'log', ticks_labelsize = 38)
+        my_plot_layout(ax=ax_QR, yscale = 'log', xscale = 'linear', ticks_labelsize = 38)
         #ax_QR.set_xticks([])
-        ax_QR.set_xlim(right = 1e-2) #use 1e-3 for other plots
-        ax_QR.set_ylim(bottom = 1e-9, top = 1.5*N_r)
-        fig_QR.savefig('../../Figures/_Summary/affinity/QR_kappa-%.1f_Nr-%.0e_'%(kappa, N_r)+model+'.pdf')
+        #ax_QR.set_xlim(right = 1e-2) #use 1e-3 for other plots
+        ax_QR.set_ylim(bottom = 1e-9, top = 10)
+        fig_QR.savefig('../../Figures/_Summary/time/QR_kappa-%.1f_Nr-%.0e_'%(kappa, N_r)+model+'.pdf')
         plt.close(fig_QR)
 
-        my_plot_layout(ax=ax_QR2, yscale = 'linear', xscale = 'log', ticks_labelsize = 30)
-        #ax_QR2.set_xlim(right = 1e-3)
-        fig_QR2.savefig('../../Figures/_Summary/affinity/QR2_kappa-%.1f_Nr-%.0e_'%(kappa, N_r)+model+'.pdf')
-        plt.close(fig_QR2)
+        # my_plot_layout(ax=ax_QR2, yscale = 'linear', xscale = 'log', ticks_labelsize = 30)
+        # #ax_QR2.set_xlim(right = 1e-3)
+        # fig_QR2.savefig('../../Figures/_Summary/time/QR2_kappa-%.1f_Nr-%.0e_'%(kappa, N_r)+model+'.pdf')
+        # plt.close(fig_QR2)
 
         my_plot_layout(ax=ax_m_bar, yscale = 'log', ticks_labelsize = 30)
-        fig_m_bar.savefig('../../Figures/_Summary/affinity/m_bar_kappa-%.1f_Nr-%.0e_'%(kappa, N_r)+model+'.pdf')
+        fig_m_bar.savefig('../../Figures/_Summary/time/m_bar_kappa-%.1f_Nr-%.0e_'%(kappa, N_r)+model+'.pdf')
         plt.close(fig_m_bar)
     
-    my_plot_layout(ax=ax_QR_all, yscale = 'log', xscale = 'log', ticks_labelsize = 38)
+    my_plot_layout(ax=ax_QR_all, yscale = 'log', xscale = 'linear', ticks_labelsize = 38)
     #ax_QR_all.set_xticks([])
-    ax_QR_all.set_xlim(right = 1e-2, left = 1e-11) #use 1e-3 for other plots
-    ax_QR_all.set_ylim(bottom = 1e-9, top = 1.5*N_r)
+    #ax_QR_all.set_xlim(right = 1e-2, left = 1e-11) #use 1e-3 for other plots
+    ax_QR_all.set_ylim(bottom = 1e-9, top = 10)
     ax_QR_all.legend(title = r'$\kappa$', title_fontsize = 34, fontsize = 32)
-    fig_QR_all.savefig('../../Figures/_Summary/affinity/QR_all_Nr-%.0e_'%(N_r)+model+'.pdf')
+    fig_QR_all.savefig('../../Figures/_Summary/time/QR_all_Nr-%.0e_'%(N_r)+model+'.pdf')
     plt.close(fig_QR_all)
 
-    my_plot_layout(ax=ax_Q0, yscale = 'log', xscale = 'log', ticks_labelsize = 38)
-    #ax_Q_act.set_xticks([])
-    ax_Q0.set_xlim(right = 1e1) #use 1e-3 for other plots
-    ax_Q0.set_ylim(bottom = 1e-9, top = 1.5)
-    fig_Q0.savefig('../../Figures/_Summary/affinity/Q0_Nr-%.0e_'%(N_r)+model+'.pdf')
-    plt.close(fig_Q0)
+    # my_plot_layout(ax=ax_Q0, yscale = 'log', xscale = 'log', ticks_labelsize = 38)
+    # #ax_Q_act.set_xticks([])
+    # ax_Q0.set_xlim(right = 1e1) #use 1e-3 for other plots
+    # ax_Q0.set_ylim(bottom = 1e-9, top = 1.5)
+    # fig_Q0.savefig('../../Figures/_Summary/time/Q0_Nr-%.0e_'%(N_r)+model+'.pdf')
+    # plt.close(fig_Q0)
 
 
 
