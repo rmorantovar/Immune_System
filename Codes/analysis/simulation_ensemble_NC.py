@@ -13,7 +13,7 @@ T0 = 3
 Tf = 8
 Tf_sim = 7
 #Tf = 10
-dT = 0.01
+dT = 0.05
 lambda_A = 6
 k_pr = 1
 #k_pr = 180 # hour^-1
@@ -26,7 +26,7 @@ kappas = [3, 2, 1]
 transparency_n = [1]
 
 colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
-colors_kappa = ['tab:cyan','green', 'tab:red', 'orange', 'darkred']
+colors_kappa = ['tab:blue','tab:green','tab:red']
 colors_R = [['tab:grey', 'tab:grey', 'tab:blue', 'tab:blue'], ['tab:grey', 'tab:grey', 'tab:green', 'tab:green'], ['tab:grey', 'tab:grey', 'tab:red', 'tab:red'], ['tab:red', 'tab:red', 'tab:red', 'tab:red']]
 
 lambda_B = lambda_A
@@ -114,8 +114,8 @@ for i_kappa, kappa in enumerate(np.flip(kappas)):
 		if(i_ens%1==0):
 			ax_NC.plot(time, NC_i, color = colors_kappa[2-i_kappa], alpha = .1, linewidth = 1)
 
-	NC = NC/N_ens		
-	ax_NC.plot(time, NC, color = colors_kappa[2-i_kappa], alpha = transparency_n[0], label = r'$%d$'%kappa, linewidth = 5)
+	NC = NC/N_ens
+	ax_NC.plot(time, NC, color = colors_kappa[2-i_kappa], alpha = 1, label = r'$%d$'%kappa, linewidth = 5)
 
 my_plot_layout(ax = ax_NC, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_NC.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')

@@ -83,7 +83,7 @@ min_E = -17.3
 max_E = -8
 
 fig, ax = plt.subplots(figsize = (18, 1), gridspec_kw={'left':0.06, 'right':.94, 'bottom':.01, 'top': .44})
-col_map = plt.get_cmap('turbo')
+col_map = plt.get_cmap('coolwarm')
 #mpl.colorbar.ColorbarBase(ax, cmap=col_map, orientation = 'vertical')
 
 # As for a more fancy example, you can also give an axes by hand:
@@ -98,14 +98,13 @@ ax.set_xticks(np.linspace(0, 1, 5))
 ax.set_xticklabels([r'$%.0e$'%(np.exp(min_E + i*(max_E - min_E)/4)) for i in np.arange(0, 5, 1)], fontsize = 38)
 fig.savefig("../../Figures/1_Dynamics/Trajectories/Muller/colorbar.pdf")
 
-quit()
 #--------------------------Loops--------------------------
 for i_kappa, kappa in enumerate(kappas):
 	print('--------')
 	print('kappa = %.2f...'%kappa)
 	beta_kappa, E_kappa, Kd_kappa = get_kappa_properties(betas, Q0, Es, dE, kappa)
 	for rep in range(1):
-		fig_muller, ax_muller = plt.subplots(figsize=(18,6), gridspec_kw={'left':0.06, 'right':.98, 'bottom':.1, 'top': 0.96}, dpi = 600)
+		fig_muller, ax_muller = plt.subplots(figsize=(18,6), gridspec_kw={'left':0.06, 'right':.98, 'bottom':.1, 'top': 0.96}, dpi = 700)
 
 		#-----------------Loading data----------------------------
 		parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
@@ -156,7 +155,7 @@ for i_kappa, kappa in enumerate(kappas):
 		entropy = -np.sum(bcell_freqs*np.log(bcell_freqs), axis = 0)
 
 		#------------------------- Stackplots -------------------------
-		greys = plt.cm.get_cmap('turbo_r', 50)
+		greys = plt.cm.get_cmap('coolwarm_r', 50)
 		min_bell_freq = np.min(bcell_freqs[:,-1])
 		
 		

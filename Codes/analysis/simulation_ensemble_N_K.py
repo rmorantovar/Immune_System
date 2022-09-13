@@ -8,12 +8,12 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 
 #--------------- PARAMETERS ---------------------
 N_ens = 20
-N_r = 1e8
+N_r = 2e8
 T0 = 3
-Tf = 8
+Tf = 10
 Tf_sim = 7
 #Tf = 10
-dT = 0.01
+dT = 0.05
 lambda_A = 6
 k_pr = 1
 #k_pr = 180 # hour^-1
@@ -21,18 +21,18 @@ k_pr = k_pr*24 #days^-1
 
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
-kappas = [3, 2]
+kappas = [1, 2, 3]
 
 transparency_n = [1]
 
 colors_kappa = ['lightskyblue', 'tab:cyan','tab:green', 'tab:red']
-colors_kappa = ['tab:cyan','tab:green', 'tab:red']
+colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
 colors_R = [['deepskyblue', 'lightskyblue', 'lightskyblue'], ['tab:purple', 'tab:cyan', 'tab:cyan'], ['tab:blue', 'tab:green', 'tab:green'], ['tab:red', 'tab:red', 'tab:red']]
 colors_R = [['tab:purple', 'tab:cyan', 'tab:cyan'], ['tab:blue', 'tab:green', 'tab:green'], ['tab:red', 'tab:red', 'tab:red']]
 
 lambda_B = lambda_A/2
 k_on = 1e6*24*3600; #(M*days)^-1
-N_c = 1e4
+N_c = 1e5
 #N_c = 1e5
 E_ms = -27.63
 C = 3e4
@@ -87,58 +87,57 @@ for i_kappa, kappa in enumerate((kappas)):
     beta_kappa, E_kappa, Kd_kappa = get_kappa_properties(betas, Q0, Es, dE, kappa)
 
     #-----------------Loading data----------------------------
-    parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, kappa, linear, N_ens)+energy_model
+    parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
     #data = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/energies_ensemble.txt', sep = '\t', header=None)
     data = get_data_ensemble(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
 
     #activation_times_total = np.array([])
-    final_Nb = np.array([])
-    Kds_total = np.array([])
-    biggest_clone = 1
-    for i_ens in tqdm(np.arange(N_ens)):
-        data_i = data.loc[data[4]==i_ens]
-        data_active = data_i.loc[data_i[1]==1]
-        t_act_data = np.min(data_active[3])
-        data_active = data_active.loc[data_active[3]<(t_act_data+1.3)]
-        activation_times = np.array(data_active[3])
-        energies  = np.array(data_active[0])
+    
+    data_active = data.loc[data[1]==1]
+    t_act_data = np.min(data_active[3])
+    data_active = data_active.loc[data_active[3]<(t_act_data+1.3)]
+    activation_times = np.array(data_active[3])
+    energies  = np.array(data_active[0])
+    energies_total = np.linspace(np.min(energies), -15, 12)
+    final_Nb = np.zeros_like(energies_total)
 
-        #---------------------------- B cell linages ----------------------
-        clone_sizes = get_clones_sizes_C(len(activation_times), time, activation_times, lambda_B, C, dT)
+    #---------------------------- B cell linages ----------------------
+    clone_sizes = get_clones_sizes_C(len(activation_times), time, activation_times, lambda_B, C, dT)
 
-        #--------------------------t_C filter-------------------------
-        lim_size = 1
-        clone_sizes_C, activation_times_C, energies_C, filter_C, n_C = apply_filter_C(clone_sizes, activation_times, energies, lim_size)
+    #--------------------------t_C filter-------------------------
+    lim_size = 1
+    clone_sizes_C, activation_times_C, energies_C, filter_C, n_C = apply_filter_C(clone_sizes, activation_times, energies, lim_size) 
+    final_sizes = clone_sizes_C[:,-1]
+    #activation_times_total = np.append(activation_times_total, activation_times_C_sorted)
+    data_sizes = []
+    for k in range(len(energies_total)-1):
+        sizes_Kd = final_sizes[(energies_C>=energies_total[k]) & (energies_C<energies_total[k+1])]
+        if(len(sizes_Kd)>0):
+            final_Nb[k] = np.mean(sizes_Kd)
+            parts = ax_N_K.violinplot(dataset=sizes_Kd, positions = [np.exp(energies_total[k])/np.exp(np.min(energies_total))], showmeans=False, showmedians=False, showextrema=False, widths = 0.15*np.exp(energies_total[k+1])/np.exp(energies_total[0]))
+            for pc in parts['bodies']:
+                pc.set_facecolor(colors_kappa[i_kappa])
+                pc.set_edgecolor('black')
+                pc.set_alpha(.8)
+
+    #final_Nb/=np.max(final_Nb)
+    #for k in range(len(energies_total)-1):
         
-        sort_inds = clone_sizes_C[:, -1].argsort()
-        clone_sizes_C_sorted = clone_sizes_C[sort_inds, :][-int(40*(4-3)):, :]
-        activation_times_C_sorted = activation_times_C[sort_inds][-int(40*(4-3)):]
-        energies_C_sorted = energies_C[sort_inds][-int(40*(4-3)):]
-
-        biggest_clone_i = clone_sizes_C_sorted[-1, -1]
-        #ax_N_K.scatter(np.exp(energies_C_sorted[-1]), biggest_clone_i, color = colors_kappa[i_kappa], alpha = .25, edgecolor='black', linewidth=1, facecolor = colors_kappa[i_kappa])
-        if(biggest_clone_i>biggest_clone):
-            biggest_clone = biggest_clone_i
-
-        #activation_times_total = np.append(activation_times_total, activation_times_C_sorted)
-        final_Nb = np.append(final_Nb, clone_sizes_C_sorted[:, -1])
-        Kds_total = np.append(Kds_total, np.exp(energies_C_sorted))#/np.exp(np.min(energies_C_sorted)))
-
-    final_Nb/=biggest_clone
     #final_Nb = np.exp(lambda_B*(Tf-activation_times_total))
     #a, b = np.polyfit(energies_total, np.log(final_Nb), 1)
     #print('Slope from simulation=%.2f'%(a))
     #print('Expected slope=%.2f'%(-kappa*lambda_B/lambda_A))
-    Kds_array = np.logspace(np.log10(np.min(Kds_total)), np.log10(np.max(Kds_total)*.05), 50)
+    Kds_total = np.exp(energies_total)
+    Kds_array = np.logspace(np.log10(np.min(Kds_total)), np.log10(np.max(Kds_total)*1), 50)
     fit = Kds_array**(-kappa*lambda_B/lambda_A)
-    fit = fit/fit[0]*10**(0.2*(3-3))*final_Nb[Kds_total==np.min(Kds_total)]
-    ax_N_K.plot(Kds_array, fit, color = colors_kappa[i_kappa], linewidth = 5, label = r'$%.d$'%(kappa))
-    ax_N_K.scatter(Kds_total, final_Nb, facecolor = colors_kappa[i_kappa], alpha = .25, linewidth = 0)
+    fit = fit/fit[0]*10**(0.2*(3-3))*np.max(final_Nb)#[Kds_total==np.min(Kds_total)]
+    ax_N_K.plot(Kds_array/np.min(Kds_array), fit, color = colors_kappa[i_kappa], linewidth = 4, label = r'$%.d$'%(kappa))
+    ax_N_K.scatter(Kds_total/np.min(Kds_total), final_Nb, facecolor = colors_kappa[i_kappa], alpha = .8, linewidth = 0)
 
 my_plot_layout(ax = ax_N_K, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-ax_N_K.legend(fontsize = 32, title_fontsize = 34, title = r'$\kappa$')
+ax_N_K.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
 #ax_N_K.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
-#ax_N_K.set_ylim(bottom = 1e-4)
+#ax_N_K.set_ylim(bottom = 2e-2)
 #ax_N_K.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_N_K.set_yticklabels([1, 0.1, 0.01])
 fig_N_K.savefig('../../Figures/1_Dynamics/Ensemble/N_K_'+energy_model+'.pdf')

@@ -20,12 +20,12 @@ k_pr = k_pr*24 #days^-1
 
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
-kappas = [3, 2, 1]
+kappas = [1, 2, 3]
 
 transparency_n = [1]
 
 colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
-colors_kappa = ['tab:cyan','green', 'tab:red', 'orange', 'darkred']
+colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
 colors_R = [['tab:grey', 'tab:grey', 'tab:blue', 'tab:blue'], ['tab:grey', 'tab:grey', 'tab:green', 'tab:green'], ['tab:grey', 'tab:grey', 'tab:red', 'tab:red'], ['tab:red', 'tab:red', 'tab:red', 'tab:red']]
 
 lambda_B = lambda_A
@@ -92,6 +92,7 @@ for N_r in N_rs:
     #ax_Q0.plot(Kds, Kds**(beta_r)/(Ks[P_min_e(N_r, avg_E, var_E, Es[:-1], dE)==np.max(P_min_e(N_r, avg_E, var_E, Es[:-1], dE))]**(beta_r))*np.max(P_min_e(N_r, avg_E, var_E, Es[:-1], dE)), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 4 )
 
     ax_QR_all.plot(Kds, Q0*N_r, alpha = 1, color = 'grey', linewidth = 5, linestyle = '--')
+    ax_QR_all.vlines(Kd_r, 1e-9, Q0[Kds==Kd_r]*N_r, alpha = 1, color = 'grey', linewidth = 1, linestyle = '--')
     for i_kappa, kappa in enumerate(kappas):
         print('--------')
         print('kappa = %.2f...'%kappa)

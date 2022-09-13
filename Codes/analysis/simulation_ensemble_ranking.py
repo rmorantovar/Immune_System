@@ -13,7 +13,7 @@ T0 = 3
 Tf = 8
 Tf_sim = 6.5
 #Tf = 10
-dT = 0.01
+dT = 0.05
 lambda_A = 6
 k_pr = 1
 #k_pr = 180 # hour^-1
@@ -21,12 +21,12 @@ k_pr = k_pr*24 #days^-1
 
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
-kappas = [3, 2]
+kappas = [1, 2, 3]
 
 transparency_n = [1]
 
 colors_kappa = ['lightskyblue', 'tab:cyan','tab:green', 'tab:red']
-colors_kappa = ['tab:cyan','tab:green', 'tab:red']
+colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
 colors_R = [['deepskyblue', 'lightskyblue', 'lightskyblue'], ['tab:purple', 'tab:cyan', 'tab:cyan'], ['tab:blue', 'tab:green', 'tab:green'], ['tab:red', 'tab:red', 'tab:red']]
 colors_R = [['tab:purple', 'tab:cyan', 'tab:cyan'], ['tab:blue', 'tab:green', 'tab:green'], ['tab:red', 'tab:red', 'tab:red']]
 
@@ -137,7 +137,7 @@ for i_kappa, kappa in enumerate((kappas)):
     ax_N_K.plot(ranking, fit, color = colors_kappa[i_kappa], linewidth = 5, label = r'$%.d$'%(kappa))
 
 my_plot_layout(ax = ax_N_K, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-ax_N_K.legend(fontsize = 32, title_fontsize = 34, title = r'$\kappa$')
+ax_N_K.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
 #ax_N_K.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
 #ax_N_K.set_ylim(bottom = 1e-4)
 #ax_N_K.set_yticks([1, 0.1, 0.01, 0.001])

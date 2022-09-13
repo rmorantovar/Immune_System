@@ -9,10 +9,10 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 N_ens = 1
 N_rs = [2e8]
 T0 = 3
-Tf = 6.5
+Tf = 7.2
 Tf_sim = 6.5
 #Tf = 10
-dT = 0.05
+dT = 0.01
 lambda_A = 6
 k_pr = 1 # hour^-1
 #k_pr = 180 # hour^-1
@@ -77,14 +77,14 @@ t_prime = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*N_c))
 print('--------')
 #--------------------------Loops--------------------------
 
-fig_antigen, ax_antigen = plt.subplots(figsize=(10,6), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+fig_antigen, ax_antigen = plt.subplots(figsize=(12,6), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 ax_antigen.plot(time, np.exp(lambda_A*time)/1e3, linewidth = 5, color = 'gold')
 print('Loops...')
 for N_r in N_rs:
     print('________')
     print('N_r = %.0e'%N_r)
     fig_QR_all, ax_QR_all = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-
+    fig_m_bar, ax_m_bar = plt.subplots(figsize=(12,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
     #--------------------------Repertoire properties--------------------------
     beta_r, E_r, Kd_r = get_repertoire_properties(betas, Q0, Es, dE, N_r)
     print('beta_r = %.1f'%beta_r)
@@ -93,51 +93,30 @@ for N_r in N_rs:
         print('--------')
         print('kappa = %.2f...'%kappa)
 
-        fig_R, ax_R = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-        fig_QR, ax_QR = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+        fig_R, ax_R = plt.subplots(figsize=(12,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+        fig_QR, ax_QR = plt.subplots(figsize=(12,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
         #fig_QR2, ax_QR2 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-        fig_N_b, ax_N_b = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-        fig_m_bar, ax_m_bar = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+        fig_N_b, ax_N_b = plt.subplots(figsize=(12,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+        
 
         #-----------------Loading data----------------------------
-        parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
-        #data = pd.read_csv(Text_files_path + 'Dynamics/Trajectories/'+parameters_path+'/energies%d.txt'%rep, sep = '\t', header=None)
-        data = get_data(folder_path = Text_files_path + 'Dynamics/Trajectories/'+parameters_path, rep = 0)
-        #-----------------Filtering data----------------------------
-        min_e_data = np.min(data[0])
-        max_e_data = np.max(data[0])
+        # parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
+        # #data = pd.read_csv(Text_files_path + 'Dynamics/Trajectories/'+parameters_path+'/energies%d.txt'%rep, sep = '\t', header=None)
+        # data = get_data(folder_path = Text_files_path + 'Dynamics/Trajectories/'+parameters_path, rep = 0)
+        # #-----------------Filtering data----------------------------
+        # min_e_data = np.min(data[0])
+        # max_e_data = np.max(data[0])
 
-        data_active = data.loc[data[1]==1]
-        print('Activated clones before filter:%d'%len(data_active[0]))
-        t_act_data = np.min(data_active[3])
-        print('t_act_data: %.2f'%t_act_data)
-        data_active = data_active.loc[data_active[3]<(t_act_data+1.3)]
-        activation_times = np.array(data_active[3])
-        print('Activated clones after filter:%d'%len(activation_times))
-        energies  = np.array(data_active[0])
-        ar1, ar2 = np.histogram(activation_times, bins = time)
-        m_data = np.cumsum(ar1)
-
-        #---------------------------- B cell linages ----------------------
-        clone_sizes = get_clones_sizes_C(int(m_data[-1]), time, activation_times, lambda_B, C, dT)
-        lim_size = 1
-        clone_sizes_C, activation_times_C, energies_C, filter_C, n_C = apply_filter_C(clone_sizes, activation_times, energies, lim_size)
-
-        sort_inds = clone_sizes_C[:, -1].argsort()
-        clone_sizes_C_sorted = clone_sizes_C[sort_inds, :][-int(40*(4-3)):, :]
-        activation_times_C_sorted = activation_times_C[sort_inds][-int(40*(4-3)):]
-        energies_C_sorted = energies_C[sort_inds][-int(40*(4-3)):]
-
-        ax_N_b.plot(time, clone_sizes_C_sorted[-1, :], linewidth = 5, color = colors_R[i_kappa][2])
-        for k in range(2, len(energies_C_sorted), int(len(energies_C_sorted)/10)+1):
-            ax_N_b.plot(time, clone_sizes_C_sorted[-k, :], linewidth = 3, color = colors_R[i_kappa][2], linestyle= 'dashed')
-
-        beta_kappa, E_kappa, Kd_kappa = get_kappa_properties(betas, Q0, Es, dE, kappa)
-        delta_t_n = (E_kappa-E_pr)*kappa/lambda_A
-        t_n = t_prime + delta_t_n
-        time1 = np.linspace(0, t_n, 100)
-        time2 = np.linspace(t_n, Tf, 100)
-
+        # data_active = data.loc[data[1]==1]
+        # print('Activated clones before filter:%d'%len(data_active[0]))
+        # t_act_data = np.min(data_active[3])
+        # print('t_act_data: %.2f'%t_act_data)
+        # data_active = data_active.loc[data_active[3]<(t_act_data+1.3)]
+        # activation_times = np.array(data_active[3])
+        # print('Activated clones after filter:%d'%len(activation_times))
+        # energies  = np.array(data_active[0])
+        # ar1, ar2 = np.histogram(activation_times, bins = time)
+        # m_data = np.cumsum(ar1)
 
         #--------------------------m_bar(t)---------------------------
         u_on, p_a, R, QR = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*time[0])/N_A, Es, kappa, lambda_A, N_c, dE)
@@ -146,14 +125,40 @@ for N_r in N_rs:
         #m_bar = np.array([N_r*(1-np.sum(np.exp(-((p_a*(np.exp(lambda_A*t)/N_A*k_on*N_c))/lambda_A))*Q0*dE)) for t in time])# Review this
         m_bar = np.array([np.sum(N_r*calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*(t))/N_A, Es, kappa, lambda_A, N_c, dE)[3]*dE) for t in time]) 
         m_bar_approx = ((k_on*M_r)/(N_A*lambda_A))*(np.exp(lambda_A*time))
-
-        ax_m_bar.plot(time, m_bar, linewidth = 4, linestyle = '-', color = colors_kappa[i_kappa])
-        ax_m_bar.plot(time, m_bar_approx, linewidth = 3, linestyle = '--', color = 'black')
-        ax_m_bar.hlines(1, T0, Tf, color = 'grey', linestyle = ':')
-
         t_act = time[m_bar<1][-1]
 
+        ax_m_bar.plot(time, m_bar, linewidth = 5, linestyle = '-', color = colors_kappa[i_kappa])
+        ax_m_bar.plot(time, m_bar_approx, linewidth = 1, linestyle = '--', color = 'black')
+        ax_m_bar.hlines(1, T0, Tf, color = 'grey', linestyle = ':')
+
+        #---------------------------- B cell linages ----------------------
+        #clone_sizes = get_clones_sizes_C(int(m_data[-1]), time, activation_times, lambda_B, C, dT)
+        activation_times = np.array([t_act, t_act + 0.65, t_act + 1.3])
+        energies = np.array([E_r, E_r, E_r])
+        clone_sizes = get_clones_sizes_C(len(activation_times), time, activation_times, lambda_B, C, dT)
+        lim_size = 1
+        clone_sizes_C, activation_times_C, energies_C, filter_C, n_C = apply_filter_C(clone_sizes, activation_times, energies, lim_size)
+
+        sort_inds = clone_sizes_C[:, -1].argsort()
+        clone_sizes_C_sorted = clone_sizes_C[sort_inds, :][-int(40*(4-3)):, :]
+        activation_times_C_sorted = activation_times_C[sort_inds][-int(40*(4-3)):]
+        energies_C_sorted = energies_C[sort_inds][-int(40*(4-3)):]
+
+        beta_kappa, E_kappa, Kd_kappa = get_kappa_properties(betas, Q0, Es, dE, kappa)
+        delta_t_n = (E_kappa-E_pr)*kappa/lambda_A
+        t_n = t_prime + delta_t_n
+        time1 = np.linspace(0, t_n, 100)
+        time2 = np.linspace(t_n, Tf, 100)
+
+        
+        clone_sizes = get_clones_sizes_C(2, time, np.array([t_act, t_act + 1.3]), lambda_B, C, dT)
+
         print('t_act_theory: %.2f'%t_act)
+
+        ax_N_b.plot(time, clone_sizes_C_sorted[-1, :], linewidth = 5, color = colors_R[i_kappa][2])
+        for k in range(2, len(energies_C_sorted)+1, int(len(energies_C_sorted)/10)+1):
+            ax_N_b.plot(time, clone_sizes_C_sorted[-k, :], linewidth = 3, color = colors_R[i_kappa][2], linestyle= 'dashed')
+        ax_N_b.vlines([t_act], 0, C, linestyle = '--', linewidth = 1, color = 'grey')
 
         u_on, p_a, R, QR = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*(t_act+1.3))/N_A, Es, kappa, lambda_A, N_c, dE)
         m_f_expected = np.sum(N_r*QR*dE)
@@ -206,9 +211,9 @@ for N_r in N_rs:
         fig_N_b.savefig('../../Figures/_Summary/time/Bcell_clones-%.1f_Nr-%.0e_'%(kappa, N_r)+energy_model+'.pdf')
         plt.close(fig_N_b)
 
-        my_plot_layout(ax=ax_m_bar, yscale = 'log', ticks_labelsize = 30)
-        fig_m_bar.savefig('../../Figures/_Summary/time/m_bar_kappa-%.1f_Nr-%.0e_'%(kappa, N_r)+energy_model+'.pdf')
-        plt.close(fig_m_bar)
+    my_plot_layout(ax=ax_m_bar, yscale = 'log', ticks_labelsize = 30)
+    fig_m_bar.savefig('../../Figures/_Summary/time/m_bar_Nr-%.0e_'%(N_r)+energy_model+'.pdf')
+    plt.close(fig_m_bar)
     
     my_plot_layout(ax=ax_QR_all, yscale = 'log', xscale = 'linear', ticks_labelsize = 38)
     ax_QR_all.set_xticks([4, 6, 8])
@@ -229,7 +234,7 @@ my_plot_layout(ax=ax_antigen, yscale = 'log', xscale = 'linear', ticks_labelsize
 ax_antigen.set_xlim(right = Tf, left = T0)
 ax_antigen.set_xticks([])
 #ax_antigen.set_xlim(right = 1e-2, left = 1e-11) #use 1e-3 for other plots
-#ax_antigen.set_ylim(bottom = 1e-9)
+ax_antigen.set_ylim(top = 1e13)
 #ax_antigen.legend(title = r'$\kappa$', title_fontsize = 34, fontsize = 32)
 fig_antigen.savefig('../../Figures/_Summary/time/antigen.pdf')
 plt.close(fig_antigen)

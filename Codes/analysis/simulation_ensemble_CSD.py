@@ -10,10 +10,10 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 N_ens = 20
 N_r = 2e8
 T0 = 3
-Tf = 8
+Tf = 10
 Tf_sim = 7
 #Tf = 10
-dT = 0.01
+dT = 0.05
 lambda_A = 6
 k_pr = 1
 #k_pr = 180 # hour^-1
@@ -21,12 +21,12 @@ k_pr = k_pr*24 #days^-1
 
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
-kappas = [3, 2]
+kappas = [1, 2, 3]
 
 transparency_n = [1]
 
 colors_kappa = ['lightskyblue', 'tab:cyan','tab:green', 'tab:red']
-colors_kappa = ['tab:cyan','tab:green', 'tab:red']
+colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
 colors_R = [['deepskyblue', 'lightskyblue', 'lightskyblue'], ['tab:purple', 'tab:cyan', 'tab:cyan'], ['tab:blue', 'tab:green', 'tab:green'], ['tab:red', 'tab:red', 'tab:red']]
 colors_R = [['tab:purple', 'tab:cyan', 'tab:cyan'], ['tab:blue', 'tab:green', 'tab:green'], ['tab:red', 'tab:red', 'tab:red']]
 
@@ -111,17 +111,20 @@ for i_kappa, kappa in enumerate(kappas):
     # activation_times_C_sorted = activation_times_C[sort_inds][:]
     # energies_C_sorted = energies_C[sort_inds][:]
 
-    clone_size_distribution = np.histogram(clone_sizes_final, bins = np.logspace(np.log10(np.min(clone_sizes_final)),np.log10(np.max(clone_sizes_final)),12), density = True)
+    bins = np.logspace(np.log10(np.min(clone_sizes_final)),0,12)
+    #bins = np.linspace((np.min(clone_sizes_final)),(np.max(clone_sizes_final)),50)
+    #bins = 80
+    clone_size_distribution = np.histogram(clone_sizes_final, bins = bins, density = True)
     clone_size = clone_size_distribution[1][:-1]#[np.where(clone_size_distribution[0]!=0)]#((clone_size_distribution[1][:-1][np.where(clone_size_distribution[0]!=0)]+clone_size_distribution[1][1:][np.where(clone_size_distribution[0]!=0)]))/2
     clone_size_counts = clone_size_distribution[0]#[np.where(clone_size_distribution[0]!=0)]
     Nb_array = np.logspace(np.log10(np.min(clone_sizes_final)), np.log10(np.max(clone_sizes_final)), 50)
     fit = Nb_array**(-beta_act*lambda_A/(lambda_B*kappa))
-    fit = fit/fit[1]
-    ax_CSD.plot(clone_size[:], 1-np.cumsum(clone_size_counts[:]*(clone_size_distribution[1][1:]-clone_size_distribution[1][:-1])), color = colors_kappa[i_kappa], linewidth = 0, marker = 's')
+    fit = fit/fit[1]*.6
+    ax_CSD.plot(clone_size[:], 1-np.cumsum(clone_size_counts[:]*(clone_size_distribution[1][1:]-clone_size_distribution[1][:-1])), color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = .8)
     ax_CSD.plot(Nb_array, fit, color = colors_kappa[i_kappa], linewidth = 5, label = r'$%.d$'%(kappa))
  
 my_plot_layout(ax = ax_CSD, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-ax_CSD.legend(fontsize = 32, title_fontsize = 34, title = r'$\kappa$')
+ax_CSD.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
 #ax_CSD.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
 ax_CSD.set_ylim(bottom = 1e-4)
 #ax_CSD.set_yticks([1, 0.1, 0.01, 0.001])
