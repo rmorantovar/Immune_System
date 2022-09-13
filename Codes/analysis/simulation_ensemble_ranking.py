@@ -7,11 +7,11 @@ warnings.filterwarnings("ignore")
 Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/'
 
 #--------------- PARAMETERS ---------------------
-N_ens = 10
-N_r = 1e8
+N_ens = 20
+N_r = 2e8
 T0 = 3
 Tf = 8
-Tf_sim = 7
+Tf_sim = 6.5
 #Tf = 10
 dT = 0.01
 lambda_A = 6
@@ -32,7 +32,7 @@ colors_R = [['tab:purple', 'tab:cyan', 'tab:cyan'], ['tab:blue', 'tab:green', 't
 
 lambda_B = lambda_A/2
 k_on = 1e6*24*3600; #(M*days)^-1
-N_c = 1e4
+N_c = 1e5
 #N_c = 1e5
 E_ms = -27.63
 C = 3e4
@@ -88,7 +88,7 @@ for i_kappa, kappa in enumerate((kappas)):
     beta_act = np.min([beta_r, beta_kappa])
 
     #-----------------Loading data----------------------------
-    parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, kappa, linear, N_ens)+energy_model
+    parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
     #data = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/energies_ensemble.txt', sep = '\t', header=None)
     data = get_data_ensemble(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
 
