@@ -7,7 +7,7 @@ warnings.filterwarnings("ignore")
 Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/'
 
 #--------------- PARAMETERS ---------------------
-N_ens = 20
+N_ens = 50
 N_r = 2e8
 T0 = 3
 Tf = 10
@@ -21,7 +21,7 @@ k_pr = k_pr*24 #days^-1
 
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
-kappas = [1, 2, 3]
+kappas = [2, 3]
 
 transparency_n = [1]
 
@@ -93,7 +93,7 @@ for i_kappa, kappa in enumerate(kappas):
 
     data_active = data.loc[data[1]==1]
     t_act_data = np.min(data_active[3])
-    data_active = data_active.loc[data_active[3]<(t_act_data+1.3)]
+    data_active = data_active.loc[data_active[3]<(t_act_data+2)]
     activation_times = np.array(data_active[3])
     energies  = np.array(data_active[0])
 
@@ -101,32 +101,33 @@ for i_kappa, kappa in enumerate(kappas):
     clone_sizes = get_clones_sizes_C(len(activation_times), time, activation_times, lambda_B, C, dT)
 
     #--------------------------t_C filter-------------------------
-    lim_size = 1
+    lim_size = 2
     clone_sizes_C, activation_times_C, energies_C, filter_C, n_C = apply_filter_C(clone_sizes, activation_times, energies, lim_size)
     
-    clone_sizes_final = clone_sizes_C[:,-1]/np.max(clone_sizes_C[:,-1])
+    clone_sizes_final = clone_sizes_C[:,-1]#/np.max(clone_sizes_C[:,-1])
 
     # sort_inds = clone_sizes_C[:, -1].argsort()
     # clone_sizes_C_sorted = clone_sizes_C[sort_inds, :][:, :]
     # activation_times_C_sorted = activation_times_C[sort_inds][:]
     # energies_C_sorted = energies_C[sort_inds][:]
 
-    bins = np.logspace(np.log10(np.min(clone_sizes_final)),0,12)
+    bins = np.logspace(np.log10(np.min(clone_sizes_final)),np.log10(np.max(clone_sizes_final)),20)
     #bins = np.linspace((np.min(clone_sizes_final)),(np.max(clone_sizes_final)),50)
     #bins = 80
     clone_size_distribution = np.histogram(clone_sizes_final, bins = bins, density = True)
     clone_size = clone_size_distribution[1][:-1]#[np.where(clone_size_distribution[0]!=0)]#((clone_size_distribution[1][:-1][np.where(clone_size_distribution[0]!=0)]+clone_size_distribution[1][1:][np.where(clone_size_distribution[0]!=0)]))/2
     clone_size_counts = clone_size_distribution[0]#[np.where(clone_size_distribution[0]!=0)]
-    Nb_array = np.logspace(np.log10(np.min(clone_sizes_final)), np.log10(np.max(clone_sizes_final)), 50)
+    Nb_array = np.logspace(np.log10(np.min(clone_sizes_final)), np.log10(np.max(clone_sizes_final))-0.6, 50)
     fit = Nb_array**(-beta_act*lambda_A/(lambda_B*kappa))
     fit = fit/fit[1]*.6
-    ax_CSD.plot(clone_size[:], 1-np.cumsum(clone_size_counts[:]*(clone_size_distribution[1][1:]-clone_size_distribution[1][:-1])), color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = .8)
-    ax_CSD.plot(Nb_array, fit, color = colors_kappa[i_kappa], linewidth = 5, label = r'$%.d$'%(kappa))
+    ax_CSD.plot(clone_size[:], 1-np.cumsum(clone_size_counts[:]*(clone_size_distribution[1][1:]-clone_size_distribution[1][:-1])), color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = 1, ms = 10)
+    #ax_CSD.plot(clone_size[:], (clone_size_counts[:]*(clone_size_distribution[1][1:]-clone_size_distribution[1][:-1])), color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = .8, ms = 10)
+    ax_CSD.plot(Nb_array, fit, color = colors_kappa[i_kappa], linewidth = 5, label = r'$%.d$'%(kappa), alpha = .8)
  
 my_plot_layout(ax = ax_CSD, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_CSD.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
 #ax_CSD.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
-ax_CSD.set_ylim(bottom = 1e-4)
+ax_CSD.set_ylim(bottom = 1e-4, top = 1.1)
 #ax_CSD.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_CSD.set_yticklabels([1, 0.1, 0.01])
 fig_CSD.savefig('../../Figures/1_Dynamics/Ensemble/CSD_'+energy_model+'.pdf')

@@ -7,7 +7,7 @@ warnings.filterwarnings("ignore")
 Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/'
 
 #--------------- PARAMETERS ---------------------
-N_ens = 20
+N_ens = 50
 N_r = 2e8
 T0 = 3
 Tf = 8
@@ -21,7 +21,7 @@ k_pr = k_pr*24 #days^-1
 
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
-kappas = [1, 2, 3]
+kappas = [2, 3]
 
 transparency_n = [1]
 
@@ -93,13 +93,14 @@ for i_kappa, kappa in enumerate((kappas)):
     data = get_data_ensemble(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
 
     #activation_times_total = np.array([])
-    final_Nb = np.zeros(40)
+    n_first_clones = 50
+    final_Nb = np.zeros(n_first_clones)
     max_rank = 0
     for i_ens in tqdm(np.arange(N_ens)):
         data_i = data.loc[data[4]==i_ens]
         data_active = data_i.loc[data_i[1]==1]
         t_act_data = np.min(data_active[3])
-        data_active = data_active.loc[data_active[3]<(t_act_data+1.3)]
+        data_active = data_active.loc[data_active[3]<(t_act_data+1.5)]
         activation_times = np.array(data_active[3])
         energies  = np.array(data_active[0])
 
@@ -107,13 +108,13 @@ for i_kappa, kappa in enumerate((kappas)):
         clone_sizes = get_clones_sizes_C(len(activation_times), time, activation_times, lambda_B, C, dT)
 
         #--------------------------t_C filter-------------------------
-        lim_size = 1
+        lim_size = 2
         clone_sizes_C, activation_times_C, energies_C, filter_C, n_C = apply_filter_C(clone_sizes, activation_times, energies, lim_size)
         
         sort_inds = clone_sizes_C[:, -1].argsort()
-        clone_sizes_C_sorted = clone_sizes_C[sort_inds, :][-int(40*(4-3)):, :]
-        activation_times_C_sorted = activation_times_C[sort_inds][-int(40*(4-3)):]
-        energies_C_sorted = energies_C[sort_inds][-int(40*(4-3)):]
+        clone_sizes_C_sorted = clone_sizes_C[sort_inds, :][-int(n_first_clones*(4-3)):, :]
+        activation_times_C_sorted = activation_times_C[sort_inds][-int(n_first_clones*(4-3)):]
+        energies_C_sorted = energies_C[sort_inds][-int(n_first_clones*(4-3)):]
 
         biggest_clone_i = clone_sizes_C_sorted[-1, -1]
         #ax_N_K.scatter(np.exp(energies_C_sorted[-1]), biggest_clone_i, color = colors_kappa[i_kappa], alpha = .25, edgecolor='black', linewidth=1, facecolor = colors_kappa[i_kappa])
@@ -131,15 +132,15 @@ for i_kappa, kappa in enumerate((kappas)):
     #a, b = np.polyfit(energies_total, np.log(final_Nb), 1)
     #print('Slope from simulation=%.2f'%(a))
     #print('Expected slope=%.2f'%(-kappa*lambda_B/lambda_A))
-    ranking = np.arange(1, 40+1)
+    ranking = np.arange(1, n_first_clones+1)
     fit = ranking**(-kappa*lambda_B/(lambda_A*beta_act))
     ax_N_K.plot(ranking, final_Nb, color = colors_kappa[i_kappa], linewidth = 0, marker = '*', alpha = 1)
-    ax_N_K.plot(ranking, fit, color = colors_kappa[i_kappa], linewidth = 5, label = r'$%.d$'%(kappa))
+    ax_N_K.plot(ranking, fit, color = colors_kappa[i_kappa], linewidth = 5, label = r'$%.d$'%(kappa), alpha = .8)
 
 my_plot_layout(ax = ax_N_K, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_N_K.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
 #ax_N_K.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
-#ax_N_K.set_ylim(bottom = 1e-4)
+ax_N_K.set_ylim(bottom = 2e-2)
 #ax_N_K.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_N_K.set_yticklabels([1, 0.1, 0.01])
 fig_N_K.savefig('../../Figures/1_Dynamics/Ensemble/Ranking_'+energy_model+'.pdf')
