@@ -95,10 +95,10 @@ for i_kappa, kappa in enumerate((kappas)):
     
     data_active = data.loc[data[1]==1]
     t_act_data = np.min(data_active[3])
-    data_active = data_active.loc[data_active[3]<(t_act_data+2.0)]
+    data_active = data_active.loc[data_active[3]<(t_act_data+1.6)]
     activation_times = np.array(data_active[3])
     energies  = np.array(data_active[0])
-    energies_total = np.linspace(np.min(energies), -16, 14)
+    energies_total = np.linspace(np.min(energies), -16, 12)
     final_Nb = np.zeros_like(energies_total)
 
     #---------------------------- B cell linages ----------------------

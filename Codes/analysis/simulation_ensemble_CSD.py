@@ -93,7 +93,7 @@ for i_kappa, kappa in enumerate(kappas):
 
     data_active = data.loc[data[1]==1]
     t_act_data = np.min(data_active[3])
-    data_active = data_active.loc[data_active[3]<(t_act_data+2)]
+    data_active = data_active.loc[data_active[3]<(t_act_data+1.7)]
     activation_times = np.array(data_active[3])
     energies  = np.array(data_active[0])
 
