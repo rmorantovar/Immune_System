@@ -13,7 +13,7 @@ T0 = 3
 Tf = 8
 Tf_sim = 6.5
 #Tf = 10
-dT = 0.05
+dT = 0.1
 lambda_A = 6
 k_pr = 1
 #k_pr = 180 # hour^-1
@@ -95,13 +95,13 @@ for i_kappa, kappa in enumerate((kappas)):
 
     #activation_times_total = np.array([])
     n_first_clones = 50
-    final_Nb = np.zeros(n_first_clones)
+    final_E = np.zeros(n_first_clones)
     max_rank = 0
     for i_ens in tqdm(np.arange(N_ens)):
         data_i = data.loc[data[4]==i_ens]
         data_active = data_i.loc[data_i[1]==1]
         t_act_data = np.min(data_active[3])
-        data_active = data_active.loc[data_active[3]<(t_act_data+1.4)]
+        data_active = data_active.loc[data_active[3]<(t_act_data+1.0)]
         activation_times = np.array(data_active[3])
         energies  = np.array(data_active[0])
 
@@ -112,34 +112,34 @@ for i_kappa, kappa in enumerate((kappas)):
         lim_size = 2
         clone_sizes_C, activation_times_C, energies_C, filter_C, n_C = apply_filter_C(clone_sizes, activation_times, energies, lim_size)
         
-        sort_inds = clone_sizes_C[:, -1].argsort()
-        clone_sizes_C_sorted = clone_sizes_C[sort_inds, :][-int(n_first_clones*(4-3)):, :]
-        activation_times_C_sorted = activation_times_C[sort_inds][-int(n_first_clones*(4-3)):]
-        energies_C_sorted = energies_C[sort_inds][-int(n_first_clones*(4-3)):]
+        sort_inds = np.flip(energies_C.argsort())
+        clone_sizes_C_sorted = clone_sizes_C[sort_inds, :][:int(n_first_clones*(4-3)), :]
+        activation_times_C_sorted = activation_times_C[sort_inds][:int(n_first_clones*(4-3))]
+        energies_C_sorted = energies_C[sort_inds][:int(n_first_clones*(4-3))]
 
-        biggest_clone_i = clone_sizes_C_sorted[-1, -1]
+        best_clone_i = clone_sizes_C_sorted[-1, -1]
         #ax_ranking.scatter(np.exp(energies_C_sorted[-1]), biggest_clone_i, color = colors_kappa[i_kappa], alpha = .25, edgecolor='black', linewidth=1, facecolor = colors_kappa[i_kappa])
         #activation_times_total = np.append(activation_times_total, activation_times_C_sorted)
-        sorted_clones = np.flip(clone_sizes_C_sorted[:, -1])/clone_sizes_C_sorted[-1, -1]
+        sorted_clones = np.exp(energies_C_sorted)/np.exp(energies_C_sorted[0])
         max_rank_i = len(sorted_clones)
         for i in range(max_rank_i):
-            final_Nb[i]+= sorted_clones[i]
+            final_E[i]+= sorted_clones[i]
         if(max_rank_i>max_rank):
             max_rank = max_rank_i
         ax_ranking.step(np.arange(1, max_rank_i+1), sorted_clones, color = colors_kappa[i_kappa], linewidth = 1, alpha = .2)
         ax_ranking_i.step(np.arange(1, max_rank_i+1), sorted_clones, color = colors_kappa[i_kappa], linewidth = 1, alpha = .2)
 
-    final_Nb/=N_ens
-    #final_Nb = np.exp(lambda_B*(Tf-activation_times_total))
-    #a, b = np.polyfit(energies_total, np.log(final_Nb), 1)
+    final_E/=N_ens
+    #final_E = np.exp(lambda_B*(Tf-activation_times_total))
+    #a, b = np.polyfit(energies_total, np.log(final_E), 1)
     #print('Slope from simulation=%.2f'%(a))
     #print('Expected slope=%.2f'%(-kappa*lambda_B/lambda_A))
     ranking = np.arange(1, n_first_clones+1)
-    fit = ranking**(-kappa*lambda_B/(lambda_A*beta_act))
-    ax_ranking.plot(ranking, final_Nb, color = colors_kappa[i_kappa], linewidth = 0, marker = '*', alpha = 1)
+    fit = ranking**(-1/(beta_act)-1)
+    ax_ranking.plot(ranking, final_E, color = colors_kappa[i_kappa], linewidth = 0, marker = '*', alpha = 1)
     ax_ranking.plot(ranking, fit, color = colors_kappa[i_kappa], linewidth = 5, label = r'$%.d$'%(kappa), alpha = .8)
 
-    ax_ranking_i.plot(ranking, final_Nb, color = colors_kappa[i_kappa], linewidth = 0, marker = '*', alpha = 1)
+    ax_ranking_i.plot(ranking, final_E, color = colors_kappa[i_kappa], linewidth = 0, marker = '*', alpha = 1)
     ax_ranking_i.plot(ranking, fit, color = colors_kappa[i_kappa], linewidth = 5, label = r'$%.d$'%(kappa), alpha = .8)
 
     my_plot_layout(ax = ax_ranking_i, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
@@ -148,7 +148,7 @@ for i_kappa, kappa in enumerate((kappas)):
     ax_ranking_i.set_ylim(bottom = 2e-2)
     #ax_ranking_i.set_yticks([1, 0.1, 0.01, 0.001])
     #ax_ranking_i.set_yticklabels([1, 0.1, 0.01])
-    fig_ranking_i.savefig('../../Figures/1_Dynamics/Ensemble/Ranking_p-%.2f'%(kappa)+'_'+energy_model+'.pdf')
+    fig_ranking_i.savefig('../../Figures/1_Dynamics/Ensemble/Ranking_2_p-%.2f'%(kappa)+'_'+energy_model+'.pdf')
 
 my_plot_layout(ax = ax_ranking, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_ranking.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
@@ -156,7 +156,7 @@ ax_ranking.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
 ax_ranking.set_ylim(bottom = 2e-2)
 #ax_ranking.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_ranking.set_yticklabels([1, 0.1, 0.01])
-fig_ranking.savefig('../../Figures/1_Dynamics/Ensemble/Ranking_'+energy_model+'.pdf')
+fig_ranking.savefig('../../Figures/1_Dynamics/Ensemble/Ranking_2_'+energy_model+'.pdf')
 print('----END-----')
 
 

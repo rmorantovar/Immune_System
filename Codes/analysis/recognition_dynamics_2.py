@@ -9,7 +9,7 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 N_ens = 1
 N_rs = [2e8]
 T0 = 3
-Tf = 7.2
+Tf = 8
 Tf_sim = 6.5
 #Tf = 10
 dT = 0.01
@@ -133,8 +133,9 @@ for N_r in N_rs:
 
         #---------------------------- B cell linages ----------------------
         #clone_sizes = get_clones_sizes_C(int(m_data[-1]), time, activation_times, lambda_B, C, dT)
-        activation_times = np.array([t_act, t_act + 0.65, t_act + 1.3])
-        energies = np.array([E_r, E_r, E_r])
+        energies = np.array([E_r, E_r+np.log(10) , E_r+np.log(100)])
+        activation_times = t_act + (energies - E_r)*kappa/lambda_A
+        print('Activation times:', activation_times)
         clone_sizes = get_clones_sizes_C(len(activation_times), time, activation_times, lambda_B, C, dT)
         lim_size = 1
         clone_sizes_C, activation_times_C, energies_C, filter_C, n_C = apply_filter_C(clone_sizes, activation_times, energies, lim_size)
@@ -149,9 +150,6 @@ for N_r in N_rs:
         t_n = t_prime + delta_t_n
         time1 = np.linspace(0, t_n, 100)
         time2 = np.linspace(t_n, Tf, 100)
-
-        
-        clone_sizes = get_clones_sizes_C(2, time, np.array([t_act, t_act + 1.3]), lambda_B, C, dT)
 
         print('t_act_theory: %.2f'%t_act)
 
@@ -234,7 +232,7 @@ my_plot_layout(ax=ax_antigen, yscale = 'log', xscale = 'linear', ticks_labelsize
 ax_antigen.set_xlim(right = Tf, left = T0)
 ax_antigen.set_xticks([])
 #ax_antigen.set_xlim(right = 1e-2, left = 1e-11) #use 1e-3 for other plots
-ax_antigen.set_ylim(top = 1e13)
+ax_antigen.set_ylim(top = 1e15)
 #ax_antigen.legend(title = r'$\kappa$', title_fontsize = 34, fontsize = 32)
 fig_antigen.savefig('../../Figures/_Summary/time/antigen.pdf')
 plt.close(fig_antigen)

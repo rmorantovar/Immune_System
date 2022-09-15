@@ -92,7 +92,7 @@ for N_r in N_rs:
     #ax_Q0.plot(Kds, Kds**(beta_r)/(Ks[P_min_e(N_r, avg_E, var_E, Es[:-1], dE)==np.max(P_min_e(N_r, avg_E, var_E, Es[:-1], dE))]**(beta_r))*np.max(P_min_e(N_r, avg_E, var_E, Es[:-1], dE)), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 4 )
 
     ax_QR_all.plot(Kds, Q0*N_r, alpha = 1, color = 'grey', linewidth = 5, linestyle = '--')
-    ax_QR_all.vlines(Kd_r, 1e-9, Q0[Kds==Kd_r]*N_r, alpha = 1, color = 'grey', linewidth = 1, linestyle = '--')
+    ax_QR_all.vlines(Kd_r, Q0[Kds==Kd_r]*N_r, N_r, alpha = 1, color = 'grey', linewidth = 1, linestyle = '--')
     for i_kappa, kappa in enumerate(kappas):
         print('--------')
         print('kappa = %.2f...'%kappa)
@@ -142,8 +142,9 @@ for N_r in N_rs:
                 ax_R.plot(Kds, R, alpha = transparency_n[0], color = colors_R[i_kappa][i_t], linewidth = 5, linestyle = '-')
                 ax_QR.plot(Kds, QR*N_r, alpha = transparency_n[0], color = colors_R[i_kappa][i_t], linewidth = 5, linestyle = '-')
 
-                ax_QR_all.plot(Kds, QR*N_r, alpha = transparency_n[0], color = colors_R[i_kappa][i_t], linewidth = 5, linestyle = '-', label = r'$%d$'%(kappa))
-                ax_QR_all.plot(Kds[QR==np.max(QR)], (Q0*N_r)[QR==np.max(QR)], alpha = transparency_n[0], color = colors_R[i_kappa][i_t], marker = 'o', ms = 10)
+                ax_QR_all.plot(Kds, QR*N_r, alpha = transparency_n[0], color = colors_kappa[i_kappa], linewidth = 5, linestyle = '-', label = r'$%d$'%(kappa))
+                ax_QR_all.plot(Kds[QR==np.max(QR)], (Q0*N_r)[QR==np.max(QR)], alpha = transparency_n[0], color = colors_kappa[i_kappa], marker = 'o', ms = 12)
+                ax_QR_all.vlines(Kds[Kds==Kd_kappa], 1e-9, (QR*N_r)[Kds==Kd_kappa], alpha = transparency_n[0], color = colors_kappa[i_kappa], linewidth = 1, linestyle = '--')
 
             else:
                 #--------------------------R(E, t) and QR(E, t)---------------------------
@@ -184,7 +185,7 @@ for N_r in N_rs:
     #ax_QR_all.set_xticks([])
     ax_QR_all.set_xlim(right = 1e-0, left = 1e-11) #use 1e-3 for other plots
     ax_QR_all.set_ylim(bottom = 1e-9, top = 1.5*N_r)
-    ax_QR_all.legend(title = r'$p$', title_fontsize = 34, fontsize = 32)
+    ax_QR_all.legend(title = r'$p$', title_fontsize = 32, fontsize = 30)
     fig_QR_all.savefig('../../Figures/_Summary/affinity/QR_all_Nr-%.0e_'%(N_r)+model+'.pdf')
     plt.close(fig_QR_all)
 
