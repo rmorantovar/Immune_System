@@ -120,7 +120,7 @@ for i_kappa, kappa in enumerate((kappas)):
         biggest_clone_i = clone_sizes_C_sorted[-1, -1]
         #ax_ranking.scatter(np.exp(energies_C_sorted[-1]), biggest_clone_i, color = colors_kappa[i_kappa], alpha = .25, edgecolor='black', linewidth=1, facecolor = colors_kappa[i_kappa])
         #activation_times_total = np.append(activation_times_total, activation_times_C_sorted)
-        sorted_clones = np.flip(clone_sizes_C_sorted[:, -1])/clone_sizes_C_sorted[-1, -1]
+        sorted_clones = np.flip(clone_sizes_C_sorted[:, -1])/biggest_clone_i
         max_rank_i = len(sorted_clones)
         for i in range(max_rank_i):
             final_Nb[i]+= sorted_clones[i]
