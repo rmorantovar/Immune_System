@@ -7,7 +7,7 @@ warnings.filterwarnings("ignore")
 Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/'
 
 #--------------- PARAMETERS ---------------------
-N_ens = 50
+N_ens = 100
 N_r = 2e8
 T0 = 3
 Tf = 8
@@ -22,13 +22,13 @@ k_pr = k_pr*24 #days^-1
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
 kappas = [1, 2, 3]
+kappas = [3]
 
 transparency_n = [1]
 
 colors_kappa = ['lightskyblue', 'tab:cyan','tab:green', 'tab:red']
 colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
-colors_R = [['deepskyblue', 'lightskyblue', 'lightskyblue'], ['tab:purple', 'tab:cyan', 'tab:cyan'], ['tab:blue', 'tab:green', 'tab:green'], ['tab:red', 'tab:red', 'tab:red']]
-colors_R = [['tab:purple', 'tab:cyan', 'tab:cyan'], ['tab:blue', 'tab:green', 'tab:green'], ['tab:red', 'tab:red', 'tab:red']]
+colors_kappa = np.flip(['tab:blue'])
 
 lambda_B = lambda_A/2
 k_on = 1e6*24*3600; #(M*days)^-1
@@ -96,6 +96,7 @@ for i_kappa, kappa in enumerate((kappas)):
     #activation_times_total = np.array([])
     n_first_clones = 50
     final_Nb = np.zeros(n_first_clones)
+    counts_final_Nb = np.zeros(n_first_clones)
     max_rank = 0
     for i_ens in tqdm(np.arange(N_ens)):
         data_i = data.loc[data[4]==i_ens]
@@ -123,23 +124,23 @@ for i_kappa, kappa in enumerate((kappas)):
         sorted_clones = np.flip(clone_sizes_C_sorted[:, -1])/biggest_clone_i
         max_rank_i = len(sorted_clones)
         for i in range(max_rank_i):
-            final_Nb[i]+= sorted_clones[i]
+            #final_Nb[i]+= np.log(sorted_clones[i])
+            final_Nb[i]+= (sorted_clones[i])
+            counts_final_Nb[i]+=1
         if(max_rank_i>max_rank):
             max_rank = max_rank_i
         ax_ranking.step(np.arange(1, max_rank_i+1), sorted_clones, color = colors_kappa[i_kappa], linewidth = 1, alpha = .2)
         ax_ranking_i.step(np.arange(1, max_rank_i+1), sorted_clones, color = colors_kappa[i_kappa], linewidth = 1, alpha = .2)
 
-    final_Nb/=N_ens
-    #final_Nb = np.exp(lambda_B*(Tf-activation_times_total))
-    #a, b = np.polyfit(energies_total, np.log(final_Nb), 1)
-    #print('Slope from simulation=%.2f'%(a))
-    #print('Expected slope=%.2f'%(-kappa*lambda_B/lambda_A))
+    #final_Nb = np.exp(final_Nb/N_ens)
+    final_Nb = final_Nb/counts_final_Nb
+    
     ranking = np.arange(1, n_first_clones+1)
     fit = ranking**(-kappa*lambda_B/(lambda_A*beta_act))
-    ax_ranking.plot(ranking, final_Nb, color = colors_kappa[i_kappa], linewidth = 0, marker = '*', alpha = 1)
+    ax_ranking.plot(ranking, final_Nb, color = colors_kappa[i_kappa], linewidth = 0, marker = '*', alpha = 1, ms = 12)
     ax_ranking.plot(ranking, fit, color = colors_kappa[i_kappa], linewidth = 5, label = r'$%.d$'%(kappa), alpha = .8)
 
-    ax_ranking_i.plot(ranking, final_Nb, color = colors_kappa[i_kappa], linewidth = 0, marker = '*', alpha = 1)
+    ax_ranking_i.plot(ranking, final_Nb, color = colors_kappa[i_kappa], linewidth = 0, marker = '*', alpha = 1, ms = 12)
     ax_ranking_i.plot(ranking, fit, color = colors_kappa[i_kappa], linewidth = 5, label = r'$%.d$'%(kappa), alpha = .8)
 
     my_plot_layout(ax = ax_ranking_i, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )

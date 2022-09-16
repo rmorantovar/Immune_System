@@ -7,7 +7,7 @@ warnings.filterwarnings("ignore")
 Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/'
 
 #--------------- PARAMETERS ---------------------
-N_ens = 50
+N_ens = 100
 N_r = 2e8
 T0 = 3
 Tf = 10
@@ -22,13 +22,14 @@ k_pr = k_pr*24 #days^-1
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
 kappas = [1, 2, 3]
+kappas = [3]
 
 transparency_n = [1]
 
 colors_kappa = ['lightskyblue', 'tab:cyan','tab:green', 'tab:red']
 colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
-colors_R = [['deepskyblue', 'lightskyblue', 'lightskyblue'], ['tab:purple', 'tab:cyan', 'tab:cyan'], ['tab:blue', 'tab:green', 'tab:green'], ['tab:red', 'tab:red', 'tab:red']]
-colors_R = [['tab:purple', 'tab:cyan', 'tab:cyan'], ['tab:blue', 'tab:green', 'tab:green'], ['tab:red', 'tab:red', 'tab:red']]
+colors_kappa = np.flip(['tab:blue'])
+
 
 lambda_B = lambda_A/2
 k_on = 1e6*24*3600; #(M*days)^-1
@@ -112,22 +113,22 @@ for i_kappa, kappa in enumerate(kappas):
     # activation_times_C_sorted = activation_times_C[sort_inds][:]
     # energies_C_sorted = energies_C[sort_inds][:]
 
-    bins = np.logspace(np.log10(np.min(affinities_final)),np.log10(np.max(affinities_final)),300)
+    bins = np.logspace(np.log10(np.min(affinities_final)),np.log10(np.max(affinities_final)), 20)
     #bins = np.linspace((np.min(affinities_final)),(np.max(affinities_final)),50)
-    #bins = 16
-    affinity_distribution = np.histogram(affinities_final, bins = bins, density = True)
+    bins = 200 
+    affinity_distribution = np.histogram(affinities_final, bins = bins, density = False)
     affinity = affinity_distribution[1][:-1]#[np.where(affinity_distribution[0]!=0)]#((affinity_distribution[1][:-1][np.where(affinity_distribution[0]!=0)]+affinity_distribution[1][1:][np.where(affinity_distribution[0]!=0)]))/2
     affinity_counts = affinity_distribution[0]#[np.where(affinity_distribution[0]!=0)]
     Kd_array = np.logspace(np.log10(np.min(affinities_final)), np.log10(np.max(affinities_final))-0.2, 50)
-    fit = Kd_array**(1-beta_act)
-    fit = fit/fit[0]*affinity_counts[0]
+    fit = Kd_array**(beta_act)
+    fit = fit/fit[-1]#*affinity_counts[0]
 
-    #ax_CSD.plot(affinity[:], 1-np.cumsum(affinity_counts[:]*(affinity_distribution[1][1:]-affinity_distribution[1][:-1])), color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = 1, ms = 10)
-    ax_CSD.plot(affinity[:], (affinity_counts[:]), color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = .8, ms = 10)
+    ax_CSD.plot(affinity[:], np.cumsum(affinity_counts[:])/len(affinities_final), color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = 1, ms = 10)
+    #ax_CSD.plot(affinity[:], (affinity_counts[:]), color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = .8, ms = 10)
     ax_CSD.plot(Kd_array, fit, color = colors_kappa[i_kappa], linewidth = 5, label = r'$%.d$'%(kappa), alpha = .8)
 
-    #ax_CSD_i.plot(affinity[:], 1-np.cumsum(affinity_counts[:]*(affinity_distribution[1][1:]-affinity_distribution[1][:-1])), color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = 1, ms = 10)
-    ax_CSD_i.plot(affinity[:], (affinity_counts[:]), color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = .8, ms = 10)
+    ax_CSD_i.plot(affinity[:], np.cumsum(affinity_counts[:])/len(affinities_final), color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = 1, ms = 10)
+    #ax_CSD_i.plot(affinity[:], (affinity_counts[:]), color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = .8, ms = 10)
     ax_CSD_i.plot(Kd_array, fit, color = colors_kappa[i_kappa], linewidth = 5, label = r'$%.d$'%(kappa), alpha = .8)
 
     my_plot_layout(ax = ax_CSD_i, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )

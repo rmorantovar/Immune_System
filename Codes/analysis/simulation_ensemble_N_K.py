@@ -7,7 +7,7 @@ warnings.filterwarnings("ignore")
 Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/'
 
 #--------------- PARAMETERS ---------------------
-N_ens = 50
+N_ens = 100
 N_r = 2e8
 T0 = 3
 Tf = 10
@@ -22,13 +22,13 @@ k_pr = k_pr*24 #days^-1
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
 kappas = [1, 2, 3]
+kappas = [3]
 
 transparency_n = [1]
 
 colors_kappa = ['lightskyblue', 'tab:cyan','tab:green', 'tab:red']
 colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
-colors_R = [['deepskyblue', 'lightskyblue', 'lightskyblue'], ['tab:purple', 'tab:cyan', 'tab:cyan'], ['tab:blue', 'tab:green', 'tab:green'], ['tab:red', 'tab:red', 'tab:red']]
-colors_R = [['tab:purple', 'tab:cyan', 'tab:cyan'], ['tab:blue', 'tab:green', 'tab:green'], ['tab:red', 'tab:red', 'tab:red']]
+colors_kappa = np.flip(['tab:blue'])
 
 lambda_B = lambda_A/2
 k_on = 1e6*24*3600; #(M*days)^-1
@@ -99,7 +99,7 @@ for i_kappa, kappa in enumerate((kappas)):
     data_active = data_active.loc[data_active[3]<(t_act_data+1.6)]
     activation_times = np.array(data_active[3])
     energies  = np.array(data_active[0])
-    energies_total = np.linspace(np.min(energies), -16, 20)
+    energies_total = np.linspace(np.min(energies), -16, 12)
     final_Nb = np.zeros_like(energies_total)
 
     #---------------------------- B cell linages ----------------------
@@ -113,29 +113,33 @@ for i_kappa, kappa in enumerate((kappas)):
     data_sizes = []
     for k in range(len(energies_total)-1):
         sizes_Kd = final_sizes[(energies_C>=energies_total[k]) & (energies_C<energies_total[k+1])]
+        enegies_Kd = np.exp(energies_C[(energies_C>=energies_total[k]) & (energies_C<energies_total[k+1])])
         if(len(sizes_Kd)>0):
-            final_Nb[k] = np.mean(sizes_Kd)
-            parts = ax_N_K.violinplot(dataset=sizes_Kd, positions = [np.exp(energies_total[k])], showmeans=False, showmedians=False, showextrema=False, widths = 0.08*np.exp(energies_total[k+1]))
-            for pc in parts['bodies']:
-                pc.set_facecolor(colors_kappa[i_kappa])
-                pc.set_edgecolor('black')
-                pc.set_alpha(.8)
-            parts = ax_N_K_i.violinplot(dataset=sizes_Kd, positions = [np.exp(energies_total[k])], showmeans=False, showmedians=False, showextrema=False, widths = 0.08*np.exp(energies_total[k+1]))
-            for pc in parts['bodies']:
-                pc.set_facecolor(colors_kappa[i_kappa])
-                pc.set_edgecolor('black')
-                pc.set_alpha(.8)
+            final_Nb[k] = np.exp(np.mean(np.log(sizes_Kd)))
+            ax_N_K.scatter(enegies_Kd, sizes_Kd, facecolor = colors_kappa[i_kappa], alpha = .1, linewidth = 0)
+            ax_N_K_i.scatter(enegies_Kd, sizes_Kd, facecolor = colors_kappa[i_kappa], alpha = .1, linewidth = 0)
+            # parts = ax_N_K.violinplot(dataset=sizes_Kd, positions = [np.exp(energies_total[k])], showmeans=False, showmedians=False, showextrema=False, widths = 0.02*np.exp(energies_total[k+1]))
+            # for pc in parts['bodies']:
+            #     pc.set_facecolor(colors_kappa[i_kappa])
+            #     pc.set_edgecolor('black')
+            #     pc.set_alpha(.5)
+            # parts = ax_N_K_i.violinplot(dataset=sizes_Kd, positions = [np.exp(energies_total[k])], showmeans=False, showmedians=False, showextrema=False, widths = 0.02*np.exp(energies_total[k+1]))
+            # for pc in parts['bodies']:
+            #     pc.set_facecolor(colors_kappa[i_kappa])
+            #     pc.set_edgecolor('black')
+            #     pc.set_alpha(.5)
 
     #final_Nb/=np.max(final_Nb)
     Kds_total = np.exp(energies_total)
     Kds_array = np.logspace(np.log10(np.min(Kds_total)), np.log10(np.max(Kds_total)*.5), 50)
     fit = Kds_array**(-kappa*lambda_B/lambda_A)
-    fit = fit/fit[0]*10**(0.2*(3-3))*np.max(final_sizes)#[Kds_total==np.min(Kds_total)]
+    fit = 0.9*fit/fit[0]*10**(0.2*(3-3))*np.max(final_sizes)#[Kds_total==np.min(Kds_total)]
 
     ax_N_K.plot(Kds_array, fit, color = colors_kappa[i_kappa], linewidth = 5, label = r'$%.d$'%(kappa), alpha = .8)
     ax_N_K_i.plot(Kds_array, fit, color = colors_kappa[i_kappa], linewidth = 5, label = r'$%.d$'%(kappa), alpha = .8)
-    ax_N_K.scatter(Kds_total, final_Nb, facecolor = colors_kappa[i_kappa], alpha = .8, linewidth = 0)
-    ax_N_K_i.scatter(Kds_total, final_Nb, facecolor = colors_kappa[i_kappa], alpha = .8, linewidth = 0)
+
+    ax_N_K.plot(Kds_total, final_Nb, alpha = 1, linewidth = 0, ms = 8, marker = 'o')
+    ax_N_K_i.plot(Kds_total, final_Nb, alpha = 1, linewidth = 0, ms = 8, marker = 'o')
 
     my_plot_layout(ax = ax_N_K_i, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
     ax_N_K_i.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')

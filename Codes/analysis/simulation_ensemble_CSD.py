@@ -7,7 +7,7 @@ warnings.filterwarnings("ignore")
 Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/'
 
 #--------------- PARAMETERS ---------------------
-N_ens = 50
+N_ens = 100
 N_r = 2e8
 T0 = 3
 Tf = 10
@@ -22,13 +22,13 @@ k_pr = k_pr*24 #days^-1
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
 kappas = [1, 2, 3]
+kappas = [3]
 
 transparency_n = [1]
 
 colors_kappa = ['lightskyblue', 'tab:cyan','tab:green', 'tab:red']
 colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
-colors_R = [['deepskyblue', 'lightskyblue', 'lightskyblue'], ['tab:purple', 'tab:cyan', 'tab:cyan'], ['tab:blue', 'tab:green', 'tab:green'], ['tab:red', 'tab:red', 'tab:red']]
-colors_R = [['tab:purple', 'tab:cyan', 'tab:cyan'], ['tab:blue', 'tab:green', 'tab:green'], ['tab:red', 'tab:red', 'tab:red']]
+colors_kappa = np.flip(['tab:blue'])
 
 lambda_B = lambda_A/2
 k_on = 1e6*24*3600; #(M*days)^-1
@@ -94,7 +94,7 @@ for i_kappa, kappa in enumerate(kappas):
 
     data_active = data.loc[data[1]==1]
     t_act_data = np.min(data_active[3])
-    data_active = data_active.loc[data_active[3]<(t_act_data+1.7)]
+    data_active = data_active.loc[data_active[3]<(t_act_data+1.6)]
     activation_times = np.array(data_active[3])
     energies  = np.array(data_active[0])
 
@@ -112,20 +112,22 @@ for i_kappa, kappa in enumerate(kappas):
     # activation_times_C_sorted = activation_times_C[sort_inds][:]
     # energies_C_sorted = energies_C[sort_inds][:]
 
-    bins = np.logspace(np.log10(np.min(clone_sizes_final)),np.log10(np.max(clone_sizes_final)),16)
+    bins = np.logspace(np.log10(np.min(clone_sizes_final)),np.log10(np.max(clone_sizes_final)), 40)
     #bins = np.linspace((np.min(clone_sizes_final)),(np.max(clone_sizes_final)),50)
-    #bins = 80
-    clone_size_distribution = np.histogram(clone_sizes_final, bins = bins, density = True)
-    clone_size = clone_size_distribution[1][:-1]#[np.where(clone_size_distribution[0]!=0)]#((clone_size_distribution[1][:-1][np.where(clone_size_distribution[0]!=0)]+clone_size_distribution[1][1:][np.where(clone_size_distribution[0]!=0)]))/2
-    clone_size_counts = clone_size_distribution[0]#[np.where(clone_size_distribution[0]!=0)]
+    bins = 300
+    print(len(clone_sizes_final))
+    clone_size_distribution = np.histogram(clone_sizes_final, bins = bins, density = False)
+    clone_size = clone_size_distribution[1][:-1]
+    clone_size_counts = clone_size_distribution[0]#/np.sum(clone_size_distribution[0]*(np.diff(clone_size_distribution[1])))
+    print(np.sum(clone_size_counts[:]))
     Nb_array = np.logspace(np.log10(np.min(clone_sizes_final)), np.log10(np.max(clone_sizes_final))-0.2, 50)
     fit = Nb_array**(-beta_act*lambda_A/(lambda_B*kappa))
-    fit = fit/fit[1]*.6
-    ax_CSD.plot(clone_size[:], 1-np.cumsum(clone_size_counts[:]*(clone_size_distribution[1][1:]-clone_size_distribution[1][:-1])), color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = 1, ms = 10)
+    fit = fit/fit[0]
+    ax_CSD.plot(clone_size[:], 1-np.cumsum(clone_size_counts[:])/len(clone_sizes_final), color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = 1, ms = 8)
     #ax_CSD.plot(clone_size[:], (clone_size_counts[:]*(clone_size_distribution[1][1:]-clone_size_distribution[1][:-1])), color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = .8, ms = 10)
     ax_CSD.plot(Nb_array, fit, color = colors_kappa[i_kappa], linewidth = 5, label = r'$%.d$'%(kappa), alpha = .8)
 
-    ax_CSD_i.plot(clone_size[:], 1-np.cumsum(clone_size_counts[:]*(clone_size_distribution[1][1:]-clone_size_distribution[1][:-1])), color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = 1, ms = 10)
+    ax_CSD_i.plot(clone_size[:], 1-np.cumsum(clone_size_counts[:])/len(clone_sizes_final), color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = 1, ms = 8)
     #ax_CSD.plot(clone_size[:], (clone_size_counts[:]*(clone_size_distribution[1][1:]-clone_size_distribution[1][:-1])), color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = .8, ms = 10)
     ax_CSD_i.plot(Nb_array, fit, color = colors_kappa[i_kappa], linewidth = 5, label = r'$%.d$'%(kappa), alpha = .8)
 
