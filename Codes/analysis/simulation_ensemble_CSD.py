@@ -22,13 +22,35 @@ k_pr = k_pr*24 #days^-1
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
 kappas = [1, 2, 3]
-kappas = [3]
+#kappas = [3]
+
+my_red = np.array((228,75,41))
+my_purple = np.array((125,64,119))
+my_green = np.array((125,165,38))
+my_blue = np.array((76,109,166))
+my_yellow = np.array((215,139,45))
+my_cyan = np.array((158,248,72))
+
+antigen_color = my_cyan/256.
 
 transparency_n = [1]
 
-colors_kappa = ['lightskyblue', 'tab:cyan','tab:green', 'tab:red']
-colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
-colors_kappa = np.flip(['tab:blue'])
+#colors_kappa = ['lightskyblue', 'tab:cyan','tab:green', 'tab:red']
+#colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
+#colors_kappa = np.flip(['tab:blue'])
+
+color_list = np.array([my_purple,my_green,my_blue,my_yellow])
+
+#colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
+#colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
+colors_kappa = []
+for i in range(len(color_list)):
+        colors_kappa.append(np.array(color_list[i])/256.)
+
+#colors_R = [['tab:grey', 'tab:grey', 'tab:blue', 'tab:blue'], ['tab:grey', 'tab:grey', 'tab:green', 'tab:green'], ['tab:grey', 'tab:grey', 'tab:red', 'tab:red'], ['tab:red', 'tab:red', 'tab:red', 'tab:red']]
+colors_R = []
+for i in range(len(kappas)):
+    colors_R.append([colors_kappa[i], colors_kappa[i], colors_kappa[i], colors_kappa[i]])
 
 lambda_B = lambda_A/2
 k_on = 1e6*24*3600; #(M*days)^-1
@@ -115,6 +137,7 @@ for i_kappa, kappa in enumerate(kappas):
     bins = np.logspace(np.log10(np.min(clone_sizes_final)),np.log10(np.max(clone_sizes_final)), 40)
     #bins = np.linspace((np.min(clone_sizes_final)),(np.max(clone_sizes_final)),50)
     bins = 300
+    bins = 'auto'
     print(len(clone_sizes_final))
     clone_size_distribution = np.histogram(clone_sizes_final, bins = bins, density = False)
     clone_size = clone_size_distribution[1][:-1]
@@ -123,13 +146,14 @@ for i_kappa, kappa in enumerate(kappas):
     Nb_array = np.logspace(np.log10(np.min(clone_sizes_final)), np.log10(np.max(clone_sizes_final))-0.2, 50)
     fit = Nb_array**(-beta_act*lambda_A/(lambda_B*kappa))
     fit = fit/fit[0]
-    ax_CSD.plot(clone_size[:], 1-np.cumsum(clone_size_counts[:])/len(clone_sizes_final), color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = 1, ms = 8)
-    #ax_CSD.plot(clone_size[:], (clone_size_counts[:]*(clone_size_distribution[1][1:]-clone_size_distribution[1][:-1])), color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = .8, ms = 10)
-    ax_CSD.plot(Nb_array, fit, color = colors_kappa[i_kappa], linewidth = 5, label = r'$%.d$'%(kappa), alpha = .8)
 
-    ax_CSD_i.plot(clone_size[:], 1-np.cumsum(clone_size_counts[:])/len(clone_sizes_final), color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = 1, ms = 8)
+    ax_CSD.plot(clone_size[:], 1-np.cumsum(clone_size_counts[:])/len(clone_sizes_final), color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = 1, ms = 4, label = r'$%.d$'%(kappa))
     #ax_CSD.plot(clone_size[:], (clone_size_counts[:]*(clone_size_distribution[1][1:]-clone_size_distribution[1][:-1])), color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = .8, ms = 10)
-    ax_CSD_i.plot(Nb_array, fit, color = colors_kappa[i_kappa], linewidth = 5, label = r'$%.d$'%(kappa), alpha = .8)
+    ax_CSD_i.plot(clone_size[:], 1-np.cumsum(clone_size_counts[:])/len(clone_sizes_final), color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = 1, ms = 4, label = r'$%.d$'%(kappa))
+    #ax_CSD.plot(clone_size[:], (clone_size_counts[:]*(clone_size_distribution[1][1:]-clone_size_distribution[1][:-1])), color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = .8, ms = 10)
+
+    ax_CSD.plot(Nb_array, fit, color = colors_kappa[i_kappa], linewidth = 4, alpha = .8)
+    ax_CSD_i.plot(Nb_array, fit, color = colors_kappa[i_kappa], linewidth = 4, alpha = .8)
 
     my_plot_layout(ax = ax_CSD_i, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
     ax_CSD_i.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')

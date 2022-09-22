@@ -22,11 +22,37 @@ k_pr = k_pr*24 #days^-1
 
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
-kappas = [3, 2, 1]
+kappas = [1, 2, 3, 4]
 
-colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
-colors_kappa = ['tab:blue','tab:green','tab:red']
-colors_R = [['tab:grey', 'tab:green', 'tab:green', 'tab:green'], ['tab:grey', 'tab:green', 'tab:green', 'tab:green'], ['tab:grey', 'tab:red', 'tab:red', 'tab:red']]
+my_red = np.array((228,75,41))
+my_purple = np.array((125,64,119))
+my_green = np.array((125,165,38))
+my_blue = np.array((76,109,166))
+my_yellow = np.array((215,139,45))
+my_cyan = np.array((246,181,56))
+
+antigen_color = my_cyan/256.
+
+transparency_n = [1]
+
+#colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
+#colors_kappa = ['tab:blue','tab:green','tab:red']
+#colors_R = [['tab:grey', 'tab:green', 'tab:green', 'tab:green'], ['tab:grey', 'tab:green', 'tab:green', 'tab:green'], ['tab:grey', 'tab:red', 'tab:red', 'tab:red']]
+
+color_list = np.array([(76,109,166),(215,139,45),(125,165,38),(228,75,41),(116,97,164),(182,90,36),(80,141,188),(246,181,56),(125,64,119),(158,248,72)])
+color_list = np.array([(228,75,41), (125,165,38), (76,109,166), (215,139,45)])
+color_list = np.array([my_purple,my_green,my_blue,my_yellow])
+
+#colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
+#colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
+colors_kappa = []
+for i in range(len(color_list)):
+        colors_kappa.append(np.array(color_list[i])/256.)
+
+#colors_R = [['tab:grey', 'tab:grey', 'tab:blue', 'tab:blue'], ['tab:grey', 'tab:grey', 'tab:green', 'tab:green'], ['tab:grey', 'tab:grey', 'tab:red', 'tab:red'], ['tab:red', 'tab:red', 'tab:red', 'tab:red']]
+colors_R = []
+for i in range(len(kappas)):
+    colors_R.append(['tab:grey', colors_kappa[i], colors_kappa[i], colors_kappa[i]])
 
 lambda_B = lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
@@ -82,8 +108,8 @@ print('Loops...')
 min_E = -17.3
 max_E = -8
 
-fig, ax = plt.subplots(figsize = (18, 1), gridspec_kw={'left':0.06, 'right':.94, 'bottom':.01, 'top': .44})
-col_map = plt.get_cmap('coolwarm')
+fig, ax = plt.subplots(figsize = (18, 1), linewidth = 6, gridspec_kw={'left':0.06, 'right':.94, 'bottom':.01, 'top': .44})
+col_map = plt.get_cmap('autumn')
 #mpl.colorbar.ColorbarBase(ax, cmap=col_map, orientation = 'vertical')
 
 # As for a more fancy example, you can also give an axes by hand:
@@ -104,7 +130,7 @@ for i_kappa, kappa in enumerate(kappas):
 	print('kappa = %.2f...'%kappa)
 	beta_kappa, E_kappa, Kd_kappa = get_kappa_properties(betas, Q0, Es, dE, kappa)
 	for rep in range(1):
-		fig_muller, ax_muller = plt.subplots(figsize=(18,6), gridspec_kw={'left':0.06, 'right':.98, 'bottom':.1, 'top': 0.96}, dpi = 700)
+		fig_muller, ax_muller = plt.subplots(figsize=(18,4), linewidth = 20, gridspec_kw={'left':0.02, 'right':.98, 'bottom':.1, 'top': 0.96}, dpi = 700)
 
 		#-----------------Loading data----------------------------
 		parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
@@ -155,7 +181,7 @@ for i_kappa, kappa in enumerate(kappas):
 		entropy = -np.sum(bcell_freqs*np.log(bcell_freqs), axis = 0)
 
 		#------------------------- Stackplots -------------------------
-		greys = plt.cm.get_cmap('coolwarm_r', 50)
+		greys = plt.cm.get_cmap('autumn_r', 50)
 		min_bell_freq = np.min(bcell_freqs[:,-1])
 		
 		
@@ -164,7 +190,7 @@ for i_kappa, kappa in enumerate(kappas):
 			color_c = greys(int(50*(1-abs((energies_C[c]-min_E)/max_E))))
 			ax_muller.stackplot(time, [(bcell_freqs[c, -1] - bcell_freqs[c, :])/2 + np.ones_like(bcell_freqs[0, :])*np.sum(bcell_freqs[:c, -1]), bcell_freqs[c, :], (bcell_freqs[c, -1] - bcell_freqs[c, :])/2], colors = ['white', color_c, 'white']);
 			if bcell_freqs[c, -1]>(0.10):
-				ax_muller.scatter(activation_times_C[c], (bcell_freqs[c, -1] - bcell_freqs[c, 0])/2 + np.sum(bcell_freqs[:c, -1]), marker = 'D', edgecolor='black', linewidth=1, facecolor = colors_kappa[i_kappa], s = 40)
+				ax_muller.scatter(activation_times_C[c], (bcell_freqs[c, -1] - bcell_freqs[c, 0])/2 + np.sum(bcell_freqs[:c, -1]), marker = 'D', edgecolor='black', linewidth=1, facecolor = colors_kappa[i_kappa], s = 50)
 
 		# for c in np.invert(range(len(clone_sizes_C[:,0]))):
 		# 	if bcell_freqs[c, -1]>(0.05):
@@ -189,8 +215,8 @@ for i_kappa, kappa in enumerate(kappas):
 		ax_muller.set_xticks([])
 		ax_muller.set_xlim(T0, Tf)
 		ax_muller.set_ylim(0, 1)
-		fig_muller.savefig('../../Figures/1_Dynamics/Trajectories/Muller/B_cell_clones_kappa-%.2f_%d_'%(kappa, rep)+energy_model+'.pdf')
-		fig_muller.savefig('../../Figures/1_Dynamics/Trajectories/Muller/B_cell_clones_kappa-%.2f_%d_'%(kappa, rep)+energy_model+'.png')
+		fig_muller.savefig('../../Figures/1_Dynamics/Trajectories/Muller/B_cell_clones_kappa-%.2f_%d_'%(kappa, rep)+energy_model+'.pdf', edgecolor=fig_muller.get_edgecolor())
+		fig_muller.savefig('../../Figures/1_Dynamics/Trajectories/Muller/B_cell_clones_kappa-%.2f_%d_'%(kappa, rep)+energy_model+'.png', edgecolor=fig_muller.get_edgecolor())
 		plt.close(fig_muller)
 
 

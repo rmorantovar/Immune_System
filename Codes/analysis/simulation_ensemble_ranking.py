@@ -22,13 +22,31 @@ k_pr = k_pr*24 #days^-1
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
 kappas = [1, 2, 3]
-kappas = [3]
+#kappas = [3]
+
+my_red = np.array((228,75,41))
+my_purple = np.array((125,64,119))
+my_green = np.array((125,165,38))
+my_blue = np.array((76,109,166))
+my_yellow = np.array((215,139,45))
+my_cyan = np.array((158,248,72))
+
+antigen_color = my_cyan/256.
 
 transparency_n = [1]
 
-colors_kappa = ['lightskyblue', 'tab:cyan','tab:green', 'tab:red']
-colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
-colors_kappa = np.flip(['tab:blue'])
+color_list = np.array([my_purple,my_green,my_blue,my_yellow])
+
+#colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
+#colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
+colors_kappa = []
+for i in range(len(color_list)):
+        colors_kappa.append(np.array(color_list[i])/256.)
+
+#colors_R = [['tab:grey', 'tab:grey', 'tab:blue', 'tab:blue'], ['tab:grey', 'tab:grey', 'tab:green', 'tab:green'], ['tab:grey', 'tab:grey', 'tab:red', 'tab:red'], ['tab:red', 'tab:red', 'tab:red', 'tab:red']]
+colors_R = []
+for i in range(len(kappas)):
+    colors_R.append([colors_kappa[i], colors_kappa[i], colors_kappa[i], colors_kappa[i]])
 
 lambda_B = lambda_A/2
 k_on = 1e6*24*3600; #(M*days)^-1
@@ -115,8 +133,8 @@ for i_kappa, kappa in enumerate((kappas)):
         
         sort_inds = clone_sizes_C[:, -1].argsort()
         clone_sizes_C_sorted = clone_sizes_C[sort_inds, :][-int(n_first_clones*(4-3)):, :]
-        activation_times_C_sorted = activation_times_C[sort_inds][-int(n_first_clones*(4-3)):]
-        energies_C_sorted = energies_C[sort_inds][-int(n_first_clones*(4-3)):]
+        #activation_times_C_sorted = activation_times_C[sort_inds][-int(n_first_clones*(4-3)):]
+        #energies_C_sorted = energies_C[sort_inds][-int(n_first_clones*(4-3)):]
 
         biggest_clone_i = clone_sizes_C_sorted[-1, -1]
         #ax_ranking.scatter(np.exp(energies_C_sorted[-1]), biggest_clone_i, color = colors_kappa[i_kappa], alpha = .25, edgecolor='black', linewidth=1, facecolor = colors_kappa[i_kappa])
@@ -124,16 +142,17 @@ for i_kappa, kappa in enumerate((kappas)):
         sorted_clones = np.flip(clone_sizes_C_sorted[:, -1])/biggest_clone_i
         max_rank_i = len(sorted_clones)
         for i in range(max_rank_i):
-            #final_Nb[i]+= np.log(sorted_clones[i])
-            final_Nb[i]+= (sorted_clones[i])
-            counts_final_Nb[i]+=1
+            final_Nb[i]+= np.log(sorted_clones[i])
+            #final_Nb[i]+= (sorted_clones[i])
+            counts_final_Nb[i] += 1
         if(max_rank_i>max_rank):
             max_rank = max_rank_i
-        ax_ranking.step(np.arange(1, max_rank_i+1), sorted_clones, color = colors_kappa[i_kappa], linewidth = 1, alpha = .2)
-        ax_ranking_i.step(np.arange(1, max_rank_i+1), sorted_clones, color = colors_kappa[i_kappa], linewidth = 1, alpha = .2)
+        if(i_ens%10==0):
+            ax_ranking.step(np.arange(1, max_rank_i+1), sorted_clones, color = colors_kappa[i_kappa], linewidth = 1, alpha = .2)
+            ax_ranking_i.step(np.arange(1, max_rank_i+1), sorted_clones, color = colors_kappa[i_kappa], linewidth = 1, alpha = .2)
 
-    #final_Nb = np.exp(final_Nb/N_ens)
-    final_Nb = final_Nb/counts_final_Nb
+    final_Nb = np.exp(final_Nb/counts_final_Nb)
+    #final_Nb = final_Nb/counts_final_Nb
     
     ranking = np.arange(1, n_first_clones+1)
     fit = ranking**(-kappa*lambda_B/(lambda_A*beta_act))

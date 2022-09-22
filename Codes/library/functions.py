@@ -35,6 +35,32 @@ delta_Nb = lambda t, tb, Nb, N, lambda_B, C: lambda_B*Nb*(1-(N/C))*np.heaviside(
 
 E_t = lambda t, theta:lambda_A*t/theta - np.log((lambda_A*N_A)/(k_on*N_c))/theta + np.log(k_pr/k_on) 
 
+def get_continuous_cmap(hex_list, float_list=None):
+    ''' creates and returns a color map that can be used in heat map figures.
+        If float_list is not provided, colour map graduates linearly between each color in hex_list.
+        If float_list is provided, each color in hex_list is mapped to the respective location in float_list. 
+        
+        Parameters
+        ----------
+        hex_list: list of hex code strings
+        float_list: list of floats between 0 and 1, same length as hex_list. Must start with 0 and end with 1.
+        
+        Returns
+        ----------
+        colour map'''
+    rgb_list = [rgb_to_dec(hex_to_rgb(i)) for i in hex_list]
+    if float_list:
+        pass
+    else:
+        float_list = list(np.linspace(0,1,len(rgb_list)))
+        
+    cdict = dict()
+    for num, col in enumerate(['red', 'green', 'blue']):
+        col_list = [[float_list[i], rgb_list[i][num], rgb_list[i][num]] for i in range(len(float_list))]
+        cdict[col] = col_list
+    cmp = matplotlib.colors.LinearSegmentedColormap('my_cmp', segmentdata=cdict, N=256)
+    return cmp
+
 def get_data(folder_path, rep):
 	if os.path.exists(folder_path+'/energies%d.pkl'%rep):
 		print('Object exists already, loading it ...')

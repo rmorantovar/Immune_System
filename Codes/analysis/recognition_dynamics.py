@@ -20,13 +20,33 @@ k_pr = k_pr*24 #days^-1
 
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
-kappas = [1, 2, 3]
+kappas = [1, 2, 3, 4]
+
+my_red = np.array((228,75,41))
+my_purple = np.array((125,64,119))
+my_green = np.array((125,165,38))
+my_blue = np.array((76,109,166))
+my_yellow = np.array((215,139,45))
+my_cyan = np.array((158,248,72))
+
+antigen_color = my_cyan/256.
 
 transparency_n = [1]
 
-colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
-colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
-colors_R = [['tab:grey', 'tab:grey', 'tab:blue', 'tab:blue'], ['tab:grey', 'tab:grey', 'tab:green', 'tab:green'], ['tab:grey', 'tab:grey', 'tab:red', 'tab:red'], ['tab:red', 'tab:red', 'tab:red', 'tab:red']]
+color_list = np.array([(76,109,166),(215,139,45),(125,165,38),(228,75,41),(116,97,164),(182,90,36),(80,141,188),(246,181,56),(125,64,119),(158,248,72)])
+color_list = np.array([(228,75,41), (125,165,38), (76,109,166), (215,139,45)])
+color_list = np.array([my_purple,my_green,my_blue,my_yellow])
+
+#colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
+#colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
+colors_kappa = []
+for i in range(len(color_list)):
+        colors_kappa.append(np.array(color_list[i])/256.)
+
+#colors_R = [['tab:grey', 'tab:grey', 'tab:blue', 'tab:blue'], ['tab:grey', 'tab:grey', 'tab:green', 'tab:green'], ['tab:grey', 'tab:grey', 'tab:red', 'tab:red'], ['tab:red', 'tab:red', 'tab:red', 'tab:red']]
+colors_R = []
+for i in range(len(kappas)):
+    colors_R.append([colors_kappa[i], colors_kappa[i], colors_kappa[i], colors_kappa[i]])
 
 lambda_B = lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
@@ -122,7 +142,7 @@ for N_r in N_rs:
         m_bar = np.array([np.sum(N_r*calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*(t))/N_A, Es, kappa, lambda_A, N_c, dE)[3]*dE) for t in time]) 
         m_bar_approx = ((k_on*M_r)/(N_A*lambda_A))*(np.exp(lambda_A*time))
 
-        ax_m_bar.plot(time, m_bar, linewidth = 4, linestyle = '-', color = colors_kappa[i_kappa])
+        ax_m_bar.plot(time, m_bar, linewidth = 4, linestyle = '-', color = tuple(colors_kappa[i_kappa]))
         ax_m_bar.plot(time, m_bar_approx, linewidth = 3, linestyle = '--', color = 'black')
         ax_m_bar.hlines(1, T0, Tf, color = 'grey', linestyle = ':')
         t_act = time[m_bar>1][0]
@@ -192,7 +212,7 @@ for N_r in N_rs:
     my_plot_layout(ax=ax_Q0, yscale = 'log', xscale = 'log', ticks_labelsize = 38)
     #ax_Q_act.set_xticks([])
     ax_Q0.set_xlim(right = 1e1) #use 1e-3 for other plots
-    ax_Q0.set_ylim(bottom = 1e-9, top = 1.5)
+    ax_Q0.set_ylim(bottom = 1e-13, top = 1.5)
     fig_Q0.savefig('../../Figures/_Summary/affinity/Q0_Nr-%.0e_'%(N_r)+model+'.pdf')
     plt.close(fig_Q0)
 

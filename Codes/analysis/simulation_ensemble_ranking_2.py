@@ -22,13 +22,34 @@ k_pr = k_pr*24 #days^-1
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
 kappas = [1, 2, 3]
-kappas = [3]
+#kappas = [3]
+
+my_red = np.array((228,75,41))
+my_purple = np.array((125,64,119))
+my_green = np.array((125,165,38))
+my_blue = np.array((76,109,166))
+my_yellow = np.array((215,139,45))
+my_cyan = np.array((158,248,72))
+
+antigen_color = my_cyan/256.
 
 transparency_n = [1]
 
-colors_kappa = ['lightskyblue', 'tab:cyan','tab:green', 'tab:red']
-colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
-colors_kappa = np.flip(['tab:blue'])
+#colors_kappa = ['lightskyblue', 'tab:cyan','tab:green', 'tab:red']
+#colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
+#colors_kappa = np.flip(['tab:blue'])
+
+color_list = np.array([my_purple,my_green,my_blue,my_yellow])
+
+
+colors_kappa = []
+for i in range(len(color_list)):
+        colors_kappa.append(np.array(color_list[i])/256.)
+
+#colors_R = [['tab:grey', 'tab:grey', 'tab:blue', 'tab:blue'], ['tab:grey', 'tab:grey', 'tab:green', 'tab:green'], ['tab:grey', 'tab:grey', 'tab:red', 'tab:red'], ['tab:red', 'tab:red', 'tab:red', 'tab:red']]
+colors_R = []
+for i in range(len(kappas)):
+    colors_R.append([colors_kappa[i], colors_kappa[i], colors_kappa[i], colors_kappa[i]])
 
 lambda_B = lambda_A/2
 k_on = 1e6*24*3600; #(M*days)^-1
@@ -127,11 +148,12 @@ for i_kappa, kappa in enumerate((kappas)):
         for i in range(max_rank_i):
             final_E[i]+= np.log(sorted_clones[i])
             #final_E[i]+= (sorted_clones[i])
-            counts_final_E[i]+= 1
+            counts_final_E[i] += 1
         if(max_rank_i<max_rank):
             max_rank = max_rank_i
-        ax_ranking.step(np.arange(1, max_rank_i+1), sorted_clones, color = colors_kappa[i_kappa], linewidth = 1, alpha = .2)
-        ax_ranking_i.step(np.arange(1, max_rank_i+1), sorted_clones, color = colors_kappa[i_kappa], linewidth = 1, alpha = .2)
+        if(i_ens%10==0):
+            ax_ranking.step(np.arange(1, max_rank_i+1), sorted_clones, color = colors_kappa[i_kappa], linewidth = 1, alpha = .2)
+            ax_ranking_i.step(np.arange(1, max_rank_i+1), sorted_clones, color = colors_kappa[i_kappa], linewidth = 1, alpha = .2)
 
     final_E = np.exp(final_E/counts_final_E)
     #final_E = (final_E/counts_final_E)
@@ -155,7 +177,7 @@ for i_kappa, kappa in enumerate((kappas)):
 my_plot_layout(ax = ax_ranking, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_ranking.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
 #ax_ranking.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
-ax_ranking.set_ylim(top = 8e2)
+ax_ranking.set_ylim(top = 1e2)
 #ax_ranking.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_ranking.set_yticklabels([1, 0.1, 0.01])
 fig_ranking.savefig('../../Figures/1_Dynamics/Ensemble/Ranking_2_'+energy_model+'.pdf')

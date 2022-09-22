@@ -7,7 +7,7 @@ warnings.filterwarnings("ignore")
 Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/'
 
 #--------------- PARAMETERS ---------------------
-N_ens = 20
+N_ens = 100
 N_r = 2e8
 T0 = 3
 Tf = 8
@@ -21,13 +21,34 @@ k_pr = k_pr*24 #days^-1
 
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
-kappas = [3, 2, 1]
+kappas = [1, 2, 3]
+
+my_red = np.array((228,75,41))
+my_purple = np.array((125,64,119))
+my_green = np.array((125,165,38))
+my_blue = np.array((76,109,166))
+my_yellow = np.array((215,139,45))
+my_cyan = np.array((158,248,72))
+
+antigen_color = my_cyan/256.
 
 transparency_n = [1]
 
-colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
-colors_kappa = ['tab:blue','tab:green','tab:red']
-colors_R = [['tab:grey', 'tab:grey', 'tab:blue', 'tab:blue'], ['tab:grey', 'tab:grey', 'tab:green', 'tab:green'], ['tab:grey', 'tab:grey', 'tab:red', 'tab:red'], ['tab:red', 'tab:red', 'tab:red', 'tab:red']]
+#colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
+#colors_kappa = ['tab:blue','tab:green','tab:red']
+#colors_R = [['tab:grey', 'tab:grey', 'tab:blue', 'tab:blue'], ['tab:grey', 'tab:grey', 'tab:green', 'tab:green'], ['tab:grey', 'tab:grey', 'tab:red', 'tab:red'], ['tab:red', 'tab:red', 'tab:red', 'tab:red']]
+color_list = np.array([my_purple,my_green,my_blue,my_yellow])
+
+#colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
+#colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
+colors_kappa = []
+for i in range(len(color_list)):
+        colors_kappa.append(np.array(color_list[i])/256.)
+
+#colors_R = [['tab:grey', 'tab:grey', 'tab:blue', 'tab:blue'], ['tab:grey', 'tab:grey', 'tab:green', 'tab:green'], ['tab:grey', 'tab:grey', 'tab:red', 'tab:red'], ['tab:red', 'tab:red', 'tab:red', 'tab:red']]
+colors_R = []
+for i in range(len(kappas)):
+    colors_R.append([colors_kappa[i], colors_kappa[i], colors_kappa[i], colors_kappa[i]])
 
 lambda_B = lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
@@ -80,7 +101,7 @@ print('--------')
 print('Loops...')
 #--------------------------Loops--------------------------
 fig_NC, ax_NC = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-for i_kappa, kappa in enumerate(np.flip(kappas)):
+for i_kappa, kappa in enumerate(kappas):
 
 	print('--------')
 	print('kappa = %.2f...'%kappa)
@@ -96,7 +117,7 @@ for i_kappa, kappa in enumerate(np.flip(kappas)):
 		data_i = data.loc[data[4]==i_ens]
 		data_active = data_i.loc[data_i[1]==1]
 		t_act_data = np.min(data_active[3])
-		data_active = data_active.loc[data_active[3]<(t_act_data+1.3)]
+		data_active = data_active.loc[data_active[3]<(t_act_data+1.2)]
 		activation_times = np.array(data_active[3])
 		energies  = np.array(data_active[0])
 
@@ -112,10 +133,10 @@ for i_kappa, kappa in enumerate(np.flip(kappas)):
 		NC_i = np.log(1-np.array([np.product(1-1/(1+(Kds_C/((1e12*(clone_sizes_C[:,t]-1))/N_A)))) for t in np.arange(len(time))]))
 		NC += NC_i
 		if(i_ens%1==0):
-			ax_NC.plot(time, NC_i, color = colors_kappa[2-i_kappa], alpha = .1, linewidth = 1)
+			ax_NC.plot(time, NC_i, color = colors_kappa[i_kappa], alpha = .1, linewidth = 1)
 
 	NC = NC/N_ens
-	ax_NC.plot(time, NC, color = colors_kappa[2-i_kappa], alpha = 1, label = r'$%d$'%kappa, linewidth = 5)
+	ax_NC.plot(time, NC, color = colors_kappa[i_kappa], alpha = 1, label = r'$%d$'%kappa, linewidth = 5)
 
 my_plot_layout(ax = ax_NC, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_NC.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')

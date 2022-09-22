@@ -22,13 +22,35 @@ k_pr = k_pr*24 #days^-1
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
 kappas = [1, 2, 3]
-kappas = [3]
+#kappas = [3]
+
+my_red = np.array((228,75,41))
+my_purple = np.array((125,64,119))
+my_green = np.array((125,165,38))
+my_blue = np.array((76,109,166))
+my_yellow = np.array((215,139,45))
+my_cyan = np.array((158,248,72))
+
+antigen_color = my_cyan/256.
 
 transparency_n = [1]
 
-colors_kappa = ['lightskyblue', 'tab:cyan','tab:green', 'tab:red']
-colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
-colors_kappa = np.flip(['tab:blue'])
+#colors_kappa = ['lightskyblue', 'tab:cyan','tab:green', 'tab:red']
+#colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
+#colors_kappa = np.flip(['tab:blue'])
+
+color_list = np.array([my_purple,my_green,my_blue,my_yellow])
+
+#colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
+#colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
+colors_kappa = []
+for i in range(len(color_list)):
+        colors_kappa.append(np.array(color_list[i])/256.)
+
+#colors_R = [['tab:grey', 'tab:grey', 'tab:blue', 'tab:blue'], ['tab:grey', 'tab:grey', 'tab:green', 'tab:green'], ['tab:grey', 'tab:grey', 'tab:red', 'tab:red'], ['tab:red', 'tab:red', 'tab:red', 'tab:red']]
+colors_R = []
+for i in range(len(kappas)):
+    colors_R.append([colors_kappa[i], colors_kappa[i], colors_kappa[i], colors_kappa[i]])
 
 lambda_B = lambda_A/2
 k_on = 1e6*24*3600; #(M*days)^-1
@@ -99,7 +121,7 @@ for i_kappa, kappa in enumerate((kappas)):
     data_active = data_active.loc[data_active[3]<(t_act_data+1.6)]
     activation_times = np.array(data_active[3])
     energies  = np.array(data_active[0])
-    energies_total = np.linspace(np.min(energies), -16, 12)
+    energies_total = np.linspace(np.min(energies), -16, 10)
     final_Nb = np.zeros_like(energies_total)
 
     #---------------------------- B cell linages ----------------------
@@ -131,15 +153,18 @@ for i_kappa, kappa in enumerate((kappas)):
 
     #final_Nb/=np.max(final_Nb)
     Kds_total = np.exp(energies_total)
-    Kds_array = np.logspace(np.log10(np.min(Kds_total)), np.log10(np.max(Kds_total)*.5), 50)
+    Kds_array = np.logspace(np.log10(np.min(Kds_total)), np.log10(np.min(Kds_total)) + 1.2, 50)
     fit = Kds_array**(-kappa*lambda_B/lambda_A)
-    fit = 0.9*fit/fit[0]*10**(0.2*(3-3))*np.max(final_sizes)#[Kds_total==np.min(Kds_total)]
+    fit = fit/fit[0]*final_Nb[0]*.9#[Kds_total==np.min(Kds_total)]
 
-    ax_N_K.plot(Kds_array, fit, color = colors_kappa[i_kappa], linewidth = 5, label = r'$%.d$'%(kappa), alpha = .8)
-    ax_N_K_i.plot(Kds_array, fit, color = colors_kappa[i_kappa], linewidth = 5, label = r'$%.d$'%(kappa), alpha = .8)
+    
+    ax_N_K_i.plot(Kds_total, final_Nb, color = colors_kappa[i_kappa], alpha = 1, linewidth = 0, ms = 8, marker = 'o', label = r'$%.d$'%(kappa))
+    ax_N_K.plot(Kds_total, final_Nb, color = colors_kappa[i_kappa], alpha = 1, linewidth = 0, ms = 8, marker = 'o', label = r'$%.d$'%(kappa))
 
-    ax_N_K.plot(Kds_total, final_Nb, alpha = 1, linewidth = 0, ms = 8, marker = 'o')
-    ax_N_K_i.plot(Kds_total, final_Nb, alpha = 1, linewidth = 0, ms = 8, marker = 'o')
+    if(kappa!=1):
+        ax_N_K.plot(Kds_array, fit, color = colors_kappa[i_kappa], linewidth = 4, alpha = .8)
+        ax_N_K_i.plot(Kds_array, fit, color = colors_kappa[i_kappa], linewidth = 4, alpha = .8)
+        
 
     my_plot_layout(ax = ax_N_K_i, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
     ax_N_K_i.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
