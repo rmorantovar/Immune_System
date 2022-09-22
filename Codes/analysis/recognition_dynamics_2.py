@@ -22,30 +22,31 @@ kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
 kappas = [1, 2, 3, 4]
 
-my_red = np.array((228,75,41))
-my_purple = np.array((125,64,119))
-my_green = np.array((125,165,38))
-my_blue = np.array((76,109,166))
-my_yellow = np.array((215,139,45))
-my_cyan = np.array((246,181,56))
+my_red = np.array((228,75,41))/256.
+my_purple = np.array((125,64,119))/256.
+my_purple2 = np.array((116,97,164))/256.
+my_green = np.array((125,165,38))/256.
+my_blue = np.array((76,109,166))/256.
+my_gold = np.array((215,139,45))/256.
+my_brown = np.array((182,90,36))/256.
+my_blue2 = np.array((80,141,188))/256.
+my_yellow = np.array((246,181,56))/256.
+my_green2 = np.array((158,248,72))/256.
+my_cyan = 'tab:cyan'
 
-antigen_color = my_cyan/256.
+antigen_color = my_yellow/256.
 
 transparency_n = [1]
 
-#colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
-#colors_kappa = ['tab:blue','tab:green','tab:red']
-#colors_R = [['tab:grey', 'tab:green', 'tab:green', 'tab:green'], ['tab:grey', 'tab:green', 'tab:green', 'tab:green'], ['tab:grey', 'tab:red', 'tab:red', 'tab:red']]
-
-color_list = np.array([(76,109,166),(215,139,45),(125,165,38),(228,75,41),(116,97,164),(182,90,36),(80,141,188),(246,181,56),(125,64,119),(158,248,72)])
-color_list = np.array([(228,75,41), (125,165,38), (76,109,166), (215,139,45)])
-color_list = np.array([my_purple,my_green,my_blue,my_yellow])
+color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_brown, my_blue2, my_yellow, my_purple, my_green2])#
+#color_list = np.array([(228,75,41), (125,165,38), (76,109,166), (215,139,45)])
+color_list = np.array([my_red, my_green, my_blue2, my_gold])
 
 #colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
 #colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
 colors_kappa = []
 for i in range(len(color_list)):
-        colors_kappa.append(np.array(color_list[i])/256.)
+        colors_kappa.append(np.array(color_list[i]))
 
 #colors_R = [['tab:grey', 'tab:grey', 'tab:blue', 'tab:blue'], ['tab:grey', 'tab:grey', 'tab:green', 'tab:green'], ['tab:grey', 'tab:grey', 'tab:red', 'tab:red'], ['tab:red', 'tab:red', 'tab:red', 'tab:red']]
 colors_R = []

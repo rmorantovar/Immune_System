@@ -20,34 +20,33 @@ k_pr = 1
 #k_pr = 180 # hour^-1
 k_pr = k_pr*24 #days^-1
 
-kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
-kappas = [1.4, 1.8, 2.2]
 kappas = [1, 2, 3, 4]
 
-my_red = np.array((228,75,41))
-my_purple = np.array((125,64,119))
-my_green = np.array((125,165,38))
-my_blue = np.array((76,109,166))
-my_yellow = np.array((215,139,45))
-my_cyan = np.array((246,181,56))
+my_red = np.array((228,75,41))/256.
+my_purple = np.array((125,64,119))/256.
+my_purple2 = np.array((116,97,164))/256.
+my_green = np.array((125,165,38))/256.
+my_blue = np.array((76,109,166))/256.
+my_gold = np.array((215,139,45))/256.
+my_brown = np.array((182,90,36))/256.
+my_blue2 = np.array((80,141,188))/256.
+my_yellow = np.array((246,181,56))/256.
+my_green2 = np.array((158,248,72))/256.
+my_cyan = 'tab:cyan'
 
-antigen_color = my_cyan/256.
+antigen_color = my_yellow/256.
 
 transparency_n = [1]
 
-#colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
-#colors_kappa = ['tab:blue','tab:green','tab:red']
-#colors_R = [['tab:grey', 'tab:green', 'tab:green', 'tab:green'], ['tab:grey', 'tab:green', 'tab:green', 'tab:green'], ['tab:grey', 'tab:red', 'tab:red', 'tab:red']]
-
-color_list = np.array([(76,109,166),(215,139,45),(125,165,38),(228,75,41),(116,97,164),(182,90,36),(80,141,188),(246,181,56),(125,64,119),(158,248,72)])
-color_list = np.array([(228,75,41), (125,165,38), (76,109,166), (215,139,45)])
-color_list = np.array([my_purple,my_green,my_blue,my_yellow])
+color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_brown, my_blue2, my_yellow, my_purple, my_green2])#
+#color_list = np.array([(228,75,41), (125,165,38), (76,109,166), (215,139,45)])
+color_list = np.array([my_red, my_green, my_blue2, my_gold])
 
 #colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
 #colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
 colors_kappa = []
 for i in range(len(color_list)):
-        colors_kappa.append(np.array(color_list[i])/256.)
+        colors_kappa.append(np.array(color_list[i]))
 
 #colors_R = [['tab:grey', 'tab:grey', 'tab:blue', 'tab:blue'], ['tab:grey', 'tab:grey', 'tab:green', 'tab:green'], ['tab:grey', 'tab:grey', 'tab:red', 'tab:red'], ['tab:red', 'tab:red', 'tab:red', 'tab:red']]
 colors_R = []
@@ -102,28 +101,22 @@ print('beta_pr = %.2f'%beta_pr)
 
 t_prime = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*N_c))
 print('--------')
-print('Loops...')
 
-
-min_E = -17.3
-max_E = -8
+min_E = -17.8
+max_E = -6
 
 fig, ax = plt.subplots(figsize = (18, 1), linewidth = 6, gridspec_kw={'left':0.06, 'right':.94, 'bottom':.01, 'top': .44})
-col_map = plt.get_cmap('autumn')
+col_map = plt.get_cmap('gist_gray')
 #mpl.colorbar.ColorbarBase(ax, cmap=col_map, orientation = 'vertical')
-
-# As for a more fancy example, you can also give an axes by hand:
-#c_map_ax = fig.add_axes([0.2, 0.8, 0.6, 0.02])
-#c_map_ax.axes.get_xaxis().set_visible(False)
-#c_map_ax.axes.get_yaxis().set_visible(False)
-
 # and create another colorbar with:
-mpl.colorbar.ColorbarBase(ax, cmap=col_map, orientation = 'horizontal')
-ax.xaxis.tick_top()
-ax.set_xticks(np.linspace(0, 1, 5))
+colorbar = mpl.colorbar.ColorbarBase(ax, cmap=col_map, orientation = 'horizontal')
+colorbar.set_ticks(np.linspace(0, 1, 5))
+#ax.set_xticks(np.linspace(0, 1, 5))
 ax.set_xticklabels([r'$%.0e$'%(np.exp(min_E + i*(max_E - min_E)/4)) for i in np.arange(0, 5, 1)], fontsize = 38)
+ax.xaxis.tick_top()
 fig.savefig("../../Figures/1_Dynamics/Trajectories/Muller/colorbar.pdf")
 
+print('Loops...')
 #--------------------------Loops--------------------------
 for i_kappa, kappa in enumerate(kappas):
 	print('--------')
@@ -181,16 +174,16 @@ for i_kappa, kappa in enumerate(kappas):
 		entropy = -np.sum(bcell_freqs*np.log(bcell_freqs), axis = 0)
 
 		#------------------------- Stackplots -------------------------
-		greys = plt.cm.get_cmap('autumn_r', 50)
+		greys = plt.cm.get_cmap('gist_gray_r', 50)
 		min_bell_freq = np.min(bcell_freqs[:,-1])
 		
 		
 		delta_E = max_E - min_E
 		for c in np.flip(range(len(clone_sizes_C[:,0]))):
-			color_c = greys(int(50*(1-abs((energies_C[c]-min_E)/max_E))))
+			color_c = greys(int(50*(1-abs((energies_C[c]-min_E)/delta_E))))
 			ax_muller.stackplot(time, [(bcell_freqs[c, -1] - bcell_freqs[c, :])/2 + np.ones_like(bcell_freqs[0, :])*np.sum(bcell_freqs[:c, -1]), bcell_freqs[c, :], (bcell_freqs[c, -1] - bcell_freqs[c, :])/2], colors = ['white', color_c, 'white']);
 			if bcell_freqs[c, -1]>(0.10):
-				ax_muller.scatter(activation_times_C[c], (bcell_freqs[c, -1] - bcell_freqs[c, 0])/2 + np.sum(bcell_freqs[:c, -1]), marker = 'D', edgecolor='black', linewidth=1, facecolor = colors_kappa[i_kappa], s = 50)
+				ax_muller.scatter(activation_times_C[c], (bcell_freqs[c, -1] - bcell_freqs[c, 0])/2 + np.sum(bcell_freqs[:c, -1]), marker = 'D', edgecolor='black', linewidth=1, facecolor = colors_kappa[i_kappa], s = 60)
 
 		# for c in np.invert(range(len(clone_sizes_C[:,0]))):
 		# 	if bcell_freqs[c, -1]>(0.05):

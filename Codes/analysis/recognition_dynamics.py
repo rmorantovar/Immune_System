@@ -20,28 +20,33 @@ k_pr = k_pr*24 #days^-1
 
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
-kappas = [1, 2, 3, 4]
+kappas = [1, 2, 3]
 
-my_red = np.array((228,75,41))
-my_purple = np.array((125,64,119))
-my_green = np.array((125,165,38))
-my_blue = np.array((76,109,166))
-my_yellow = np.array((215,139,45))
-my_cyan = np.array((158,248,72))
+my_red = np.array((228,75,41))/256.
+my_purple = np.array((125,64,119))/256.
+my_purple2 = np.array((116,97,164))/256.
+my_green = np.array((125,165,38))/256.
+my_blue = np.array((76,109,166))/256.
+my_gold = np.array((215,139,45))/256.
+my_brown = np.array((182,90,36))/256.
+my_blue2 = np.array((80,141,188))/256.
+my_yellow = np.array((246,181,56))/256.
+my_green2 = np.array((158,248,72))/256.
+my_cyan = 'tab:cyan'
 
-antigen_color = my_cyan/256.
+antigen_color = my_yellow/256.
 
 transparency_n = [1]
 
-color_list = np.array([(76,109,166),(215,139,45),(125,165,38),(228,75,41),(116,97,164),(182,90,36),(80,141,188),(246,181,56),(125,64,119),(158,248,72)])
-color_list = np.array([(228,75,41), (125,165,38), (76,109,166), (215,139,45)])
-color_list = np.array([my_purple,my_green,my_blue,my_yellow])
+color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_brown, my_blue2, my_yellow, my_purple, my_green2])#
+#color_list = np.array([(228,75,41), (125,165,38), (76,109,166), (215,139,45)])
+color_list = np.array([my_red, my_green, my_blue2, my_gold])
 
 #colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
 #colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
 colors_kappa = []
 for i in range(len(color_list)):
-        colors_kappa.append(np.array(color_list[i])/256.)
+        colors_kappa.append(np.array(color_list[i]))
 
 #colors_R = [['tab:grey', 'tab:grey', 'tab:blue', 'tab:blue'], ['tab:grey', 'tab:grey', 'tab:green', 'tab:green'], ['tab:grey', 'tab:grey', 'tab:red', 'tab:red'], ['tab:red', 'tab:red', 'tab:red', 'tab:red']]
 colors_R = []
@@ -142,7 +147,7 @@ for N_r in N_rs:
         m_bar = np.array([np.sum(N_r*calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*(t))/N_A, Es, kappa, lambda_A, N_c, dE)[3]*dE) for t in time]) 
         m_bar_approx = ((k_on*M_r)/(N_A*lambda_A))*(np.exp(lambda_A*time))
 
-        ax_m_bar.plot(time, m_bar, linewidth = 4, linestyle = '-', color = tuple(colors_kappa[i_kappa]))
+        ax_m_bar.plot(time, m_bar, linewidth = 4, linestyle = '-', color = colors_kappa[i_kappa])
         ax_m_bar.plot(time, m_bar_approx, linewidth = 3, linestyle = '--', color = 'black')
         ax_m_bar.hlines(1, T0, Tf, color = 'grey', linestyle = ':')
         t_act = time[m_bar>1][0]
