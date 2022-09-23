@@ -135,7 +135,8 @@ for i_kappa, kappa in enumerate(kappas):
 		#-------Simulations-------
 		Kds_C = np.exp(energies_C)
 		total_size = np.sum(clone_sizes_C, axis = 0)
-		entropy_i = -np.array([np.sum((clone_sizes_C[:, t]/total_size[t])*np.log(clone_sizes_C[:, t]/total_size[t])) for t in range(len(time))])
+		entropy_i = -np.array([np.sum(((clone_sizes_C[:, t]-np.ones_like(clone_sizes_C[:, t]))/total_size[t])*np.log((clone_sizes_C[:, t]-np.ones_like(clone_sizes_C[:, t]))/total_size[t])) for t in range(len(time))])
+		entropy_i = np.nan_to_num(entropy_i, nan = 0, posinf = 0, neginf = 0)
 		entropy += entropy_i
 		if(i_ens%1==0):
 			ax_entropy.plot(time, entropy_i, color = colors_kappa[  i_kappa], alpha = .1, linewidth = 1)
@@ -146,7 +147,7 @@ for i_kappa, kappa in enumerate(kappas):
 my_plot_layout(ax = ax_entropy, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_entropy.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
 #ax_entropy.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
-#ax_entropy.set_ylim(bottom = -10)
+ax_entropy.set_ylim(bottom = 0)
 #ax_entropy.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_entropy.set_yticklabels([1, 0.1, 0.01])
 fig_entropy.savefig('../../Figures/1_Dynamics/Ensemble/Entropy_'+energy_model+'.pdf')

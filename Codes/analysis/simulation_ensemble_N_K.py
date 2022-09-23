@@ -21,7 +21,7 @@ k_pr = k_pr*24 #days^-1
 
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
-kappas = [2, 3]
+kappas = [2, 3, 4]
 #kappas = [3]
 
 my_red = np.array((228,75,41))/256.

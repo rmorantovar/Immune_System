@@ -103,6 +103,7 @@ t_prime = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*N_c))
 print('--------')
 
 min_E = -17.8
+min_E = -19
 max_E = -6
 
 fig, ax = plt.subplots(figsize = (18, 1), linewidth = 6, gridspec_kw={'left':0.06, 'right':.94, 'bottom':.01, 'top': .44})
@@ -123,8 +124,11 @@ for i_kappa, kappa in enumerate(kappas):
 	print('kappa = %.2f...'%kappa)
 	beta_kappa, E_kappa, Kd_kappa = get_kappa_properties(betas, Q0, Es, dE, kappa)
 	for rep in range(1):
-		fig_muller, ax_muller = plt.subplots(figsize=(18,4), linewidth = 20, gridspec_kw={'left':0.02, 'right':.98, 'bottom':.1, 'top': 0.96}, dpi = 700)
-
+		fig_muller, ax_muller = plt.subplots(figsize=(18,4), linewidth = 0, gridspec_kw={'left':0.005, 'right':.995, 'bottom':.02, 'top': 0.98}, dpi = 700, edgecolor = 'black')
+		ax_muller.spines["top"].set_linewidth(3)
+		ax_muller.spines["left"].set_linewidth(3)
+		ax_muller.spines["right"].set_linewidth(3)
+		ax_muller.spines["bottom"].set_linewidth(3)
 		#-----------------Loading data----------------------------
 		parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
 		#data = pd.read_csv(Text_files_path + 'Dynamics/Trajectories/'+parameters_path+'/energies%d.txt'%rep, sep = '\t', header=None)
