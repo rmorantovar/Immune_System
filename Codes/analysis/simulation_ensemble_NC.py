@@ -105,6 +105,7 @@ print('--------')
 print('Loops...')
 #--------------------------Loops--------------------------
 fig_NC, ax_NC = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+fig_NC_distribution, ax_NC_distribution = plt.subplots(figsize=(8,2), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 for i_kappa, kappa in enumerate(kappas):
 
 	print('--------')
@@ -117,6 +118,7 @@ for i_kappa, kappa in enumerate(kappas):
 	data = get_data_ensemble(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
 
 	NC = np.zeros_like(time)
+	NC_final = []
 	for i_ens in tqdm(np.arange(N_ens)):
 		data_i = data.loc[data[4]==i_ens]
 		data_active = data_i.loc[data_i[1]==1]
@@ -136,16 +138,28 @@ for i_kappa, kappa in enumerate(kappas):
 		Kds_C = np.exp(energies_C)
 		NC_i = np.log(1-np.array([np.product(1-1/(1+(Kds_C/((1e12*(clone_sizes_C[:,t]-1))/N_A)))) for t in np.arange(len(time))]))
 		NC += NC_i
+		NC_final.append(NC_i[-1])
 		if(i_ens%1==0):
 			ax_NC.plot(time, NC_i, color = colors_kappa[i_kappa], alpha = .1, linewidth = 1)
 
 	NC = NC/N_ens
 	ax_NC.plot(time, NC, color = colors_kappa[i_kappa], alpha = 1, label = r'$%d$'%kappa, linewidth = 5)
+	ax_NC_distribution.hist(-np.array(NC_final), color = colors_kappa[i_kappa], bins = 'auto', density = True)
+
+my_plot_layout(ax = ax_NC_distribution, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+#ax_NC_distribution.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
+#ax_NC_distribution.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
+#ax_NC_distribution.set_ylim(bottom = -10)
+ax_NC_distribution.set_xlim(left = -0.01, right = 10)
+ax_NC_distribution.set_xticks([])
+ax_NC_distribution.set_yticks([])
+#ax_NC_distribution.set_yticklabels([1, 0.1, 0.01])
+fig_NC_distribution.savefig('../../Figures/1_Dynamics/Ensemble/NC_histograms_'+energy_model+'.pdf')
 
 my_plot_layout(ax = ax_NC, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_NC.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
 #ax_NC.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
-ax_NC.set_ylim(bottom = -10)
+ax_NC.set_ylim(bottom = -10, top = 0.01)
 #ax_NC.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_NC.set_yticklabels([1, 0.1, 0.01])
 fig_NC.savefig('../../Figures/1_Dynamics/Ensemble/NC_'+energy_model+'.pdf')

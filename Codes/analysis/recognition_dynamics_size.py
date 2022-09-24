@@ -111,8 +111,8 @@ for N_r in N_rs:
     beta_r, E_r, Kd_r = get_repertoire_properties(betas, Q0, Es, dE, N_r)
     print('beta_r = %.1f'%beta_r)
 
-    ax_QRT_all.plot(Kds, Q0*N_r, alpha = 1, color = 'grey', linewidth = 5, linestyle = '--')
-    ax_QRT_all.vlines(Kd_r, Q0[Kds==Kd_r]*N_r, 1e30, alpha = 1, color = 'grey', linewidth = 2, linestyle = ':')
+    ax_QRT_all.plot(Kds, Q0, alpha = 1, color = 'grey', linewidth = 5, linestyle = '--')
+    #ax_QRT_all.vlines(Kd_r, Q0[Kds==Kd_r]*N_r, 1, alpha = 1, color = 'grey', linewidth = 2, linestyle = ':')
     for i_kappa, kappa in enumerate(kappas):
         print('--------')
         print('kappa = %.2f...'%kappa)
@@ -127,7 +127,7 @@ for N_r in N_rs:
         time1 = np.linspace(0, t_n, 100)
         time2 = np.linspace(t_n, Tf, 100)
 
-        ax_QRT.plot(Kds, Q0*N_r, alpha = transparency_n[0], color = 'grey', linewidth = 5, linestyle = '-')
+        ax_QRT.plot(Kds, Q0, alpha = transparency_n[0], color = 'grey', linewidth = 5, linestyle = '-')
 
         ax_QRT2.plot(Kds, Q0, alpha = .8, color = 'grey', linewidth = 5, linestyle = '-')
         ax_QRT2.vlines([Kd_r], 0, 0.355, alpha = 1, color = 'black', linestyle = '--', linewidth = 5)
@@ -154,22 +154,24 @@ for N_r in N_rs:
             #----------------------------------------------------------------
             #--------------------------QR_all(E, t)---------------------------
             if i_t==3:
-                ax_QRT.plot(Kds, QR*N_r*np.exp(-Es[:-1]*lambda_B*kappa/lambda_A)/np.exp(Es[:-1]), alpha = transparency_n[0], color = colors_R[i_kappa][i_t], linewidth = 5, linestyle = '-')
+                QRT = QR*N_r*np.exp(-Es[:-1]*lambda_B*kappa/lambda_A)/np.exp(Es[:-1])
+                ax_QRT.plot(Kds, QRT/np.sum(QRT*dE), alpha = transparency_n[0], color = colors_R[i_kappa][i_t], linewidth = 5, linestyle = '-')
 
-                ax_QRT_all.plot(Kds, QR*N_r*np.exp(-Es[:-1]*lambda_B*kappa/lambda_A)/np.exp(Es[:-1]), alpha = transparency_n[0], color = colors_kappa[i_kappa], linewidth = 5, linestyle = '-', label = r'$%d$'%(kappa))
+                ax_QRT_all.plot(Kds, QRT/np.sum(QRT*dE), alpha = transparency_n[0], color = colors_kappa[i_kappa], linewidth = 5, linestyle = '-', label = r'$%d$'%(kappa))
                 #ax_QRT_all.plot(Kds[QR==np.max(QR)], (Q0*N_r)[QR==np.max(QR)], alpha = transparency_n[0], color = colors_kappa[i_kappa], marker = 'o', ms = 12)
                 #ax_QRT_all.vlines(Kds[Kds==Kd_kappa], 1e-9, (QR*N_r)[Kds==Kd_kappa], alpha = transparency_n[0], color = colors_kappa[i_kappa], linewidth = 1.5, linestyle = '--')
 
             else:
                 #--------------------------R(E, t) and QR(E, t)---------------------------
-                ax_QRT.plot(Kds, QR*N_r*np.exp(-Es[:-1]*lambda_B*kappa/lambda_A)/np.exp(Es[:-1]), alpha = transparency_n[0], color = colors_R[i_kappa][i_t], linewidth = 4, linestyle = '--')
+                QRT = QR*N_r*np.exp(-Es[:-1]*lambda_B*kappa/lambda_A)/np.exp(Es[:-1])
+                ax_QRT.plot(Kds, QRT/np.sum(QRT*dE), alpha = transparency_n[0], color = colors_R[i_kappa][i_t], linewidth = 4, linestyle = '--')
                 #-------FOR Q0--------- 
                 #ax_QRT.vlines(Kd_r, 0, .5, color = 'black', linestyle = 'dashed')
                 #ax_QRT.vlines([Kd_kappa, Kd_1], ax_QRT.get_ylim()[0], N_r*Q0[Kds<np.exp(E_n)][-1], color = 'grey', linestyle = 'dotted', linewidth = 4)       
                 #ax_Q_act.hlines(N_r*Q0[Ks<np.exp(E_r)][-1], ax_Q_act.get_xlim()[0], np.exp(E_r), alpha = 1, color = 'black', linestyle = ':')
 
-        
-        ax_QRT2.plot(Kds, (QR*np.exp(-Es[:-1]*lambda_B*kappa/lambda_A)/np.exp(Es[:-1]))/np.sum(QR*np.exp(-Es[:-1]*lambda_B*kappa/lambda_A)/np.exp(Es[:-1])*dE), alpha = transparency_n[0], color = colors_R[i_kappa][i_t], linewidth = 5, linestyle = '-')
+        QRT = QR*N_r*np.exp(-Es[:-1]*lambda_B*kappa/lambda_A)/np.exp(Es[:-1])
+        ax_QRT2.plot(Kds, QRT/np.sum(QRT*dE), alpha = transparency_n[0], color = colors_R[i_kappa][i_t], linewidth = 5, linestyle = '-')
 
         my_plot_layout(ax=ax_QRT, yscale = 'log', xscale = 'log', ticks_labelsize = 38)
         #ax_QRT.set_xticks([])
