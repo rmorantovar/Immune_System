@@ -213,7 +213,7 @@ for i_kappa, kappa in enumerate(kappas):
 		ax_muller.set_xlim(T0, Tf)
 		ax_muller.set_ylim(0, 1)
 		fig_muller.savefig('../../Figures/1_Dynamics/Trajectories/Muller/B_cell_clones_kappa-%.2f_%d_'%(kappa, rep)+energy_model+'.pdf', edgecolor=fig_muller.get_edgecolor())
-		fig_muller.savefig('../../Figures/1_Dynamics/Trajectories/Muller/B_cell_clones_kappa-%.2f_%d_'%(kappa, rep)+energy_model+'.png', edgecolor=fig_muller.get_edgecolor())
+		#fig_muller.savefig('../../Figures/1_Dynamics/Trajectories/Muller/B_cell_clones_kappa-%.2f_%d_'%(kappa, rep)+energy_model+'.png', edgecolor=fig_muller.get_edgecolor())
 		plt.close(fig_muller)
 
 

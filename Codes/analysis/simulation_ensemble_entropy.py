@@ -138,8 +138,8 @@ for i_kappa, kappa in enumerate(kappas):
 		entropy_i = -np.array([np.sum(((clone_sizes_C[:, t]-np.ones_like(clone_sizes_C[:, t]))/total_size[t])*np.log((clone_sizes_C[:, t]-np.ones_like(clone_sizes_C[:, t]))/total_size[t])) for t in range(len(time))])
 		entropy_i = np.nan_to_num(entropy_i, nan = 0, posinf = 0, neginf = 0)
 		entropy += entropy_i
-		if(i_ens%1==0):
-			ax_entropy.plot(time, entropy_i, color = colors_kappa[  i_kappa], alpha = .1, linewidth = 1)
+		#if(i_ens%1==0):
+		#	ax_entropy.plot(time, entropy_i, color = colors_kappa[  i_kappa], alpha = .1, linewidth = 1)
 
 	entropy = entropy/N_ens
 	ax_entropy.plot(time, entropy, color = colors_kappa[  i_kappa], alpha = 1, label = r'$%d$'%kappa, linewidth = 5)

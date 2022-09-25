@@ -139,8 +139,8 @@ for i_kappa, kappa in enumerate(kappas):
 		NC_i = np.log(1-np.array([np.product(1-1/(1+(Kds_C/((1e12*(clone_sizes_C[:,t]-1))/N_A)))) for t in np.arange(len(time))]))
 		NC += NC_i
 		NC_final.append(NC_i[-1])
-		if(i_ens%1==0):
-			ax_NC.plot(time, NC_i, color = colors_kappa[i_kappa], alpha = .1, linewidth = 1)
+		#if(i_ens%1==0):
+		#	ax_NC.plot(time, NC_i, color = colors_kappa[i_kappa], alpha = .1, linewidth = 1)
 
 	NC = NC/N_ens
 	ax_NC.plot(time, NC, color = colors_kappa[i_kappa], alpha = 1, label = r'$%d$'%kappa, linewidth = 5)
