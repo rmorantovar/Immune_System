@@ -287,6 +287,10 @@ def P_min_e(N, avg_E, var_E, Es, dE):
 
     return (N*(1-np.cumsum(P_e_gaussian(avg_E, var_E, Es)*dE))**(N-1)*(P_e_gaussian(avg_E, var_E, Es)))
 
+def P_min_e_Q0(N, Q0, dE):
+
+    return (N*(1-np.cumsum(Q0*dE))**(N-1)*(Q0))
+
 def apply_filter_C(clone_sizes, activation_times, energies, lim_size):
 	filter_C = clone_sizes[:, -1] > lim_size
 	n_C = np.sum(filter_C)

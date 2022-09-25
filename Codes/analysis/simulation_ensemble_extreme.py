@@ -22,7 +22,7 @@ k_pr = k_pr*24 #days^-1
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
 kappas = [1, 2, 3]
-kappas = [2, 3]
+kappas = [1, 2, 3]
 
 
 my_red = np.array((228,75,41))/256.
@@ -91,6 +91,9 @@ print('mean_e_PWM=%.4f'%(np.sum([np.mean(PWM_data[:,i]) for i in range(len(PWM_d
 for i in np.arange(L):
     PWM_data[:,i]-=np.min(PWM_data[:,i], axis=0)
 
+avg_E = np.sum([np.mean(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))]) + E_ms
+var_E = np.sum([np.var(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))])
+
 #--------------------------Entropy function--------------------------
 Es, dE, Q0, betas = calculate_Q0(0.01, 50, 400000, PWM_data, E_ms, L)
 Kds = np.exp(Es[:-1])
@@ -107,16 +110,19 @@ t_prime = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*N_c))
 print('--------')
 print('Loops...')
 #--------------------------Loops--------------------------
-fig_biggest_all, ax_biggest_all = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 fig_best_all, ax_best_all = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 
+best_clones = []
+
+ax_best_all.plot(Kds,  Q0, alpha = 1, color = 'grey', linewidth = 5, linestyle = '--')
+
 for i_kappa, kappa in enumerate((kappas)):
-    fig_biggest, ax_biggest = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
     fig_best, ax_best = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
     print('--------')
     print('kappa = %.2f...'%kappa)
     beta_kappa, E_kappa, Kd_kappa = get_kappa_properties(betas, Q0, Es, dE, kappa)
     beta_act = np.min([beta_r, beta_kappa])
+    ax_best.plot(Kds, Q0, alpha = 1, color = 'grey', linewidth = 5, linestyle = '--')
 
     #-----------------Loading data----------------------------
     parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
@@ -124,8 +130,7 @@ for i_kappa, kappa in enumerate((kappas)):
     data = get_data_ensemble(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
 
     #activation_times_total = np.array([])
-    biggest_clones = []
-    best_clones = []
+    best_clones_p = []
     for i_ens in tqdm(np.arange(N_ens)):
         data_i = data.loc[data[4]==i_ens]
         data_active = data_i.loc[data_i[1]==1]
@@ -134,51 +139,32 @@ for i_kappa, kappa in enumerate((kappas)):
         activation_times = np.array(data_active[3])
         energies  = np.array(data_active[0])
 
-        #---------------------------- B cell linages ----------------------
-        clone_sizes = get_clones_sizes_C(len(activation_times), time, activation_times, lambda_B, C, dT)
+        best_clones_p.append(np.min(energies))
+        best_clones.append(np.min(energies))
 
-        #--------------------------t_C filter-------------------------
-        lim_size = 2
-        clone_sizes_C, activation_times_C, energies_C, filter_C, n_C = apply_filter_C(clone_sizes, activation_times, energies, lim_size)
-        
-        biggest_clones.append(np.max(clone_sizes_C[:, -1]))
-        best_clones.append(np.min(energies_C))
 
-    
-    ax_biggest.hist(np.array(biggest_clones), bins = np.logspace(np.log10(1e2), np.log10(3e4), 20), density = False, color = colors_kappa[i_kappa], label = r'$%d$'%kappa)
-    ax_best.hist(np.exp(best_clones), bins = np.logspace(np.log10(3e-9), np.log10(7e-8), 12), density = False, color = colors_kappa[i_kappa], label = r'$%d$'%kappa)
+    bata_best = np.histogram(np.exp(best_clones_p), bins = np.logspace(np.log10(3e-9), np.log10(7e-8), 10), density = False)
+    ax_best.plot(bata_best[1][:-1], bata_best[0]/len(best_clones_p), linestyle = '', marker = 's', color = 'black', ms = 12)
+    #ax_best.plot(Kds, P_min_e(N_r, avg_E, var_E, Es[:-1], dE), linestyle = '--', marker = '',  color = 'black', ms = 2, linewidth = 4)
+    ax_best.plot(Kds, P_min_e_Q0(N_r, Q0, dE), linestyle = '--', marker = '',  color = 'black', ms = 2, linewidth = 4, alpha = .8)
 
-    ax_biggest_all.hist(np.array(biggest_clones), bins = np.logspace(np.log10(1e2), np.log10(3e4), 12), density = False, color = colors_kappa[i_kappa], label = r'$%d$'%kappa)
-    ax_best_all.hist(np.exp(best_clones), bins = np.logspace(np.log10(3e-9), np.log10(7e-8), 12), density = False, color = colors_kappa[i_kappa], label = r'$%d$'%kappa)
-
-    my_plot_layout(ax = ax_biggest, xscale='log', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-    ax_biggest.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
-    #ax_biggest.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
-    #ax_biggest.set_ylim(bottom = 2e-2)
-    #ax_biggest.set_yticks([1, 0.1, 0.01, 0.001])
-    #ax_biggest.set_yticklabels([1, 0.1, 0.01])
-    fig_biggest.savefig('../../Figures/1_Dynamics/Ensemble/Biggest_p-%.2f'%(kappa)+'_'+energy_model+'.pdf')
-
-    my_plot_layout(ax = ax_best, xscale='log', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+    my_plot_layout(ax = ax_best, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
     ax_best.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
-    #ax_best.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
-    #ax_best.set_ylim(bottom = 2e-2)
+    #ax_best.set_xlim(right = 1e-2)
+    ax_best.set_ylim(bottom = 1e-3, top = 1)
     #ax_best.set_yticks([1, 0.1, 0.01, 0.001])
     #ax_best.set_yticklabels([1, 0.1, 0.01])
     fig_best.savefig('../../Figures/1_Dynamics/Ensemble/Best_p-%.2f'%(kappa)+'_'+energy_model+'.pdf')
 
-my_plot_layout(ax = ax_biggest_all, xscale='log', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-ax_biggest_all.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
-#ax_biggest_all.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
-#ax_biggest_all.set_ylim(bottom = 2e-2)
-#ax_biggest_all.set_yticks([1, 0.1, 0.01, 0.001])
-#ax_biggest_all.set_yticklabels([1, 0.1, 0.01])
-fig_biggest_all.savefig('../../Figures/1_Dynamics/Ensemble/Biggest_'+energy_model+'.pdf')
+bata_best = np.histogram(np.exp(best_clones), bins = np.logspace(np.log10(3e-9), np.log10(7e-8), 10), density = False)
+ax_best_all.plot(bata_best[1][:-1], bata_best[0]/len(best_clones), linestyle = '', marker = 's', color = 'black', ms = 12)
+#ax_best_all.plot(Kds, P_min_e(N_r, avg_E, var_E, Es[:-1], dE), linestyle = '--', marker = '',  color = 'black', ms = 2, linewidth = 4)
+ax_best_all.plot(Kds, P_min_e_Q0(N_r, Q0, dE), linestyle = '--', marker = '',  color = 'black', ms = 2, linewidth = 4, alpha = .8)
 
-my_plot_layout(ax = ax_best_all, xscale='log', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+my_plot_layout(ax = ax_best_all, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_best_all.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
-#ax_best_all.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
-#ax_best_all.set_ylim(bottom = 2e-2)
+#ax_best_all.set_xlim(right = 1e-2)
+ax_best_all.set_ylim(bottom = 1e-3, top = 1)
 #ax_best_all.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_best_all.set_yticklabels([1, 0.1, 0.01])
 fig_best_all.savefig('../../Figures/1_Dynamics/Ensemble/best'+energy_model+'.pdf')
