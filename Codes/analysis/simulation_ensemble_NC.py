@@ -10,7 +10,7 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 N_ens = 100
 N_r = 2e8
 T0 = 3
-Tf = 8
+Tf = 10
 Tf_sim = 7
 #Tf = 10
 dT = 0.05
@@ -21,7 +21,8 @@ k_pr = k_pr*24 #days^-1
 
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
-kappas = [1, 2, 3]
+kappas = [1, 2, 3, 4]
+#kappas = [3]
 
 my_red = np.array((228,75,41))/256.
 my_purple = np.array((125,64,119))/256.
@@ -42,6 +43,7 @@ transparency_n = [1]
 color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_brown, my_blue2, my_yellow, my_purple, my_green2])#
 #color_list = np.array([(228,75,41), (125,165,38), (76,109,166), (215,139,45)])
 color_list = np.array([my_red, my_green, my_blue2, my_gold])
+#color_list = np.array([my_blue2, my_gold])
 
 #colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
 #colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
@@ -60,6 +62,7 @@ N_c = 1e5
 #N_c = 1e5
 E_ms = -27.63
 C = 3e4
+AA = 1
 
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
 energy_models = ['MJ']
@@ -105,7 +108,7 @@ print('--------')
 print('Loops...')
 #--------------------------Loops--------------------------
 fig_NC, ax_NC = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-fig_NC_distribution, ax_NC_distribution = plt.subplots(figsize=(8,2), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+fig_NC_distribution, ax_NC_distribution = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 for i_kappa, kappa in enumerate(kappas):
 
 	print('--------')
@@ -123,7 +126,7 @@ for i_kappa, kappa in enumerate(kappas):
 		data_i = data.loc[data[4]==i_ens]
 		data_active = data_i.loc[data_i[1]==1]
 		t_act_data = np.min(data_active[3])
-		data_active = data_active.loc[data_active[3]<(t_act_data+1.2)]
+		data_active = data_active.loc[data_active[3]<(t_act_data+1.1)]
 		activation_times = np.array(data_active[3])
 		energies  = np.array(data_active[0])
 
@@ -136,30 +139,41 @@ for i_kappa, kappa in enumerate(kappas):
 
 		#-------Simulations-------
 		Kds_C = np.exp(energies_C)
-		NC_i = np.log(1-np.array([np.product(1-1/(1+(Kds_C/((1e12*(clone_sizes_C[:,t]-1))/N_A)))) for t in np.arange(len(time))]))
+		NC_i = np.log(1-np.array([np.product(1-1/(1+(Kds_C/((AA*(clone_sizes_C[:,t]-1))/N_A)))) for t in np.arange(len(time))]))
 		NC += NC_i
 		NC_final.append(NC_i[-1])
 		#if(i_ens%1==0):
 		#	ax_NC.plot(time, NC_i, color = colors_kappa[i_kappa], alpha = .1, linewidth = 1)
 
 	NC = NC/N_ens
-	ax_NC.plot(time, NC, color = colors_kappa[i_kappa], alpha = 1, label = r'$%d$'%kappa, linewidth = 5)
-	ax_NC_distribution.hist(-np.array(NC_final), color = colors_kappa[i_kappa], bins = 'auto', density = True)
+	if(i_kappa==0):
+		normalization = NC[-1]
+	ax_NC.plot(time, NC-normalization, color = colors_kappa[i_kappa], alpha = 1, label = r'$%d$'%kappa, linewidth = 5)
+
+	NC_data = np.histogram(np.array(NC_final)-normalization, bins = np.linspace(-4, 8, 24), density = False)
+	ax_NC_distribution.plot(NC_data[1][:-1], np.cumsum(NC_data[0]/N_ens), color = colors_kappa[i_kappa], linestyle='', marker = 'D', label = r'$%d$'%kappa)
+	#Nb = np.exp(lambda_B*Tf)*((k_on*N_c)/(lambda_A*N_A))**(lambda_B/lambda_A)*(k_pr/k_on)**(kappa*lambda_B/lambda_A)*Kds**(-kappa*lambda_B/lambda_A)
+
+Nb = C
+NC_array = np.log(1/(1+(Kds/((AA*(Nb))/N_A))))
+p_NC = P_min_e_Q0(N_r, Q0, dE)*(Nb*AA/N_A)/NC_array**2
+p_NC = p_NC/np.sum(p_NC[:-1]*abs(np.diff(NC_array)))
+ax_NC_distribution.plot(np.flip(NC_array[:-1]-normalization), np.cumsum(np.flip(p_NC[:-1])*abs(np.diff(np.flip(NC_array)))), linestyle = '--', marker = '',  color = 'black', ms = 2, linewidth = 4, alpha = .8, label = 'Gumbel')
 
 my_plot_layout(ax = ax_NC_distribution, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-#ax_NC_distribution.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
+ax_NC_distribution.legend(fontsize = 32, title_fontsize = 34, title = r'$p$', loc = 4)
 #ax_NC_distribution.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
-#ax_NC_distribution.set_ylim(bottom = -10)
-ax_NC_distribution.set_xlim(left = -0.01, right = 10)
-ax_NC_distribution.set_xticks([])
-ax_NC_distribution.set_yticks([])
+#ax_NC_distribution.set_ylim(bottom = 1e-3, top = 1)
+ax_NC_distribution.set_xlim(left = -3, right = 8.5)
+#ax_NC_distribution.set_xticks([])
+#ax_NC_distribution.set_yticks([])
 #ax_NC_distribution.set_yticklabels([1, 0.1, 0.01])
 fig_NC_distribution.savefig('../../Figures/1_Dynamics/Ensemble/NC_histograms_'+energy_model+'.pdf')
 
 my_plot_layout(ax = ax_NC, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_NC.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
 #ax_NC.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
-ax_NC.set_ylim(bottom = -10, top = 0.01)
+ax_NC.set_ylim(bottom = -2, top = 4.5)
 #ax_NC.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_NC.set_yticklabels([1, 0.1, 0.01])
 fig_NC.savefig('../../Figures/1_Dynamics/Ensemble/NC_'+energy_model+'.pdf')

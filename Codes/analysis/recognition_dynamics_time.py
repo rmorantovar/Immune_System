@@ -180,8 +180,8 @@ for N_r in N_rs:
 
         ax_N_b.plot(time, clone_sizes_C_sorted[-1, :], linewidth = 5, color = colors_R[i_kappa][2])
         for k in range(2, len(energies_C_sorted)+1, int(len(energies_C_sorted)/10)+1):
-            ax_N_b.plot(time, clone_sizes_C_sorted[-k, :], linewidth = 3, color = colors_R[i_kappa][2], linestyle= 'dashed')
-        ax_N_b.vlines([t_act], 0, C, linestyle = '--', linewidth = 1, color = 'grey')
+            ax_N_b.plot(time, clone_sizes_C_sorted[-k, :], linewidth = 3, color = colors_R[i_kappa][2], linestyle= '-', alpha = .8)
+        #ax_N_b.vlines([t_act], 0, C, linestyle = '--', linewidth = 1, color = 'grey')
 
         u_on, p_a, R, QR = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*(t_act+1.3))/N_A, Es, kappa, lambda_A, N_c, dE)
         m_f_expected = np.sum(N_r*QR*dE)
@@ -203,7 +203,7 @@ for N_r in N_rs:
 
             else:
                 #--------------------------R(E, t) and QR(E, t)---------------------------
-                ax_R.plot(time, R_t, alpha = transparency_n[0], color = colors_R[i_kappa][i_Kd], linewidth = 4, linestyle = '--')
+                ax_R.plot(time, R_t, alpha = .8, color = colors_R[i_kappa][i_Kd], linewidth = 4, linestyle = '-')
                 ax_QR.plot(time, QR_t*N_r, alpha = transparency_n[0], color = colors_R[i_kappa][i_Kd], linewidth = 4, linestyle = '--')
                 #-------FOR Q0--------- 
                 #ax_QR.vlines(Kd_r, 0, .5, color = 'black', linestyle = 'dashed')

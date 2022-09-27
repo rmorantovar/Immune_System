@@ -169,7 +169,7 @@ for i_kappa, kappa in enumerate(kappas):
 my_plot_layout(ax = ax_CSD, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_CSD.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
 #ax_CSD.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
-ax_CSD.set_ylim(bottom = 1e-4, top = 1.1)
+ax_CSD.set_ylim(bottom = 3e-4, top = 1.1)
 #ax_CSD.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_CSD.set_yticklabels([1, 0.1, 0.01])
 fig_CSD.savefig('../../Figures/1_Dynamics/Ensemble/CSD_'+energy_model+'.pdf')
