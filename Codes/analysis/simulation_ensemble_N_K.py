@@ -21,7 +21,7 @@ k_pr = k_pr*24 #days^-1
 
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
-kappas = [1, 2, 3]
+kappas = [1, 2, 3, 4]
 #kappas = [3]
 
 my_red = np.array((228,75,41))/256.
@@ -180,7 +180,7 @@ for i_kappa, kappa in enumerate((kappas)):
 my_plot_layout(ax = ax_N_K, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_N_K.legend(fontsize = 32, title_fontsize = 34, title = r'$p$', loc = 1)
 #ax_N_K.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
-#ax_N_K.set_ylim(bottom = 2e-2)
+ax_N_K.set_ylim(top = 6e3)
 #ax_N_K.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_N_K.set_yticklabels([1, 0.1, 0.01])
 fig_N_K.savefig('../../Figures/1_Dynamics/Ensemble/N_K_'+energy_model+'.pdf')

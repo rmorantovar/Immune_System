@@ -124,7 +124,7 @@ for i_kappa, kappa in enumerate(kappas):
 	print('kappa = %.2f...'%kappa)
 	beta_kappa, E_kappa, Kd_kappa = get_kappa_properties(betas, Q0, Es, dE, kappa)
 	for rep in range(1):
-		fig_muller, ax_muller = plt.subplots(figsize=(18,4), linewidth = 0, gridspec_kw={'left':0.005, 'right':.995, 'bottom':.02, 'top': 0.98}, dpi = 700, edgecolor = 'black')
+		fig_muller, ax_muller = plt.subplots(figsize=(7,4), linewidth = 0, gridspec_kw={'left':0.005, 'right':.995, 'bottom':.02, 'top': 0.98}, dpi = 700, edgecolor = 'black')
 		ax_muller.spines["top"].set_linewidth(3)
 		ax_muller.spines["left"].set_linewidth(3)
 		ax_muller.spines["right"].set_linewidth(3)

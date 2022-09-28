@@ -151,7 +151,7 @@ for i_kappa, kappa in enumerate(kappas):
 	ax_NC.plot(time, NC-normalization, color = colors_kappa[i_kappa], alpha = 1, label = r'$%d$'%kappa, linewidth = 5)
 
 	NC_data = np.histogram(np.array(NC_final)-normalization, bins = np.linspace(-4, 8, 24), density = False)
-	ax_NC_distribution.plot(NC_data[1][:-1], np.cumsum(NC_data[0]/N_ens), color = colors_kappa[i_kappa], linestyle='', marker = 'D', label = r'$%d$'%kappa)
+	ax_NC_distribution.plot(NC_data[1][:-1], np.cumsum(NC_data[0]/N_ens), color = colors_kappa[i_kappa], linestyle='--', marker = '', label = r'$%d$'%kappa, linewidth = 3)
 	#Nb = np.exp(lambda_B*Tf)*((k_on*N_c)/(lambda_A*N_A))**(lambda_B/lambda_A)*(k_pr/k_on)**(kappa*lambda_B/lambda_A)*Kds**(-kappa*lambda_B/lambda_A)
 
 Nb = C
