@@ -289,7 +289,7 @@ void choose_naive_Bcells2(int N, int L, int L_alphabet, vector< vector<double> >
     }
     for(int n = 0 ; n<N ; n++){
         e = Bcells[n].e;
-        if(e<(min_e+10)){
+        if(e<(min_e+8)){
             Naive.push_back( &Bcells[n]);
             n_naive++;
         }

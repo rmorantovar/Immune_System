@@ -10,8 +10,8 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 N_ens = 100
 N_r = 2e8
 T0 = 3
-Tf = 8
-Tf_sim = 6.5
+Tf = 10
+Tf_sim = 7.0
 #Tf = 10
 dT = 0.05
 lambda_A = 6
@@ -22,7 +22,7 @@ k_pr = k_pr*24 #days^-1
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
 kappas = [1, 2, 3]
-kappas = [1, 2, 3]
+kappas = [2, 3, 4]
 
 
 my_red = np.array((228,75,41))/256.
@@ -113,7 +113,6 @@ print('Loops...')
 fig_biggest_all, ax_biggest_all = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 
 biggest_clones = []
-best_clones = []
 
 for i_kappa, kappa in enumerate((kappas)):
     fig_biggest, ax_biggest = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
@@ -134,7 +133,7 @@ for i_kappa, kappa in enumerate((kappas)):
         data_i = data.loc[data[4]==i_ens]
         data_active = data_i.loc[data_i[1]==1]
         t_act_data = np.min(data_active[3])
-        data_active = data_active.loc[data_active[3]<(t_act_data+1.2)]
+        data_active = data_active.loc[data_active[3]<(t_act_data+1.4)]
         activation_times = np.array(data_active[3])
         energies  = np.array(data_active[0])
 
@@ -146,17 +145,16 @@ for i_kappa, kappa in enumerate((kappas)):
         clone_sizes_C, activation_times_C, energies_C, filter_C, n_C = apply_filter_C(clone_sizes, activation_times, energies, lim_size)
         
         biggest_clones_p.append(np.max(clone_sizes_C[:, -1]))
-        best_clones_p.append(np.min(energies_C))
 
         biggest_clones.append(np.max(clone_sizes_C[:, -1]))
-        best_clones.append(np.min(energies_C))
 
     
-    ax_biggest.hist(np.array(biggest_clones_p), bins = np.logspace(np.log10(1e2), np.log10(3e4), 12), density = False, color = colors_kappa[i_kappa], label = r'$%d$'%kappa)
-    ax_biggest_all.hist(np.array(biggest_clones_p), bins = np.logspace(np.log10(1e2), np.log10(3e4), 12), density = False, color = colors_kappa[i_kappa], label = r'$%d$'%kappa)
+    data_biggest = np.histogram(np.array(biggest_clones_p), bins = np.logspace(np.log10(np.min(biggest_clones_p)), np.log10(np.max(biggest_clones_p)), 20), density = False)
 
+    ax_biggest.plot(data_biggest[1][:-1], data_biggest[0]/len(biggest_clones_p), color = colors_kappa[i_kappa], label = r'$%d$'%kappa)
+    ax_biggest_all.plot(data_biggest[1][:-1], data_biggest[0]/len(biggest_clones_p), color = colors_kappa[i_kappa], label = r'$%d$'%kappa, alpha = .8)
 
-    my_plot_layout(ax = ax_biggest, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+    my_plot_layout(ax = ax_biggest, xscale='log', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
     ax_biggest.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
     #ax_biggest.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
     #ax_biggest.set_ylim(bottom = 2e-2)
@@ -165,7 +163,7 @@ for i_kappa, kappa in enumerate((kappas)):
     fig_biggest.savefig('../../Figures/1_Dynamics/Ensemble/Biggest_p-%.2f'%(kappa)+'_'+energy_model+'.pdf')
 
 
-my_plot_layout(ax = ax_biggest_all, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+my_plot_layout(ax = ax_biggest_all, xscale='log', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_biggest_all.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
 #ax_biggest_all.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
 #ax_biggest_all.set_ylim(bottom = 2e-2)

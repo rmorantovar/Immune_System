@@ -137,39 +137,43 @@ for i_kappa, kappa in enumerate(kappas):
     # activation_times_C_sorted = activation_times_C[sort_inds][:]
     # energies_C_sorted = energies_C[sort_inds][:]
 
-    bins = np.logspace(np.log10(np.min(clone_sizes_final)),np.log10(np.max(clone_sizes_final)), 25)
+    bins = np.logspace(np.log10(np.min(clone_sizes_final)),np.log10(np.max(clone_sizes_final)), 40)
     #bins = np.linspace((np.min(clone_sizes_final)),(np.max(clone_sizes_final)),50)
     #bins = 300
     #bins = 'auto'
     print(len(clone_sizes_final))
     clone_size_distribution = np.histogram(clone_sizes_final, bins = bins, density = False)
     clone_size = clone_size_distribution[1][:-1]
-    clone_size_counts = clone_size_distribution[0]#/np.sum(clone_size_distribution[0]*(np.diff(clone_size_distribution[1])))
+    clone_size_counts = clone_size_distribution[0]/N_ens#/np.sum(clone_size_distribution[0]*(np.diff(clone_size_distribution[1])))
     print(np.sum(clone_size_counts[:]))
     Nb_array = np.logspace(np.log10(np.min(clone_sizes_final)), np.log10(np.max(clone_sizes_final))-0.2, 50)
     fit = Nb_array**(-beta_act*lambda_A/(lambda_B*kappa))
-    fit = fit/fit[0]
-
-    ax_CSD.plot(clone_size[:]/clone_size[:][0], 1-np.cumsum(clone_size_counts[:])/len(clone_sizes_final), color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = 1, ms = 6, label = r'$%.d$'%(kappa))
+    fit = fit/fit[0]*np.sum(clone_size_counts[:])*0.7
+    normalization = len(clone_sizes_final)
+    normalization = 1
+    ax_CSD.plot(clone_size/C, np.sum(clone_size_counts[:])-np.cumsum(clone_size_counts[:])/normalization, color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = 1, ms = 6, label = r'$%.d$'%(kappa))
     #ax_CSD.plot(clone_size[:], (clone_size_counts[:]*(clone_size_distribution[1][1:]-clone_size_distribution[1][:-1])), color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = .8, ms = 10)
-    ax_CSD_i.plot(clone_size[:]/clone_size[:][0], 1-np.cumsum(clone_size_counts[:])/len(clone_sizes_final), color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = 1, ms = 6, label = r'$%.d$'%(kappa))
+    ax_CSD_i.plot(clone_size/C, np.sum(clone_size_counts[:])-np.cumsum(clone_size_counts[:])/normalization, color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = 1, ms = 6, label = r'$%.d$'%(kappa))
     #ax_CSD.plot(clone_size[:], (clone_size_counts[:]*(clone_size_distribution[1][1:]-clone_size_distribution[1][:-1])), color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = .8, ms = 10)
 
-    ax_CSD.plot(Nb_array/Nb_array[0], fit, color = colors_kappa[i_kappa], linewidth = 4, alpha = .8)
-    ax_CSD_i.plot(Nb_array/Nb_array[0], fit, color = colors_kappa[i_kappa], linewidth = 4, alpha = .8)
+    ax_CSD.plot(Nb_array/C, fit, color = colors_kappa[i_kappa], linewidth = 4, alpha = .8)
+    ax_CSD_i.plot(Nb_array/C, fit, color = colors_kappa[i_kappa], linewidth = 4, alpha = .8)
+
+    
 
     my_plot_layout(ax = ax_CSD_i, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
     ax_CSD_i.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
     #ax_CSD_i.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
-    ax_CSD_i.set_ylim(bottom = 1e-3, top = 1.1)
+    #ax_CSD_i.set_ylim(bottom = 1e-3, top = 1.1)
     #ax_CSD_i.set_yticks([1, 0.1, 0.01, 0.001])
     #ax_CSD_i.set_yticklabels([1, 0.1, 0.01])
     fig_CSD_i.savefig('../../Figures/1_Dynamics/Ensemble/CSD_p-%.2f'%(kappa)+'_'+energy_model+'.pdf')
- 
+
+ax_CSD.hlines(1, 2e-4, 6e-1, linestyle = 'dashed', color = 'black', linewidth = 1)
 my_plot_layout(ax = ax_CSD, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_CSD.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
 #ax_CSD.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
-ax_CSD.set_ylim(bottom = 5e-4, top = 1.1)
+ax_CSD.set_ylim(bottom = 2e-3, top = 2e1)
 #ax_CSD.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_CSD.set_yticklabels([1, 0.1, 0.01])
 fig_CSD.savefig('../../Figures/1_Dynamics/Ensemble/CSD_'+energy_model+'.pdf')
