@@ -148,7 +148,7 @@ for i_kappa, kappa in enumerate(kappas):
     print(np.sum(clone_size_counts[:]))
     Nb_array = np.logspace(np.log10(np.min(clone_sizes_final)), np.log10(np.max(clone_sizes_final))-0.2, 50)
     fit = Nb_array**(-beta_act*lambda_A/(lambda_B*kappa))
-    fit = fit/fit[0]*np.sum(clone_size_counts[:])*0.7
+    fit = fit/fit[0]*np.sum(clone_size_counts[:])*0.8
     normalization = len(clone_sizes_final)
     normalization = 1
     ax_CSD.plot(clone_size/C, np.sum(clone_size_counts[:])-np.cumsum(clone_size_counts[:])/normalization, color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = 1, ms = 6, label = r'$%.d$'%(kappa))

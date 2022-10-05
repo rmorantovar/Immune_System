@@ -121,7 +121,7 @@ for i_kappa, kappa in enumerate((kappas)):
     
     data_active = data.loc[data[1]==1]
     t_act_data = np.min(data_active[3])
-    data_active = data_active.loc[data_active[3]<(t_act_data+1.6)]
+    data_active = data_active.loc[data_active[3]<(t_act_data+1.5)]
     activation_times = np.array(data_active[3])
     energies  = np.array(data_active[0])
     energies_total = np.linspace(np.min(energies), -16, 10)
@@ -141,7 +141,7 @@ for i_kappa, kappa in enumerate((kappas)):
         enegies_Kd = np.exp(energies_C[(energies_C>=energies_total[k]) & (energies_C<energies_total[k+1])])
         if(len(sizes_Kd)>0):
             final_Nb[k] = np.exp(np.mean(np.log(sizes_Kd)))
-            ax_N_K.scatter(enegies_Kd, sizes_Kd, facecolor = colors_kappa[i_kappa], alpha = .1, linewidth = 0)
+            #ax_N_K.scatter(enegies_Kd, sizes_Kd, facecolor = colors_kappa[i_kappa], alpha = .1, linewidth = 0)
             ax_N_K_i.scatter(enegies_Kd, sizes_Kd, facecolor = colors_kappa[i_kappa], alpha = .1, linewidth = 0)
             # parts = ax_N_K.violinplot(dataset=sizes_Kd, positions = [np.exp(energies_total[k])], showmeans=False, showmedians=False, showextrema=False, widths = 0.02*np.exp(energies_total[k+1]))
             # for pc in parts['bodies']:
