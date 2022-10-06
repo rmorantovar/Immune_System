@@ -15,7 +15,7 @@ Tf_sim = 7
 #Tf = 10
 dT = 0.05
 lambda_A = 6
-k_pr = 1
+k_pr = 1 #hour^-1
 #k_pr = 180 # hour^-1
 k_pr = k_pr*24 #days^-1
 
@@ -97,20 +97,19 @@ Kds = np.exp(Es[:-1])
 
 #--------------------------Repertoire properties--------------------------
 beta_r, E_r, Kd_r = get_repertoire_properties(betas, Q0, Es, dE, N_r)
-print('beta_r = %.1f'%beta_r)
+print('beta_r = %.2f'%beta_r)
 
 #--------------------------Proofreading properties--------------------------
 beta_pr, E_pr, Kd_pr = get_proofreading_properties(betas, Q0, Es, dE, k_pr, k_on)
 print('beta_pr = %.2f'%beta_pr)
 
-t_prime = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*N_c))
 print('--------')
 print('Loops...')
 #--------------------------Loops--------------------------
 fig_m_f, ax_m_f = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 fig_m_bar, ax_m_bar = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 for i_kappa, kappa in enumerate(kappas):
-
+	t_prime = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*N_c))
 	print('--------')
 	print('kappa = %.2f...'%kappa)
 	beta_kappa, E_kappa, Kd_kappa = get_kappa_properties(betas, Q0, Es, dE, kappa)
@@ -119,9 +118,10 @@ for i_kappa, kappa in enumerate(kappas):
 	t_kappa = t_prime + delta_t_kappa
 	t_r = t_prime + delta_t_r
 
-	if(kappa>beta_r):
+	if(kappa>1):
 		t_act = t_r
 	else:
+		t_prime = (1/lambda_A)*(np.log((lambda_A*N_A)/(k_on*N_c*N_r*Q0[Es[:-1]<E_kappa][-1])) + kappa*(E_kappa - E_pr))
 		t_act = t_prime
 
 	#-----------------Loading data----------------------------

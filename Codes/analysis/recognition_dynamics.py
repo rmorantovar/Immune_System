@@ -80,7 +80,7 @@ print('L=%d'%(L))
 model = 'TCRen'
 #model = 'MJ2'
 #--------------------------Energy Motif--------------------------
-PWM_data = get_motif(antigen, model, Text_files_path)
+PWM_data, M, Alphabet = get_motif(antigen, model, Text_files_path)
 print('min_e_PWM=%.4f'%(np.sum([np.min(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))])))
 print('mean_e_PWM=%.4f'%(np.sum([np.mean(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))])))
 #Change values by the minimum
@@ -180,9 +180,9 @@ for N_r in N_rs:
                 #ax_QR_all.vlines(Kds[QR==np.max(QR)], 1e-9, (Q0*N_r)[QR==np.max(QR)], color = colors_kappa[3-i_kappa], linewidth = 3, linestyle = '--')
                 ax_QR_all_f.vlines(Kds[QR==np.max(QR)], 1e-9, (Q0*N_r)[QR==np.max(QR)], color = colors_kappa[3-i_kappa], linewidth = 3, linestyle = '--')
                 
-                ax_QR_all_f.plot(Kds[QR==np.max(QR)], (Q0*N_r)[QR==np.max(QR)], markerfacecolor = colors_kappa[3-i_kappa], marker = 'D', ms = 14, markeredgecolor='black', alpha = .6)
-                ax_QR_all.plot(Kds[Kds==Kd_kappa], (Q0*N_r)[Kds==Kd_kappa], markerfacecolor = colors_kappa[3-i_kappa], marker = '*', ms = 20, markeredgecolor='black', alpha = .6)
-                ax_QR_all.plot(Kds[QR==np.max(QR)], (Q0*N_r)[QR==np.max(QR)], markerfacecolor = colors_kappa[3-i_kappa], marker = 'D', ms = 14, markeredgecolor='black', alpha = .6)
+                ax_QR_all_f.plot(Kds[QR==np.max(QR)], (Q0*N_r)[QR==np.max(QR)], markerfacecolor = colors_kappa[3-i_kappa], marker = 'D', ms = 16, markeredgecolor='black', alpha = .6)
+                ax_QR_all.plot(Kds[Kds==Kd_kappa], (Q0*N_r)[Kds==Kd_kappa], markerfacecolor = colors_kappa[3-i_kappa], marker = '*', ms = 22, markeredgecolor='black', alpha = .6)
+                ax_QR_all.plot(Kds[QR==np.max(QR)], (Q0*N_r)[QR==np.max(QR)], markerfacecolor = colors_kappa[3-i_kappa], marker = 'D', ms = 16, markeredgecolor='black', alpha = .6)
 
             if i_t==3:
 
@@ -190,7 +190,7 @@ for N_r in N_rs:
                 ax_QR.plot(Kds, QR*N_r, color = colors_R[3-i_kappa][i_t], linewidth = 5, linestyle = '-', alpha = .6)
 
                 ax_QR_all_f.plot(Kds, QR*N_r, color = colors_kappa[3-i_kappa], linewidth = 5, linestyle = '-', alpha = .8)
-                ax_QR_all_f.plot(Kds[QR==np.max(QR)], (Q0*N_r)[QR==np.max(QR)], markerfacecolor = colors_kappa[3-i_kappa], marker = 'o', ms = 14, alpha = .6, markeredgecolor='black')
+                ax_QR_all_f.plot(Kds[QR==np.max(QR)], (Q0*N_r)[QR==np.max(QR)], markerfacecolor = colors_kappa[3-i_kappa], marker = 'o', ms = 16, alpha = .6, markeredgecolor='black')
                 if kappa!=1:
                     ax_QR_all_f.vlines(Kds[QR==np.max(QR)], 1e-9, (Q0*N_r)[QR==np.max(QR)], color = colors_kappa[3-i_kappa], linewidth = 3, linestyle = ':')
             
