@@ -7,7 +7,7 @@ warnings.filterwarnings("ignore")
 Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/'
 
 #--------------- PARAMETERS ---------------------
-N_ens = 100
+N_ens = 200
 N_r = 2e8
 T0 = 3
 Tf = 10
@@ -82,7 +82,7 @@ print('L=%d'%(L))
 energy_model = 'TCRen'
 #energy_model = 'MJ2'
 #--------------------------Energy Motif--------------------------
-PWM_data = get_motif(antigen, energy_model, Text_files_path)
+PWM_data, M, Alphabet = get_motif(antigen, energy_model, Text_files_path)
 print('min_e_PWM=%.2f'%(np.sum([np.min(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))])))
 print('mean_e_PWM=%.4f'%(np.sum([np.mean(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))])))
 #Change values by the minimum
@@ -137,7 +137,7 @@ for i_kappa, kappa in enumerate(kappas):
     # activation_times_C_sorted = activation_times_C[sort_inds][:]
     # energies_C_sorted = energies_C[sort_inds][:]
 
-    bins = np.logspace(np.log10(np.min(clone_sizes_final)),np.log10(np.max(clone_sizes_final)), 40)
+    bins = np.logspace(np.log10(np.min(clone_sizes_final)),np.log10(np.max(clone_sizes_final)), 50)
     #bins = np.linspace((np.min(clone_sizes_final)),(np.max(clone_sizes_final)),50)
     #bins = 300
     #bins = 'auto'
@@ -169,11 +169,11 @@ for i_kappa, kappa in enumerate(kappas):
     #ax_CSD_i.set_yticklabels([1, 0.1, 0.01])
     fig_CSD_i.savefig('../../Figures/1_Dynamics/Ensemble/CSD_p-%.2f'%(kappa)+'_'+energy_model+'.pdf')
 
-ax_CSD.hlines(1, 2e-4, 6e-1, linestyle = 'dashed', color = 'black', linewidth = 1)
+ax_CSD.hlines(1, 3e-4, 4e-2, linestyle = 'dashed', color = 'black', linewidth = 1)
 my_plot_layout(ax = ax_CSD, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_CSD.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
 #ax_CSD.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
-ax_CSD.set_ylim(bottom = 2e-3, top = 2e1)
+ax_CSD.set_ylim(bottom = 3e-3, top = 6e0)
 #ax_CSD.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_CSD.set_yticklabels([1, 0.1, 0.01])
 fig_CSD.savefig('../../Figures/1_Dynamics/Ensemble/CSD_'+energy_model+'.pdf')

@@ -7,7 +7,7 @@ warnings.filterwarnings("ignore")
 Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/'
 
 #--------------- PARAMETERS ---------------------
-N_ens = 100
+N_ens = 200
 N_r = 2e8
 T0 = 3
 Tf = 10
@@ -22,7 +22,7 @@ k_pr = k_pr*24 #days^-1
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
 kappas = [1, 2, 3, 4]
-#kappas = [3]
+kappas = [2, 3, 4]
 
 my_red = np.array((228,75,41))/256.
 my_purple = np.array((125,64,119))/256.
@@ -43,7 +43,7 @@ transparency_n = [1]
 color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_brown, my_blue2, my_yellow, my_purple, my_green2])#
 #color_list = np.array([(228,75,41), (125,165,38), (76,109,166), (215,139,45)])
 color_list = np.array([my_red, my_green, my_blue2, my_gold])
-#color_list = np.array([my_blue2, my_gold])
+color_list = np.array([my_green, my_blue2, my_gold])
 
 #colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
 #colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
@@ -105,11 +105,12 @@ print('beta_pr = %.2f'%beta_pr)
 
 print('--------')
 print('Loops...')
+t_prime = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*N_c))
 #--------------------------Loops--------------------------
 fig_m_f, ax_m_f = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 fig_m_bar, ax_m_bar = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 for i_kappa, kappa in enumerate(kappas):
-	t_prime = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*N_c))
+	
 	print('--------')
 	print('kappa = %.2f...'%kappa)
 	beta_kappa, E_kappa, Kd_kappa = get_kappa_properties(betas, Q0, Es, dE, kappa)
@@ -121,9 +122,8 @@ for i_kappa, kappa in enumerate(kappas):
 	if(kappa>1):
 		t_act = t_r
 	else:
-		t_prime = (1/lambda_A)*(np.log((lambda_A*N_A)/(k_on*N_c*N_r*Q0[Es[:-1]<E_kappa][-1])) + kappa*(E_kappa - E_pr))
-		t_act = t_prime
-
+		t_act = t_kappa - (1/lambda_A)*(np.log(N_r*Q0[Es[:-1]<E_kappa][-1]))
+	print('Activation time:',t_act)
 	#-----------------Loading data----------------------------
 	parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
 	#data = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/energies_ensemble.txt', sep = '\t', header=None)
@@ -154,9 +154,10 @@ for i_kappa, kappa in enumerate(kappas):
 		
 
 
-	ax_m_bar.plot(time, m_bar/N_ens, color = colors_kappa[i_kappa], alpha = 1, label = r'%d'%(kappa))
+	ax_m_bar.plot(time, m_bar/N_ens, color = colors_kappa[i_kappa], alpha = 1, label = r'$%d$'%(kappa))
 	ax_m_bar.scatter(t_act, 1, color = colors_kappa[i_kappa])
-	ax_m_f.hist(m_final, alpha = .8, color = colors_kappa[i_kappa], bins = np.logspace(0, 3+np.log10(5), 16), label = r'%d'%(kappa))
+	#ax_m_f.hist(m_final, alpha = .8, color = colors_kappa[i_kappa], bins = np.logspace(0, 3+np.log10(5), 16), label = r'%d'%(kappa))
+	ax_m_f.hist(m_final, alpha = .8, color = colors_kappa[i_kappa], bins = np.linspace(1, 2e3, 50), label = r'$%d$'%(kappa))
 
 my_plot_layout(ax = ax_m_bar, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_m_bar.legend(fontsize = 32, title_fontsize = 34, title = r'$p$', loc = 4)
@@ -168,7 +169,7 @@ ax_m_bar.legend(fontsize = 32, title_fontsize = 34, title = r'$p$', loc = 4)
 #ax_m_bar.set_yticklabels([1, 0.1, 0.01])
 fig_m_bar.savefig('../../Figures/1_Dynamics/Ensemble/m_bar_'+energy_model+'.pdf')
 
-my_plot_layout(ax = ax_m_f, xscale='log', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+my_plot_layout(ax = ax_m_f, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_m_f.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
 #ax_m_f.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
 #ax_m_f.set_ylim(bottom = -2, top = 4.5)
