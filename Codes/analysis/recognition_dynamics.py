@@ -121,7 +121,7 @@ for N_r in N_rs:
         print('kappa = %.2f...'%kappa)
 
         fig_QR_all, ax_QR_all = plt.subplots(figsize=(12,7), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-        fig_QR_all_f, ax_QR_all_f = plt.subplots(figsize=(12,7), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+        fig_QR_all_f, ax_QR_all_f = plt.subplots(figsize=(16,6), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 
         ax_QR_all.plot(Kds, Q0*N_r, alpha = 1, color = 'grey', linewidth = 5, linestyle = '--')
         ax_QR_all.vlines(Kd_r, Q0[Kds==Kd_r]*N_r, N_r, alpha = 1, color = 'grey', linewidth = 3, linestyle = ':')
@@ -181,6 +181,8 @@ for N_r in N_rs:
                 ax_QR_all_f.vlines(Kds[QR==np.max(QR)], 1e-9, (Q0*N_r)[QR==np.max(QR)], color = colors_kappa[3-i_kappa], linewidth = 3, linestyle = '--')
                 
                 ax_QR_all_f.plot(Kds[QR==np.max(QR)], (Q0*N_r)[QR==np.max(QR)], markerfacecolor = colors_kappa[3-i_kappa], marker = 'D', ms = 16, markeredgecolor='black', alpha = .6)
+                ax_QR_all_f.plot(Kds[Kds==Kd_kappa], (Q0*N_r)[Kds==Kd_kappa], markerfacecolor = colors_kappa[3-i_kappa], marker = '*', ms = 22, markeredgecolor='black', alpha = .6)
+
                 ax_QR_all.plot(Kds[Kds==Kd_kappa], (Q0*N_r)[Kds==Kd_kappa], markerfacecolor = colors_kappa[3-i_kappa], marker = '*', ms = 22, markeredgecolor='black', alpha = .6)
                 ax_QR_all.plot(Kds[QR==np.max(QR)], (Q0*N_r)[QR==np.max(QR)], markerfacecolor = colors_kappa[3-i_kappa], marker = 'D', ms = 16, markeredgecolor='black', alpha = .6)
 

@@ -80,7 +80,7 @@ print('L=%d'%(L))
 energy_model = 'TCRen'
 #energy_model = 'MJ2'
 #--------------------------Energy Motif--------------------------
-PWM_data = get_motif(antigen, energy_model, Text_files_path)
+PWM_data, M, Alphabet = get_motif(antigen, energy_model, Text_files_path)
 print('min_e_PWM=%.2f'%(np.sum([np.min(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))])))
 print('mean_e_PWM=%.4f'%(np.sum([np.mean(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))])))
 #Change values by the minimum
@@ -124,7 +124,7 @@ for i_kappa, kappa in enumerate(kappas):
 	print('kappa = %.2f...'%kappa)
 	beta_kappa, E_kappa, Kd_kappa = get_kappa_properties(betas, Q0, Es, dE, kappa)
 	for rep in range(1):
-		fig_muller, ax_muller = plt.subplots(figsize=(7,4), linewidth = 0, gridspec_kw={'left':0.005, 'right':.995, 'bottom':.02, 'top': 0.98}, dpi = 700, edgecolor = 'black')
+		fig_muller, ax_muller = plt.subplots(figsize=(9,4), linewidth = 0, gridspec_kw={'left':0.005, 'right':.995, 'bottom':.02, 'top': 0.98}, dpi = 700, edgecolor = 'black')
 		ax_muller.spines["top"].set_linewidth(3)
 		ax_muller.spines["left"].set_linewidth(3)
 		ax_muller.spines["right"].set_linewidth(3)
