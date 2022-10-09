@@ -21,7 +21,7 @@ k_pr = k_pr*24 #days^-1
 
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
-kappas = [1, 2, 3, 4]
+kappas = [2, 3, 4]
 #kappas = [3]
 
 my_red = np.array((228,75,41))/256.
@@ -43,6 +43,7 @@ transparency_n = [1]
 color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_brown, my_blue2, my_yellow, my_purple, my_green2])#
 #color_list = np.array([(228,75,41), (125,165,38), (76,109,166), (215,139,45)])
 color_list = np.array([my_red, my_green, my_blue2, my_gold])
+color_list = np.array([my_green, my_blue2, my_gold])
 
 #colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
 #colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
@@ -82,7 +83,7 @@ print('L=%d'%(L))
 energy_model = 'TCRen'
 #energy_model = 'MJ2'
 #--------------------------Energy Motif--------------------------
-PWM_data = get_motif(antigen, energy_model, Text_files_path)
+PWM_data, M, Alphabet = get_motif(antigen, energy_model, Text_files_path)
 print('min_e_PWM=%.2f'%(np.sum([np.min(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))])))
 print('mean_e_PWM=%.4f'%(np.sum([np.mean(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))])))
 #Change values by the minimum
@@ -124,7 +125,7 @@ for i_kappa, kappa in enumerate((kappas)):
     data_active = data_active.loc[data_active[3]<(t_act_data+1.5)]
     activation_times = np.array(data_active[3])
     energies  = np.array(data_active[0])
-    energies_total = np.linspace(np.min(energies), -16, 10)
+    energies_total = np.linspace(np.min(energies), -17, 12)
     final_Nb = np.zeros_like(energies_total)
 
     #---------------------------- B cell linages ----------------------
@@ -156,7 +157,7 @@ for i_kappa, kappa in enumerate((kappas)):
 
     #final_Nb/=np.max(final_Nb)
     Kds_total = np.exp(energies_total)
-    Kds_array = np.logspace(np.log10(np.min(Kds_total)), np.log10(np.min(Kds_total)) + 1.2, 50)
+    Kds_array = np.logspace(np.log10(np.min(Kds_total)), np.log10(np.max(Kds_total))-0.2 , 50)
     fit = Kds_array**(-kappa*lambda_B/lambda_A)
     fit = fit/fit[0]*final_Nb[0]*.9#[Kds_total==np.min(Kds_total)]
 
@@ -180,7 +181,7 @@ for i_kappa, kappa in enumerate((kappas)):
 my_plot_layout(ax = ax_N_K, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_N_K.legend(fontsize = 32, title_fontsize = 34, title = r'$p$', loc = 1)
 #ax_N_K.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
-ax_N_K.set_ylim(top = 6e3)
+ax_N_K.set_ylim(top = 2e3)
 #ax_N_K.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_N_K.set_yticklabels([1, 0.1, 0.01])
 fig_N_K.savefig('../../Figures/1_Dynamics/Ensemble/N_K_'+energy_model+'.pdf')

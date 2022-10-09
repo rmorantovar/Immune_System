@@ -41,12 +41,9 @@ antigen_color = my_yellow/256.
 transparency_n = [1]
 
 color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_brown, my_blue2, my_yellow, my_purple, my_green2])#
-#color_list = np.array([(228,75,41), (125,165,38), (76,109,166), (215,139,45)])
 color_list = np.array([my_red, my_green, my_blue2, my_gold])
-#color_list = np.array([my_blue2, my_gold])
+#color_list = np.array([my_green, my_blue2, my_gold])
 
-#colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
-#colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
 colors_kappa = []
 for i in range(len(color_list)):
         colors_kappa.append(np.array(color_list[i]))
@@ -151,8 +148,8 @@ for i_kappa, kappa in enumerate(kappas):
 		normalization = NC[-1]
 	ax_NC.plot(time, NC-normalization, color = colors_kappa[i_kappa], alpha = 1, label = r'$%d$'%kappa, linewidth = 5)
 
-	NC_data = np.histogram(np.array(NC_final)-normalization, bins = np.linspace(-4, 8, 20), density = False)
-	ax_NC_distribution.plot(NC_data[1][:-1], NC_data[0]/N_ens, color = colors_kappa[i_kappa], linestyle='--', marker = '', label = r'$%d$'%kappa, linewidth = 3)
+	NC_data = np.histogram(np.array(NC_final)-normalization, bins = np.linspace(0, 8, 20), density = False)
+	ax_NC_distribution.plot(NC_data[1][:-1], NC_data[0]/N_ens, color = colors_kappa[i_kappa], linestyle='', marker = 's', label = r'$%d$'%kappa, linewidth = 3)
 	ax_NC_distribution2.plot(NC_data[1][:-1], np.cumsum(NC_data[0]/N_ens), color = colors_kappa[i_kappa], linestyle='--', marker = '', label = r'$%d$'%kappa, linewidth = 3)
 	#Nb = np.exp(lambda_B*Tf)*((k_on*N_c)/(lambda_A*N_A))**(lambda_B/lambda_A)*(k_pr/k_on)**(kappa*lambda_B/lambda_A)*Kds**(-kappa*lambda_B/lambda_A)
 
@@ -160,7 +157,7 @@ Nb = C
 NC_array = np.log(1/(1+(Kds/((AA*(Nb))/N_A))))
 p_NC = P_min_e_Q0(N_r, Q0, dE)*(Nb*AA/N_A)/NC_array**2
 p_NC = p_NC/np.sum(p_NC[:-1]*abs(np.diff(NC_array)))
-ax_NC_distribution.plot(np.flip(NC_array[:-1]-normalization), np.flip(p_NC[:-1]), linestyle = '', marker = 's',  color = 'black', ms = 2, linewidth = 2, alpha = .8, label = 'Gumbel')
+ax_NC_distribution.plot(np.flip(NC_array[:-1]-normalization), np.flip(p_NC[:-1]), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 2, alpha = .8, label = 'Gumbel')
 ax_NC_distribution2.plot(np.flip(NC_array[:-1]-normalization), np.cumsum(np.flip(p_NC[:-1])*abs(np.diff(np.flip(NC_array)))), linestyle = '--', marker = '',  color = 'black', ms = 2, linewidth = 4, alpha = .8, label = 'Gumbel')
 
 my_plot_layout(ax = ax_NC_distribution, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
