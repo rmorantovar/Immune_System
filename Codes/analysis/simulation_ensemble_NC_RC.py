@@ -120,73 +120,74 @@ for i_kappa, kappa in enumerate(kappas):
 	data = get_data_ensemble(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
 	
 
-	NC = np.zeros_like(time)
-	#NC_common = np.zeros_like(time)
-	NC_final = []
-	#NC_final_common = []
-	Counter = 0
-	#Counter_common = 0 
+	NC_rare = np.zeros_like(time)
+	NC_common = np.zeros_like(time)
+	NC_final_rare = []
+	NC_final_common = []
+	Counter_rare = 0
+	Counter_common = 0 
 	for i_ens in tqdm(np.arange(N_ens)):
 		data_i = data.loc[data[4]==i_ens]
 		data_active = data_i.loc[data_i[1]==1]
 		t_act_data = np.min(data_active[3])
 		data_active = data_active.loc[data_active[3]<(t_act_data+1.0)]
-		activation_times = np.array(data_active[3])
-		energies  = np.array(data_active[0])
+		
+		data_active_rare = data_active.loc[data_active[3]<(t_act_theory)]
+		activation_times_rare = np.array(data_active_rare[3])
+		energies_rare = np.array(data_active_rare[0])
 
-		#data_active_common = data_active.loc[data_active[3]>(t_act_theory)]
-		#activation_times_common = np.array(data_active_common[3])
-		#energies_common = np.array(data_active_common[0])
+		data_active_common = data_active.loc[data_active[3]>(t_act_theory)]
+		activation_times_common = np.array(data_active_common[3])
+		energies_common = np.array(data_active_common[0])
 
 		#---------------------------- B cell linages ----------------------
-		clone_sizes = get_clones_sizes_C(len(activation_times), time, activation_times, lambda_B, C, dT)
-		#clone_sizes_common = get_clones_sizes_C(len(activation_times_common), time, activation_times_common, lambda_B, C, dT)
+		clone_sizes_rare = get_clones_sizes_C(len(activation_times_rare), time, activation_times_rare, lambda_B, C, dT)
+		clone_sizes_common = get_clones_sizes_C(len(activation_times_common), time, activation_times_common, lambda_B, C, dT)
 
 		#--------------------------t_C filter-------------------------
 		lim_size = 2
-		clone_sizes_C, activation_times_C, energies_C, filter_C, n_C = apply_filter_C(clone_sizes, activation_times, energies, lim_size)
-		#clone_sizes_C_common, activation_times_C_common, energies_C_common, filter_C_common, n_C_common = apply_filter_C(clone_sizes_common, activation_times_common, energies_common, lim_size)
+		clone_sizes_C_rare, activation_times_C_rare, energies_C_rare, filter_C_rare, n_C_rare = apply_filter_C(clone_sizes_rare, activation_times_rare, energies_rare, lim_size)
+		clone_sizes_C_common, activation_times_C_common, energies_C_common, filter_C_common, n_C_common = apply_filter_C(clone_sizes_common, activation_times_common, energies_common, lim_size)
 		#-------Simulations-------
-		Kds_C = np.exp(energies_C)
+		Kds_C_rare = np.exp(energies_C_rare)
+		Kds_C_common = np.exp(energies_C_common)
 
-		#Kds_C_common = np.exp(energies_C_common)
+		NC_i_rare = np.log(1-np.array([np.product(1-1/(1+(Kds_C_rare/((AA*(clone_sizes_C_rare[:,t]-1))/N_A)))) for t in np.arange(len(time))]))
+		NC_i_common = np.log(1-np.array([np.product(1-1/(1+(Kds_C_common/((AA*(clone_sizes_C_common[:,t]-1))/N_A)))) for t in np.arange(len(time))]))
 
-		NC_i = np.log(1-np.array([np.product(1-1/(1+(Kds_C/((AA*(clone_sizes_C[:,t]-1))/N_A)))) for t in np.arange(len(time))]))
-		#NC_i_common = np.log(1-np.array([np.product(1-1/(1+(Kds_C_common/((AA*(clone_sizes_C_common[:,t]-1))/N_A)))) for t in np.arange(len(time))]))
-
-		if(np.sum(~np.isinf(NC_i))!=0):
-			NC += NC_i
-			NC_final.append(NC_i[-1])
-			Counter+=1
-		#if(np.sum(~np.isinf(NC_i_common))!=0):
-		#	NC_common += NC_i_common
-		#	NC_final_common.append(NC_i_common[-1])
-		#	Counter_common+=1
+		if(np.sum(~np.isinf(NC_i_rare))!=0):
+			NC_rare += NC_i_rare
+			NC_final_rare.append(NC_i_rare[-1])
+			Counter_rare+=1
+		if(np.sum(~np.isinf(NC_i_common))!=0):
+			NC_common += NC_i_common
+			NC_final_common.append(NC_i_common[-1])
+			Counter_common+=1
 
 		#if(i_ens%1==0):
 		#	ax_NC.plot(time, NC_i, color = colors_kappa[i_kappa], alpha = .1, linewidth = 1)
-	#print(Counter, Counter_common)
-	NC = NC/Counter
-	#NC_common = NC_common/Counter_common
+	print(Counter_rare, Counter_common)
+	NC_rare = NC_rare/Counter_rare
+	NC_common = NC_common/Counter_common
 
 	if(i_kappa==0):
-		normalization = NC[-1]
-		#normalization_common = NC_common[-1]
+		normalization_rare = NC_rare[-1]
+		normalization_common = NC_common[-1]
 	
-	ax_NC.plot(time, NC-normalization, color = colors_kappa[i_kappa], alpha = .8, label = r'$%d$'%kappa, linewidth = 5)
-	#ax_NC.plot(time, NC_common-normalization, color = colors_kappa[i_kappa], alpha = .8, linewidth = 5, linestyle = 'dashed')
+	ax_NC.plot(time, NC_rare - normalization_common, color = colors_kappa[i_kappa], alpha = .8, label = r'$%d$'%kappa, linewidth = 5)
+	ax_NC.plot(time, NC_common - normalization_common, color = colors_kappa[i_kappa], alpha = .8, linewidth = 5, linestyle = 'dashed')
 
-	print(np.min(np.array(NC_final) - normalization))
-	#print(np.min(np.array(NC_final_common) - normalization))
+	print(np.min(np.array(NC_final_rare) - normalization_common))
+	print(np.min(np.array(NC_final_common) - normalization_common))
 
-	NC_data = np.histogram(np.array(NC_final) - normalization, bins = np.linspace(-5, 7, 50), density = False)
-	#NC_common_data = np.histogram(np.array(NC_final_common) - normalization, bins = np.linspace(-5, 7, 50), density = False)
+	NC_rare_data = np.histogram(np.array(NC_final_rare) - normalization_common, bins = np.linspace(-7, 7, 50), density = False)
+	NC_common_data = np.histogram(np.array(NC_final_common) - normalization_common, bins = np.linspace(-7, 7, 50), density = False)
 	
-	ax_NC_distribution.plot(NC_data[1][:-1], NC_data[0]/Counter, color = colors_kappa[i_kappa], linestyle='-', marker = '', label = r'$%d$'%kappa, linewidth = 2)
-	#ax_NC_distribution.plot(NC_common_data[1][:-1], NC_common_data[0]/Counter_common, color = colors_kappa[i_kappa], linestyle='--', marker = '', linewidth = 2)
+	ax_NC_distribution.plot(NC_rare_data[1][:-1], NC_rare_data[0]/Counter_rare, color = colors_kappa[i_kappa], linestyle='-', marker = '', label = r'$%d$'%kappa, linewidth = 2)
+	ax_NC_distribution.plot(NC_common_data[1][:-1], NC_common_data[0]/Counter_common, color = colors_kappa[i_kappa], linestyle='--', marker = '', linewidth = 2)
 
-	ax_NC_distribution2.plot(NC_data[1][:-1], np.cumsum(NC_data[0]/Counter), color = colors_kappa[i_kappa], linestyle='-', marker = '', label = r'$%d$'%kappa, linewidth = 2)
-	#ax_NC_distribution2.plot(NC_common_data[1][:-1], np.cumsum(NC_common_data[0]/Counter_common), color = colors_kappa[i_kappa], linestyle='--', marker = '', linewidth = 2)
+	ax_NC_distribution2.plot(NC_rare_data[1][:-1], np.cumsum(NC_rare_data[0]/Counter_rare), color = colors_kappa[i_kappa], linestyle='-', marker = '', label = r'$%d$'%kappa, linewidth = 2)
+	ax_NC_distribution2.plot(NC_common_data[1][:-1], np.cumsum(NC_common_data[0]/Counter_common), color = colors_kappa[i_kappa], linestyle='--', marker = '', linewidth = 2)
 	
 	#Nb = np.exp(lambda_B*Tf)*((k_on*N_c)/(lambda_A*N_A))**(lambda_B/lambda_A)*(k_pr/k_on)**(kappa*lambda_B/lambda_A)*Kds**(-kappa*lambda_B/lambda_A)
 
@@ -195,8 +196,8 @@ Nb = C
 NC_array = np.log(1/(1+(Kds/((AA*(Nb))/N_A))))
 p_NC = P_min_e_Q0(N_r, Q0, dE)*(Nb*AA/N_A)/NC_array**1
 p_NC = p_NC/np.sum(p_NC[:-1]*abs(np.diff(NC_array)))
-ax_NC_distribution.plot(np.flip(NC_array[:-1]-normalization), np.flip(p_NC[:-1]), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 2, alpha = .8, label = 'Gumbel')
-ax_NC_distribution2.plot(np.flip(NC_array[:-1]-normalization), np.cumsum(np.flip(p_NC[:-1])*abs(np.diff(np.flip(NC_array)))), linestyle = '--', marker = '',  color = 'black', ms = 2, linewidth = 4, alpha = .8, label = 'Gumbel')
+ax_NC_distribution.plot(np.flip(NC_array[:-1]-normalization_common), np.flip(p_NC[:-1]), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 2, alpha = .8, label = 'Gumbel')
+ax_NC_distribution2.plot(np.flip(NC_array[:-1]-normalization_common), np.cumsum(np.flip(p_NC[:-1])*abs(np.diff(np.flip(NC_array)))), linestyle = '--', marker = '',  color = 'black', ms = 2, linewidth = 4, alpha = .8, label = 'Gumbel')
 
 my_plot_layout(ax = ax_NC_distribution, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 #ax_NC_distribution.legend(fontsize = 32, title_fontsize = 34, title = r'$p$', loc = 4)
@@ -206,7 +207,7 @@ ax_NC_distribution.set_xlim(left = -4, right = 6.5)
 #ax_NC_distribution.set_xticks([])
 #ax_NC_distribution.set_yticks([])
 #ax_NC_distribution.set_yticklabels([1, 0.1, 0.01])
-fig_NC_distribution.savefig('../../Figures/1_Dynamics/Ensemble/NC_P_'+energy_model+'.pdf')
+fig_NC_distribution.savefig('../../Figures/1_Dynamics/Ensemble/NC_P_RC_'+energy_model+'.pdf')
 
 my_plot_layout(ax = ax_NC_distribution2, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_NC_distribution2.legend(fontsize = 32, title_fontsize = 34, title = r'$p$', loc = 4)
@@ -216,7 +217,7 @@ ax_NC_distribution2.set_xlim(left = -3, right = 8.5)
 #ax_NC_distribution2.set_xticks([])
 #ax_NC_distribution2.set_yticks([])
 #ax_NC_distribution2.set_yticklabels([1, 0.1, 0.01])
-fig_NC_distribution2.savefig('../../Figures/1_Dynamics/Ensemble/NC_F_'+energy_model+'.pdf')
+fig_NC_distribution2.savefig('../../Figures/1_Dynamics/Ensemble/NC_F_RC_'+energy_model+'.pdf')
 
 my_plot_layout(ax = ax_NC, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_NC.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
@@ -224,7 +225,7 @@ ax_NC.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
 ax_NC.set_ylim(bottom = -2, top = 4.5)
 #ax_NC.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_NC.set_yticklabels([1, 0.1, 0.01])
-fig_NC.savefig('../../Figures/1_Dynamics/Ensemble/NC_'+energy_model+'.pdf')
+fig_NC.savefig('../../Figures/1_Dynamics/Ensemble/NC_RC_'+energy_model+'.pdf')
 
 
 

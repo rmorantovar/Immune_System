@@ -7,7 +7,7 @@ warnings.filterwarnings("ignore")
 Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/'
 
 #--------------- PARAMETERS ---------------------
-N_ens = 100
+N_ens = 200
 N_r = 2e8
 T0 = 3
 Tf = 10
@@ -22,7 +22,7 @@ k_pr = k_pr*24 #days^-1
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
 kappas = [1, 2, 3]
-kappas = [1, 2, 3]
+kappas = [1, 2, 3, 4]
 
 
 my_red = np.array((228,75,41))/256.
@@ -44,7 +44,7 @@ transparency_n = [1]
 color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_brown, my_blue2, my_yellow, my_purple, my_green2])#
 #color_list = np.array([(228,75,41), (125,165,38), (76,109,166), (215,139,45)])
 color_list = np.array([my_red, my_green, my_blue2, my_gold])
-color_list = np.array([my_green, my_blue2, my_gold])
+#color_list = np.array([my_green, my_blue2, my_gold])
 
 #colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
 #colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
@@ -84,7 +84,7 @@ print('L=%d'%(L))
 energy_model = 'TCRen'
 #energy_model = 'MJ2'
 #--------------------------Energy Motif--------------------------
-PWM_data = get_motif(antigen, energy_model, Text_files_path)
+PWM_data, M, Alphabet = get_motif(antigen, energy_model, Text_files_path)
 print('min_e_PWM=%.2f'%(np.sum([np.min(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))])))
 print('mean_e_PWM=%.4f'%(np.sum([np.mean(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))])))
 #Change values by the minimum
