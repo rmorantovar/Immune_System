@@ -172,7 +172,7 @@ for i_kappa, kappa in enumerate(kappas):
 		if(kappa==1):
 			normalization = NC[-1]
 
-		NC_data = np.histogram(np.log(NC_final) - normalization, bins = np.linspace(-5, 7, 80), density = False)
+		NC_data = np.histogram(np.log(NC_final) - normalization, bins = np.linspace(-5, 7, 100), density = False)
 		
 		#ax_NC.plot(time, NC-normalization, color = colors_kappa[i_kappa], alpha = .8, label = r'$%d$'%kappa, linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r])
 		if(i_N_r==0):
@@ -190,21 +190,20 @@ for i_kappa, kappa in enumerate(kappas):
 				
 		#Nb = np.exp(lambda_B*Tf)*((k_on*N_c)/(lambda_A*N_A))**(lambda_B/lambda_A)*(k_pr/k_on)**(kappa*lambda_B/lambda_A)*Kds**(-kappa*lambda_B/lambda_A)
 
-
 		if(kappa==1):
 			# Printing K from Gumbel
 			Nb = C
 			#NC_array = np.log(1/(1+(Kds/((AA*(Nb))/N_A))))
-			NC_array = ((Nb/N_A)/Kds)
-			p_NC = P_min_e_Q0(N_r, Q0, dE)*(Nb*AA/N_A)/NC_array**2
+			NC_array = np.log((Nb/N_A)/Kds)
+			p_NC = P_min_e_Q0(N_r, Q0, dE)#/NC_array**2*(Nb/N_A)
 			p_NC = p_NC/np.sum(np.flip(p_NC[:-1])*abs(np.diff(np.flip(NC_array))))
-			ax_NC_distribution.plot(np.flip(np.log(NC_array[:-1])-normalization), np.flip(p_NC[:-1]), marker = '',  color = 'black', ms = 2, alpha = .8, linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r])
-			ax_NC_distribution2.plot(np.flip(np.log(NC_array[:-1])-normalization), 1-np.cumsum(np.flip(p_NC[:-1])*abs(np.diff(np.flip(NC_array)))), marker = '',  color = 'black', ms = 2, alpha = .8, linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r])
+			ax_NC_distribution.plot((np.flip(NC_array[:-1]))-normalization, np.flip(p_NC[:-1]), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 2, alpha = .8, label = 'Gumbel')
+			ax_NC_distribution2.plot((np.flip(NC_array[:-1]))-normalization, 1-np.cumsum(np.flip(p_NC[:-1])*abs(np.diff(np.flip(NC_array)))), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 4, alpha = .8, label = 'Gumbel')
 
 my_plot_layout(ax = ax_NC_distribution, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 #ax_NC_distribution.legend(fontsize = 32, title_fontsize = 34, title = r'$p$', loc = 4)
 #ax_NC_distribution.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
-#ax_NC_distribution.set_ylim(bottom = 2e-3, top = 1)
+ax_NC_distribution.set_ylim(bottom = 2e-3, top = 1)
 ax_NC_distribution.set_xlim(left = 1, right = 6.5)
 #ax_NC_distribution.set_xticks([])
 #ax_NC_distribution.set_yticks([])
@@ -214,7 +213,7 @@ fig_NC_distribution.savefig('../../Figures/1_Dynamics/Ensemble/NC_P_'+energy_mod
 my_plot_layout(ax = ax_NC_distribution2, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_NC_distribution2.legend(fontsize = 32, title_fontsize = 34, title = r'$p$', loc = 3)
 #ax_NC_distribution2.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
-ax_NC_distribution2.set_ylim(bottom = 1e-3)
+ax_NC_distribution2.set_ylim(bottom = 1e-4)
 ax_NC_distribution2.set_xlim(left = 1, right = 6.5)
 #ax_NC_distribution2.set_xticks([])
 #ax_NC_distribution2.set_yticks([])
@@ -228,9 +227,6 @@ ax_NC.set_ylim(bottom = -1, top = 3.5)
 #ax_NC.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_NC.set_yticklabels([1, 0.1, 0.01])
 fig_NC.savefig('../../Figures/1_Dynamics/Ensemble/NC_'+energy_model+'.pdf')
-
-
-
 
 
 

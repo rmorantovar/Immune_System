@@ -135,7 +135,7 @@ for i_kappa, kappa in enumerate(kappas):
 		data_i = data.loc[data[4]==i_ens]
 		data_active = data_i.loc[data_i[1]==1]
 		t_act_data = np.min(data_active[3])
-		data_active = data_active.loc[data_active[3]<(t_act_data+0.9+0.1*(kappa-1))]
+		data_active = data_active.loc[data_active[3]<(t_act_data+1.0+0.1*(kappa-1))]
 		
 		data_active_rare = data_active#.loc[data_active[3]<(t_act_theory)]
 		activation_times_rare = np.array(data_active_rare[3])
