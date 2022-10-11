@@ -142,11 +142,11 @@ for i_kappa, kappa in enumerate((kappas)):
         best_clones_p.append(np.min(energies))
         best_clones.append(np.min(energies))
 
-
+    print(np.sum((P_min_e_Q0(N_r, Q0, dE)/Kds)[:-1]*np.diff(Kds)), np.sum((P_min_e_Q0(N_r, Q0, dE))[:-1]*np.diff(Kds)), np.sum((P_min_e_Q0(N_r, Q0, dE))*dE))
     bata_best = np.histogram(np.exp(best_clones_p), bins = np.logspace(np.log10(3e-9), np.log10(7e-8), 10), density = False)
     ax_best.plot(bata_best[1][:-1], bata_best[0]/len(best_clones_p), linestyle = '', marker = 's', color = 'black', ms = 12)
     #ax_best.plot(Kds, P_min_e(N_r, avg_E, var_E, Es[:-1], dE), linestyle = '--', marker = '',  color = 'black', ms = 2, linewidth = 4)
-    ax_best.plot(Kds, P_min_e_Q0(N_r, Q0, dE), linestyle = '--', marker = '',  color = 'black', ms = 2, linewidth = 4, alpha = .8)
+    ax_best.plot(Kds, (P_min_e_Q0(N_r, Q0, dE)), linestyle = '--', marker = '',  color = 'black', ms = 2, linewidth = 4, alpha = .8)
 
     my_plot_layout(ax = ax_best, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
     ax_best.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')

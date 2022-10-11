@@ -10,6 +10,7 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 N_ens = 200
 N_rs = [[2e8], [2e8, 2e8/2, 2e8/5, 2e8/20]]
 linewidths_N_r = [[5], [5, 4, 3, 2]]
+linestyles_N_r = [['-'], ['-', '--', '--', '--']]
 T0 = 3
 Tf = 10
 Tf_sim = 7.5
@@ -152,7 +153,7 @@ for i_kappa, kappa in enumerate(kappas):
 		if(i_kappa==0):
 			normalization = NC[-1]
 			print(normalization)
-		ax_NC.plot(time, NC-normalization, color = colors_kappa[i_kappa], alpha = 1, label = r'$%.e$'%N_r, linewidth = linewidths_N_r[i_kappa][i_N_r])
+		ax_NC.plot(time, NC-normalization, color = colors_kappa[i_kappa], alpha = 1, label = r'$%.e$'%N_r, linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r])
 
 		NC_data = np.histogram(np.array(NC_final)-normalization, bins = np.linspace(-5, 7, 40), density = False)
 		ax_NC_distribution.plot(NC_data[1][:-1], NC_data[0]/N_ens, color = colors_kappa[i_kappa], linestyle='-', marker = 's', label = r'$%.e$'%N_r, linewidth = linewidths_N_r[i_kappa][i_N_r])

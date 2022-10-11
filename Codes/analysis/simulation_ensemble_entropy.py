@@ -9,8 +9,11 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 #--------------- PARAMETERS ---------------------
 N_ens = 200
 N_r = 2e8
+N_rs = [[2e8], [2e8], [2e8], [2e8, 2e8/2, 2e8/5, 2e8/20]]
+linewidths_N_r = [[5], [5], [5], [5, 4, 3, 2]]
+linestyles_N_r = [['-'], ['-'], ['-'], ['-', '--', '--', '--']]
 T0 = 3
-Tf = 8
+Tf = 12
 Tf_sim = 7
 #Tf = 10
 dT = 0.05
@@ -21,7 +24,7 @@ k_pr = k_pr*24 #days^-1
 
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
-kappas = [1, 2, 3, 4]
+kappas = [1, 3, 4, 2]
 
 my_red = np.array((228,75,41))/256.
 my_purple = np.array((125,64,119))/256.
@@ -41,7 +44,7 @@ transparency_n = [1]
 
 color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_brown, my_blue2, my_yellow, my_purple, my_green2])#
 #color_list = np.array([(228,75,41), (125,165,38), (76,109,166), (215,139,45)])
-color_list = np.array([my_red, my_green, my_blue2, my_gold])
+color_list = np.array([my_red, my_blue2, my_gold, my_green])
 
 #colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
 #colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
@@ -54,7 +57,7 @@ colors_R = []
 for i in range(len(kappas)):
     colors_R.append([colors_kappa[i], colors_kappa[i], colors_kappa[i], colors_kappa[i]])
 
-lambda_B = lambda_A
+lambda_B = lambda_A/2
 k_on = 1e6*24*3600; #(M*days)^-1
 N_c = 1e5
 #N_c = 1e5
@@ -81,7 +84,7 @@ print('L=%d'%(L))
 energy_model = 'TCRen'
 #energy_model = 'MJ2'
 #--------------------------Energy Motif--------------------------
-PWM_data = get_motif(antigen, energy_model, Text_files_path)
+PWM_data, M, Alphabet = get_motif(antigen, energy_model, Text_files_path)
 print('min_e_PWM=%.2f'%(np.sum([np.min(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))])))
 print('mean_e_PWM=%.4f'%(np.sum([np.mean(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))])))
 #Change values by the minimum
@@ -96,10 +99,6 @@ Kds = np.exp(Es[:-1])
 beta_r, E_r, Kd_r = get_repertoire_properties(betas, Q0, Es, dE, N_r)
 print('beta_r = %.1f'%beta_r)
 
-#--------------------------Proofreading properties--------------------------
-beta_pr, E_pr, Kd_pr = get_proofreading_properties(betas, Q0, Es, dE, k_pr, k_on)
-print('beta_pr = %.2f'%beta_pr)
-
 t_prime = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*N_c))
 print('--------')
 print('Loops...')
@@ -110,43 +109,51 @@ for i_kappa, kappa in enumerate(kappas):
 	print('--------')
 	print('kappa = %.2f...'%kappa)
 	beta_kappa, E_kappa, Kd_kappa = get_kappa_properties(betas, Q0, Es, dE, kappa)
+	for i_N_r, N_r in enumerate(N_rs[i_kappa]):
+		#--------------------------Repertoire properties--------------------------
+		beta_r, E_r, Kd_r = get_repertoire_properties(betas, Q0, Es, dE, N_r)
+		print('N_r = %.e'%N_r)
+		print('beta_r = %.1f'%beta_r)
 
-	#-----------------Loading data----------------------------
-	parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
-	#data = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/energies_ensemble.txt', sep = '\t', header=None)
-	data = get_data_ensemble(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
+		#-----------------Loading data----------------------------
+		parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
+		#data = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/energies_ensemble.txt', sep = '\t', header=None)
+		data = get_data_ensemble(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
 
-	entropy = np.zeros_like(time)
-	for i_ens in tqdm(np.arange(N_ens)):
-		data_i = data.loc[data[4]==i_ens]
-		data_active = data_i.loc[data_i[1]==1]
-		t_act_data = np.min(data_active[3])
-		data_active = data_active.loc[data_active[3]<(t_act_data+1.1)]
-		activation_times = np.array(data_active[3])
-		energies  = np.array(data_active[0])
+		entropy = np.zeros_like(time)
+		for i_ens in tqdm(np.arange(N_ens)):
+			data_i = data.loc[data[4]==i_ens]
+			data_active = data_i.loc[data_i[1]==1]
+			t_act_data = np.min(data_active[3])
+			data_active = data_active.loc[data_active[3]<(t_act_data+1.0+0.1*(kappa-1))]
+			activation_times = np.array(data_active[3])
+			energies  = np.array(data_active[0])
 
-		#---------------------------- B cell linages ----------------------
-		clone_sizes = get_clones_sizes_C(len(activation_times), time, activation_times, lambda_B, C, dT)
+			#---------------------------- B cell linages ----------------------
+			clone_sizes = get_clones_sizes_C(len(activation_times), time, activation_times, lambda_B, C, dT)
 
-		#--------------------------t_C filter-------------------------
-		lim_size = 2
-		clone_sizes_C, activation_times_C, energies_C, filter_C, n_C = apply_filter_C(clone_sizes, activation_times, energies, lim_size)
+			#--------------------------t_C filter-------------------------
+			lim_size = 2
+			clone_sizes_C, activation_times_C, energies_C, filter_C, n_C = apply_filter_C(clone_sizes, activation_times, energies, lim_size)
 
-		#-------Simulations-------
-		Kds_C = np.exp(energies_C)
-		total_size = np.sum(clone_sizes_C, axis = 0)
-		entropy_i = -np.array([np.sum(((clone_sizes_C[:, t]-np.ones_like(clone_sizes_C[:, t]))/total_size[t])*np.log((clone_sizes_C[:, t]-np.ones_like(clone_sizes_C[:, t]))/total_size[t])) for t in range(len(time))])
-		entropy_i = np.nan_to_num(entropy_i, nan = 0, posinf = 0, neginf = 0)
-		entropy += entropy_i
-		#if(i_ens%1==0):
-		#	ax_entropy.plot(time, entropy_i, color = colors_kappa[  i_kappa], alpha = .1, linewidth = 1)
+			#-------Simulations-------
+			Kds_C = np.exp(energies_C)
+			total_size = np.sum(clone_sizes_C, axis = 0)
+			entropy_i = -np.array([np.sum(((clone_sizes_C[:, t]-np.ones_like(clone_sizes_C[:, t]))/total_size[t])*np.log((clone_sizes_C[:, t]-np.ones_like(clone_sizes_C[:, t]))/total_size[t])) for t in range(len(time))])
+			entropy_i = np.nan_to_num(entropy_i, nan = 0, posinf = 0, neginf = 0)
+			entropy += entropy_i
+			#if(i_ens%1==0):
+			#	ax_entropy.plot(time, entropy_i, color = colors_kappa[  i_kappa], alpha = .1, linewidth = 1)
 
-	entropy = entropy/N_ens
-	ax_entropy.plot(time, entropy, color = colors_kappa[  i_kappa], alpha = 1, label = r'$%d$'%kappa, linewidth = 5)
+		entropy = entropy/N_ens
+		if(i_N_r==0):
+			ax_entropy.plot(time, entropy, color = colors_kappa[  i_kappa], alpha = 1, label = r'$%d$'%kappa, linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r])
+		else:
+			ax_entropy.plot(time, entropy, color = colors_kappa[  i_kappa], alpha = 1, linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r])
 
 my_plot_layout(ax = ax_entropy, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-ax_entropy.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
-#ax_entropy.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
+ax_entropy.legend(fontsize = 30, title_fontsize = 32, title = r'$p$')
+ax_entropy.set_xlim(left = 3, right = 10)
 ax_entropy.set_ylim(bottom = 0)
 #ax_entropy.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_entropy.set_yticklabels([1, 0.1, 0.01])
