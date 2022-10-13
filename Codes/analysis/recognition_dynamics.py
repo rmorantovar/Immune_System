@@ -175,16 +175,19 @@ for N_r in N_rs:
                 ax_R.plot(Kds, R, color = colors_R[3-i_kappa][i_t], linewidth = 5, linestyle = '-')
                 
                 ax_QR.plot(Kds, QR*N_r, color = colors_R[3-i_kappa][i_t], linewidth = 5, linestyle = '-')
+                
                 ax_QR_all.plot(Kds, QR*N_r, color = colors_kappa[3-i_kappa], linewidth = 5, linestyle = '-', label = r'$%d$'%(kappa), alpha = .8)
                 
+                ax_QR_all_f.plot(Kds, QR*N_r, color = colors_kappa[3-i_kappa], linewidth = 5, linestyle = ':', alpha = .6)
+
                 #ax_QR_all.vlines(Kds[QR==np.max(QR)], 1e-9, (Q0*N_r)[QR==np.max(QR)], color = colors_kappa[3-i_kappa], linewidth = 3, linestyle = '--')
                 ax_QR_all_f.vlines(Kds[QR==np.max(QR)], 1e-9, (Q0*N_r)[QR==np.max(QR)], color = colors_kappa[3-i_kappa], linewidth = 3, linestyle = '--')
                 
-                ax_QR_all_f.plot(Kds[QR==np.max(QR)], (Q0*N_r)[QR==np.max(QR)], markerfacecolor = colors_kappa[3-i_kappa], marker = 'D', ms = 16, markeredgecolor='black', alpha = .6)
-                ax_QR_all_f.plot(Kds[Kds==Kd_kappa], (Q0*N_r)[Kds==Kd_kappa], markerfacecolor = colors_kappa[3-i_kappa], marker = '*', ms = 22, markeredgecolor='black', alpha = .6)
-
                 ax_QR_all.plot(Kds[Kds==Kd_kappa], (Q0*N_r)[Kds==Kd_kappa], markerfacecolor = colors_kappa[3-i_kappa], marker = '*', ms = 22, markeredgecolor='black', alpha = .6)
                 ax_QR_all.plot(Kds[QR==np.max(QR)], (Q0*N_r)[QR==np.max(QR)], markerfacecolor = colors_kappa[3-i_kappa], marker = 'D', ms = 16, markeredgecolor='black', alpha = .6)
+
+                ax_QR_all_f.plot(Kds[QR==np.max(QR)], (Q0*N_r)[QR==np.max(QR)], markerfacecolor = colors_kappa[3-i_kappa], marker = 'D', ms = 16, markeredgecolor='black', alpha = .6)
+                ax_QR_all_f.plot(Kds[Kds==Kd_kappa], (Q0*N_r)[Kds==Kd_kappa], markerfacecolor = colors_kappa[3-i_kappa], marker = '*', ms = 22, markeredgecolor='black', alpha = .6)
 
             if i_t==3:
 

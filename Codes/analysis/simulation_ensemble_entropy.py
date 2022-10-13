@@ -9,9 +9,10 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 #--------------- PARAMETERS ---------------------
 N_ens = 200
 N_r = 2e8
-N_rs = [[2e8], [2e8], [2e8], [2e8, 2e8/2, 2e8/5, 2e8/20]]
-linewidths_N_r = [[5], [5], [5], [5, 4, 3, 2]]
-linestyles_N_r = [['-'], ['-'], ['-'], ['-', '--', '--', '--']]
+N_rs = [[2e8], [2e8, 2e8/2, 2e8/5, 2e8/20], [2e8], [2e8]]
+linewidths_N_r = [[5], [5, 4, 3, 2], [5], [5]]
+linestyles_N_r = [['-'], ['-', '--', '--', '--'], ['-'], ['-']]
+transparencies_N_r = [[.8], [1, 1, 1, 1], [.8], [.8]]
 T0 = 3
 Tf = 12
 Tf_sim = 7
@@ -24,7 +25,7 @@ k_pr = k_pr*24 #days^-1
 
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
-kappas = [1, 3, 4, 2]
+kappas = [1, 2, 3, 4]
 
 my_red = np.array((228,75,41))/256.
 my_purple = np.array((125,64,119))/256.
@@ -44,7 +45,7 @@ transparency_n = [1]
 
 color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_brown, my_blue2, my_yellow, my_purple, my_green2])#
 #color_list = np.array([(228,75,41), (125,165,38), (76,109,166), (215,139,45)])
-color_list = np.array([my_red, my_blue2, my_gold, my_green])
+color_list = np.array([my_red, my_green, my_blue2, my_gold])
 
 #colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
 #colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
@@ -146,13 +147,13 @@ for i_kappa, kappa in enumerate(kappas):
 			#	ax_entropy.plot(time, entropy_i, color = colors_kappa[  i_kappa], alpha = .1, linewidth = 1)
 
 		entropy = entropy/N_ens
-		if(i_N_r==0):
-			ax_entropy.plot(time, entropy, color = colors_kappa[  i_kappa], alpha = 1, label = r'$%d$'%kappa, linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r])
+		if(kappa==2):
+			ax_entropy.plot(time, entropy, color = colors_kappa[  i_kappa], alpha = transparencies_N_r[i_kappa][i_N_r], linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r], label = r'$%.e$'%N_r)
 		else:
-			ax_entropy.plot(time, entropy, color = colors_kappa[  i_kappa], alpha = 1, linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r])
+			ax_entropy.plot(time, entropy, color = colors_kappa[  i_kappa], alpha = transparencies_N_r[i_kappa][i_N_r], linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r])
 
 my_plot_layout(ax = ax_entropy, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-ax_entropy.legend(fontsize = 30, title_fontsize = 32, title = r'$p$')
+ax_entropy.legend(fontsize = 28, title_fontsize = 30, title = r'$N_r$', loc = 3)
 ax_entropy.set_xlim(left = 3, right = 10)
 ax_entropy.set_ylim(bottom = 0)
 #ax_entropy.set_yticks([1, 0.1, 0.01, 0.001])

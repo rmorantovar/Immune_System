@@ -9,9 +9,11 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 #--------------- PARAMETERS ---------------------
 N_ens = 200
 N_r = 2e8
-N_rs = [[2e8], [2e8], [2e8], [2e8, 2e8/2, 2e8/5, 2e8/20]]
-linewidths_N_r = [[5], [5], [5], [5, 4, 3, 2]]
-linestyles_N_r = [['-'], ['-'], ['-'], ['-', '--', '--', '--']]
+N_rs = [[2e8], [2e8, 2e8/2, 2e8/5, 2e8/20], [2e8], [2e8]]
+linewidths_N_r = [[5], [5, 4, 3, 2], [5], [5]]
+linestyles_N_r = [['-'], ['-', '--', '--', '--'], ['-'], ['-']]
+transparencies_N_r = [[.8], [1, 1, 1, 1], [.8], [.8]]
+
 T0 = 3
 Tf = 12
 Tf_sim = 7
@@ -24,7 +26,7 @@ k_pr = k_pr*24 #days^-1
 
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
-kappas = [1, 3, 4, 2]
+kappas = [1, 2, 3, 4]
 #kappas = [3]
 
 my_red = np.array((228,75,41))/256.
@@ -44,7 +46,7 @@ antigen_color = my_yellow/256.
 transparency_n = [1]
 
 color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_brown, my_blue2, my_yellow, my_purple, my_green2])#
-color_list = np.array([my_red, my_blue2, my_gold, my_green])
+color_list = np.array([my_red, my_green, my_blue2, my_gold])
 #color_list = np.array([my_green, my_blue2, my_gold])
 
 colors_kappa = []
@@ -155,7 +157,7 @@ for i_kappa, kappa in enumerate(kappas):
 			Kds_C = np.exp(energies_C)
 
 			#NC_i = np.log(1-np.array([np.product(1-1/(1+(Kds_C/((AA*(clone_sizes_C[:,t]-1))/N_A)))) for t in np.arange(len(time))]))
-			NC_i = [np.sum(((clone_sizes_C[:,t]-1)/N_A)/Kds_C) for t in np.arange(len(time))]
+			NC_i = [np.log(np.sum(((clone_sizes_C[:,t]-1)/N_A)/Kds_C)) for t in np.arange(len(time))]
 
 			if(np.sum(~np.isinf(NC_i))!=0):
 				#NC += NC_i
@@ -167,12 +169,12 @@ for i_kappa, kappa in enumerate(kappas):
 			#	ax_NC.plot(time, NC_i, color = colors_kappa[i_kappa], alpha = .1, linewidth = 1)
 
 		#NC = NC/Counter
-		NC = np.log(NC/Counter)
+		NC = (NC/Counter)
 	
 		if(kappa==1):
 			normalization = NC[-1]
 
-		NC_data = np.histogram(np.log(NC_final) - normalization, bins = np.linspace(-5, 7, 100), density = False)
+		NC_data = np.histogram((NC_final) - normalization, bins = np.linspace(-5, 7, 100), density = False)
 		
 		#ax_NC.plot(time, NC-normalization, color = colors_kappa[i_kappa], alpha = .8, label = r'$%d$'%kappa, linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r])
 		if(i_N_r==0):
@@ -221,7 +223,7 @@ ax_NC_distribution2.set_xlim(left = 1, right = 6.5)
 fig_NC_distribution2.savefig('../../Figures/1_Dynamics/Ensemble/NC_F_'+energy_model+'.pdf')
 
 my_plot_layout(ax = ax_NC, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-ax_NC.legend(fontsize = 30, title_fontsize = 32, title = r'$p$')
+ax_NC.legend(fontsize = 28, title_fontsize = 30, title = r'$p$')
 ax_NC.set_xlim(left = 4.5, right = Tf)
 ax_NC.set_ylim(bottom = -1, top = 3.5)
 #ax_NC.set_yticks([1, 0.1, 0.01, 0.001])
