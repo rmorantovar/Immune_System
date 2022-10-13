@@ -177,15 +177,16 @@ for i_kappa, kappa in enumerate(kappas):
 		NC_data = np.histogram((NC_final) - normalization, bins = np.linspace(-5, 7, 100), density = False)
 		
 		#ax_NC.plot(time, NC-normalization, color = colors_kappa[i_kappa], alpha = .8, label = r'$%d$'%kappa, linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r])
-		if(i_N_r==0):
-			ax_NC.plot(time, NC-normalization, color = colors_kappa[i_kappa], alpha = 1, linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r], label = r'$%d$'%kappa)
-
-			ax_NC_distribution.plot(NC_data[1][:-1], NC_data[0]/Counter, color = colors_kappa[i_kappa], marker = '', label = r'$%d$'%kappa, linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r])
-
-			ax_NC_distribution2.plot(NC_data[1][:-1], 1-np.cumsum(NC_data[0]/Counter), color = colors_kappa[i_kappa], marker = '', label = r'$%d$'%kappa, linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r])
+		if(kappa==2):
+			ax_NC.plot(time, NC-normalization, color = colors_kappa[i_kappa], alpha = 1, linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r], label = r'$%.0f \cdot 10^{%d}$'%(10**(np.log10(N_r)%1), int(np.log10(N_r))))
 		else:
 			ax_NC.plot(time, NC-normalization, color = colors_kappa[i_kappa], alpha = 1, linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r])
 
+		if(i_N_r==0):
+			ax_NC_distribution.plot(NC_data[1][:-1], NC_data[0]/Counter, color = colors_kappa[i_kappa], marker = '', label = r'$%d$'%kappa, linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r])
+
+			ax_NC_distribution2.plot(NC_data[1][:-1], 1-np.cumsum(NC_data[0]/Counter), color = colors_kappa[i_kappa], marker = '', label = r'$%d$'%kappa, linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r])
+		#else:
 			#ax_NC_distribution.plot(NC_data[1][:-1], NC_data[0]/Counter, color = colors_kappa[i_kappa], marker = '', linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r])
 
 			#ax_NC_distribution2.plot(NC_data[1][:-1], 1-np.cumsum(NC_data[0]/Counter), color = colors_kappa[i_kappa], marker = '', linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r])
@@ -223,7 +224,7 @@ ax_NC_distribution2.set_xlim(left = 1, right = 6.5)
 fig_NC_distribution2.savefig('../../Figures/1_Dynamics/Ensemble/NC_F_'+energy_model+'.pdf')
 
 my_plot_layout(ax = ax_NC, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-ax_NC.legend(fontsize = 28, title_fontsize = 30, title = r'$p$')
+ax_NC.legend(fontsize = 28, title_fontsize = 30, title = r'$N_r$')
 ax_NC.set_xlim(left = 4.5, right = Tf)
 ax_NC.set_ylim(bottom = -1, top = 3.5)
 #ax_NC.set_yticks([1, 0.1, 0.01, 0.001])

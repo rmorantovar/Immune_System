@@ -13,7 +13,7 @@ N_rs = [[2e8], [2e8, 2e8/2, 2e8/5, 2e8/20], [2e8], [2e8]]
 linewidths_N_r = [[5], [5, 4, 3, 2], [5], [5]]
 linestyles_N_r = [['-'], ['-', '--', '--', '--'], ['-'], ['-']]
 transparencies_N_r = [[.8], [1, 1, 1, 1], [.8], [.8]]
-T0 = 3
+T0 = 2.5
 Tf = 12
 Tf_sim = 7
 #Tf = 10
@@ -147,14 +147,14 @@ for i_kappa, kappa in enumerate(kappas):
 			#	ax_entropy.plot(time, entropy_i, color = colors_kappa[  i_kappa], alpha = .1, linewidth = 1)
 
 		entropy = entropy/N_ens
-		if(kappa==2):
-			ax_entropy.plot(time, entropy, color = colors_kappa[  i_kappa], alpha = transparencies_N_r[i_kappa][i_N_r], linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r], label = r'$%.e$'%N_r)
+		if(i_N_r==0):
+			ax_entropy.plot(time, entropy, color = colors_kappa[  i_kappa], alpha = transparencies_N_r[i_kappa][i_N_r], linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r], label = r'$%d$'%kappa)
 		else:
 			ax_entropy.plot(time, entropy, color = colors_kappa[  i_kappa], alpha = transparencies_N_r[i_kappa][i_N_r], linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r])
 
 my_plot_layout(ax = ax_entropy, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-ax_entropy.legend(fontsize = 28, title_fontsize = 30, title = r'$N_r$', loc = 3)
-ax_entropy.set_xlim(left = 3, right = 10)
+ax_entropy.legend(fontsize = 28, title_fontsize = 30, title = r'$p$', loc = 2)
+ax_entropy.set_xlim(left = 2.5, right = 10)
 ax_entropy.set_ylim(bottom = 0)
 #ax_entropy.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_entropy.set_yticklabels([1, 0.1, 0.01])
