@@ -347,7 +347,7 @@ my_plot_layout(ax = ax_NC_avidity_cumulative, xscale='log', yscale= 'linear', ti
 fig_NC_avidity_cumulative.savefig('../../Figures/1_Dynamics/Ensemble/NC_avidity-cum_RC_'+energy_model+'.pdf')
 
 my_plot_layout(ax = ax_NC, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-ax_NC.legend(fontsize = 30, title_fontsize = 32, title = r'$p$')
+ax_NC.legend(fontsize = 28, title_fontsize = 30, title = r'$p$')
 ax_NC.set_xlim(left = 4.5, right = Tf)
 ax_NC.set_ylim(bottom = -1, top = 3.5)
 #ax_NC.set_yticks([1, 0.1, 0.01, 0.001])
