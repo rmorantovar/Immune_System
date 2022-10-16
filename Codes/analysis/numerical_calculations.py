@@ -18,6 +18,20 @@ lambda_A = 6
 k_pr = 1
 #k_pr = 180 # hour^-1
 k_pr = k_pr*24 #days^-1
+lambda_B = lambda_A/2
+k_on = 1e6*24*3600; #(M*days)^-1
+N_c = 1e5
+#N_c = 1e5
+E_ms = -27.63
+C = 3e4
+AA = 1
+
+time = np.linspace(T0, Tf, int((Tf-T0)/dT))
+energy_models = ['MJ']
+energy_model = 'MJ'
+models_name = ['exponential']#, 'linear',]
+growth_models = [0]
+linear = 0
 
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
@@ -53,20 +67,6 @@ colors_R = []
 for i in range(len(kappas)):
     colors_R.append([colors_kappa[i], colors_kappa[i], colors_kappa[i], colors_kappa[i]])
 
-lambda_B = lambda_A/2
-k_on = 1e6*24*3600; #(M*days)^-1
-N_c = 1e5
-#N_c = 1e5
-E_ms = -27.63
-C = 3e4
-AA = 1
-
-time = np.linspace(T0, Tf, int((Tf-T0)/dT))
-energy_models = ['MJ']
-energy_model = 'MJ'
-models_name = ['exponential']#, 'linear',]
-growth_models = [0]
-linear = 0
 
 # antigen = 'CMFILVWYAGTSQNEDHRKPFMRTP'
 # antigen = 'FMLFMAVFVMTSWYC'
@@ -104,10 +104,7 @@ t_prime = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*N_c))
 print('--------')
 print('Loops...')
 #--------------------------Loops--------------------------
-fig_NC, ax_NC = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-fig_NC_distribution, ax_NC_distribution = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-fig_NC_distribution2, ax_NC_distribution2 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-fig_NC_scatter, ax_NC_scatter = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+
 for i_kappa, kappa in enumerate(kappas):
     m_bar_theory = np.array([np.sum(N_r*calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*(t))/N_A, Es, kappa, lambda_A, N_c, dE)[3]*dE) for t in time])
     t_act_theory = time[m_bar_theory>1][0] 

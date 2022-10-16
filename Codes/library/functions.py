@@ -121,13 +121,13 @@ def get_motif(antigen, Matrix, Text_files_path):
 		# df = pd.DataFrame(M, index=Alphabet, columns=Alphabet)
 		# df.to_csv('../Input_files/TCRen.txt', header=Alphabet, index=Alphabet, sep='\t', mode = 'w')
 
-		M = np.loadtxt('../Input_files/' + Matrix + '.txt', skiprows= 0, usecols=range(0,20))
+		M = np.loadtxt(Text_files_path+'Input_files/' + Matrix + '.txt', skiprows= 0, usecols=range(0,20))
 		#Alphabet = ["C", "S", "T", "P", "A", "G", "N", "D", "E", "Q", "H", "R", "K", "M", "I", "L", "V", "F", "Y", "W"]
-		Alphabet = np.loadtxt('../Input_files/Alphabet_'+Matrix+'.txt', dtype=bytes, delimiter='\t').astype(str)
+		Alphabet = np.loadtxt(Text_files_path+'Input_files/Alphabet_'+Matrix+'.txt', dtype=bytes, delimiter='\t').astype(str)
 		Alphabet_list = Alphabet.tolist()
 	if(Matrix == 'MJ2'):
-		M = np.loadtxt('../Input_files/' + Matrix + '.txt', skiprows= 0, usecols=range(0,20))
-		Alphabet = np.loadtxt('../Input_files/Alphabet_'+Matrix+'.txt', dtype=bytes, delimiter='\t').astype(str)
+		M = np.loadtxt(Text_files_path+'Input_files/' + Matrix + '.txt', skiprows= 0, usecols=range(0,20))
+		Alphabet = np.loadtxt(Text_files_path+'Input_files/Alphabet_'+Matrix+'.txt', dtype=bytes, delimiter='\t').astype(str)
 		Alphabet_list = Alphabet.tolist()
 
 	antigen_list = [i for i in antigen]
