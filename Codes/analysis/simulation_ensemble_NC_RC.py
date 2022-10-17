@@ -120,6 +120,7 @@ for i_kappa, kappa in enumerate(kappas):
 	print('--------')
 	print('kappa = %.2f...'%kappa)
 	beta_kappa, E_kappa, Kd_kappa = get_kappa_properties(betas, Q0, Es, dE, kappa)
+	beta_act = np.min([beta_r, beta_kappa])
 
 	#-----------------Loading data----------------------------
 	parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
@@ -282,6 +283,13 @@ p_NC = p_NC/np.sum(np.flip(p_NC[:-1])*abs(np.diff(np.flip(NC_array))))
 ax_NC_distribution.plot((np.flip(NC_array[:-1]))-normalization_all, np.flip(p_NC[:-1]), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 2, alpha = .8, label = 'Gumbel')
 ax_NC_distribution2.plot((np.flip(NC_array[:-1]))-normalization_all, 1-np.cumsum(np.flip(p_NC[:-1])*abs(np.diff(np.flip(NC_array)))), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 4, alpha = .8, label = 'Gumbel')
 
+NC_array_tail = np.linspace(3, 7, 50)
+exponent_tail  = beta_act+1
+fit_tail = np.exp(-exponent_tail*(NC_array_tail))/np.exp(-exponent_tail*(5.5))
+fit_tail *= (1-np.cumsum(np.flip(p_NC[:-1])*abs(np.diff(np.flip(NC_array)))))[(np.flip(NC_array)[:-1]-normalization_all)<5.5][-1]
+print((1-np.cumsum(np.flip(p_NC[:-1])*abs(np.diff(np.flip(NC_array)))))[(np.flip(NC_array)[:-1]-normalization_all)<5.5][-1])
+ax_NC_distribution2.plot(NC_array_tail, fit_tail, linewidth = 2, color = 'grey')
+
 my_plot_layout(ax = ax_NC_distribution, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 #ax_NC_distribution.legend(fontsize = 32, title_fontsize = 34, title = r'$p$', loc = 4)
 ax_NC_distribution.set_ylim(bottom = 2e-3, top = 1)
@@ -292,9 +300,9 @@ ax_NC_distribution.set_xlim(left = 0, right = 6.5)
 fig_NC_distribution.savefig('../../Figures/1_Dynamics/Ensemble/NC_P_RC_'+energy_model+'.pdf')
 
 my_plot_layout(ax = ax_NC_distribution2, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-ax_NC_distribution2.legend(fontsize = 28, title_fontsize = 30, title = r'$p$', loc = 0)
-ax_NC_distribution2.set_ylim(bottom = 1e-4)
-ax_NC_distribution2.set_xlim(left = 1, right = 6.5)
+ax_NC_distribution2.legend(fontsize = 28, title_fontsize = 30, title = r'$p$', loc = 3)
+ax_NC_distribution2.set_ylim(bottom = 1e-4, top = 3)
+ax_NC_distribution2.set_xlim(left = 1, right = 7)
 #ax_NC_distribution2.set_xticks([])
 #ax_NC_distribution2.set_yticks([])
 #ax_NC_distribution2.set_yticklabels([1, 0.1, 0.01])

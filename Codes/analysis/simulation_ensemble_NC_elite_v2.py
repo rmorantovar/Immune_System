@@ -93,6 +93,10 @@ for i in np.arange(L):
 Es, dE, Q0, betas = calculate_Q0(0.01, 50, 400000, PWM_data, E_ms, L)
 Kds = np.exp(Es[:-1])
 
+#--------------------------Repertoire properties--------------------------
+beta_r, E_r, Kd_r = get_repertoire_properties(betas, Q0, Es, dE, N_r)
+print('beta_r = %.1f'%beta_r)
+
 #--------------------------Proofreading properties--------------------------
 beta_pr, E_pr, Kd_pr = get_proofreading_properties(betas, Q0, Es, dE, k_pr, k_on)
 print('beta_pr = %.2f'%beta_pr)
@@ -113,10 +117,6 @@ fig_NC_avidity_cumulative, ax_NC_avidity_cumulative = plt.subplots(figsize=(10,8
 NC_final_best_renorm = []
 
 for i_kappa, kappa in enumerate(kappas):
-
-	#--------------------------Repertoire properties--------------------------
-	beta_r, E_r, Kd_r = get_repertoire_properties(betas, Q0, Es, dE, N_r)
-	print('beta_r = %.1f'%beta_r)
 	m_bar_theory = np.array([np.sum(N_r*calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*(t))/N_A, Es, kappa, lambda_A, N_c, dE)[3]*dE) for t in time])
 	t_act_theory = time[m_bar_theory>1][0] 
 	print('--------')
@@ -310,8 +310,8 @@ ax_NC_distribution.set_xlim(left = 0, right = 6.5)
 fig_NC_distribution.savefig('../../Figures/1_Dynamics/Ensemble/NC_P_elite_'+energy_model+'.pdf')
 
 my_plot_layout(ax = ax_NC_distribution2, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-ax_NC_distribution2.legend(fontsize = 28, title_fontsize = 30, loc = 0)
-ax_NC_distribution2.set_ylim(bottom = 1e-4)
+ax_NC_distribution2.legend(fontsize = 28, title_fontsize = 30, loc = 3)
+ax_NC_distribution2.set_ylim(bottom = 1e-4, top = 3)
 ax_NC_distribution2.set_xlim(left = 1, right = 7)
 #ax_NC_distribution2.set_xticks([])
 #ax_NC_distribution2.set_yticks([])
