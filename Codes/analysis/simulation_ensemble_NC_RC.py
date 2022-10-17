@@ -35,7 +35,7 @@ linear = 0
 
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
-kappas = [1, 2, 4]
+kappas = [1, 2, 3, 4]
 #kappas = [3]
 
 my_red = np.array((228,75,41))/256.
@@ -55,7 +55,7 @@ antigen_color = my_yellow/256.
 transparency_n = [1]
 
 color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_brown, my_blue2, my_yellow, my_purple, my_green2])#
-color_list = np.array([my_red, my_green, my_gold])
+color_list = np.array([my_red, my_green, my_blue2, my_gold])
 #color_list = np.array([my_green, my_blue2, my_gold])
 
 colors_kappa = []
@@ -338,7 +338,7 @@ fig_NC_scatter_rare.savefig('../../Figures/1_Dynamics/Ensemble/NC_scatter_rare_R
 # fig_NC_avidity_cumulative.savefig('../../Figures/1_Dynamics/Ensemble/NC_avidity-cum_RC_'+energy_model+'.pdf')
 
 my_plot_layout(ax = ax_NC, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-ax_NC.legend(fontsize = 28, title_fontsize = 30, title = r'$p$')
+#ax_NC.legend(fontsize = 28, title_fontsize = 30, title = r'$p$')
 ax_NC.set_xlim(left = 4.5, right = Tf)
 ax_NC.set_ylim(bottom = -1, top = 3.5)
 #ax_NC.set_yticks([1, 0.1, 0.01, 0.001])

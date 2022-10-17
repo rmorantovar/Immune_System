@@ -123,6 +123,9 @@ for i_kappa, kappa in enumerate(kappas):
 	print('--------')
 	print('kappa = %.2f...'%kappa)
 	beta_kappa, E_kappa, Kd_kappa = get_kappa_properties(betas, Q0, Es, dE, kappa)
+	beta_act = np.min([beta_r, beta_kappa])
+	m_bar_theory = np.array([np.sum(N_r*calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*(t))/N_A, Es, kappa, lambda_A, N_c, dE)[3]*dE) for t in time])
+	t_act_theory = time[m_bar_theory>1][0]
 	for rep in range(1):
 		fig_muller, ax_muller = plt.subplots(figsize=(9,4), linewidth = 0, gridspec_kw={'left':0.005, 'right':.995, 'bottom':.02, 'top': 0.98}, dpi = 700, edgecolor = 'black')
 		ax_muller.spines["top"].set_linewidth(3)
@@ -205,7 +208,9 @@ for i_kappa, kappa in enumerate(kappas):
 		# 	for c in range(int(len(clone_sizes_C[:,0]))):
 		# 		ax_muller.plot(time, cumsum_freqs[c, :], linewidth = .00001*kappa, color = 'black')
 
-			
+		ax_muller.vlines(t_act_theory, 0, 1, color = colors_kappa[i_kappa], linewidth = 2, alpha = .8, linestyle = '--')
+		ax_muller.vlines(t_act_theory+1.2, 0, 1, color = colors_kappa[i_kappa], linewidth = 2, alpha = .8, linestyle = ':')
+
 		my_plot_layout(ax = ax_muller, ticks_labelsize=38, yscale = 'linear')
 		ax_muller.set_yticks([])
 		#ax_muller.set_xticks(np.arange(Tf))

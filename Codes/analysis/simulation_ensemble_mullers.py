@@ -7,8 +7,8 @@ warnings.filterwarnings("ignore")
 Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/'
 
 #--------------- PARAMETERS ---------------------
-N_ens = 100
-N_r = 2e8
+N_ens = 400
+N_r = 2e7
 T0 = 3
 Tf = 8
 Tf_sim = 7
@@ -20,7 +20,7 @@ k_pr = 1
 k_pr = k_pr*24 #days^-1
 
 
-kappas = [2, 3]
+kappas = [2.5]
 
 
 my_red = np.array((228,75,41))/256.
@@ -82,7 +82,7 @@ print('L=%d'%(L))
 energy_model = 'TCRen'
 #energy_model = 'MJ2'
 #--------------------------Energy Motif--------------------------
-PWM_data = get_motif(antigen, energy_model, Text_files_path)
+PWM_data, M, Alphabet = get_motif(antigen, energy_model, Text_files_path)
 print('min_e_PWM=%.2f'%(np.sum([np.min(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))])))
 print('mean_e_PWM=%.4f'%(np.sum([np.mean(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))])))
 #Change values by the minimum
@@ -114,6 +114,8 @@ for i_kappa, kappa in enumerate((kappas)):
     beta_kappa, E_kappa, Kd_kappa = get_kappa_properties(betas, Q0, Es, dE, kappa)
     beta_act = np.min([beta_r, beta_kappa])
 
+    m_bar_theory = np.array([np.sum(N_r*calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*(t))/N_A, Es, kappa, lambda_A, N_c, dE)[3]*dE) for t in time])
+    t_act_theory = time[m_bar_theory>1][0]
     #-----------------Loading data----------------------------
     parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
     #data = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/energies_ensemble.txt', sep = '\t', header=None)
@@ -179,14 +181,15 @@ for i_kappa, kappa in enumerate((kappas)):
         # if(i_kappa!=4):
         #   for c in range(int(len(clone_sizes_C[:,0]))):
         #       ax_muller.plot(time, cumsum_freqs[c, :], linewidth = .00001*kappa, color = 'black')
-
+        ax_muller.vlines(t_act_theory, 0, 1, color = colors_kappa[i_kappa], linewidth = 2, alpha = .8, linestyle = '--')
+        ax_muller.vlines(t_act_theory+1.2, 0, 1, color = colors_kappa[i_kappa], linewidth = 2, alpha = .8, linestyle = ':')
         my_plot_layout(ax = ax_muller, ticks_labelsize=38, yscale = 'linear')
         ax_muller.set_yticks([])
         #ax_muller.set_xticks(np.arange(Tf))
         ax_muller.set_xticks([])
         ax_muller.set_xlim(T0, Tf)
         ax_muller.set_ylim(0, 1)
-        fig_muller.savefig('../../Figures/1_Dynamics/Ensemble/Mullers/B_cell_clones_kappa-%.2f_%d_'%(kappa, i_ens)+energy_model+'.pdf', edgecolor=fig_muller.get_edgecolor())
+        fig_muller.savefig('../../Figures/1_Dynamics/Ensemble/Mullers/B_cell_clones_N_r%.e_kappa-%.2f_%d_'%(N_r,kappa, i_ens)+energy_model+'.pdf', edgecolor=fig_muller.get_edgecolor())
         plt.close(fig_muller)
 
 
