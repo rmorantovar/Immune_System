@@ -7,7 +7,7 @@ warnings.filterwarnings("ignore")
 Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/'
 
 #--------------- PARAMETERS ---------------------
-N_ensss = [[200], [400, 100]]
+N_ensss = [[200], [400, 300, 100]]
 N_r = 2e8
 
 T0 = 3
