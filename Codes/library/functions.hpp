@@ -1,12 +1,12 @@
 //
-//  Immuno_functions.hpp
+//  functions.hpp
 //  
 //  Created by Roberto Moran Tovar on 27.02.21.
 //
 
 #ifndef functions_h
 #define functions_h
-#endif /* Immuno_functions_h */
+#endif /* functions_h */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -575,13 +575,13 @@ void EF_dynamics_ensemble(int linear, double const alpha, double const beta, dou
         N_final_active_linages.push_back(n_active_linages);
     } 
 }
-void EF_response(int linear, double const alpha, double const beta, double gamma, double const theta, double N_c, double To, double Tf, long long int NT, double dT, int n_naive, vector<bcell*> & Naive)
+void EF_response(int linear, double const alpha, double const beta, double gamma, double const theta, long double const N_c, double To, double Tf, long long int NT, double dT, int n_naive, vector<bcell*> & Naive)
 {
-    double k_on = 1e6*24*3600; // M*days^-1
+    long double k_on = 1e6*24*3600; // M*days^-1
     //double k_off = 1e-8*24*3600 days^-1;
     double k_off;
     gamma = gamma*24; // days^-1
-    double alpha2 = alpha;
+    long double alpha2 = alpha;
     int z;
     double r;
     double r_GC;
@@ -590,7 +590,7 @@ void EF_response(int linear, double const alpha, double const beta, double gamma
     long long int n_time = NT; //number of steps
 
     // Time array 
-    valarray<double> time(n_time);
+    valarray<long double> time(n_time);
     time[0] = To;
     for (int t = 1; t < n_time; t++)
     {   
