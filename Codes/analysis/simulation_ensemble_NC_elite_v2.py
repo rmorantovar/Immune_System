@@ -7,7 +7,8 @@ warnings.filterwarnings("ignore")
 Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/'
 
 #--------------- PARAMETERS ---------------------
-N_ensss = [[200], [400, 300, 200, 100, 50], [200, 150, 100], [200, 100]]
+N_ensss = [[200], [501, 502, 503, 504, 505, 506, 507, 508, 509, 400, 300, 200, 100, 50], [200, 150, 100], [200, 100], [200]]
+N_ensss = [[200], [501, 502, 503, 504, 505, 506, 507, 508, 509, 400, 300, 200, 100, 50]]
 N_r = 2e8
 
 T0 = 3
@@ -36,8 +37,8 @@ linear = 0
 
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
-kappas = [1, 2.5, 3.0, 4.0]
-#kappas = [3]
+kappas = [1, 2.5, 3.0, 4.0, 5.0]
+kappas = [1, 2.5]
 
 my_red = np.array((228,75,41))/256.
 my_purple = np.array((125,64,119))/256.
@@ -56,8 +57,8 @@ antigen_color = my_yellow/256.
 transparency_n = [1]
 
 color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_brown, my_blue2, my_yellow, my_purple, my_green2])#
-color_list = np.array([my_red, my_green, my_blue2, my_gold])
-#color_list = np.array([my_green, my_blue2, my_gold])
+color_list = np.array([my_red, my_green, my_blue2, my_gold, my_purple])
+color_list = np.array([my_red, my_green])
 
 colors_kappa = []
 for i in range(len(color_list)):
@@ -176,53 +177,55 @@ for i_kappa, kappa in enumerate(kappas):
 			clone_sizes_C_all, activation_times_C_all, energies_C_all, filter_C_all, n_C_all = apply_filter_C(clone_sizes_all, activation_times_all, energies_all, lim_size)
 			#clone_sizes_C_common, activation_times_C_common, energies_C_common, filter_C_common, n_C_common = apply_filter_C(clone_sizes_common, activation_times_common, energies_common, lim_size)
 			#-------Simulations-------
-			Kds_C_all = np.exp(energies_C_all)
-			Avidities = np.divide(((clone_sizes_C_all-1).T)/N_A, Kds_C_all).T
-			final_potencies = (Avidities[:,-1])
-			final_potency = (np.sum(Avidities[:,-1]))
-			sort_inds_avidity = np.flip(final_potencies.argsort())
+			if(len(energies_C_all)>0):
+				Kds_C_all = np.exp(energies_C_all)
+				Avidities = np.divide(((clone_sizes_C_all-1).T)/1, Kds_C_all).T
+				final_potencies = (Avidities[:,-1])
+				final_potency = (np.sum(Avidities[:,-1]))
+				sort_inds_avidity = np.flip(final_potencies.argsort())
 
-			cum_avidity_freq = np.cumsum(final_potencies[sort_inds_avidity])/final_potency
+				cum_avidity_freq = np.cumsum(final_potencies[sort_inds_avidity])/final_potency
 
-			ax_NC_avidity_cumulative.plot(np.arange(len(final_potencies))+1, cum_avidity_freq, color = colors_kappa[i_kappa], alpha = .5 )
+				ax_NC_avidity_cumulative.plot(np.arange(len(final_potencies))+1, cum_avidity_freq, color = colors_kappa[i_kappa], alpha = .5 )
 
-			order = 0
-			K_i = final_potencies[sort_inds_avidity[order]]
-			while (((K_i)/(final_potency))<.9):
-				order+=1
-				K_i+=final_potencies[sort_inds_avidity[order]]
+				order = 0
+				K_i = final_potencies[sort_inds_avidity[order]]
+				while (((K_i)/(final_potency))<.9):
+					order+=1
+					K_i+=final_potencies[sort_inds_avidity[order]]
 
-			Avidity_orders.append(order+1)
+				Avidity_orders.append(order+1)
 
-			#Kds_C_common = np.exp(energies_C_common)
+				#Kds_C_common = np.exp(energies_C_common)
 
-			NC_i_all = np.log(np.sum(Avidities, axis = 0))
-			NC_i_best = np.log(np.sum(Avidities[energies_C_all==np.min(energies_C_all),:], axis = 0))
-			NC_i_biggest = np.log(np.sum(Avidities[clone_sizes_C_all[:,-1]==np.max(clone_sizes_C_all[:,-1]),:], axis = 0))
-			NC_i_avidity = np.log(np.sum(Avidities[Avidities[:,-1]==np.max(Avidities[:,-1]),:], axis = 0))
-			
-			NC_final_best_renorm.append(np.log((C/N_A)/np.min(Kds_C_all)))
+				NC_i_all = (np.sum(Avidities, axis = 0))
+				NC_i_best = (np.sum(Avidities[energies_C_all==np.min(energies_C_all),:], axis = 0))
+				NC_i_biggest = (np.sum(Avidities[clone_sizes_C_all[:,-1]==np.max(clone_sizes_C_all[:,-1]),:], axis = 0))
+				NC_i_avidity = (np.sum(Avidities[Avidities[:,-1]==np.max(Avidities[:,-1]),:], axis = 0))
+				
+				NC_final_best_renorm.append(((C/1)/np.min(Kds_C_all)))
 
-			if(np.sum(~np.isinf(NC_i_all))!=0):
-				NC_all += NC_i_all
-				NC_final_all.append(NC_i_all[-1])
-				Counter_all+=1
+				#if(np.sum(~np.isinf(NC_i_all))!=0):
+				if(np.sum(NC_i_all)!=0):
+					NC_all += NC_i_all
+					NC_final_all.append(NC_i_all[-1])
+					Counter_all+=1
 
-				NC_best += NC_i_best
-				NC_final_best.append(NC_i_best[-1])
-				Counter_best+=1
+					NC_best += NC_i_best
+					NC_final_best.append(NC_i_best[-1])
+					Counter_best+=1
 
-				NC_biggest += NC_i_biggest
-				NC_final_biggest.append(NC_i_biggest[-1])
-				Counter_biggest+=1
+					NC_biggest += NC_i_biggest
+					NC_final_biggest.append(NC_i_biggest[-1])
+					Counter_biggest+=1
 
-				NC_avidity += NC_i_avidity
-				NC_final_avidity.append(NC_i_avidity[-1])
-				Counter_avidity+=1
+					NC_avidity += NC_i_avidity
+					NC_final_avidity.append(NC_i_avidity[-1])
+					Counter_avidity+=1
 
-			
-			#if(i_ens%1==0):
-			#	ax_NC.plot(time, NC_i, color = colors_kappa[i_kappa], alpha = .1, linewidth = 1)
+				
+				#if(i_ens%1==0):
+				#	ax_NC.plot(time, NC_i, color = colors_kappa[i_kappa], alpha = .1, linewidth = 1)
 			
 	counter_total+=Counter_all
 
@@ -242,25 +245,25 @@ for i_kappa, kappa in enumerate(kappas):
 		normalization_avidity = NC_all[-1]
 	
 	else:
-		ax_NC.plot(time, NC_all - normalization_all, color = colors_kappa[i_kappa], alpha = 1, linewidth = 5, linestyle = '-', label = 'all')
-		#ax_NC.plot(time, NC_best - normalization_best, color = colors_kappa[i_kappa], alpha = 1, linewidth = 5, linestyle = '--', label = 'affinity')
-		#ax_NC.plot(time, NC_biggest - normalization_biggest, color = colors_kappa[i_kappa], alpha = 1, linewidth = 5, linestyle = ':', label = 'clone-size')
-		ax_NC.plot(time, NC_avidity - normalization_avidity, color = colors_kappa[i_kappa], alpha = 1, linewidth = 5, linestyle = '-.', label = 'potency')
+		ax_NC.plot(time, np.log(NC_all/normalization_all), color = colors_kappa[i_kappa], alpha = 1, linewidth = 5, linestyle = '-', label = 'all')
+		#ax_NC.plot(time, np.log(NC_best/normalization_best), color = colors_kappa[i_kappa], alpha = 1, linewidth = 5, linestyle = '--', label = 'affinity')
+		#ax_NC.plot(time, np.log(NC_biggest/normalization_biggest), color = colors_kappa[i_kappa], alpha = 1, linewidth = 5, linestyle = ':', label = 'clone-size')
+		ax_NC.plot(time, np.log(NC_avidity/normalization_avidity), color = colors_kappa[i_kappa], alpha = 1, linewidth = 5, linestyle = '-.', label = 'potency')
 
-	print(np.max(np.array(NC_final_all) - normalization_all))
-	print(np.max(np.array(NC_final_best) - normalization_best))
-	print(np.max(np.array(NC_final_biggest) - normalization_biggest))
-	print(np.max(np.array(NC_final_avidity) - normalization_avidity))
+	print(np.max(np.log(np.array(NC_final_all)/normalization_all)))
+	print(np.max(np.log(np.array(NC_final_best)/normalization_best)))
+	print(np.max(np.log(np.array(NC_final_biggest)/normalization_biggest)))
+	print(np.max(np.log(np.array(NC_final_avidity)/normalization_avidity)))
 
 	#bins = np.linspace(-5, 7, 100)
-	NC_data_all = np.histogram((NC_final_all) - normalization_all, bins = 'auto', density = False)
-	NC_data_best = np.histogram((NC_final_best) - normalization_best, bins = np.linspace(-7, 7, 80), density = False)
-	NC_data_biggest = np.histogram((NC_final_biggest) - normalization_biggest, bins = np.linspace(np.min((NC_final_biggest) - normalization_biggest), 7, 80), density = False)
-	NC_data_avidity = np.histogram((NC_final_avidity) - normalization_avidity, bins = np.linspace(-7, 7, 80), density = False)
+	NC_data_all = np.histogram(np.log((NC_final_all)/normalization_all), bins = 'auto', density = False)
+	NC_data_best = np.histogram(np.log((NC_final_best)/normalization_best), bins = np.linspace(-7, 7, 80), density = False)
+	NC_data_biggest = np.histogram(np.log((NC_final_biggest)/normalization_biggest), bins = np.linspace(np.min((NC_final_biggest) - normalization_biggest), 7, 80), density = False)
+	NC_data_avidity = np.histogram(np.log((NC_final_avidity)/normalization_avidity), bins = np.linspace(-7, 7, 80), density = False)
 	
-	ax_NC_scatter_affinity.scatter((NC_final_all) - normalization_all, (NC_final_best) - normalization_best, color = colors_kappa[i_kappa])
-	ax_NC_scatter_clone_size.scatter((NC_final_all) - normalization_all, (NC_final_biggest) - normalization_biggest, color = colors_kappa[i_kappa])
-	ax_NC_scatter_avidity.scatter((NC_final_all) - normalization_all, (NC_final_avidity) - normalization_avidity, color = colors_kappa[i_kappa])
+	ax_NC_scatter_affinity.scatter(np.log((NC_final_all)/normalization_all), np.log((NC_final_best)/normalization_best), color = colors_kappa[i_kappa])
+	ax_NC_scatter_clone_size.scatter(np.log((NC_final_all)/normalization_all), np.log((NC_final_biggest)/normalization_biggest), color = colors_kappa[i_kappa])
+	ax_NC_scatter_avidity.scatter(np.log((NC_final_all)/normalization_all), np.log((NC_final_avidity)/normalization_avidity), color = colors_kappa[i_kappa])
 
 	ax_NC_scatter_affinity.plot(np.linspace(-2, 6, 50), np.linspace(-2, 6, 50), color = 'black', alpha = .8)
 	ax_NC_scatter_clone_size.plot(np.linspace(-2, 6, 50), np.linspace(-2, 6, 50), color = 'black', alpha = .8)
@@ -282,33 +285,33 @@ for i_kappa, kappa in enumerate(kappas):
 Counter_best_renorm = counter_total
 print(Counter_best_renorm)
 #Counter_best_renorm = 1
-NC_best_renorm_data = np.histogram((NC_final_best_renorm) - normalization_best, bins = 'auto', density = False)
+NC_best_renorm_data = np.histogram(np.log(np.array(NC_final_best_renorm)/normalization_best), bins = 'auto', density = False)
 ax_NC_distribution.plot(NC_best_renorm_data[1][:-1], NC_best_renorm_data[0]/Counter_best_renorm, color = 'gray', linestyle=':', marker = '', linewidth = 2)
 #ax_NC_distribution2.plot(NC_best_renorm_data[1][:-1], 1-np.cumsum(NC_best_renorm_data[0]/Counter_best_renorm*np.diff(NC_best_renorm_data[1])), color = 'gray', linestyle='', marker = 'D', linewidth = 2)
 ax_NC_distribution2.plot(NC_best_renorm_data[1][:-1], 1-np.cumsum(NC_best_renorm_data[0]/Counter_best_renorm), color = 'gray', linestyle='', marker = 'D', linewidth = 2)
 
 # Printing K from Gumbel
 Nb = C
-#NC_array = np.log(1/(1+(Kds/((AA*(Nb))/N_A))))
-NC_array = np.log((Nb/N_A)/Kds)
+#NC_array = np.log(1/(1+(Kds/((AA*(Nb))/1))))
+NC_array = ((Nb/1)/Kds)
 print(NC_array)
-p_NC = P_min_e_Q0(N_r, Q0, dE)#/NC_array**2*(Nb/N_A)
-print(np.sum(P_min_e_Q0(N_r, Q0, dE)*dE), np.sum(P_min_e_Q0(N_r, Q0, dE)[:-1]*abs(np.diff((NC_array)))))
-p_NC = p_NC/np.sum(np.flip(p_NC[:-1])*abs(np.diff(np.flip(NC_array))))
-ax_NC_distribution.plot((np.flip(NC_array[:-1]))-normalization_all, np.flip(p_NC[:-1]), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 2, alpha = .8, label = 'Gumbel')
-ax_NC_distribution2.plot((np.flip(NC_array[:-1]))-normalization_all, 1-np.cumsum(np.flip(p_NC[:-1])*abs(np.diff(np.flip(NC_array)))), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 4, alpha = .8, label = 'Gumbel')
+p_NC = P_min_e_Q0(N_r, Q0, dE)#/NC_array**2*(Nb/1)
+print(np.sum(P_min_e_Q0(N_r, Q0, dE)*dE), np.sum(P_min_e_Q0(N_r, Q0, dE)[:-1]/NC_array[:-1]*abs(np.diff((NC_array)))))
+p_NC = p_NC/np.sum(np.flip(p_NC[:-1])/np.flip(NC_array[:-1])*abs(np.diff(np.flip(NC_array))))
+ax_NC_distribution.plot(np.log((np.flip(NC_array[:-1]))/normalization_all), np.flip(p_NC[:-1]), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 2, alpha = .8, label = 'Gumbel')
+ax_NC_distribution2.plot(np.log((np.flip(NC_array[:-1]))/normalization_all), 1-np.cumsum(np.flip(p_NC[:-1])/np.flip(NC_array[:-1])*abs(np.diff(np.flip(NC_array)))), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 4, alpha = .8, label = 'Gumbel')
 
 NC_array_tail = np.linspace(3, 7, 50)
 exponent_tail  = beta_act+1
 fit_tail = np.exp(-exponent_tail*(NC_array_tail))/np.exp(-exponent_tail*(5.5))
-fit_tail *= (1-np.cumsum(np.flip(p_NC[:-1])*abs(np.diff(np.flip(NC_array)))))[(np.flip(NC_array)[:-1]-normalization_all)<5.5][-1]
-print((1-np.cumsum(np.flip(p_NC[:-1])*abs(np.diff(np.flip(NC_array)))))[(np.flip(NC_array)[:-1]-normalization_all)<5.5][-1])
+fit_tail *= (1-np.cumsum(np.flip(p_NC[:-1])/np.flip(NC_array[:-1])*abs(np.diff(np.flip(NC_array)))))[np.log(np.flip(NC_array)[:-1]/normalization_all)<5.5][-1]
+print((1-np.cumsum(np.flip(p_NC[:-1])/np.flip(NC_array[:-1])*abs(np.diff(np.flip(NC_array)))))[(np.flip(NC_array)[:-1]-normalization_all)<5.5][-1])
 ax_NC_distribution2.plot(NC_array_tail, fit_tail, linewidth = 2, color = 'grey')
 
 my_plot_layout(ax = ax_NC_distribution, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 #ax_NC_distribution.legend(fontsize = 32, title_fontsize = 34, title = r'$p$', loc = 4)
 ax_NC_distribution.set_ylim(bottom = 2e-3, top = 1)
-ax_NC_distribution.set_xlim(left = 0, right = 6.5)
+ax_NC_distribution.set_xlim(left = -4, right = 6.5)
 #ax_NC_distribution.set_xticks([])
 #ax_NC_distribution.set_yticks([])
 #ax_NC_distribution.set_yticklabels([1, 0.1, 0.01])
@@ -316,8 +319,8 @@ fig_NC_distribution.savefig('../../Figures/1_Dynamics/Ensemble/NC_P_elite_'+ener
 
 my_plot_layout(ax = ax_NC_distribution2, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_NC_distribution2.legend(fontsize = 28, title_fontsize = 30, loc = 3, title = r'$p$')
-ax_NC_distribution2.set_ylim(bottom = 1e-4, top = 3)
-ax_NC_distribution2.set_xlim(left = 1, right = 7)
+ax_NC_distribution2.set_ylim(bottom = 5e-5, top = 3)
+ax_NC_distribution2.set_xlim(left = 1.5, right = 7.5)
 #ax_NC_distribution2.set_xticks([])
 #ax_NC_distribution2.set_yticks([])
 #ax_NC_distribution2.set_yticklabels([1, 0.1, 0.01])
