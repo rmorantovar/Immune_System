@@ -7,9 +7,11 @@ warnings.filterwarnings("ignore")
 Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/'
 
 #--------------- PARAMETERS ---------------------
-N_ens = 200
+N_ens = 400
+N_enss = [[200], [400, 400, 400, 400]]#, 502, 503, 504, 505, 506, 507, 508, 509, 400, 300, 200, 100, 50], [301, 302, 303, 304, 305, 306, 307, 308, 309]]
 N_r = 2e8
-N_rs = [[2e8], [2e8, 2e8/2, 2e8/5, 2e8/20], [2e8], [2e8]]
+N_r = 2e8
+N_rs = [[2e8], [2e8, 2e8/2, 2e8/5, 2e8/10], [2e8], [2e8]]
 linewidths_N_r = [[5], [5, 4, 3, 2], [5], [5]]
 linestyles_N_r = [['-'], ['-', '--', '--', '--'], ['-'], ['-']]
 transparencies_N_r = [[.4], [1, 1, 1, 1], [.4], [.4]]
@@ -116,6 +118,7 @@ for i_kappa, kappa in enumerate(kappas):
 	beta_kappa, E_kappa, Kd_kappa = get_kappa_properties(betas, Q0, Es, dE, kappa)
 
 	for i_N_r, N_r in enumerate(N_rs[i_kappa]):
+		N_ens = N_enss[i_kappa][i_N_r]
 		#--------------------------Repertoire properties--------------------------
 		beta_r, E_r, Kd_r = get_repertoire_properties(betas, Q0, Es, dE, N_r)
 		print('N_r = %.e'%N_r)
@@ -150,10 +153,10 @@ for i_kappa, kappa in enumerate(kappas):
 			#-------Simulations-------
 			Kds_C = np.exp(energies_C)
 
-			#NC_i = np.log(1-np.array([np.product(1-1/(1+(Kds_C/((AA*(clone_sizes_C[:,t]-1))/N_A)))) for t in np.arange(len(time))]))
-			NC_i = [np.log(np.sum(((clone_sizes_C[:,t]-1)/N_A)/Kds_C)) for t in np.arange(len(time))]
+			#NC_i = np.log(1-np.array([np.product(1-1/(1+(Kds_C/((AA*(clone_sizes_C[:,t]-1))/1)))) for t in np.arange(len(time))]))
+			NC_i = [(np.sum(((clone_sizes_C[:,t]-1)/1)/Kds_C)) for t in np.arange(len(time))]
 
-			if(np.sum(~np.isinf(NC_i))!=0):
+			if(np.sum(NC_i)!=0):
 				#NC += NC_i
 				NC += NC_i
 				NC_final.append(NC_i[-1])
@@ -166,13 +169,13 @@ for i_kappa, kappa in enumerate(kappas):
 		NC = (NC/Counter)
 	
 		if(kappa==1):
-			normalization = NC[-1]
+			normalization = 1#NC[-1]
 
-		NC_data = np.histogram((NC_final) - normalization, bins = np.linspace(-5, 7, 100), density = False)
+		NC_data = np.histogram(np.log10(np.array(NC_final)/normalization), bins = 'auto', density = False)
 		
 		#ax_NC.plot(time, NC-normalization, color = colors_kappa[i_kappa], alpha = .8, label = r'$%d$'%kappa, linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r])
-		if(kappa==2):
-			ax_NC.plot(time, NC-normalization, color = colors_kappa[i_kappa], alpha = 1, linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r], label = r'$%.0f \cdot 10^{%d}$'%(10**(np.log10(N_r)%1), int(np.log10(N_r))))
+		if(kappa==2.5):
+			ax_NC.plot(time, NC/normalization, color = colors_kappa[i_kappa], alpha = 1, linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r], label = r'$%.0f \cdot 10^{%d}$'%(10**(np.log10(N_r)%1), int(np.log10(N_r))))
 
 			ax_NC_distribution.plot(NC_data[1][:-1], NC_data[0]/Counter, color = colors_kappa[i_kappa], marker = '', label = r'$%d$'%kappa, linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r])
 
@@ -183,12 +186,12 @@ for i_kappa, kappa in enumerate(kappas):
 		if(kappa==1):
 			# Printing K from Gumbel
 			Nb = C
-			#NC_array = np.log(1/(1+(Kds/((AA*(Nb))/N_A))))
-			NC_array = np.log((Nb/N_A)/Kds)
-			p_NC = P_min_e_Q0(N_r, Q0, dE)#/NC_array**2*(Nb/N_A)
-			p_NC = p_NC/np.sum(np.flip(p_NC[:-1])*abs(np.diff(np.flip(NC_array))))
-			ax_NC_distribution.plot((np.flip(NC_array[:-1]))-normalization, np.flip(p_NC[:-1]), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 2, alpha = .8, label = 'Gumbel')
-			ax_NC_distribution2.plot((np.flip(NC_array[:-1]))-normalization, 1-np.cumsum(np.flip(p_NC[:-1])*abs(np.diff(np.flip(NC_array)))), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 4, alpha = .8, label = 'Gumbel')
+			#NC_array = np.log(1/(1+(Kds/((AA*(Nb))/1))))
+			NC_array = ((Nb/1)/Kds)
+			p_NC = P_min_e_Q0(N_r, Q0, dE)#/NC_array**2*(Nb/1)
+			p_NC = p_NC/np.sum(np.flip(p_NC[:-1])/np.flip(NC_array[:-1])*abs(np.diff(np.flip(NC_array))))
+			ax_NC_distribution.plot((np.flip(NC_array[:-1]))/normalization, np.flip(p_NC[:-1]), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 2, alpha = .8, label = 'Gumbel')
+			ax_NC_distribution2.plot((np.flip(NC_array[:-1]))/normalization, 1-np.cumsum(np.flip(p_NC[:-1])/np.flip(NC_array[:-1])*abs(np.diff(np.flip(NC_array)))), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 4, alpha = .8, label = 'Gumbel')
 
 my_plot_layout(ax = ax_NC_distribution, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 #ax_NC_distribution.legend(fontsize = 32, title_fontsize = 34, title = r'$p$', loc = 4)
@@ -210,10 +213,10 @@ ax_NC_distribution2.set_xlim(left = 1, right = 6.5)
 #ax_NC_distribution2.set_yticklabels([1, 0.1, 0.01])
 fig_NC_distribution2.savefig('../../Figures/1_Dynamics/Ensemble/NC_aging_F_'+energy_model+'.pdf')
 
-my_plot_layout(ax = ax_NC, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+my_plot_layout(ax = ax_NC, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_NC.legend(fontsize = 28, title_fontsize = 30, title = r'$N_r$')
 ax_NC.set_xlim(left = 4.5, right = Tf)
-ax_NC.set_ylim(bottom = -1.5, top = 3)
+ax_NC.set_ylim(bottom = 2e8, top = 2e12)
 #ax_NC.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_NC.set_yticklabels([1, 0.1, 0.01])
 fig_NC.savefig('../../Figures/1_Dynamics/Ensemble/NC_aging_'+energy_model+'.pdf')

@@ -8,7 +8,7 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 
 #--------------- PARAMETERS ---------------------
 N_ensss = [[200], [501, 502, 503, 504, 505, 506, 507, 508, 509, 400, 300, 200, 100, 50], [200, 150, 100], [200, 100], [200]]
-N_ensss = [[200], [501, 502, 503, 504, 505, 506, 507, 508, 509, 400, 300, 200, 100, 50]]
+N_ensss = [[200], [501]]#, 502, 503, 504, 505, 506, 507, 508, 509, 400, 300, 200, 100, 50], [301, 302, 303, 304, 305, 306, 307, 308, 309]]
 N_r = 2e8
 
 T0 = 3
@@ -38,7 +38,7 @@ linear = 0
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
 kappas = [1, 2.5, 3.0, 4.0, 5.0]
-kappas = [1, 2.5]
+kappas = [1, 2.5]#, 4.0]
 
 my_red = np.array((228,75,41))/256.
 my_purple = np.array((125,64,119))/256.
@@ -58,7 +58,7 @@ transparency_n = [1]
 
 color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_brown, my_blue2, my_yellow, my_purple, my_green2])#
 color_list = np.array([my_red, my_green, my_blue2, my_gold, my_purple])
-color_list = np.array([my_red, my_green])
+color_list = np.array([my_red, my_green, my_gold])
 
 colors_kappa = []
 for i in range(len(color_list)):
@@ -239,10 +239,10 @@ for i_kappa, kappa in enumerate(kappas):
 	NC_avidity = (NC_avidity/Counter_avidity)
 
 	if(kappa==1):
-		normalization_all = NC_all[-1]
-		normalization_best = NC_all[-1]
-		normalization_biggest = NC_all[-1]
-		normalization_avidity = NC_all[-1]
+		normalization_all = 1#NC_all[-1]
+		normalization_best = 1#NC_all[-1]
+		normalization_biggest = 1#NC_all[-1]
+		normalization_avidity = 1#NC_all[-1]
 	
 	else:
 		ax_NC.plot(time, np.log(NC_all/normalization_all), color = colors_kappa[i_kappa], alpha = 1, linewidth = 5, linestyle = '-', label = 'all')
@@ -256,7 +256,7 @@ for i_kappa, kappa in enumerate(kappas):
 	print(np.max(np.log(np.array(NC_final_avidity)/normalization_avidity)))
 
 	#bins = np.linspace(-5, 7, 100)
-	NC_data_all = np.histogram(np.log((NC_final_all)/normalization_all), bins = 'auto', density = False)
+	NC_data_all = np.histogram(np.log((NC_final_all)/normalization_all), bins = np.linspace(-7, 7, 80), density = False)
 	NC_data_best = np.histogram(np.log((NC_final_best)/normalization_best), bins = np.linspace(-7, 7, 80), density = False)
 	NC_data_biggest = np.histogram(np.log((NC_final_biggest)/normalization_biggest), bins = np.linspace(np.min((NC_final_biggest) - normalization_biggest), 7, 80), density = False)
 	NC_data_avidity = np.histogram(np.log((NC_final_avidity)/normalization_avidity), bins = np.linspace(-7, 7, 80), density = False)

@@ -37,7 +37,7 @@ linear = 0
 
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
-kappas = [1, 2, 3, 4, 5]
+kappas = [1, 2, 3, 4]#, 5]
 #kappas = [3]
 
 my_red = np.array((228,75,41))/256.
@@ -174,7 +174,7 @@ for i_kappa, kappa in enumerate(kappas):
 	NC_data = np.histogram(np.log(np.array(NC_final)/normalization), bins = 'auto', density = False)
 	
 
-	ax_NC.plot(time, np.log(NC/normalization), color = colors_kappa[i_kappa], alpha = 1, linewidth = 5, linestyle = '-', label = r'$%d$'%(kappa))
+	ax_NC.plot(time, (NC/normalization), color = colors_kappa[i_kappa], alpha = 1, linewidth = 5, linestyle = '-', label = r'$%d$'%(kappa))
 	
 	max_potency_simulations[kappa] = np.log(NC[-1]/normalization)
 	max_potency_simulations_std[kappa] = np.sqrt(np.var(np.log(np.array(NC_final)/normalization)))
@@ -196,26 +196,28 @@ for i_kappa, kappa in enumerate(kappas):
 		ax_NC_distribution2.plot(np.log((np.flip(NC_array[:-1]))/normalization), 1-np.cumsum(np.flip(p_NC[:-1])/np.flip(NC_array[:-1])*abs(np.diff(np.flip(NC_array)))), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 4, alpha = .8, label = 'Gumbel')
 
 print('--------')
-kappas_theory = np.linspace(1, 5.5, 40)
-for kappa in tqdm(kappas_theory):
-	m_bar_theory = np.array([np.sum(N_r*calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*(t))/N_A, Es, kappa, lambda_A, N_c, dE)[3]*dE) for t in time])
-	t_act_theory = time[m_bar_theory>=1][0] 
-	QR = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*(t_act_theory))/N_A, Es, kappa, lambda_A, N_c, dE)[3]
-	numerator = np.sum(dE[:]*QR[:]*np.exp(-lambda_B*kappa/lambda_A*Es[:-1][:] - Es[:-1][:]))
-	denominator = np.sum(dE[:]*QR[:]*np.exp(-lambda_B*kappa/lambda_A*Es[:-1][:]))
-	#Es[:-1]>E_r
-	K = np.log(C*(numerator/denominator))
-	#print(K)
-	if(kappa == 1):
-		normalization_theory = 1
-	max_potency_theory[kappa] = K - normalization_theory
+# kappas_theory = np.linspace(1, 5.5, 30)
+# for kappa in tqdm(kappas_theory):
+# 	m_bar_theory = np.array([np.sum(N_r*calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*(t))/N_A, Es, kappa, lambda_A, N_c, dE)[3]*dE) for t in time])
+# 	t_act_theory = time[m_bar_theory>=1][0] 
+# 	QR = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*(t_act_theory))/N_A, Es, kappa, lambda_A, N_c, dE)[3]
+# 	numerator = np.sum(dE[:]*QR[:]*np.exp(-lambda_B*kappa/lambda_A*Es[:-1][:] - Es[:-1][:]))
+# 	denominator = np.sum(dE[:]*QR[:]*np.exp(-lambda_B*kappa/lambda_A*Es[:-1][:]))
+# 	#Es[:-1]>E_r
+# 	K = (C*(numerator/denominator))
+# 	#print(K)
+# 	if(kappa == 1):
+# 		normalization_theory = 1
+# 	max_potency_theory[kappa] = K - normalization_theory
 
-ax_NC_max.plot(kappas_theory, np.array(list(max_potency_theory.values())), color = my_purple, linestyle = '-', marker = '', linewidth = 3, label = 'theory')
+# ax_NC_max.plot(kappas_theory, np.array(list(max_potency_theory.values())), color = my_purple, linestyle = '-', marker = '', linewidth = 3, label = 'theory')
 ax_NC_max.plot(kappas, np.array(list(max_potency_simulations.values())), color = my_purple2, linestyle = '', marker = 'D', linewidth = 3, label = 'simulations')
 ax_NC_max.errorbar(x=kappas, y=np.array(list(max_potency_simulations.values())), yerr = np.array(list(max_potency_simulations_std.values())), ls = 'none')
 
+print(Kds[betas[:-1]>1][-1])
 t_growth = (1/lambda_B)*np.log(C/50)
-ax_NC.plot(t_growth+t_prime+kappas_theory/lambda_A*(E_r - E_pr), max_potency_theory.values(), color = 'grey', linewidth = 2)
+#ax_NC.plot(t_growth+t_prime+kappas_theory/lambda_A*(E_r - E_pr), max_potency_theory.values(), color = 'grey', linewidth = 2)
+ax_NC.hlines([C/Kds[betas[:-1]>1][-1], C/Kd_r], 0, Tf, linewidth = 2, color = 'black', linestyle = 'dashed')
 
 my_plot_layout(ax = ax_NC_distribution, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 #ax_NC_distribution.legend(fontsize = 32, title_fontsize = 34, title = r'$p$', loc = 4)
@@ -235,10 +237,10 @@ ax_NC_distribution2.set_xlim(left = 26, right = 31.5)
 #ax_NC_distribution2.set_yticklabels([1, 0.1, 0.01])
 fig_NC_distribution2.savefig('../../Figures/1_Dynamics/Ensemble/NC_F_'+energy_model+'.pdf')
 
-my_plot_layout(ax = ax_NC, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+my_plot_layout(ax = ax_NC, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_NC.legend(fontsize = 28, title_fontsize = 30, title = r'$p$')
 ax_NC.set_xlim(left = 4.5, right = Tf)
-ax_NC.set_ylim(bottom = 20, top = 32)
+ax_NC.set_ylim(bottom = 2e8, top = 2e12)
 #ax_NC.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_NC.set_yticklabels([1, 0.1, 0.01])
 fig_NC.savefig('../../Figures/1_Dynamics/Ensemble/NC_'+energy_model+'.pdf')
