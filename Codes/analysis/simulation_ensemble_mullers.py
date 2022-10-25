@@ -7,8 +7,8 @@ warnings.filterwarnings("ignore")
 Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/'
 
 #--------------- PARAMETERS ---------------------
-N_ens = 400
-N_r = 2e7
+N_ens = 200
+N_r = 2e8
 T0 = 3
 Tf = 8
 Tf_sim = 7
@@ -106,7 +106,7 @@ print('--------')
 print('Loops...')
 #--------------------------Loops--------------------------
 min_E = -19
-max_E = -6
+max_E = -7.5
 
 for i_kappa, kappa in enumerate((kappas)):
     print('--------')
@@ -165,7 +165,7 @@ for i_kappa, kappa in enumerate((kappas)):
         entropy = -np.sum(bcell_freqs*np.log(bcell_freqs), axis = 0)
 
         #------------------------- Stackplots -------------------------
-        greys = plt.cm.get_cmap('gist_gray_r', 50)
+        greys = plt.cm.get_cmap('cividis_r', 50)
         min_bell_freq = np.min(bcell_freqs[:,-1])
         
         

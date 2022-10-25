@@ -605,7 +605,7 @@ void EF_response(int linear, double const alpha, double const beta, double gamma
         //getting k_off from the energy
         k_off = k_on*exp(Naive[n]->e);
         u_on = (exp(alpha2*time)/N_A)*k_on*N_c;
-        double p_act = 1/(1+pow((k_off/gamma),theta));
+        double p_act = 1/pow((1+(k_off/gamma)),theta);
         prob_recognition = (u_on*p_act) * exp(-((u_on/alpha2)*p_act)) * dT;
         partial_sum(begin(prob_recognition), end(prob_recognition), begin(cum_prob_recognition));
         r = randX(0,1);

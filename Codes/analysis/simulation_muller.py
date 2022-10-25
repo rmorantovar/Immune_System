@@ -103,14 +103,14 @@ t_prime = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*N_c))
 print('--------')
 
 min_E = -17.8
-min_E = -19
-max_E = -6
+min_E = -19.0
+max_E = -7.5
 
 fig, ax = plt.subplots(figsize = (18, 1), linewidth = 6, gridspec_kw={'left':0.06, 'right':.94, 'bottom':.01, 'top': .44})
-col_map = plt.get_cmap('gist_gray')
+col_map = 'cividis'
 #mpl.colorbar.ColorbarBase(ax, cmap=col_map, orientation = 'vertical')
 # and create another colorbar with:
-colorbar = mpl.colorbar.ColorbarBase(ax, cmap=col_map, orientation = 'horizontal')
+colorbar = mpl.colorbar.ColorbarBase(ax, cmap=plt.get_cmap(col_map), orientation = 'horizontal')
 colorbar.set_ticks(np.linspace(0, 1, 5))
 #ax.set_xticks(np.linspace(0, 1, 5))
 ax.set_xticklabels([r'$%.0e$'%(np.exp(min_E + i*(max_E - min_E)/4)) for i in np.arange(0, 5, 1)], fontsize = 38)
@@ -181,7 +181,7 @@ for i_kappa, kappa in enumerate(kappas):
 		entropy = -np.sum(bcell_freqs*np.log(bcell_freqs), axis = 0)
 
 		#------------------------- Stackplots -------------------------
-		greys = plt.cm.get_cmap('gist_gray_r', 50)
+		greys = plt.cm.get_cmap(col_map+'_r', 50)
 		min_bell_freq = np.min(bcell_freqs[:,-1])
 		
 		

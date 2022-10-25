@@ -107,9 +107,9 @@ t_prime = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*N_c))
 print('--------')
 print('Loops...')
 #--------------------------Loops--------------------------
-fig_NC, ax_NC = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-fig_NC_distribution, ax_NC_distribution = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-fig_NC_distribution2, ax_NC_distribution2 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+fig_K, ax_K = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+fig_K_distribution, ax_K_distribution = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+fig_K_distribution2, ax_K_distribution2 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 for i_kappa, kappa in enumerate(kappas):
 	m_bar_theory = np.array([np.sum(N_r*calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*(t))/N_A, Es, kappa, lambda_A, N_c, dE)[3]*dE) for t in time])
 	t_act_theory = time[m_bar_theory>1][0] 
@@ -129,11 +129,11 @@ for i_kappa, kappa in enumerate(kappas):
 		data = get_data_ensemble(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
 		
 
-		NC = np.zeros_like(time)
-		NC2 = np.zeros_like(time)
-		#NC_common = np.zeros_like(time)
-		NC_final = []
-		#NC_final_common = []
+		K = np.zeros_like(time)
+		K2 = np.zeros_like(time)
+		#K_common = np.zeros_like(time)
+		K_final = []
+		#K_final_common = []
 		Counter = 0
 		#Counter_common = 0 
 		for i_ens in tqdm(np.arange(N_ens)):
@@ -153,73 +153,73 @@ for i_kappa, kappa in enumerate(kappas):
 			#-------Simulations-------
 			Kds_C = np.exp(energies_C)
 
-			#NC_i = np.log(1-np.array([np.product(1-1/(1+(Kds_C/((AA*(clone_sizes_C[:,t]-1))/1)))) for t in np.arange(len(time))]))
-			NC_i = [(np.sum(((clone_sizes_C[:,t]-1)/1)/Kds_C)) for t in np.arange(len(time))]
+			#K_i = np.log(1-np.array([np.product(1-1/(1+(Kds_C/((AA*(clone_sizes_C[:,t]-1))/1)))) for t in np.arange(len(time))]))
+			K_i = [(np.sum(((clone_sizes_C[:,t]-1)/1)/Kds_C)) for t in np.arange(len(time))]
 
-			if(np.sum(NC_i)!=0):
-				#NC += NC_i
-				NC += NC_i
-				NC_final.append(NC_i[-1])
+			if(np.sum(K_i)!=0):
+				#K += K_i
+				K += K_i
+				K_final.append(K_i[-1])
 				Counter+=1
 
 			#if(i_ens%1==0):
-			#	ax_NC.plot(time, NC_i, color = colors_kappa[i_kappa], alpha = .1, linewidth = 1)
+			#	ax_K.plot(time, K_i, color = colors_kappa[i_kappa], alpha = .1, linewidth = 1)
 
-		#NC = NC/Counter
-		NC = (NC/Counter)
+		#K = K/Counter
+		K = (K/Counter)
 	
 		if(kappa==1):
-			normalization = 1#NC[-1]
+			normalization = 1#K[-1]
 
-		NC_data = np.histogram(np.log10(np.array(NC_final)/normalization), bins = 'auto', density = False)
+		K_data = np.histogram(np.log10(np.array(K_final)/normalization), bins = 'auto', density = False)
 		
-		#ax_NC.plot(time, NC-normalization, color = colors_kappa[i_kappa], alpha = .8, label = r'$%d$'%kappa, linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r])
+		#ax_K.plot(time, K-normalization, color = colors_kappa[i_kappa], alpha = .8, label = r'$%d$'%kappa, linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r])
 		if(kappa==2.5):
-			ax_NC.plot(time, NC/normalization, color = colors_kappa[i_kappa], alpha = 1, linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r], label = r'$%.0f \cdot 10^{%d}$'%(10**(np.log10(N_r)%1), int(np.log10(N_r))))
+			ax_K.plot(time, K/normalization, color = colors_kappa[i_kappa], alpha = 1, linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r], label = r'$%.0f \cdot 10^{%d}$'%(10**(np.log10(N_r)%1), int(np.log10(N_r))))
 
-			ax_NC_distribution.plot(NC_data[1][:-1], NC_data[0]/Counter, color = colors_kappa[i_kappa], marker = '', label = r'$%d$'%kappa, linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r])
+			ax_K_distribution.plot(K_data[1][:-1], K_data[0]/Counter, color = colors_kappa[i_kappa], marker = '', label = r'$%d$'%kappa, linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r])
 
-			ax_NC_distribution2.plot(NC_data[1][:-1], 1-np.cumsum(NC_data[0]/Counter), color = colors_kappa[i_kappa], marker = 'D', label = r'$%d$'%kappa, linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = '')
+			ax_K_distribution2.plot(K_data[1][:-1], 1-np.cumsum(K_data[0]/Counter), color = colors_kappa[i_kappa], marker = 'D', label = r'$%d$'%kappa, linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = '')
 					
 		#Nb = np.exp(lambda_B*Tf)*((k_on*N_c)/(lambda_A*N_A))**(lambda_B/lambda_A)*(k_pr/k_on)**(kappa*lambda_B/lambda_A)*Kds**(-kappa*lambda_B/lambda_A)
 
 		if(kappa==1):
 			# Printing K from Gumbel
 			Nb = C
-			#NC_array = np.log(1/(1+(Kds/((AA*(Nb))/1))))
-			NC_array = ((Nb/1)/Kds)
-			p_NC = P_min_e_Q0(N_r, Q0, dE)#/NC_array**2*(Nb/1)
-			p_NC = p_NC/np.sum(np.flip(p_NC[:-1])/np.flip(NC_array[:-1])*abs(np.diff(np.flip(NC_array))))
-			ax_NC_distribution.plot((np.flip(NC_array[:-1]))/normalization, np.flip(p_NC[:-1]), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 2, alpha = .8, label = 'Gumbel')
-			ax_NC_distribution2.plot((np.flip(NC_array[:-1]))/normalization, 1-np.cumsum(np.flip(p_NC[:-1])/np.flip(NC_array[:-1])*abs(np.diff(np.flip(NC_array)))), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 4, alpha = .8, label = 'Gumbel')
+			#K_array = np.log(1/(1+(Kds/((AA*(Nb))/1))))
+			K_array = ((Nb/1)/Kds)
+			p_K = P_min_e_Q0(N_r, Q0, dE)#/K_array**2*(Nb/1)
+			p_K = p_K/np.sum(np.flip(p_K[:-1])/np.flip(K_array[:-1])*abs(np.diff(np.flip(K_array))))
+			ax_K_distribution.plot((np.flip(K_array[:-1]))/normalization, np.flip(p_K[:-1]), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 2, alpha = .8, label = 'Gumbel')
+			ax_K_distribution2.plot((np.flip(K_array[:-1]))/normalization, 1-np.cumsum(np.flip(p_K[:-1])/np.flip(K_array[:-1])*abs(np.diff(np.flip(K_array)))), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 4, alpha = .8, label = 'Gumbel')
 
-my_plot_layout(ax = ax_NC_distribution, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-#ax_NC_distribution.legend(fontsize = 32, title_fontsize = 34, title = r'$p$', loc = 4)
-#ax_NC_distribution.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
-ax_NC_distribution.set_ylim(bottom = 2e-3, top = 1)
-ax_NC_distribution.set_xlim(left = 1, right = 6.5)
-#ax_NC_distribution.set_xticks([])
-#ax_NC_distribution.set_yticks([])
-#ax_NC_distribution.set_yticklabels([1, 0.1, 0.01])
-fig_NC_distribution.savefig('../../Figures/1_Dynamics/Ensemble/NC_aging_P_'+energy_model+'.pdf')
+my_plot_layout(ax = ax_K_distribution, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+#ax_K_distribution.legend(fontsize = 32, title_fontsize = 34, title = r'$p$', loc = 4)
+#ax_K_distribution.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
+ax_K_distribution.set_ylim(bottom = 2e-3, top = 1)
+ax_K_distribution.set_xlim(left = 1, right = 6.5)
+#ax_K_distribution.set_xticks([])
+#ax_K_distribution.set_yticks([])
+#ax_K_distribution.set_yticklabels([1, 0.1, 0.01])
+fig_K_distribution.savefig('../../Figures/1_Dynamics/Ensemble/K_aging_P_'+energy_model+'.pdf')
 
-my_plot_layout(ax = ax_NC_distribution2, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-ax_NC_distribution2.legend(fontsize = 32, title_fontsize = 34, title = r'$p$', loc = 3)
-#ax_NC_distribution2.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
-ax_NC_distribution2.set_ylim(bottom = 1e-4)
-ax_NC_distribution2.set_xlim(left = 1, right = 6.5)
-#ax_NC_distribution2.set_xticks([])
-#ax_NC_distribution2.set_yticks([])
-#ax_NC_distribution2.set_yticklabels([1, 0.1, 0.01])
-fig_NC_distribution2.savefig('../../Figures/1_Dynamics/Ensemble/NC_aging_F_'+energy_model+'.pdf')
+my_plot_layout(ax = ax_K_distribution2, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+ax_K_distribution2.legend(fontsize = 32, title_fontsize = 34, title = r'$p$', loc = 3)
+#ax_K_distribution2.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
+ax_K_distribution2.set_ylim(bottom = 1e-4)
+ax_K_distribution2.set_xlim(left = 1, right = 6.5)
+#ax_K_distribution2.set_xticks([])
+#ax_K_distribution2.set_yticks([])
+#ax_K_distribution2.set_yticklabels([1, 0.1, 0.01])
+fig_K_distribution2.savefig('../../Figures/1_Dynamics/Ensemble/K_aging_F_'+energy_model+'.pdf')
 
-my_plot_layout(ax = ax_NC, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-ax_NC.legend(fontsize = 28, title_fontsize = 30, title = r'$N_r$')
-ax_NC.set_xlim(left = 4.5, right = Tf)
-ax_NC.set_ylim(bottom = 2e8, top = 2e12)
-#ax_NC.set_yticks([1, 0.1, 0.01, 0.001])
-#ax_NC.set_yticklabels([1, 0.1, 0.01])
-fig_NC.savefig('../../Figures/1_Dynamics/Ensemble/NC_aging_'+energy_model+'.pdf')
+my_plot_layout(ax = ax_K, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+ax_K.legend(fontsize = 28, title_fontsize = 30, title = r'$N_r$')
+ax_K.set_xlim(left = 4.5, right = Tf)
+ax_K.set_ylim(bottom = 8e8, top = 8e12)
+#ax_K.set_yticks([1, 0.1, 0.01, 0.001])
+#ax_K.set_yticklabels([1, 0.1, 0.01])
+fig_K.savefig('../../Figures/1_Dynamics/Ensemble/K_aging_'+energy_model+'.pdf')
 
 
 

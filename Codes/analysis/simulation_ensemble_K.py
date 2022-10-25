@@ -106,33 +106,34 @@ t_prime = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*N_c))
 print('--------')
 print('Loops...')
 #--------------------------Loops--------------------------
-fig_NC, ax_NC = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-fig_NC_max, ax_NC_max = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-fig_NC_distribution, ax_NC_distribution = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-fig_NC_distribution2, ax_NC_distribution2 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+fig_K, ax_K = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+fig_K_max, ax_K_max = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+fig_K_distribution, ax_K_distribution = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+fig_K_distribution2, ax_K_distribution2 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 
 max_potency_simulations = dict()
 max_potency_simulations_std = dict()
 max_potency_theory = dict()
 
 for i_kappa, kappa in enumerate(kappas):
+	m_bar_theory = np.array([np.sum(N_r*calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*(t))/N_A, Es, kappa, lambda_A, N_c, dE)[3]*dE) for t in time])
+	t_act_theory = time[m_bar_theory>1][0] 
 	print('--------')
 	print('kappa = %.2f...'%kappa)
 	beta_kappa, E_kappa, Kd_kappa = get_kappa_properties(betas, Q0, Es, dE, kappa)
 
+	if kappa==1:
+		t_act_1 = t_act_theory
 	#-----------------Loading data----------------------------
 	parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
 	#data = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/energies_ensemble.txt', sep = '\t', header=None)
 	data = get_data_ensemble(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
 	
 
-	NC = np.zeros_like(time)
-	NC2 = np.zeros_like(time)
-	#NC_common = np.zeros_like(time)
-	NC_final = []
-	#NC_final_common = []
+	K = np.zeros_like(time)
+	K2 = np.zeros_like(time)
+	K_final = []
 	Counter = 0
-	#Counter_common = 0 
 	for i_ens in tqdm(np.arange(N_ens)):
 		data_i = data.loc[data[4]==i_ens]
 		data_active = data_i.loc[data_i[1]==1]
@@ -151,49 +152,45 @@ for i_kappa, kappa in enumerate(kappas):
 		if(len(energies_C)>0):
 			Kds_C = np.exp(energies_C)
 
-			#NC_i = np.log(1-np.array([np.product(1-1/(1+(Kds_C/((AA*(clone_sizes_C[:,t]-1))/1)))) for t in np.arange(len(time))]))
-			#NC_i = [np.log(np.sum(((clone_sizes_C[:,t]-1)/1)/Kds_C)) for t in np.arange(len(time))]
-			NC_i = [np.sum(((clone_sizes_C[:,t]-1)/1)/Kds_C) for t in np.arange(len(time))]
+			K_i = [np.sum(((clone_sizes_C[:,t]-1)/1)/Kds_C) for t in np.arange(len(time))]
 
-			#if(np.sum(~np.isinf(NC_i))!=0):
-			if(np.sum(NC_i)!=0):
-				#NC += NC_i
-				NC += NC_i
-				NC_final.append(NC_i[-1])
+			if(np.sum(K_i)!=0):
+				#K += K_i
+				K += K_i
+				K_final.append(K_i[-1])
 				Counter+=1
 
 			#if(i_ens%1==0):
-			#	ax_NC.plot(time, NC_i, color = colors_kappa[i_kappa], alpha = .1, linewidth = 1)
+			#	ax_K.plot(time, K_i, color = colors_kappa[i_kappa], alpha = .1, linewidth = 1)
 
-	#NC = NC/Counter
-	NC = (NC/Counter)
+	K = (K/Counter)
 
 	if(kappa==1):
-		normalization = 1# NC[-1]
+		normalization = 1# K[-1]
 
-	NC_data = np.histogram(np.log(np.array(NC_final)/normalization), bins = 'auto', density = False)
+	K_data = np.histogram(np.log(np.array(K_final)/normalization), bins = 'auto', density = False)
 	
 
-	ax_NC.plot(time, (NC/normalization), color = colors_kappa[i_kappa], alpha = 1, linewidth = 5, linestyle = '-', label = r'$%d$'%(kappa))
+	ax_K.plot(time, (K/normalization), color = colors_kappa[i_kappa], alpha = 1, linewidth = 5, linestyle = '-', label = r'$%d$'%(kappa))
 	
-	max_potency_simulations[kappa] = np.log(NC[-1]/normalization)
-	max_potency_simulations_std[kappa] = np.sqrt(np.var(np.log(np.array(NC_final)/normalization)))
+	max_potency_simulations[kappa] = np.log(K[-1]/normalization)
+	max_potency_simulations_std[kappa] = np.sqrt(np.var(np.log(np.array(K_final)/normalization)))
 
-	ax_NC_distribution.plot(NC_data[1][:-1], NC_data[0]/Counter, color = colors_kappa[i_kappa], marker = '', label = r'$%d$'%kappa, linewidth = 5, linestyle = '-')
+	ax_K_distribution.plot(K_data[1][:-1], K_data[0]/Counter, color = colors_kappa[i_kappa], marker = '', label = r'$%d$'%kappa, linewidth = 5, linestyle = '-')
 
-	ax_NC_distribution2.plot(NC_data[1][:-1], 1-np.cumsum(NC_data[0]/Counter), color = colors_kappa[i_kappa], marker = 'D', label = r'$%d$'%kappa, linewidth = 5, linestyle = '')
+	ax_K_distribution2.plot(K_data[1][:-1], 1-np.cumsum(K_data[0]/Counter), color = colors_kappa[i_kappa], marker = 'D', label = r'$%d$'%kappa, linewidth = 5, linestyle = '')
 			
 	#Nb = np.exp(lambda_B*Tf)*((k_on*N_c)/(lambda_A*N_A))**(lambda_B/lambda_A)*(k_pr/k_on)**(kappa*lambda_B/lambda_A)*Kds**(-kappa*lambda_B/lambda_A)
 
 	if(kappa==1):
 		# Printing K from Gumbel
 		Nb = C
-		#NC_array = np.log(1/(1+(Kds/((AA*(Nb))/1))))
-		NC_array = ((Nb/1)/Kds)
-		p_NC = P_min_e_Q0(N_r, Q0, dE)#/NC_array**2*(Nb/1)
-		p_NC = p_NC/np.sum(np.flip(p_NC[:-1])/np.flip(NC_array[:-1])*abs(np.diff(np.flip(NC_array))))
-		ax_NC_distribution.plot(np.log((np.flip(NC_array[:-1]))/normalization), np.flip(p_NC[:-1]), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 2, alpha = .8, label = 'Gumbel')
-		ax_NC_distribution2.plot(np.log((np.flip(NC_array[:-1]))/normalization), 1-np.cumsum(np.flip(p_NC[:-1])/np.flip(NC_array[:-1])*abs(np.diff(np.flip(NC_array)))), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 4, alpha = .8, label = 'Gumbel')
+		#K_array = np.log(1/(1+(Kds/((AA*(Nb))/1))))
+		K_array = ((Nb/1)/Kds)
+		p_K = P_min_e_Q0(N_r, Q0, dE)#/K_array**2*(Nb/1)
+		p_K = p_K/np.sum(np.flip(p_K[:-1])/np.flip(K_array[:-1])*abs(np.diff(np.flip(K_array))))
+		ax_K_distribution.plot(np.log((np.flip(K_array[:-1]))/normalization), np.flip(p_K[:-1]), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 2, alpha = .8, label = 'Gumbel')
+		ax_K_distribution2.plot(np.log((np.flip(K_array[:-1]))/normalization), 1-np.cumsum(np.flip(p_K[:-1])/np.flip(K_array[:-1])*abs(np.diff(np.flip(K_array)))), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 4, alpha = .8, label = 'Gumbel')
 
 print('--------')
 # kappas_theory = np.linspace(1, 5.5, 30)
@@ -210,48 +207,51 @@ print('--------')
 # 		normalization_theory = 1
 # 	max_potency_theory[kappa] = K - normalization_theory
 
-# ax_NC_max.plot(kappas_theory, np.array(list(max_potency_theory.values())), color = my_purple, linestyle = '-', marker = '', linewidth = 3, label = 'theory')
-ax_NC_max.plot(kappas, np.array(list(max_potency_simulations.values())), color = my_purple2, linestyle = '', marker = 'D', linewidth = 3, label = 'simulations')
-ax_NC_max.errorbar(x=kappas, y=np.array(list(max_potency_simulations.values())), yerr = np.array(list(max_potency_simulations_std.values())), ls = 'none')
+# ax_K_max.plot(kappas_theory, np.array(list(max_potency_theory.values())), color = my_purple, linestyle = '-', marker = '', linewidth = 3, label = 'theory')
+
+ax_K.plot(time, ((C*np.exp(lambda_B*(time-t_act_1)))/(C+(np.exp(lambda_B*(time-t_act_1))-1)))/Kd_r, linewidth = 3, color = 'black', linestyle = 'dotted')
+
+ax_K_max.plot(kappas, np.array(list(max_potency_simulations.values())), color = my_purple2, linestyle = '', marker = 'D', linewidth = 3, label = 'simulations')
+ax_K_max.errorbar(x=kappas, y=np.array(list(max_potency_simulations.values())), yerr = np.array(list(max_potency_simulations_std.values())), ls = 'none')
 
 print(Kds[betas[:-1]>1][-1])
 t_growth = (1/lambda_B)*np.log(C/50)
-#ax_NC.plot(t_growth+t_prime+kappas_theory/lambda_A*(E_r - E_pr), max_potency_theory.values(), color = 'grey', linewidth = 2)
-ax_NC.hlines([C/Kds[betas[:-1]>1][-1], C/Kd_r], 0, Tf, linewidth = 2, color = 'black', linestyle = 'dashed')
+#ax_K.plot(t_growth+t_prime+kappas_theory/lambda_A*(E_r - E_pr), max_potency_theory.values(), color = 'grey', linewidth = 2)
+ax_K.hlines([C/Kds[betas[:-1]>1][-1], C/Kd_r], 0, Tf, linewidth = 2, color = 'black', linestyle = 'dashed')
 
-my_plot_layout(ax = ax_NC_distribution, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-#ax_NC_distribution.legend(fontsize = 32, title_fontsize = 34, title = r'$p$', loc = 4)
-ax_NC_distribution.set_ylim(bottom = 1e-4, top = 1)
-ax_NC_distribution.set_xlim(left = 20, right = 31.5)
-#ax_NC_distribution.set_xticks([])
-#ax_NC_distribution.set_yticks([])
-#ax_NC_distribution.set_yticklabels([1, 0.1, 0.01])
-fig_NC_distribution.savefig('../../Figures/1_Dynamics/Ensemble/NC_P_'+energy_model+'.pdf')
+my_plot_layout(ax = ax_K_distribution, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+#ax_K_distribution.legend(fontsize = 32, title_fontsize = 34, title = r'$p$', loc = 4)
+ax_K_distribution.set_ylim(bottom = 1e-4, top = 1)
+ax_K_distribution.set_xlim(left = 20, right = 31.5)
+#ax_K_distribution.set_xticks([])
+#ax_K_distribution.set_yticks([])
+#ax_K_distribution.set_yticklabels([1, 0.1, 0.01])
+fig_K_distribution.savefig('../../Figures/1_Dynamics/Ensemble/K_P_'+energy_model+'.pdf')
 
-my_plot_layout(ax = ax_NC_distribution2, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-ax_NC_distribution2.legend(fontsize = 28, title_fontsize = 30, title = r'$p$', loc = 3)
-ax_NC_distribution2.set_ylim(bottom = 1e-4, top = 3)
-ax_NC_distribution2.set_xlim(left = 26, right = 31.5)
-#ax_NC_distribution2.set_xticks([])
-#ax_NC_distribution2.set_yticks([])
-#ax_NC_distribution2.set_yticklabels([1, 0.1, 0.01])
-fig_NC_distribution2.savefig('../../Figures/1_Dynamics/Ensemble/NC_F_'+energy_model+'.pdf')
+my_plot_layout(ax = ax_K_distribution2, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+ax_K_distribution2.legend(fontsize = 28, title_fontsize = 30, title = r'$p$', loc = 3)
+ax_K_distribution2.set_ylim(bottom = 1e-4, top = 3)
+ax_K_distribution2.set_xlim(left = 26, right = 31.5)
+#ax_K_distribution2.set_xticks([])
+#ax_K_distribution2.set_yticks([])
+#ax_K_distribution2.set_yticklabels([1, 0.1, 0.01])
+fig_K_distribution2.savefig('../../Figures/1_Dynamics/Ensemble/K_F_'+energy_model+'.pdf')
 
-my_plot_layout(ax = ax_NC, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-ax_NC.legend(fontsize = 28, title_fontsize = 30, title = r'$p$')
-ax_NC.set_xlim(left = 4.5, right = Tf)
-ax_NC.set_ylim(bottom = 2e8, top = 2e12)
-#ax_NC.set_yticks([1, 0.1, 0.01, 0.001])
-#ax_NC.set_yticklabels([1, 0.1, 0.01])
-fig_NC.savefig('../../Figures/1_Dynamics/Ensemble/NC_'+energy_model+'.pdf')
+my_plot_layout(ax = ax_K, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+ax_K.legend(fontsize = 28, title_fontsize = 30, title = r'$p$')
+ax_K.set_xlim(left = 4.5, right = Tf)
+ax_K.set_ylim(bottom = 8e8, top = 8e12)
+#ax_K.set_yticks([1, 0.1, 0.01, 0.001])
+#ax_K.set_yticklabels([1, 0.1, 0.01])
+fig_K.savefig('../../Figures/1_Dynamics/Ensemble/K_'+energy_model+'.pdf')
 
-my_plot_layout(ax = ax_NC_max, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-ax_NC_max.legend(fontsize = 28, title_fontsize = 30)
-ax_NC_max.set_xlim(left = 0.8, right = 5.5)
-ax_NC_max.set_ylim(bottom = 20, top = 32)
-#ax_NC_max.set_yticks([1, 0.1, 0.01, 0.001])
-#ax_NC_max.set_yticklabels([1, 0.1, 0.01])
-fig_NC_max.savefig('../../Figures/1_Dynamics/Ensemble/NC_max_'+energy_model+'.pdf')
+my_plot_layout(ax = ax_K_max, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+ax_K_max.legend(fontsize = 28, title_fontsize = 30)
+ax_K_max.set_xlim(left = 0.8, right = 5.5)
+ax_K_max.set_ylim(bottom = 20, top = 32)
+#ax_K_max.set_yticks([1, 0.1, 0.01, 0.001])
+#ax_K_max.set_yticklabels([1, 0.1, 0.01])
+fig_K_max.savefig('../../Figures/1_Dynamics/Ensemble/K_max_'+energy_model+'.pdf')
 
 
 

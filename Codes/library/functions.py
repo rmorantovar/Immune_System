@@ -87,6 +87,26 @@ def get_data_ensemble(folder_path):
 		pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
 		return data
 
+def get_data_ensemble_v2(folder_path):
+	return_data_type = 0 #default for returning processed data
+	if os.path.exists(folder_path+'/processed_data.pkl'):
+		return_data_type = 1
+		print('Data exists already and is proccesed.  Loading it ...')
+		f = open(folder_path+'/processed_data.pkl', 'rb')
+		data = pickle.load(f) 
+	else:
+		if os.path.exists(folder_path+'/energies_ensemble.pkl'):
+			print('Object exists already, loading it ...')
+			f = open(folder_path+'/energies_ensemble.pkl', 'rb')
+			data = pickle.load(f) 
+		else:
+			print(f'Pickling data ...')
+			data = pd.read_csv(folder_path+'/energies_ensemble.txt', sep = '\t', header=None)
+			f = open(folder_path+'/energies_ensemble.pkl', 'wb')
+			pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
+			
+	return data, return_data_type
+
 def get_clones_sizes_C(n_act, time, activation_times, lambda_B, C, dT):
 	clone_sizes = np.ones((n_act, len(time)))
 	for i_t, t in enumerate(time[:-1]):

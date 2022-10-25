@@ -6,7 +6,7 @@
 //
 //Template to run a stochastic simulation of the EF response.
 
-#include "../library/Immuno_functions.hpp"
+#include "../library/functions.hpp"
 
 #include <stdio.h>
 #include <unistd.h>
