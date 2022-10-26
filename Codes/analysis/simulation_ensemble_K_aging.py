@@ -8,13 +8,12 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 
 #--------------- PARAMETERS ---------------------
 N_ens = 400
-N_enss = [[200], [400, 400, 400, 400]]#, 502, 503, 504, 505, 506, 507, 508, 509, 400, 300, 200, 100, 50], [301, 302, 303, 304, 305, 306, 307, 308, 309]]
-N_r = 2e8
-N_r = 2e8
-N_rs = [[2e8], [2e8, 2e8/2, 2e8/5, 2e8/10], [2e8], [2e8]]
-linewidths_N_r = [[5], [5, 4, 3, 2], [5], [5]]
-linestyles_N_r = [['-'], ['-', '--', '--', '--'], ['-'], ['-']]
-transparencies_N_r = [[.4], [1, 1, 1, 1], [.4], [.4]]
+N_enss = [[500, 500, 500, 500]]#, 502, 503, 504, 505, 506, 507, 508, 509, 400, 300, 200, 100, 50], [301, 302, 303, 304, 305, 306, 307, 308, 309]]
+#N_rs = [[2e8], [2e8, 2e8/2, 2e8/5, 2e8/10], [2e8], [2e8]]
+N_rs = [[2e8, 2e8/2, 2e8/5, 2e8/10]]
+linewidths_N_r = [[5, 4, 3, 2], [5], [5]]
+linestyles_N_r = [['-', '--', '--', '--'], ['-'], ['-']]
+transparencies_N_r = [[1, 1, 1, 1], [.4], [.4]]
 
 T0 = 3
 Tf = 12
@@ -43,7 +42,7 @@ linear = 0
 
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
-kappas = [1, 2.5]
+kappas = [3.0]
 #kappas = [3]
 
 my_red = np.array((228,75,41))/256.
@@ -63,7 +62,7 @@ antigen_color = my_yellow/256.
 transparency_n = [1]
 
 color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_brown, my_blue2, my_yellow, my_purple, my_green2])#
-color_list = np.array([my_red, my_green, my_blue2, my_gold])
+color_list = np.array([my_blue2, my_gold])
 #color_list = np.array([my_green, my_blue2, my_gold])
 
 colors_kappa = []
@@ -116,19 +115,20 @@ for i_kappa, kappa in enumerate(kappas):
 	print('--------')
 	print('kappa = %.2f...'%kappa)
 	beta_kappa, E_kappa, Kd_kappa = get_kappa_properties(betas, Q0, Es, dE, kappa)
-
+	if kappa==1:
+		t_act_1 = t_act_theory
 	for i_N_r, N_r in enumerate(N_rs[i_kappa]):
 		N_ens = N_enss[i_kappa][i_N_r]
 		#--------------------------Repertoire properties--------------------------
 		beta_r, E_r, Kd_r = get_repertoire_properties(betas, Q0, Es, dE, N_r)
 		print('N_r = %.e'%N_r)
 		print('beta_r = %.1f'%beta_r)
+
 		#-----------------Loading data----------------------------
 		parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
 		#data = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/energies_ensemble.txt', sep = '\t', header=None)
 		data = get_data_ensemble(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
 		
-
 		K = np.zeros_like(time)
 		K2 = np.zeros_like(time)
 		#K_common = np.zeros_like(time)
@@ -192,6 +192,9 @@ for i_kappa, kappa in enumerate(kappas):
 			p_K = p_K/np.sum(np.flip(p_K[:-1])/np.flip(K_array[:-1])*abs(np.diff(np.flip(K_array))))
 			ax_K_distribution.plot((np.flip(K_array[:-1]))/normalization, np.flip(p_K[:-1]), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 2, alpha = .8, label = 'Gumbel')
 			ax_K_distribution2.plot((np.flip(K_array[:-1]))/normalization, 1-np.cumsum(np.flip(p_K[:-1])/np.flip(K_array[:-1])*abs(np.diff(np.flip(K_array)))), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 4, alpha = .8, label = 'Gumbel')
+			Kd_r_renorm = Kds[(P_min_e_Q0(N_r, Q0, dE)/Kds)==np.max(P_min_e_Q0(N_r, Q0, dE)/Kds)]
+
+ax_K.plot(time, ((C*np.exp(lambda_B*(time-t_act_1)))/(C+(np.exp(lambda_B*(time-t_act_1))-1)))/Kd_r_renorm, linewidth = 4, color = 'black', linestyle = 'dotted')
 
 my_plot_layout(ax = ax_K_distribution, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 #ax_K_distribution.legend(fontsize = 32, title_fontsize = 34, title = r'$p$', loc = 4)

@@ -170,7 +170,6 @@ for i_kappa, kappa in enumerate(kappas):
 
 	K_data = np.histogram(np.log(np.array(K_final)/normalization), bins = 'auto', density = False)
 	
-
 	ax_K.plot(time, (K/normalization), color = colors_kappa[i_kappa], alpha = 1, linewidth = 5, linestyle = '-', label = r'$%d$'%(kappa))
 	
 	max_potency_simulations[kappa] = np.log(K[-1]/normalization)
@@ -191,6 +190,11 @@ for i_kappa, kappa in enumerate(kappas):
 		p_K = p_K/np.sum(np.flip(p_K[:-1])/np.flip(K_array[:-1])*abs(np.diff(np.flip(K_array))))
 		ax_K_distribution.plot(np.log((np.flip(K_array[:-1]))/normalization), np.flip(p_K[:-1]), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 2, alpha = .8, label = 'Gumbel')
 		ax_K_distribution2.plot(np.log((np.flip(K_array[:-1]))/normalization), 1-np.cumsum(np.flip(p_K[:-1])/np.flip(K_array[:-1])*abs(np.diff(np.flip(K_array)))), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 4, alpha = .8, label = 'Gumbel')
+		QR = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*(t_act_1))/N_A, Es, kappa, lambda_A, N_c, dE)[3]
+		Kd_1_renorm = Kds[(QR/Kds)==np.max(QR/Kds)]
+		ax_K.hlines((C*0.1)/Kd_1_renorm, 0, Tf, linewidth = 2, color = 'black', linestyle = 'dashed')
+		Kd_r_renorm = Kds[(P_min_e_Q0(N_r, Q0, dE)/Kds)==np.max(P_min_e_Q0(N_r, Q0, dE)/Kds)]
+		ax_K.hlines(C/Kd_r_renorm, 0, Tf, linewidth = 2, color = 'black', linestyle = 'dashed')
 
 print('--------')
 # kappas_theory = np.linspace(1, 5.5, 30)
@@ -209,7 +213,7 @@ print('--------')
 
 # ax_K_max.plot(kappas_theory, np.array(list(max_potency_theory.values())), color = my_purple, linestyle = '-', marker = '', linewidth = 3, label = 'theory')
 
-ax_K.plot(time, ((C*np.exp(lambda_B*(time-t_act_1)))/(C+(np.exp(lambda_B*(time-t_act_1))-1)))/Kd_r, linewidth = 3, color = 'black', linestyle = 'dotted')
+ax_K.plot(time, ((C*np.exp(lambda_B*(time-t_act_1)))/(C+(np.exp(lambda_B*(time-t_act_1))-1)))/Kd_r_renorm, linewidth = 4, color = 'black', linestyle = 'dotted')
 
 ax_K_max.plot(kappas, np.array(list(max_potency_simulations.values())), color = my_purple2, linestyle = '', marker = 'D', linewidth = 3, label = 'simulations')
 ax_K_max.errorbar(x=kappas, y=np.array(list(max_potency_simulations.values())), yerr = np.array(list(max_potency_simulations_std.values())), ls = 'none')
@@ -217,7 +221,9 @@ ax_K_max.errorbar(x=kappas, y=np.array(list(max_potency_simulations.values())), 
 print(Kds[betas[:-1]>1][-1])
 t_growth = (1/lambda_B)*np.log(C/50)
 #ax_K.plot(t_growth+t_prime+kappas_theory/lambda_A*(E_r - E_pr), max_potency_theory.values(), color = 'grey', linewidth = 2)
-ax_K.hlines([C/Kds[betas[:-1]>1][-1], C/Kd_r], 0, Tf, linewidth = 2, color = 'black', linestyle = 'dashed')
+#ax_K.hlines([C/Kds[betas[:-1]>1][-1], C/Kd_r], 0, Tf, linewidth = 2, color = 'black', linestyle = 'dashed')
+
+
 
 my_plot_layout(ax = ax_K_distribution, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 #ax_K_distribution.legend(fontsize = 32, title_fontsize = 34, title = r'$p$', loc = 4)
@@ -240,7 +246,7 @@ fig_K_distribution2.savefig('../../Figures/1_Dynamics/Ensemble/K_F_'+energy_mode
 my_plot_layout(ax = ax_K, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_K.legend(fontsize = 28, title_fontsize = 30, title = r'$p$')
 ax_K.set_xlim(left = 4.5, right = Tf)
-ax_K.set_ylim(bottom = 8e8, top = 8e12)
+ax_K.set_ylim(bottom = 5e8, top = 2e12)
 #ax_K.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_K.set_yticklabels([1, 0.1, 0.01])
 fig_K.savefig('../../Figures/1_Dynamics/Ensemble/K_'+energy_model+'.pdf')

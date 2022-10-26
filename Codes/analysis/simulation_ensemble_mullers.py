@@ -20,7 +20,7 @@ k_pr = 1
 k_pr = k_pr*24 #days^-1
 
 
-kappas = [2.5]
+kappas = [3.0]
 
 
 my_red = np.array((228,75,41))/256.
@@ -42,7 +42,7 @@ transparency_n = [1]
 color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_brown, my_blue2, my_yellow, my_purple, my_green2])#
 #color_list = np.array([(228,75,41), (125,165,38), (76,109,166), (215,139,45)])
 color_list = np.array([my_red, my_green, my_blue2, my_gold])
-color_list = np.array([my_green, my_blue2, my_gold])
+color_list = np.array([my_blue2, my_gold])
 
 #colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
 #colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])

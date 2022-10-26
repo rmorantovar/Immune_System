@@ -8,7 +8,9 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 
 #--------------- PARAMETERS ---------------------
 N_ensss = [[200], [501, 502, 503, 504, 505, 506, 507, 508, 509, 400, 300, 200, 100, 50], [200, 150, 100], [200, 100], [200]]
-N_ensss = [[50, 100, 200, 300, 400, 501, 502, 503, 504, 505, 506, 507, 508, 509]]#, [301, 302, 303, 304, 305, 306, 307, 308, 309]]
+N_ensss = [[50, 100, 200, 300, 400, 401, 402, 403, 404, 405, 406, 407, 408, 409, 501, 502, 503, 504, 505, 506, 507, 508, 509]]#, [301, 302, 303, 304, 305, 306, 307, 308, 309]]
+N_ensss = [[50, 100, 150, 200, 401, 402, 403, 404, 405, 406, 407, 408, 409]]
+
 N_r = 2e8
 
 T0 = 3
@@ -37,7 +39,7 @@ linear = 0
 
 
 kappas = [1, 2.5, 3.0, 4.0, 5.0]
-kappas = [2.5]#, 4.0]
+kappas = [3.0]#, 4.0]
 
 my_red = np.array((228,75,41))/256.
 my_purple = np.array((125,64,119))/256.
@@ -58,7 +60,7 @@ transparency_n = [1]
 
 color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_brown, my_blue2, my_yellow, my_purple, my_green2])#
 color_list = np.array([my_red, my_green, my_blue2, my_gold, my_purple])
-color_list = np.array([my_olive, my_gold])
+color_list = np.array([my_blue])
 
 colors_kappa = []
 for i in range(len(color_list)):
