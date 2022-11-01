@@ -3,7 +3,17 @@ sys.path.append('../library/')
 from functions import*
 plt.rcParams['text.usetex'] = True
 warnings.filterwarnings("ignore")
-
+my_red = np.array((228,75,41))/256.
+my_purple = np.array((125,64,119))/256.
+my_purple2 = np.array((116,97,164))/256.
+my_green = np.array((125,165,38))/256.
+my_blue = np.array((76,109,166))/256.
+my_gold = np.array((215,139,45))/256.
+my_brown = np.array((182,90,36))/256.
+my_blue2 = np.array((80,141,188))/256.
+my_yellow = np.array((246,181,56))/256.
+my_green2 = np.array((158,248,72))/256.
+my_cyan = 'tab:cyan'
 Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/'
 
 #--------------- PARAMETERS ---------------------
@@ -19,21 +29,7 @@ k_pr = 1
 #k_pr = 180 # hour^-1
 k_pr = k_pr*24 #days^-1
 
-
 kappas = [3.0]
-
-
-my_red = np.array((228,75,41))/256.
-my_purple = np.array((125,64,119))/256.
-my_purple2 = np.array((116,97,164))/256.
-my_green = np.array((125,165,38))/256.
-my_blue = np.array((76,109,166))/256.
-my_gold = np.array((215,139,45))/256.
-my_brown = np.array((182,90,36))/256.
-my_blue2 = np.array((80,141,188))/256.
-my_yellow = np.array((246,181,56))/256.
-my_green2 = np.array((158,248,72))/256.
-my_cyan = 'tab:cyan'
 
 antigen_color = my_yellow/256.
 
@@ -42,18 +38,14 @@ transparency_n = [1]
 color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_brown, my_blue2, my_yellow, my_purple, my_green2])#
 #color_list = np.array([(228,75,41), (125,165,38), (76,109,166), (215,139,45)])
 color_list = np.array([my_red, my_green, my_blue2, my_gold])
-color_list = np.array([my_blue2, my_gold])
+color_list = np.array([my_green])
 
 #colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
 #colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
 colors_kappa = []
 for i in range(len(color_list)):
         colors_kappa.append(np.array(color_list[i]))
-
-#colors_R = [['tab:grey', 'tab:grey', 'tab:blue', 'tab:blue'], ['tab:grey', 'tab:grey', 'tab:green', 'tab:green'], ['tab:grey', 'tab:grey', 'tab:red', 'tab:red'], ['tab:red', 'tab:red', 'tab:red', 'tab:red']]
-colors_R = []
-for i in range(len(kappas)):
-    colors_R.append([colors_kappa[i], colors_kappa[i], colors_kappa[i], colors_kappa[i]])
+colors_kappa = ['limegreen']
 
 lambda_B = lambda_A
 k_on = 1e6*24*3600; #(M*days)^-1
@@ -69,12 +61,8 @@ models_name = ['exponential']#, 'linear',]
 growth_models = [0]
 linear = 0
 
-# antigen = 'CMFILVWYAGTSQNEDHRKPFMRTP'
-# antigen = 'FMLFMAVFVMTSWYC'
-# antigen = 'FTSENAYCGR'
-# antigen = 'TACNSEYPNTTK'
+
 antigen = 'EYTACNSEYPNTTKCGRWYCGRYPN'
-#antigen = 'TACNSEYPNTTKCGRWYC'
 L=len(antigen)
 print('--------')
 print('L=%d'%(L))

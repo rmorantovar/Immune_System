@@ -8,8 +8,8 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 
 #--------------- PARAMETERS ---------------------
 N_ensss = [[200], [501, 502, 503, 504, 505, 506, 507, 508, 509, 400, 300, 200, 100, 50], [200, 150, 100], [200, 100], [200]]
-N_ensss = [[50, 100, 200, 300, 400, 401, 402, 403, 404, 405, 406, 407, 408, 409, 501, 502, 503, 504, 505, 506, 507, 508, 509]]#, [301, 302, 303, 304, 305, 306, 307, 308, 309]]
-N_ensss = [[50, 100, 150, 200, 401, 402, 403, 404, 405, 406, 407, 408, 409]]
+N_ensss = [[400, 401, 402, 403, 404, 405, 406, 407, 408, 409, 501, 502, 503, 504, 505, 506, 507, 508, 509]] #for p=2.5
+#N_ensss = [[50, 100, 150, 200] + [400+i for i in range(1, 10)] + [500+i for i in range(1, 21)]] #for p=3
 
 N_r = 2e8
 
@@ -39,7 +39,7 @@ linear = 0
 
 
 kappas = [1, 2.5, 3.0, 4.0, 5.0]
-kappas = [3.0]#, 4.0]
+kappas = [2.5]#, 4.0]
 
 my_red = np.array((228,75,41))/256.
 my_purple = np.array((125,64,119))/256.
@@ -60,7 +60,7 @@ transparency_n = [1]
 
 color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_brown, my_blue2, my_yellow, my_purple, my_green2])#
 color_list = np.array([my_red, my_green, my_blue2, my_gold, my_purple])
-color_list = np.array([my_blue])
+color_list = np.array([my_green])
 
 colors_kappa = []
 for i in range(len(color_list)):
@@ -72,12 +72,7 @@ for i in range(len(kappas)):
     colors_R.append([colors_kappa[i], colors_kappa[i], colors_kappa[i], colors_kappa[i]])
 
 
-# antigen = 'CMFILVWYAGTSQNEDHRKPFMRTP'
-# antigen = 'FMLFMAVFVMTSWYC'
-# antigen = 'FTSENAYCGR'
-# antigen = 'TACNSEYPNTTK'
 antigen = 'EYTACNSEYPNTTKCGRWYCGRYPN'
-#antigen = 'TACNSEYPNTTKCGRWYC'
 L=len(antigen)
 print('--------')
 print('L=%d'%(L))
@@ -151,19 +146,19 @@ for i_kappa, kappa in enumerate(kappas):
 	K_final_all = []
 	Counter_all = 0
 
-	K_best = np.zeros_like(time)
-	K_final_best = []
-	Counter_best = 0
+	# K_best = np.zeros_like(time)
+	# K_final_best = []
+	# Counter_best = 0
 
-	K_biggest = np.zeros_like(time)
-	K_final_biggest = []
-	Counter_biggest = 0
+	# K_biggest = np.zeros_like(time)
+	# K_final_biggest = []
+	# Counter_biggest = 0
 
-	K_avidity = np.zeros_like(time)
-	K_final_avidity = []
-	Counter_avidity = 0
+	# K_avidity = np.zeros_like(time)
+	# K_final_avidity = []
+	# Counter_avidity = 0
 
-	Avidity_orders = []
+	# Avidity_orders = []
 
 	for N_ens in N_enss:
 		print('N_ens = %d'%N_ens)
@@ -171,135 +166,141 @@ for i_kappa, kappa in enumerate(kappas):
 		#-----------------Loading data----------------------------
 		parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
 		#data = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/energies_ensemble.txt', sep = '\t', header=None)
-		data = get_data_ensemble(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
+		data, return_data_type = get_data_ensemble_elite(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
 		
+		if(return_data_type):
+			K_final_all = data[0]
+			Counter_all = data[1]
+		else:
 
-		for i_ens in tqdm(np.arange(N_ens)):
-			data_i = data.loc[data[4]==i_ens]
-			data_active = data_i.loc[data_i[1]==1]
-			t_act_data = np.min(data_active[3])
-			data_active = data_active.loc[data_active[3]<(t_act_data+1.0+0.1*(kappa-1))]
-			
-			data_active_all = data_active#.loc[data_active[3]<(t_act_theory)]
-			activation_times_all = np.array(data_active_all[3])
-			energies_all = np.array(data_active_all[0])
-
-			#data_active_common = data_active.loc[data_active[3]>(t_act_theory)]
-			#activation_times_common = np.array(data_active_common[3])
-			#energies_common = np.array(data_active_common[0])
-
-			#---------------------------- B cell linages ----------------------
-			clone_sizes_all = get_clones_sizes_C(len(activation_times_all), time, activation_times_all, lambda_B, C, dT)
-			#clone_sizes_common = get_clones_sizes_C(len(activation_times_common), time, activation_times_common, lambda_B, C, dT)
-
-			#--------------------------t_C filter-------------------------
-			lim_size = 2
-			clone_sizes_C_all, activation_times_C_all, energies_C_all, filter_C_all, n_C_all = apply_filter_C(clone_sizes_all, activation_times_all, energies_all, lim_size)
-			#clone_sizes_C_common, activation_times_C_common, energies_C_common, filter_C_common, n_C_common = apply_filter_C(clone_sizes_common, activation_times_common, energies_common, lim_size)
-			#-------Simulations-------
-			if(len(energies_C_all)>0):
-				Kds_C_all = np.exp(energies_C_all)
-				Avidities = np.divide(((clone_sizes_C_all-1).T)/1, Kds_C_all).T
-				final_potencies = (Avidities[:,-1])
-				final_potency = (np.sum(Avidities[:,-1]))
-				sort_inds_avidity = np.flip(final_potencies.argsort())
-
-				cum_avidity_freq = np.cumsum(final_potencies[sort_inds_avidity])/final_potency
-
-				ax_K_avidity_cumulative.plot(np.arange(len(final_potencies))+1, cum_avidity_freq, color = colors_kappa[i_kappa], alpha = .5 )
-
-				order = 0
-				K_i = final_potencies[sort_inds_avidity[order]]
-				while (((K_i)/(final_potency))<.9):
-					order+=1
-					K_i+=final_potencies[sort_inds_avidity[order]]
-
-				Avidity_orders.append(order+1)
-
-				#Kds_C_common = np.exp(energies_C_common)
-
-				K_i_all = np.sum(Avidities, axis = 0)
-				K_i_best = np.sum(Avidities[energies_C_all==np.min(energies_C_all),:], axis = 0)
-				K_i_biggest = np.sum(Avidities[clone_sizes_C_all[:,-1]==np.max(clone_sizes_C_all[:,-1]),:], axis = 0)
-				K_i_avidity = np.sum(Avidities[Avidities[:,-1]==np.max(Avidities[:,-1]),:], axis = 0)
+			for i_ens in tqdm(np.arange(N_ens)):
+				data_i = data.loc[data[4]==i_ens]
+				data_active = data_i.loc[data_i[1]==1]
+				t_act_data = np.min(data_active[3])
+				data_active = data_active.loc[data_active[3]<(t_act_data+1.0+0.1*(kappa-1))]
 				
-				K_final_best_renorm.append(((C/1)/np.min(Kds_C_all)))
+				data_active_all = data_active#.loc[data_active[3]<(t_act_theory)]
+				activation_times_all = np.array(data_active_all[3])
+				energies_all = np.array(data_active_all[0])
 
-				#if(np.sum(~np.isinf(K_i_all))!=0):
-				if(np.sum(K_i_all)!=0):
-					K_all += K_i_all
-					K_final_all.append(K_i_all[-1])
-					Counter_all+=1
+				#data_active_common = data_active.loc[data_active[3]>(t_act_theory)]
+				#activation_times_common = np.array(data_active_common[3])
+				#energies_common = np.array(data_active_common[0])
 
-					K_best += K_i_best
-					K_final_best.append(K_i_best[-1])
-					Counter_best+=1
+				#---------------------------- B cell linages ----------------------
+				clone_sizes_all = get_clones_sizes_C(len(activation_times_all), time, activation_times_all, lambda_B, C, dT)
+				#clone_sizes_common = get_clones_sizes_C(len(activation_times_common), time, activation_times_common, lambda_B, C, dT)
 
-					K_biggest += K_i_biggest
-					K_final_biggest.append(K_i_biggest[-1])
-					Counter_biggest+=1
+				#--------------------------t_C filter-------------------------
+				lim_size = 2
+				clone_sizes_C_all, activation_times_C_all, energies_C_all, filter_C_all, n_C_all = apply_filter_C(clone_sizes_all, activation_times_all, energies_all, lim_size)
+				#clone_sizes_C_common, activation_times_C_common, energies_C_common, filter_C_common, n_C_common = apply_filter_C(clone_sizes_common, activation_times_common, energies_common, lim_size)
+				#-------Simulations-------
+				if(len(energies_C_all)>0):
+					Kds_C_all = np.exp(energies_C_all)
+					Avidities = np.divide(((clone_sizes_C_all-1).T)/1, Kds_C_all).T
+					# final_potencies = (Avidities[:,-1])
+					# final_potency = (np.sum(Avidities[:,-1]))
+					# sort_inds_avidity = np.flip(final_potencies.argsort())
 
-					K_avidity += K_i_avidity
-					K_final_avidity.append(K_i_avidity[-1])
-					Counter_avidity+=1
+					# cum_avidity_freq = np.cumsum(final_potencies[sort_inds_avidity])/final_potency
 
-				
-				#if(i_ens%1==0):
-				#	ax_K.plot(time, K_i, color = colors_kappa[i_kappa], alpha = .1, linewidth = 1)
-			
-	counter_total+=Counter_all
+					# ax_K_avidity_cumulative.plot(np.arange(len(final_potencies))+1, cum_avidity_freq, color = colors_kappa[i_kappa], alpha = .5 )
 
-	ax_K_avidity_order.hist(Avidity_orders, color = colors_kappa[i_kappa], bins = np.logspace(0, np.log10(np.max(2*Avidity_orders)), 20))
+					# order = 0
+					# K_i = final_potencies[sort_inds_avidity[order]]
+					# while (((K_i)/(final_potency))<.9):
+					# 	order+=1
+					# 	K_i+=final_potencies[sort_inds_avidity[order]]
 
-	print(Counter_all, Counter_best, Counter_biggest, Counter_avidity)
+					# Avidity_orders.append(order+1)
 
-	K_all = (K_all/Counter_all)
-	K_best = (K_best/Counter_best)
-	K_biggest = (K_biggest/Counter_biggest)
-	K_avidity = (K_avidity/Counter_avidity)
+					#Kds_C_common = np.exp(energies_C_common)
+
+					K_i_all = np.sum(Avidities, axis = 0)
+					#K_i_best = np.sum(Avidities[energies_C_all==np.min(energies_C_all),:], axis = 0)
+					#K_i_biggest = np.sum(Avidities[clone_sizes_C_all[:,-1]==np.max(clone_sizes_C_all[:,-1]),:], axis = 0)
+					#K_i_avidity = np.sum(Avidities[Avidities[:,-1]==np.max(Avidities[:,-1]),:], axis = 0)
+					
+					K_final_best_renorm.append(((C/1)/np.min(Kds_C_all)))
+
+					#if(np.sum(~np.isinf(K_i_all))!=0):
+					if(np.sum(K_i_all)!=0):
+						#K_all += K_i_all
+						K_final_all.append(K_i_all[-1])
+						Counter_all+=1
+
+						#K_best += K_i_best
+						#K_final_best.append(K_i_best[-1])
+						#Counter_best+=1
+
+						#K_biggest += K_i_biggest
+						#K_final_biggest.append(K_i_biggest[-1])
+						#Counter_biggest+=1
+
+						#K_avidity += K_i_avidity
+						#K_final_avidity.append(K_i_avidity[-1])
+						#Counter_avidity+=1
+
+					
+					#if(i_ens%1==0):
+					#	ax_K.plot(time, K_i, color = colors_kappa[i_kappa], alpha = .1, linewidth = 1)
+			f = open(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/processed_data.pkl', 'wb')
+			pickle.dump([K_final_all, Counter_all], f, pickle.HIGHEST_PROTOCOL)	
+
+	#counter_total+=Counter_all
+
+	#ax_K_avidity_order.hist(Avidity_orders, color = colors_kappa[i_kappa], bins = np.logspace(0, np.log10(np.max(2*Avidity_orders)), 20))
+
+	#print(Counter_all, Counter_best, Counter_biggest, Counter_avidity)
+
+	#K_all = (K_all/Counter_all)
+	#K_best = (K_best/Counter_best)
+	#K_biggest = (K_biggest/Counter_biggest)
+	#K_avidity = (K_avidity/Counter_avidity)
 
 	normalization_all = 1
-	normalization_best = 1#K_all[-1]
-	normalization_biggest = 1#K_all[-1]
-	normalization_avidity = 1#K_all[-1]
-	if(kappa==1):
-		normalization_all = 1#K_all[-1]
-		normalization_best = 1#K_all[-1]
-		normalization_biggest = 1#K_all[-1]
-		normalization_avidity = 1#K_all[-1]
+	#normalization_best = 1#K_all[-1]
+	#normalization_biggest = 1#K_all[-1]
+	#normalization_avidity = 1#K_all[-1]
+	#if(kappa==1):
+	#	normalization_all = 1#K_all[-1]
+		#normalization_best = 1#K_all[-1]
+		#normalization_biggest = 1#K_all[-1]
+		#normalization_avidity = 1#K_all[-1]
 	
-	else:
-		ax_K.plot(time, (K_all/normalization_all), color = colors_kappa[i_kappa], alpha = 1, linewidth = 5, linestyle = '-', label = 'all')
+	#else:
+		#ax_K.plot(time, (K_all/normalization_all), color = colors_kappa[i_kappa], alpha = 1, linewidth = 5, linestyle = '-', label = 'all')
 		#ax_K.plot(time, (K_best/normalization_best), color = colors_kappa[i_kappa], alpha = 1, linewidth = 5, linestyle = '--', label = 'affinity')
 		#ax_K.plot(time, (K_biggest/normalization_biggest), color = colors_kappa[i_kappa], alpha = 1, linewidth = 5, linestyle = ':', label = 'clone-size')
-		ax_K.plot(time, (K_avidity/normalization_avidity), color = colors_kappa[i_kappa], alpha = 1, linewidth = 5, linestyle = '-.', label = 'potency')
+		#ax_K.plot(time, (K_avidity/normalization_avidity), color = colors_kappa[i_kappa], alpha = 1, linewidth = 5, linestyle = '-.', label = 'potency')
 
-	print(np.max(np.log10(np.array(K_final_all)/normalization_all)))
-	print(np.max(np.log10(np.array(K_final_best)/normalization_best)))
-	print(np.max(np.log10(np.array(K_final_biggest)/normalization_biggest)))
-	print(np.max(np.log10(np.array(K_final_avidity)/normalization_avidity)))
+	#print(np.max(np.log10(np.array(K_final_all)/normalization_all)))
+	#print(np.max(np.log10(np.array(K_final_best)/normalization_best)))
+	#print(np.max(np.log10(np.array(K_final_biggest)/normalization_biggest)))
+	#print(np.max(np.log10(np.array(K_final_avidity)/normalization_avidity)))
 
 	#bins = np.linspace(-5, 7, 100)
-	K_data_all = np.histogram(np.log10(np.array(K_final_all)/normalization_all), bins = np.linspace(6, 14.5, 140), density = False)
-	K_data_best = np.histogram(np.log10(np.array(K_final_best)/normalization_best), bins = np.linspace(6, 14.5, 140), density = False)
-	K_data_biggest = np.histogram(np.log10(np.array(K_final_biggest)/normalization_biggest), bins = np.linspace(6, 14.5, 140), density = False)
-	K_data_avidity = np.histogram(np.log10(np.array(K_final_avidity)/normalization_avidity), bins = np.linspace(6, 14.5, 140), density = False)
+	K_data_all = np.histogram(np.log10(np.array(K_final_all)/normalization_all), bins = np.linspace(6, 14.5, 140), density = True)
+	#K_data_best = np.histogram(np.log10(np.array(K_final_best)/normalization_best), bins = np.linspace(6, 14.5, 140), density = False)
+	#K_data_biggest = np.histogram(np.log10(np.array(K_final_biggest)/normalization_biggest), bins = np.linspace(6, 14.5, 140), density = False)
+	#K_data_avidity = np.histogram(np.log10(np.array(K_final_avidity)/normalization_avidity), bins = np.linspace(6, 14.5, 140), density = False)
 	
-	ax_K_scatter_affinity.scatter((np.array(K_final_all)/normalization_all), (np.array(K_final_best)/normalization_best), color = colors_kappa[i_kappa])
-	ax_K_scatter_clone_size.scatter((np.array(K_final_all)/normalization_all), (np.array(K_final_biggest)/normalization_biggest), color = colors_kappa[i_kappa])
-	ax_K_scatter_avidity.scatter((np.array(K_final_all)/normalization_all), (np.array(K_final_avidity)/normalization_avidity), color = colors_kappa[i_kappa])
+	#ax_K_scatter_affinity.scatter((np.array(K_final_all)/normalization_all), (np.array(K_final_best)/normalization_best), color = colors_kappa[i_kappa])
+	#ax_K_scatter_clone_size.scatter((np.array(K_final_all)/normalization_all), (np.array(K_final_biggest)/normalization_biggest), color = colors_kappa[i_kappa])
+	#ax_K_scatter_avidity.scatter((np.array(K_final_all)/normalization_all), (np.array(K_final_avidity)/normalization_avidity), color = colors_kappa[i_kappa])
 
-	ax_K_scatter_affinity.plot(np.logspace(6, 14.5, 50), np.logspace(6, 14.5, 50), color = 'black', alpha = .8)
-	ax_K_scatter_clone_size.plot(np.logspace(6, 14.5, 50), np.logspace(6, 14.5, 50), color = 'black', alpha = .8)
-	ax_K_scatter_avidity.plot(np.logspace(6, 14.5, 50), np.logspace(6, 14.5, 50), color = 'black', alpha = .8)
+	#ax_K_scatter_affinity.plot(np.logspace(6, 14.5, 50), np.logspace(6, 14.5, 50), color = 'black', alpha = .8)
+	#ax_K_scatter_clone_size.plot(np.logspace(6, 14.5, 50), np.logspace(6, 14.5, 50), color = 'black', alpha = .8)
+	#ax_K_scatter_avidity.plot(np.logspace(6, 14.5, 50), np.logspace(6, 14.5, 50), color = 'black', alpha = .8)
 
-	ax_K_distribution.plot(10**(K_data_all[1][:-1]), K_data_all[0]/Counter_all, color = colors_kappa[i_kappa], linestyle='-', marker = '', linewidth = 2, label = 'all')
-	ax_K_distribution.plot(10**(K_data_best[1][:-1]), K_data_best[0]/Counter_best, color = colors_kappa[i_kappa], linestyle='--', marker = '', linewidth = 2, label = 'affinity')
-	ax_K_distribution.plot(10**(K_data_biggest[1][:-1]), K_data_biggest[0]/Counter_biggest, color = colors_kappa[i_kappa], linestyle=':', marker = '', linewidth = 2, label = 'clone-size')
-	ax_K_distribution.plot(10**(K_data_avidity[1][:-1]), K_data_avidity[0]/Counter_avidity, color = colors_kappa[i_kappa], linestyle='-.', marker = '', linewidth = 2, label = 'potency')
+	ax_K_distribution.plot(10**(K_data_all[1][:-1]), K_data_all[0]/1, color = 'orange', linestyle='-', marker = '', linewidth = 2, label = 'all')
+	#ax_K_distribution.plot(10**(K_data_best[1][:-1]), K_data_best[0]/Counter_best, color = colors_kappa[i_kappa], linestyle='--', marker = '', linewidth = 2, label = 'affinity')
+	#ax_K_distribution.plot(10**(K_data_biggest[1][:-1]), K_data_biggest[0]/Counter_biggest, color = colors_kappa[i_kappa], linestyle=':', marker = '', linewidth = 2, label = 'clone-size')
+	#ax_K_distribution.plot(10**(K_data_avidity[1][:-1]), K_data_avidity[0]/Counter_avidity, color = colors_kappa[i_kappa], linestyle='-.', marker = '', linewidth = 2, label = 'potency')
 
 	if(kappa!=1.0):
-		ax_K_distribution2.plot(10**(K_data_all[1][:-1]), 1-np.cumsum(K_data_all[0]/Counter_all), color = colors_kappa[i_kappa], linestyle='-', marker = '', linewidth = 3, label = r'$p=%.1f$'%(kappa))
+		ax_K_distribution2.plot(10**(K_data_all[1][:-1]), 1-np.cumsum(K_data_all[0]*np.diff(K_data_all[1])/1), color = 'orange', linestyle='-', marker = '', linewidth = 3, label = r'$p=%.1f$'%(kappa))
 		#ax_K_distribution2.plot(K_data_best[1][:-1], 1-np.cumsum(K_data_best[0]/Counter_best), color = colors_kappa[i_kappa], linestyle='', marker = '^', linewidth = 2, label = 'affinity')
 		#ax_K_distribution2.plot(K_data_biggest[1][:-1], 1-np.cumsum(K_data_biggest[0]/Counter_biggest), color = colors_kappa[i_kappa], linestyle='', marker = '*', linewidth = 2, label = 'clone-size')
 		#ax_K_distribution2.plot(K_data_avidity[1][:-1], 1-np.cumsum(K_data_avidity[0]/Counter_avidity), color = colors_kappa[i_kappa], linestyle='', marker = 's', linewidth = 2, label = 'potency')
@@ -309,8 +310,8 @@ for i_kappa, kappa in enumerate(kappas):
 Counter_best_renorm = counter_total
 print(Counter_best_renorm)
 #Counter_best_renorm = 1
-K_best_renorm_data = np.histogram(np.log10(np.array(K_final_best_renorm)/normalization_best), bins = np.linspace(10, 14.5, 60), density = False)
-ax_K_distribution.plot(10**(K_best_renorm_data[1][:-1]), K_best_renorm_data[0]/Counter_best_renorm, color = 'gray', linestyle=':', marker = '', linewidth = 2, alpha = .8)
+#K_best_renorm_data = np.histogram(np.log10(np.array(K_final_best_renorm)/normalization_best), bins = np.linspace(10, 14.5, 60), density = False)
+#ax_K_distribution.plot(10**(K_best_renorm_data[1][:-1]), K_best_renorm_data[0]/Counter_best_renorm, color = 'gray', linestyle=':', marker = '', linewidth = 2, alpha = .8)
 #ax_K_distribution2.plot(K_best_renorm_data[1][:-1], 1-np.cumsum(K_best_renorm_data[0]/Counter_best_renorm*np.diff(K_best_renorm_data[1])), color = 'gray', linestyle='', marker = 'D', linewidth = 2)
 #ax_K_distribution2.plot(10**(K_best_renorm_data[1][:-1]), 1-np.cumsum(K_best_renorm_data[0]/Counter_best_renorm), color = 'gray', linestyle='', marker = 'D', linewidth = 2, alpha = .8)
 

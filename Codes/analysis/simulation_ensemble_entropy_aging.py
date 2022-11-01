@@ -7,12 +7,14 @@ warnings.filterwarnings("ignore")
 Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/'
 
 #--------------- PARAMETERS ---------------------
-N_ens = 200
-N_r = 2e8
-N_rs = [[2e8], [2e8, 2e8/2, 2e8/5, 2e8/20], [2e8], [2e8]]
+N_ens = 400
+N_enss = [[50], [500, 500, 500, 500]]#, 502, 503, 504, 505, 506, 507, 508, 509, 400, 300, 200, 100, 50], [301, 302, 303, 304, 305, 306, 307, 308, 309]]
+#N_rs = [[2e8], [2e8, 2e8/2, 2e8/5, 2e8/10], [2e8], [2e8]]
+N_rs = [[2e8], [2e8, 2e8/2, 2e8/5, 2e8/10]]
 linewidths_N_r = [[5], [5, 4, 3, 2], [5], [5]]
 linestyles_N_r = [['-'], ['-', '--', '--', '--'], ['-'], ['-']]
-transparencies_N_r = [[.8], [1, 1, 1, 1], [.8], [.8]]
+transparencies_N_r = [[.4], [1, 1, 1, 1], [.4], [.4]]
+
 T0 = 2.5
 Tf = 12
 Tf_sim = 7
@@ -38,7 +40,7 @@ linear = 0
 
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
-kappas = [1, 2]
+kappas = [1, 3.0]
 
 my_red = np.array((228,75,41))/256.
 my_purple = np.array((125,64,119))/256.
@@ -58,7 +60,7 @@ transparency_n = [1]
 
 color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_brown, my_blue2, my_yellow, my_purple, my_green2])#
 #color_list = np.array([(228,75,41), (125,165,38), (76,109,166), (215,139,45)])
-color_list = np.array([my_red, my_green, my_blue2, my_gold])
+color_list = np.array([my_red, my_green])
 
 #colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
 #colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
@@ -95,9 +97,9 @@ for i in np.arange(L):
 Es, dE, Q0, betas = calculate_Q0(0.01, 50, 400000, PWM_data, E_ms, L)
 Kds = np.exp(Es[:-1])
 
-#--------------------------Repertoire properties--------------------------
-beta_r, E_r, Kd_r = get_repertoire_properties(betas, Q0, Es, dE, N_r)
-print('beta_r = %.1f'%beta_r)
+#--------------------------Proofreading properties--------------------------
+beta_pr, E_pr, Kd_pr = get_proofreading_properties(betas, Q0, Es, dE, k_pr, k_on)
+print('beta_pr = %.2f'%beta_pr)
 
 t_prime = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*N_c))
 print('--------')
@@ -110,6 +112,7 @@ for i_kappa, kappa in enumerate(kappas):
 	print('kappa = %.2f...'%kappa)
 	beta_kappa, E_kappa, Kd_kappa = get_kappa_properties(betas, Q0, Es, dE, kappa)
 	for i_N_r, N_r in enumerate(N_rs[i_kappa]):
+		N_ens = N_enss[i_kappa][i_N_r]
 		#--------------------------Repertoire properties--------------------------
 		beta_r, E_r, Kd_r = get_repertoire_properties(betas, Q0, Es, dE, N_r)
 		print('N_r = %.e'%N_r)
@@ -146,7 +149,7 @@ for i_kappa, kappa in enumerate(kappas):
 			#	ax_entropy.plot(time, entropy_i, color = colors_kappa[  i_kappa], alpha = .1, linewidth = 1)
 
 		entropy = entropy/N_ens
-		if(kappa==2):
+		if(kappa!=1.0):
 			ax_entropy.plot(time, entropy, color = colors_kappa[  i_kappa], alpha = transparencies_N_r[i_kappa][i_N_r], linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r], label = r'$%.0f \cdot 10^{%d}$'%(10**(np.log10(N_r)%1), int(np.log10(N_r))))
 		
 my_plot_layout(ax = ax_entropy, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )

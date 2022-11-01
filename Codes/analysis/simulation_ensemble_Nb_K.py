@@ -42,8 +42,7 @@ transparency_n = [1]
 
 color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_brown, my_blue2, my_yellow, my_purple, my_green2])#
 #color_list = np.array([(228,75,41), (125,165,38), (76,109,166), (215,139,45)])
-color_list = np.array([my_red, my_green, my_blue2, my_gold])
-color_list = np.array([my_green, my_blue2, my_gold])
+color_list = np.array([my_blue2, my_green, my_gold, my_brown])
 
 #colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
 #colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
@@ -122,7 +121,7 @@ for i_kappa, kappa in enumerate((kappas)):
     
     data_active = data.loc[data[1]==1]
     t_act_data = np.min(data_active[3])
-    data_active = data_active.loc[data_active[3]<(t_act_data+1.5)]
+    data_active = data_active.loc[data_active[3]<(t_act_data+1.0+0.1*(kappa-1))]
     activation_times = np.array(data_active[3])
     energies  = np.array(data_active[0])
     energies_total = np.linspace(np.min(energies), -17, 12)

@@ -34,7 +34,7 @@ growth_models = [0]
 linear = 0
 
 
-kappas = [1, 2, 3, 4, 5]
+kappas = [1, 2, 3, 4]
 #kappas = [3]
 
 my_red = np.array((228,75,41))/256.
@@ -54,7 +54,7 @@ antigen_color = my_yellow/256.
 transparency_n = [1]
 
 color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_brown, my_blue2, my_yellow, my_purple, my_green2])#
-color_list = np.array([my_red, my_green, my_blue2, my_gold, my_purple])
+color_list = np.array([my_red, my_blue2, my_green, my_gold, my_purple2])
 #color_list = np.array([my_green, my_blue2, my_gold])
 
 colors_kappa = []
@@ -258,13 +258,14 @@ for i_kappa, kappa in enumerate(kappas):
 
 	ax_K_scatter_common.scatter((np.array(K_final_all)[index_common_cases]/normalization_all), (np.array((K_final_common))/normalization_common), color = colors_kappa[i_kappa], marker = '*', alpha = .8)
 	ax_K_scatter_rare.scatter((np.array(K_final_all)[index_rare_cases]/normalization_all), (np.array((K_final_rare))/normalization_rare), color = colors_kappa[i_kappa], marker = 'o', alpha = .8)
-	#ax_K_scatter_biggest_affinity.scatter(np.exp(final_biggest_affinity), np.array(final_biggest)/C, color = colors_kappa[i_kappa], marker = 'o', alpha = .8, label = r'$%.1f$'%kappa)
+	
+	ax_K_scatter_biggest_affinity.scatter(np.exp(final_biggest_affinity), np.array(final_biggest)/C, color = colors_kappa[i_kappa], marker = 'o', alpha = .8, label = r'$%.1f$'%kappa)
 	#ax_K_scatter_biggest_affinity.hist2d(np.exp(final_biggest_affinity), np.array(final_biggest)/C, bins = [np.logspace(-9, 3, 20), np.linspace(0, 1, 10)], density = True, color = colors_kappa[i_kappa], label = r'$%.1f$'%kappa)
 	
-	df = pd.DataFrame({'x':np.exp(final_biggest_affinity), 'y':np.array(final_biggest)/C})
+	#df = pd.DataFrame({'x':np.exp(final_biggest_affinity), 'y':np.array(final_biggest)/C})
 	#df = pd.DataFrame({'x':np.array(final_biggest)/C, 'y':np.array(final_biggest)/C})
 
-	sns.kdeplot(data = df, x='x', y='y', ax=ax_K_scatter_biggest_affinity, color = colors_kappa[i_kappa], log_scale = (True, False), cut = 0, label = r'$%d$'%kappa)#, clip = ((np.min(np.exp(final_biggest_affinity)), np.max(np.exp(final_biggest_affinity))),(0, 1)))
+	#sns.kdeplot(data = df, x='x', y='y', ax=ax_K_scatter_biggest_affinity, color = colors_kappa[i_kappa], log_scale = (True, False), cut = 0, label = r'$%d$'%kappa)#, clip = ((np.min(np.exp(final_biggest_affinity)), np.max(np.exp(final_biggest_affinity))),(0, 1)))
 	
 	ax_K_scatter_common.plot(np.logspace(6, 14.5, 50), np.logspace(6, 14.5, 50), color = 'black', alpha = .8)
 	ax_K_scatter_rare.plot(np.logspace(6, 14.5, 50), np.logspace(6, 14.5, 50), color = 'black', alpha = .8)
@@ -331,25 +332,6 @@ ax_K_scatter_biggest_affinity.set_xlim(left = 1e-9, right = 2e-4)
 #ax_K_scatter_biggest_affinity.set_yticks([])
 #ax_K_scatter_biggest_affinity.set_yticklabels([1, 0.1, 0.01])
 fig_K_scatter_biggest_affinity.savefig('../../Figures/1_Dynamics/Ensemble/K_RC_scatter_big_affi_'+energy_model+'.pdf')
-
-
-# my_plot_layout(ax = ax_K_avidity_order, xscale='log', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-# #ax_K_avidity_order.legend(fontsize = 32, title_fontsize = 34, title = r'$p$', loc = 4)
-# #ax_K_avidity_order.set_ylim(bottom = 1e-4)
-# #ax_K_avidity_order.set_xlim(left = 1, right = 6.5)
-# #ax_K_avidity_order.set_xticks([])
-# #ax_K_avidity_order.set_yticks([])
-# #ax_K_avidity_order.set_yticklabels([1, 0.1, 0.01])
-# fig_K_avidity_order.savefig('../../Figures/1_Dynamics/Ensemble/K_avidity-order_RC_'+energy_model+'.pdf')
-
-# my_plot_layout(ax = ax_K_avidity_cumulative, xscale='log', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-# #ax_K_avidity_cumulative.legend(fontsize = 32, title_fontsize = 34, title = r'$p$', loc = 4)
-# #ax_K_avidity_cumulative.set_ylim(bottom = 1e-4)
-# #ax_K_avidity_cumulative.set_xlim(left = 1, right = 6.5)
-# #ax_K_avidity_cumulative.set_xticks([])
-# #ax_K_avidity_cumulative.set_yticks([])
-# #ax_K_avidity_cumulative.set_yticklabels([1, 0.1, 0.01])
-# fig_K_avidity_cumulative.savefig('../../Figures/1_Dynamics/Ensemble/K_avidity-cum_RC_'+energy_model+'.pdf')
 
 my_plot_layout(ax = ax_K, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 #ax_K.legend(fontsize = 28, title_fontsize = 30, title = r'$p$')

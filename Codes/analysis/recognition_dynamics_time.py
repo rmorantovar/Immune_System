@@ -40,7 +40,7 @@ transparency_n = [1]
 
 color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_brown, my_blue2, my_yellow, my_purple, my_green2])#
 #color_list = np.array([(228,75,41), (125,165,38), (76,109,166), (215,139,45)])
-color_list = np.array([my_red, my_green, my_blue2, my_gold])
+color_list = np.array([my_red, my_blue2, my_green, my_gold, my_brown])
 
 #colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
 #colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
@@ -67,20 +67,17 @@ models_name = ['exponential']#, 'linear',]
 growth_models = [0]
 linear = 0
 
-# antigen = 'CMFILVWYAGTSQNEDHRKPFMRTP'
-# antigen = 'FMLFMAVFVMTSWYC'
-# antigen = 'FTSENAYCGR'
-# antigen = 'TACNSEYPNTTK'
+
 antigen = 'EYTACNSEYPNTTKCGRWYCGRYPN'
 #antigen = 'TACNSEYPNTTKCGRWYC'
 L=len(antigen)
 print('--------')
 print('L=%d'%(L))
 #----------------------------------------------------------------
-energy_model = 'TCRen'
+model = 'TCRen'
 #energy_model = 'MJ2'
 #--------------------------Energy Motif--------------------------
-PWM_data = get_motif(antigen, energy_model, Text_files_path)
+PWM_data, M, Alphabet = get_motif(antigen, model, Text_files_path)
 print('min_e_PWM=%.4f'%(np.sum([np.min(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))])))
 print('mean_e_PWM=%.4f'%(np.sum([np.mean(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))])))
 #Change values by the minimum
