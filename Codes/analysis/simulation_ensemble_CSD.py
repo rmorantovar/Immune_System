@@ -7,10 +7,10 @@ warnings.filterwarnings("ignore")
 Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/'
 
 #--------------- PARAMETERS ---------------------
-N_ens = 200
+N_ens = 500
 N_r = 2e8
 T0 = 3
-Tf = 10
+Tf = 12
 Tf_sim = 7
 #Tf = 10
 dT = 0.05
@@ -22,7 +22,7 @@ k_pr = k_pr*24 #days^-1
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
 kappas = [2, 3, 4]
-#kappas = [3]
+kappas = [3]
 
 my_red = np.array((228,75,41))/256.
 my_purple = np.array((125,64,119))/256.
@@ -43,6 +43,7 @@ transparency_n = [1]
 color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_brown, my_blue2, my_yellow, my_purple, my_green2])#
 #color_list = np.array([(228,75,41), (125,165,38), (76,109,166), (215,139,45)])
 color_list = np.array([my_blue2, my_green, my_gold, my_brown])
+color_list = np.array([my_green])
 
 #colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
 #colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
@@ -107,7 +108,7 @@ print('Loops...')
 #--------------------------Loops--------------------------
 fig_CSD, ax_CSD = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 for i_kappa, kappa in enumerate(kappas):
-    fig_CSD_i, ax_CSD_i = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+    markers_b = ['^', 's', 'o', '*']
     print('--------')
     print('kappa = %.2f...'%kappa)
     beta_kappa, E_kappa, Kd_kappa = get_kappa_properties(betas, Q0, Es, dE, kappa)
@@ -123,60 +124,65 @@ for i_kappa, kappa in enumerate(kappas):
     activation_times = np.array(data_active[3])
     energies  = np.array(data_active[0])
 
-    #---------------------------- B cell linages ----------------------
-    clone_sizes = get_clones_sizes_C(len(activation_times), time, activation_times, lambda_B, C, dT)
-
-    #--------------------------t_C filter-------------------------
-    lim_size = 2
-    clone_sizes_C, activation_times_C, energies_C, filter_C, n_C = apply_filter_C(clone_sizes, activation_times, energies, lim_size)
+    for i_lambda_B, lambda_B in enumerate(lambda_A*np.array([0.5, 0.3, 0.2, .1])):
     
-    clone_sizes_final = clone_sizes_C[:,-1]#/np.max(clone_sizes_C[:,-1])
+        fig_CSD_i, ax_CSD_i = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+        
 
-    # sort_inds = clone_sizes_C[:, -1].argsort()
-    # clone_sizes_C_sorted = clone_sizes_C[sort_inds, :][:, :]
-    # activation_times_C_sorted = activation_times_C[sort_inds][:]
-    # energies_C_sorted = energies_C[sort_inds][:]
+        #---------------------------- B cell linages ----------------------
+        clone_sizes = get_clones_sizes_C(len(activation_times), time, activation_times, lambda_B, C, dT)
 
-    bins = np.logspace(np.log10(np.min(clone_sizes_final)),np.log10(np.max(clone_sizes_final)), 50)
-    #bins = np.linspace((np.min(clone_sizes_final)),(np.max(clone_sizes_final)),50)
-    #bins = 300
-    #bins = 'auto'
-    print(len(clone_sizes_final))
-    clone_size_distribution = np.histogram(clone_sizes_final, bins = bins, density = False)
-    clone_size = clone_size_distribution[1][:-1]
-    clone_size_counts = clone_size_distribution[0]/N_ens#/np.sum(clone_size_distribution[0]*(np.diff(clone_size_distribution[1])))
-    print(np.sum(clone_size_counts[:]))
-    Nb_array = np.logspace(np.log10(np.min(clone_sizes_final)), np.log10(np.max(clone_sizes_final))-0.2, 50)
-    fit = Nb_array**(-beta_act*lambda_A/(lambda_B*kappa))
-    fit = fit/fit[0]*np.sum(clone_size_counts[:])*0.8
-    normalization = len(clone_sizes_final)
-    normalization = 1
-    ax_CSD.plot(clone_size/C, np.sum(clone_size_counts[:])-np.cumsum(clone_size_counts[:])/normalization, color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = 1, ms = 6, label = r'$%.d$'%(kappa))
-    #ax_CSD.plot(clone_size[:], (clone_size_counts[:]*(clone_size_distribution[1][1:]-clone_size_distribution[1][:-1])), color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = .8, ms = 10)
-    ax_CSD_i.plot(clone_size/C, np.sum(clone_size_counts[:])-np.cumsum(clone_size_counts[:])/normalization, color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = 1, ms = 6, label = r'$%.d$'%(kappa))
-    #ax_CSD.plot(clone_size[:], (clone_size_counts[:]*(clone_size_distribution[1][1:]-clone_size_distribution[1][:-1])), color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = .8, ms = 10)
+        #--------------------------t_C filter-------------------------
+        lim_size = 2
+        clone_sizes_C, activation_times_C, energies_C, filter_C, n_C = apply_filter_C(clone_sizes, activation_times, energies, lim_size)
+        
+        clone_sizes_final = clone_sizes_C[:,-1]#/np.max(clone_sizes_C[:,-1])
 
-    ax_CSD.plot(Nb_array/C, fit, color = colors_kappa[i_kappa], linewidth = 4, alpha = .8)
-    ax_CSD_i.plot(Nb_array/C, fit, color = colors_kappa[i_kappa], linewidth = 4, alpha = .8)
+        # sort_inds = clone_sizes_C[:, -1].argsort()
+        # clone_sizes_C_sorted = clone_sizes_C[sort_inds, :][:, :]
+        # activation_times_C_sorted = activation_times_C[sort_inds][:]
+        # energies_C_sorted = energies_C[sort_inds][:]
 
-    
+        bins = np.logspace(np.log10(np.min(clone_sizes_final)*0.5),np.log10(np.max(clone_sizes_final)*5), 200)
+        #bins = np.linspace((np.min(clone_sizes_final)),(np.max(clone_sizes_final)),50)
+        #bins = 300
+        #bins = 'auto'
+        print(len(clone_sizes_final))
+        clone_size_distribution = np.histogram(clone_sizes_final, bins = bins, density = True)
+        clone_size = clone_size_distribution[1][:-1]
+        clone_size_counts = clone_size_distribution[0]#/np.sum(clone_size_distribution[0]*(np.diff(clone_size_distribution[1])))
+        print(np.sum(clone_size_counts[:]))
+        Nb_array = np.logspace(np.log10(np.min(clone_sizes_final)), np.log10(np.max(clone_sizes_final))-0.15, 50)
+        fit = Nb_array**(-beta_act*lambda_A/(lambda_B*kappa))
+        fit = fit/fit[0]*.8#*np.sum(clone_size_counts[:])*0.8
+        normalization = len(clone_sizes_final)
+        normalization = 1
+        ax_CSD.plot(clone_size/1, 1-np.cumsum(clone_size_counts[:]*np.diff(clone_size_distribution[1]))/np.sum(clone_size_counts[:]*np.diff(clone_size_distribution[1])), color = colors_kappa[i_kappa], linewidth = 0, marker = markers_b[i_lambda_B], alpha = 1, ms = 4, label = r'$%.d$'%(kappa))
+        #ax_CSD.plot(clone_size[:], (clone_size_counts[:]*(clone_size_distribution[1][1:]-clone_size_distribution[1][:-1])), color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = .8, ms = 10)
+        ax_CSD_i.plot(clone_size/1, 1-np.cumsum(clone_size_counts[:]*np.diff(clone_size_distribution[1]))/np.sum(clone_size_counts[:]*np.diff(clone_size_distribution[1])), color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = 1, ms = 5, label = r'$%.d$'%(kappa))
+        #ax_CSD.plot(clone_size[:], (clone_size_counts[:]*(clone_size_distribution[1][1:]-clone_size_distribution[1][:-1])), color = colors_kappa[i_kappa], linewidth = 0, marker = 's', alpha = .8, ms = 10)
 
-    my_plot_layout(ax = ax_CSD_i, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-    ax_CSD_i.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
-    #ax_CSD_i.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
-    #ax_CSD_i.set_ylim(bottom = 1e-3, top = 1.1)
-    #ax_CSD_i.set_yticks([1, 0.1, 0.01, 0.001])
-    #ax_CSD_i.set_yticklabels([1, 0.1, 0.01])
-    fig_CSD_i.savefig('../../Figures/1_Dynamics/Ensemble/CSD_p-%.2f'%(kappa)+'_'+energy_model+'.pdf')
+        ax_CSD.plot(Nb_array/1, fit, color = colors_kappa[i_kappa], linewidth = 4, alpha = .8)
+        ax_CSD_i.plot(Nb_array/1, fit, color = colors_kappa[i_kappa], linewidth = 4, alpha = .8)
 
-ax_CSD.hlines(1, 3e-4, 4e-2, linestyle = 'dashed', color = 'black', linewidth = 1)
-my_plot_layout(ax = ax_CSD, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-ax_CSD.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
-#ax_CSD.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
-ax_CSD.set_ylim(bottom = 3e-3, top = 6e0)
-#ax_CSD.set_yticks([1, 0.1, 0.01, 0.001])
-#ax_CSD.set_yticklabels([1, 0.1, 0.01])
-fig_CSD.savefig('../../Figures/1_Dynamics/Ensemble/CSD_'+energy_model+'.pdf')
-print('----END-----')
+        
+
+        my_plot_layout(ax = ax_CSD_i, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+        ax_CSD_i.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
+        #ax_CSD_i.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
+        ax_CSD_i.set_ylim(bottom = 5e-4, top = 1.2)
+        #ax_CSD_i.set_yticks([1, 0.1, 0.01, 0.001])
+        #ax_CSD_i.set_yticklabels([1, 0.1, 0.01])
+        fig_CSD_i.savefig('../../Figures/1_Dynamics/Ensemble/CSD_p-%.2f_lamAB-%.2f'%(kappa, lambda_A/lambda_B)+'_'+energy_model+'.pdf')
+
+    #ax_CSD.hlines(1, 4e-4*C, 1e-1*C, linestyle = 'dashed', color = 'black', linewidth = 1)
+    my_plot_layout(ax = ax_CSD, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+    ax_CSD.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
+    ax_CSD.set_xlim(right = 1e3)
+    ax_CSD.set_ylim(bottom = 1e-3, top = 1.2)
+    #ax_CSD.set_yticks([1, 0.1, 0.01, 0.001])
+    #ax_CSD.set_yticklabels([1, 0.1, 0.01])
+    fig_CSD.savefig('../../Figures/1_Dynamics/Ensemble/CSD_lamAB-%.2f_'%(lambda_A/lambda_B)+energy_model+'.pdf')
+    print('----END-----')
 
 

@@ -107,7 +107,7 @@ K_array = ((Nb/1)/Kds)
 p_K = P_min_e_Q0(N_r, Q0, dE)#/K_array**2*(Nb/1)
 p_K = p_K/np.sum(np.flip(p_K[:-1])/np.flip(K_array[:-1])*abs(np.diff(np.flip(K_array))))
 ax_K_distribution.plot(((np.flip(K_array[:-1]))/1), np.flip(p_K[:-1]), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 2, alpha = .8, label = 'Gumbel')
-ax_K_distribution2.plot(((np.flip(K_array[:-1]))/1), 1-np.cumsum(np.flip(p_K[:-1])/np.flip(K_array[:-1])*abs(np.diff(np.flip(K_array)))), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 4, alpha = .5, label = 'Gumbel')
+#ax_K_distribution2.plot(((np.flip(K_array[:-1]))/1), 1-np.cumsum(np.flip(p_K[:-1])/np.flip(K_array[:-1])*abs(np.diff(np.flip(K_array)))), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 4, alpha = .4, label = 'Gumbel')
 
 K_array_tail = 10**np.linspace(9, 14.5, 50)
 exponent_tail  = beta_r+1
@@ -174,19 +174,20 @@ for i_kappa, kappa in enumerate(kappas):
 						K_final_all.append(K_i_all[-1])
 						Counter_all+=1
 
-			f = open(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/processed_data_elite.pkl', 'wb')
+			f = open(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/processed_data_K_elite.pkl', 'wb')
 			pickle.dump([K_final_all, Counter_all], f, pickle.HIGHEST_PROTOCOL)	
 
 	counter_total+=Counter_all
-	Counter_all = 1
+	#Counter_all = 1
 	normalization_all = 1
 	print('%.2e'%np.max(K_final_all))
-	K_data_all = np.histogram(np.log10(np.array(K_final_all)), bins = 80, density = True)
+	K_data_all = np.histogram(np.log10(np.array(K_final_all)), bins = np.linspace(10.5, 14, 30), density = False)
 	
 	ax_K_distribution.plot(10**(K_data_all[1][:-1]), K_data_all[0]/Counter_all, color = 'limegreen', linestyle='', marker = 'D', linewidth = 2, ms = 5, label = r'$p=%.1f$'%(kappa))
 
-	ax_K_distribution2.plot(10**(K_data_all[1][:-1]), 1-np.cumsum(K_data_all[0]*np.diff(K_data_all[1])/Counter_all), color = 'limegreen', linestyle='-', marker = '', linewidth = 2, ms = 6, label = r'$p=%.1f$'%(kappa))
-		
+	ax_K_distribution2.plot(10**(K_data_all[1][:-1]), 1-np.cumsum(K_data_all[0]/Counter_all), color = 'limegreen', linestyle='', marker = 'D', linewidth = 2, ms = 8, label = r'$p=%.1f$'%(kappa))
+	
+	ax_K_distribution2.vlines(8e11, 1e-5, 1, color = my_green, linestyle=':', linewidth = 4)		
 print(counter_total)
 
 my_plot_layout(ax = ax_K_distribution, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
@@ -200,8 +201,8 @@ fig_K_distribution.savefig('../../Figures/1_Dynamics/Ensemble/K_elite_P_'+energy
 
 my_plot_layout(ax = ax_K_distribution2, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_K_distribution2.legend(fontsize = 28, title_fontsize = 30, loc = 0)
-ax_K_distribution2.set_ylim(bottom = 2e-5, top = 5)
-ax_K_distribution2.set_xlim(left = 10**(11), right = 9*10**(13))
+ax_K_distribution2.set_ylim(bottom = 8e-5, top = 1)
+ax_K_distribution2.set_xlim(left = 6*10**(11), right = 5*10**(13))
 #ax_K_distribution2.set_xticks([])
 #ax_K_distribution2.set_yticks([])
 #ax_K_distribution2.set_yticklabels([1, 0.1, 0.01])

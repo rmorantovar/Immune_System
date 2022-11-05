@@ -138,7 +138,7 @@ for i_kappa, kappa in enumerate(kappas):
 			K_is = data[2]
 			
 			for j in range(int(len(K_is)/len(time))):
-				ax_K.plot(time, K_is[j*len(time):(j+1)*len(time)], color = 'limegreen', linewidth = 5, alpha = .9)
+				ax_K.plot(time, K_is[j*len(time):(j+1)*len(time)], color = 'limegreen', linewidth = 3, alpha = .9)
 		else:
 
 			K = np.zeros_like(time)
@@ -172,7 +172,7 @@ for i_kappa, kappa in enumerate(kappas):
 					Counter+=1
 				
 				if((K_i[-1]>8e12) and (N_r == 2e8)) :
-					ax_K.plot(time, K_i, color = 'limegreen', linewidth = 5, alpha = .9)
+					ax_K.plot(time, K_i, color = 'limegreen', linewidth = 3, alpha = .9)
 					K_is = np.append(K_is, K_i)
 
 			f = open(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/processed_data_K_aging.pkl', 'wb')
@@ -186,9 +186,12 @@ for i_kappa, kappa in enumerate(kappas):
 
 		if(kappa!=1.0):
 
-			line = ax_K.plot(time, K/normalization, color = colors_kappa[i_kappa], alpha = .9, linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r])
+			ax_K.plot(time, K/normalization, color = colors_kappa[i_kappa], alpha = .9, linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r])
+			if(N_r == np.max(N_rs[1])):
+				K_0 = K[-1]
 			custom_lines.append(Line2D([0], [0], color=colors_kappa[i_kappa], lw=linewidths_N_r[i_kappa][i_N_r], ls = linestyles_N_r[i_kappa][i_N_r]))
 			custom_labels.append(r'$%.0f \cdot 10^{%d}$'%(10**(np.log10(N_r)%1), int(np.log10(N_r))))
+
 
 					
 		#Nb = np.exp(lambda_B*Tf)*((k_on*N_c)/(lambda_A*N_A))**(lambda_B/lambda_A)*(k_pr/k_on)**(kappa*lambda_B/lambda_A)*Kds**(-kappa*lambda_B/lambda_A)
@@ -200,18 +203,24 @@ for i_kappa, kappa in enumerate(kappas):
 		K_array = ((Nb/1)/Kds)
 		p_K = P_min_e_Q0(np.max(N_rs[1]), Q0, dE)#/K_array**2*(Nb/1)
 		p_K = p_K/np.sum(np.flip(p_K[:-1])/np.flip(K_array[:-1])*abs(np.diff(np.flip(K_array))))
-		Kd_r_renorm = Kds[(P_min_e_Q0(np.max(N_rs[1]), Q0, dE)/Kds)==np.max(P_min_e_Q0(np.max(N_rs[1]), Q0, dE)/Kds)]
+K_0 = 8e11
+delta_E_r = -(1/2)*np.log(0.1)# - np.log(np.max(N_rs[1]))*(1/1.8 - 1/2)
+ax_K.vlines(11.90, K_0 - K_0*(1-1/np.exp(delta_E_r)), K_0, color = 'goldenrod', linewidth = 4)
+ax_K.hlines(2.e5, 4.2, 4.2 + 0.5*np.log(10)/2, color = 'goldenrod', linewidth = 4)
 
-custom_lines.append(Line2D([0], [0], color = 'limegreen', lw=4))
+custom_lines.append(Line2D([0], [0], color = 'limegreen', lw=3))
 custom_labels.append('Elite')
 
 #ax_K.plot(time, ((C*np.exp(lambda_B*(time-t_act_1)))/(C+(np.exp(lambda_B*(time-t_act_1))-1)))/Kd_r_renorm, linewidth = 4, color = 'black', linestyle = 'dotted')
+Kd_r_renorm = Kds[(P_min_e_Q0(np.max(N_rs[1]), Q0, dE)/Kds)==np.max(P_min_e_Q0(np.max(N_rs[1]), Q0, dE)/Kds)]
 ax_K.plot(time, ((1.08*C*np.exp(1.02*lambda_B*(time-t_act_1+.45)**(0.695)))/(1.08*C+(np.exp(1.02*lambda_B*(time-t_act_1+.45)**(0.695))-1)))/Kd_r_renorm, linewidth = 5, color = 'black', linestyle = 'dotted', zorder = -20)
+Kd_r_renorm = Kds[(P_min_e_Q0(np.min(N_rs[1]), Q0, dE)/Kds)==np.max(P_min_e_Q0(np.min(N_rs[1]), Q0, dE)/Kds)]
+#ax_K.plot(time, ((1.08*C*np.exp(1.02*lambda_B*(time-t_act_1+.45-0.5*np.log(10)/2)**(0.695)))/(1.08*C+(np.exp(1.02*lambda_B*(time-t_act_1+.45-0.5*np.log(10)/2)**(0.695))-1)))/Kd_r_renorm, linewidth = 5, color = 'black', linestyle = 'dotted', zorder = -20)
 
 my_plot_layout(ax = ax_K, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_K.legend(handles = custom_lines, labels = custom_labels, fontsize = 26, title_fontsize = 28, title = r'$N_r$')
 ax_K.set_xlim(left = 4.5, right = Tf)
-ax_K.set_ylim(bottom = 2e10, top = 4e13)
+ax_K.set_ylim(bottom = 5e10, top = 4e13)
 #ax_K.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_K.set_yticklabels([1, 0.1, 0.01])
 fig_K.savefig('../../Figures/1_Dynamics/Ensemble/K_aging_'+energy_model+'.pdf')
