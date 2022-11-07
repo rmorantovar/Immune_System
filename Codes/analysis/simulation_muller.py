@@ -208,8 +208,8 @@ for i_kappa, kappa in enumerate(kappas):
 		# 	for c in range(int(len(clone_sizes_C[:,0]))):
 		# 		ax_muller.plot(time, cumsum_freqs[c, :], linewidth = .00001*kappa, color = 'black')
 
-		ax_muller.vlines(t_act_theory, 0, 1, color = colors_kappa[i_kappa], linewidth = 2, alpha = .8, linestyle = '--')
-		ax_muller.vlines(t_act_theory+1.2, 0, 1, color = colors_kappa[i_kappa], linewidth = 2, alpha = .8, linestyle = ':')
+		ax_muller.vlines(t_act_theory, 0, 1, color = colors_kappa[i_kappa], linewidth = 2, alpha = .8, linestyle = ':')
+		ax_muller.vlines(t_act_theory+1.2, 0, 1, color = colors_kappa[i_kappa], linewidth = 2, alpha = .8, linestyle = '-')
 
 		my_plot_layout(ax = ax_muller, ticks_labelsize=38, yscale = 'linear')
 		ax_muller.set_yticks([])

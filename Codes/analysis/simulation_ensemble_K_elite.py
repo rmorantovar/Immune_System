@@ -19,8 +19,8 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 
 #--------------- PARAMETERS ---------------------
 #N_ensss = [[200], [501, 502, 503, 504, 505, 506, 507, 508, 509, 400, 300, 200, 100, 50], [200, 150, 100], [200, 100], [200]]
-N_ensss = [[400, 401, 402, 403, 404, 405, 406, 407, 408, 409, 501, 502, 503, 504, 505, 506, 507, 508, 509]] #for p=2.5
-N_ensss = [[50, 100, 150, 200] + [400+i for i in range(1, 10)] + [500+i for i in range(0, 91)]] #for p=3
+#N_ensss = [[400, 401, 402, 403, 404, 405, 406, 407, 408, 409, 501, 502, 503, 504, 505, 506, 507, 508, 509]] #for p=2.5
+N_ensss = [[50, 100, 150, 200] + [400+i for i in range(1, 10)] + [500+i for i in range(0, 91)] + [1000+i for i in range(1, 32)]] #for p=3
 
 N_r = 2e8
 
@@ -100,23 +100,6 @@ print('Loops...')
 fig_K_distribution, ax_K_distribution = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 fig_K_distribution2, ax_K_distribution2 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 
-# Printing K from Gumbel
-Nb = C
-#K_array = np.log(1/(1+(Kds/((AA*(Nb))/1))))
-K_array = ((Nb/1)/Kds)
-p_K = P_min_e_Q0(N_r, Q0, dE)#/K_array**2*(Nb/1)
-p_K = p_K/np.sum(np.flip(p_K[:-1])/np.flip(K_array[:-1])*abs(np.diff(np.flip(K_array))))
-ax_K_distribution.plot(((np.flip(K_array[:-1]))/1), np.flip(p_K[:-1]), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 2, alpha = .8, label = 'Gumbel')
-#ax_K_distribution2.plot(((np.flip(K_array[:-1]))/1), 1-np.cumsum(np.flip(p_K[:-1])/np.flip(K_array[:-1])*abs(np.diff(np.flip(K_array)))), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 4, alpha = .4, label = 'Gumbel')
-
-K_array_tail = 10**np.linspace(9, 14.5, 50)
-exponent_tail  = beta_r+1
-#fit_tail = np.exp(-exponent_tail*(K_array_tail))/np.exp(-exponent_tail*(12.3))
-fit_tail =(K_array_tail**(-exponent_tail))/((10**13.2)**(-exponent_tail))
-fit_tail *= (1-np.cumsum(np.flip(p_K[:-1])/np.flip(K_array[:-1])*abs(np.diff(np.flip(K_array)))))[np.log10(np.flip(K_array)[:-1]/1)<13.2][-1]
-#print((1-np.cumsum(np.flip(p_K[:-1])/np.flip(K_array[:-1])*abs(np.diff(np.flip(K_array)))))[(np.flip(K_array)[:-1]/normalization_all)<27.5][-1])
-ax_K_distribution2.plot(K_array_tail, fit_tail, linewidth = 2, color = 'black', linestyle = 'dashed')
-
 K_final_best_renorm = []
 counter_total = 0
 for i_kappa, kappa in enumerate(kappas):
@@ -178,17 +161,36 @@ for i_kappa, kappa in enumerate(kappas):
 			pickle.dump([K_final_all, Counter_all], f, pickle.HIGHEST_PROTOCOL)	
 
 	counter_total+=Counter_all
-	#Counter_all = 1
+	Counter_all = 1
 	normalization_all = 1
 	print('%.2e'%np.max(K_final_all))
-	K_data_all = np.histogram(np.log10(np.array(K_final_all)), bins = np.linspace(10.5, 14, 30), density = False)
+	#K_data_all = np.histogram(np.log10(np.array(K_final_all)), bins = np.linspace(10.5, 14, 34), density = False)
+	K_data_all = np.histogram(np.log10(np.array(K_final_all)), bins = 'auto', density = True)
 	
 	ax_K_distribution.plot(10**(K_data_all[1][:-1]), K_data_all[0]/Counter_all, color = 'limegreen', linestyle='', marker = 'D', linewidth = 2, ms = 5, label = r'$p=%.1f$'%(kappa))
 
-	ax_K_distribution2.plot(10**(K_data_all[1][:-1]), 1-np.cumsum(K_data_all[0]/Counter_all), color = 'limegreen', linestyle='', marker = 'D', linewidth = 2, ms = 8, label = r'$p=%.1f$'%(kappa))
+	ax_K_distribution2.plot(10**(K_data_all[1][:-1]), 1-np.cumsum(K_data_all[0]*np.diff(K_data_all[1])/Counter_all), color = 'limegreen', linestyle='-', marker = '', linewidth = 5, ms = 8, label = r'$p=%.1f$'%(kappa), zorder = 20)
 	
 	ax_K_distribution2.vlines(8e11, 1e-5, 1, color = my_green, linestyle=':', linewidth = 4)		
 print(counter_total)
+
+# Printing K from Gumbel
+Nb = C
+#K_array = np.log(1/(1+(Kds/((AA*(Nb))/1))))
+K_array = ((Nb/1)/Kds)
+p_K = P_min_e_Q0(N_r, Q0, dE)#/K_array**2*(Nb/1)
+p_K = p_K/np.sum(np.flip(p_K[:-1])/np.flip(K_array[:-1])*abs(np.diff(np.flip(K_array))))
+ax_K_distribution.plot(((np.flip(K_array[:-1]))/1), np.flip(p_K[:-1]), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 5, alpha = .8, label = 'Gumbel')
+#ax_K_distribution2.plot(((np.flip(K_array[:-1]))/1), 1-np.cumsum(np.flip(p_K[:-1])/np.flip(K_array[:-1])*abs(np.diff(np.flip(K_array)))), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 4, alpha = .4, label = 'Gumbel')
+
+K_array_tail = 10**np.linspace(9, 14.5, 50)
+exponent_tail  = beta_r+1
+#fit_tail = np.exp(-exponent_tail*(K_array_tail))/np.exp(-exponent_tail*(12.3))
+fit_tail =(K_array_tail**(-exponent_tail))/((10**13.2)**(-exponent_tail))
+#fit_tail *= (1-np.cumsum(np.flip(p_K[:-1])/np.flip(K_array[:-1])*abs(np.diff(np.flip(K_array)))))[np.log10(np.flip(K_array)[:-1]/1)<13.2][-1]
+fit_tail *= (1-np.cumsum(K_data_all[0]*np.diff(K_data_all[1])))[((K_data_all[1][:-1]))<13.2][-1]
+#print((1-np.cumsum(np.flip(p_K[:-1])/np.flip(K_array[:-1])*abs(np.diff(np.flip(K_array)))))[(np.flip(K_array)[:-1]/normalization_all)<27.5][-1])
+ax_K_distribution2.plot(K_array_tail, fit_tail, linewidth = 4, color = 'black', linestyle = 'dashed')
 
 my_plot_layout(ax = ax_K_distribution, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 #ax_K_distribution.legend(fontsize = 32, title_fontsize = 34, title = r'$p$', loc = 4)
@@ -201,8 +203,8 @@ fig_K_distribution.savefig('../../Figures/1_Dynamics/Ensemble/K_elite_P_'+energy
 
 my_plot_layout(ax = ax_K_distribution2, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_K_distribution2.legend(fontsize = 28, title_fontsize = 30, loc = 0)
-ax_K_distribution2.set_ylim(bottom = 8e-5, top = 1)
-ax_K_distribution2.set_xlim(left = 6*10**(11), right = 5*10**(13))
+ax_K_distribution2.set_ylim(bottom = 4e-5, top = 1)
+ax_K_distribution2.set_xlim(left = 6*10**(11), right = 6*10**(13))
 #ax_K_distribution2.set_xticks([])
 #ax_K_distribution2.set_yticks([])
 #ax_K_distribution2.set_yticklabels([1, 0.1, 0.01])
