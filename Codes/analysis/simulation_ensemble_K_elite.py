@@ -20,7 +20,7 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 #--------------- PARAMETERS ---------------------
 #N_ensss = [[200], [501, 502, 503, 504, 505, 506, 507, 508, 509, 400, 300, 200, 100, 50], [200, 150, 100], [200, 100], [200]]
 #N_ensss = [[400, 401, 402, 403, 404, 405, 406, 407, 408, 409, 501, 502, 503, 504, 505, 506, 507, 508, 509]] #for p=2.5
-N_ensss = [[50, 100, 150, 200] + [400+i for i in range(1, 10)] + [500+i for i in range(0, 91)] + [1000+i for i in range(1, 32)]] #for p=3
+N_ensss = [[50, 100, 150, 200] + [400+i for i in range(1, 10)] + [500+i for i in range(0, 91)] + [1000+i for i in range(1, 51)]] #for p=3
 
 N_r = 2e8
 
@@ -203,7 +203,7 @@ fig_K_distribution.savefig('../../Figures/1_Dynamics/Ensemble/K_elite_P_'+energy
 
 my_plot_layout(ax = ax_K_distribution2, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_K_distribution2.legend(fontsize = 28, title_fontsize = 30, loc = 0)
-ax_K_distribution2.set_ylim(bottom = 4e-5, top = 1)
+ax_K_distribution2.set_ylim(bottom = 5e-5, top = 1)
 ax_K_distribution2.set_xlim(left = 6*10**(11), right = 6*10**(13))
 #ax_K_distribution2.set_xticks([])
 #ax_K_distribution2.set_yticks([])
