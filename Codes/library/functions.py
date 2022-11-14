@@ -33,7 +33,17 @@ k_BT = 1.380649e-23*293
 
 delta_Nb = lambda t, tb, Nb, N, lambda_B, C: lambda_B*Nb*(1-(N/C))*np.heaviside(t-tb, 1)
 
-E_t = lambda t, theta:lambda_A*t/theta - np.log((lambda_A*N_A)/(k_on*N_c))/theta + np.log(k_pr/k_on) 
+#Quantity regime
+
+t_E_0 = lambda E, theta, lambda_A, k_on, N_c, k_pr, N_r, L:-theta*E/lambda_A - np.log((lambda_A*N_A)/(k_on*N_c))/lambda_A + theta*np.log(k_pr/k_on)/lambda_A - np.log(N_r)/lambda_A + 1*L*np.log(20)*lambda_A
+
+#Quality regime
+
+E_t = lambda t, theta, lambda_A, k_on, N_c, k_pr:lambda_A*t/theta - np.log((lambda_A*N_A)/(k_on*N_c))/theta + np.log(k_pr/k_on) 
+
+t_E = lambda E, theta, lambda_A, k_on, N_c, k_pr:theta*E/lambda_A + np.log((lambda_A*N_A)/(k_on*N_c))/lambda_A - theta*np.log(k_pr/k_on)/lambda_A
+
+
 
 def get_continuous_cmap(hex_list, float_list=None):
     ''' creates and returns a color map that can be used in heat map figures.
@@ -93,6 +103,26 @@ def get_data_ensemble_K(folder_path):
 		return_data_type = 1
 		print('Data exists already and is proccesed.  Loading it ...')
 		f = open(folder_path+'/processed_data_K.pkl', 'rb')
+		data = pickle.load(f) 
+	else:
+		if os.path.exists(folder_path+'/energies_ensemble.pkl'):
+			print('Data is not processed. Picke object exists already. Loading it ...')
+			f = open(folder_path+'/energies_ensemble.pkl', 'rb')
+			data = pickle.load(f) 
+		else:
+			print(f'Pickling data ...')
+			data = pd.read_csv(folder_path+'/energies_ensemble.txt', sep = '\t', header=None)
+			f = open(folder_path+'/energies_ensemble.pkl', 'wb')
+			pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
+			
+	return data, return_data_type
+
+def get_data_ensemble_K_mf(folder_path):
+	return_data_type = 0 #default for returning processed data
+	if os.path.exists(folder_path+'/processed_data_K_mf.pkl'):
+		return_data_type = 1
+		print('Data exists already and is proccesed.  Loading it ...')
+		f = open(folder_path+'/processed_data_K_mf.pkl', 'rb')
 		data = pickle.load(f) 
 	else:
 		if os.path.exists(folder_path+'/energies_ensemble.pkl'):
@@ -337,7 +367,7 @@ def calculate_Q0(Tmin, Tmax, n_T, E_matrix, E_ms, L):
 
 def calculate_QR(Q0, k_on, k_act, rho_A, Es, q, lambda_A, N_c, dE):
 
-	p_a = (1/(1 + (k_on*np.exp(Es[:-1])/k_act)**q) )
+	p_a = (1/(1 + (k_on*np.exp(Es[:-1])/k_act))**q)
 	u_on = rho_A*k_on
 	R = 1-np.exp(-u_on*p_a*N_c/lambda_A)
 	QR = Q0*R

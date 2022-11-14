@@ -107,7 +107,6 @@ print('--------')
 print('Loops...')
 #--------------------------Loops--------------------------
 fig_K, ax_K = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-fig_K_max, ax_K_max = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 
 max_potency_simulations = dict()
 max_potency_simulations_std = dict()
@@ -174,11 +173,7 @@ for i_kappa, kappa in enumerate(kappas):
 	if(kappa==1):
 		normalization = 1# K[-1]
 	
-	ax_K.plot(time, (K/normalization), color = colors_kappa[i_kappa], alpha = .9, linewidth = 5, linestyle = '-', label = r'$%d$'%(kappa))
 	
-	max_potency_simulations[kappa] = (K[-1]/normalization)
-	#max_potency_simulations_std[kappa] = np.sqrt(np.var(np.log(np.array(K_final)/normalization)))
-
 	#Nb = np.exp(lambda_B*Tf)*((k_on*N_c)/(lambda_A*N_A))**(lambda_B/lambda_A)*(k_pr/k_on)**(kappa*lambda_B/lambda_A)*Kds**(-kappa*lambda_B/lambda_A)
 
 	if(kappa==1):
@@ -188,11 +183,13 @@ for i_kappa, kappa in enumerate(kappas):
 		K_array = ((Nb/1)/Kds)
 		p_K = P_min_e_Q0(N_r, Q0, dE)#/K_array**2*(Nb/1)
 		p_K = p_K/np.sum(np.flip(p_K[:-1])/np.flip(K_array[:-1])*abs(np.diff(np.flip(K_array))))
+		Kd_r_renorm = Kds[(P_min_e_Q0(N_r, Q0, dE)/Kds)==np.max(P_min_e_Q0(N_r, Q0, dE)/Kds)]
+		ax_K.hlines(1, 0, Tf, linewidth = 2, color = 'black', linestyle = 'dashed')
 		QR = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*(t_act_1))/N_A, Es, kappa, lambda_A, N_c, dE)[3]
 		Kd_1_renorm = Kds[(QR/1)==np.max(QR/1)]
-		ax_K.hlines((C*1)/Kd_1_renorm, 0, Tf, linewidth = 2, color = 'black', linestyle = 'dashed')
-		Kd_r_renorm = Kds[(P_min_e_Q0(N_r, Q0, dE)/Kds)==np.max(P_min_e_Q0(N_r, Q0, dE)/Kds)]
-		ax_K.hlines(C/Kd_r_renorm, 0, Tf, linewidth = 2, color = 'black', linestyle = 'dashed')
+		ax_K.hlines((C*1)/Kd_1_renorm/(C/Kd_r_renorm), 0, Tf, linewidth = 2, color = 'black', linestyle = 'dashed')
+
+	ax_K.plot(time, (K/normalization)/(C/Kd_r_renorm), color = colors_kappa[i_kappa], alpha = .9, linewidth = 5, linestyle = '-', label = r'$%d$'%(kappa))
 
 print('--------')
 # kappas_theory = np.linspace(1, 5.5, 30)
@@ -209,12 +206,9 @@ print('--------')
 # 		normalization_theory = 1
 # 	max_potency_theory[kappa] = K - normalization_theory
 
-# ax_K_max.plot(kappas_theory, np.array(list(max_potency_theory.values())), color = my_purple, linestyle = '-', marker = '', linewidth = 3, label = 'theory')
 
-ax_K.plot(time, ((1.08*C*np.exp(1.02*lambda_B*(time-t_act_1+.45)**(0.695)))/(1.08*C+(np.exp(1.02*lambda_B*(time-t_act_1+.45)**(0.695))-1)))/Kd_r_renorm, linewidth = 5, color = 'black', linestyle = 'dotted', zorder = -20)
+ax_K.plot(time, ((1.08*C*np.exp(1.02*lambda_B*(time-t_act_1+.45)**(0.695)))/(1.08*C+(np.exp(1.02*lambda_B*(time-t_act_1+.45)**(0.695))-1)))/Kd_r_renorm/(C/Kd_r_renorm), linewidth = 5, color = 'black', linestyle = 'dotted', zorder = -20)
 
-ax_K_max.plot(kappas, np.array(list(max_potency_simulations.values())), color = my_purple2, linestyle = '', marker = 'D', linewidth = 3, label = 'simulations')
-#ax_K_max.errorbar(x=kappas, y=np.array(list(max_potency_simulations.values())), yerr = np.array(list(max_potency_simulations_std.values())), ls = 'none')
 
 print(Kds[betas[:-1]>1][-1])
 t_growth = (1/lambda_B)*np.log(C/50)
@@ -225,18 +219,11 @@ t_growth = (1/lambda_B)*np.log(C/50)
 my_plot_layout(ax = ax_K, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_K.legend(fontsize = 28, title_fontsize = 30, title = r'$p$', loc = 4)
 ax_K.set_xlim(left = 4.5, right = Tf)
-ax_K.set_ylim(bottom = 1e9, top = 2e12)
+ax_K.set_ylim(bottom = 1e-3, top = 2e0)
 #ax_K.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_K.set_yticklabels([1, 0.1, 0.01])
 fig_K.savefig('../../Figures/1_Dynamics/Ensemble/K_'+energy_model+'.pdf')
 
-my_plot_layout(ax = ax_K_max, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-ax_K_max.legend(fontsize = 28, title_fontsize = 30)
-ax_K_max.set_xlim(left = 0.8, right = 4.5)
-#ax_K_max.set_ylim(bottom = 20, top = 32)
-#ax_K_max.set_yticks([1, 0.1, 0.01, 0.001])
-#ax_K_max.set_yticklabels([1, 0.1, 0.01])
-fig_K_max.savefig('../../Figures/1_Dynamics/Ensemble/K_max_'+energy_model+'.pdf')
 
 
 
