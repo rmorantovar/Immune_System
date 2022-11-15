@@ -7,10 +7,10 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 
 #--------------- PARAMETERS ---------------------
 N_ens = 1
-N_rs = [2e8]
-T0 = 3
-Tf = 8
-Tf_sim = 6.5
+N_rs = [2e9]
+T0 = 0
+Tf = 9
+Tf_sim= 6.5
 #Tf = 10
 dT = 0.01
 lambda_A = 6
@@ -34,7 +34,7 @@ my_yellow = np.array((246,181,56))/256.
 my_green2 = np.array((158,248,72))/256.
 my_cyan = 'tab:cyan'
 
-antigen_color = my_yellow/256.
+antigen_color = my_yellow
 
 transparency_n = [1]
 
@@ -53,7 +53,7 @@ colors_R = []
 for i in range(len(kappas)):
     colors_R.append(['tab:grey', colors_kappa[i], colors_kappa[i], colors_kappa[i]])
 
-lambda_B = lambda_A
+lambda_B = lambda_A*.6
 k_on = 1e6*24*3600; #(M*days)^-1
 N_c = 1e5
 #N_c = 1e5
@@ -99,8 +99,8 @@ t_prime = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*N_c))
 print('--------')
 #--------------------------Loops--------------------------
 
-fig_antigen, ax_antigen = plt.subplots(figsize=(12,6), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-ax_antigen.plot(time, np.exp(lambda_A*time)/1e3, linewidth = 5, color = antigen_color)
+fig_antigen, ax_antigen = plt.subplots(figsize=(12,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+ax_antigen.plot(time, np.exp(lambda_A*time)/(5*1e3), linewidth = 5, color = antigen_color)
 print('Loops...')
 for N_r in N_rs:
     print('________')
@@ -155,11 +155,11 @@ for N_r in N_rs:
 
         #---------------------------- B cell linages ----------------------
         #clone_sizes = get_clones_sizes_C(int(m_data[-1]), time, activation_times, lambda_B, C, dT)
-        energies = np.array([E_r, E_r+np.log(10) , E_r+np.log(100)])
+        energies = np.array([E_r, E_r+np.log(10) , E_r+np.log(100), E_r+np.log(1000)])
         activation_times = t_act + (energies - E_r)*kappa/lambda_A
         print('Activation times:', activation_times)
         clone_sizes = get_clones_sizes_C(len(activation_times), time, activation_times, lambda_B, C, dT)
-        lim_size = 1
+        lim_size = 2
         clone_sizes_C, activation_times_C, energies_C, filter_C, n_C = apply_filter_C(clone_sizes, activation_times, energies, lim_size)
 
         sort_inds = clone_sizes_C[:, -1].argsort()
@@ -184,7 +184,7 @@ for N_r in N_rs:
         m_f_expected = np.sum(N_r*QR*dE)
         print('Activated clones expected:%.d'%m_f_expected)
 
-        Kds_plot = [Kd_r*100, Kd_r*10, Kd_r]
+        Kds_plot = [Kd_r*1000, Kd_r*100, Kd_r*10, Kd_r]
         #days = np.linspace(1, Tf-0.5, 3)
         for i_Kd, Kd in enumerate(Kds_plot):
             rho_A_t = np.exp(lambda_A*time)/N_A
@@ -210,7 +210,7 @@ for N_r in N_rs:
         my_plot_layout(ax=ax_R, yscale = 'log', xscale = 'linear', ticks_labelsize = 38)
         ax_R.set_xticks([])
         ax_R.set_xlim(right = Tf, left = T0)
-        ax_R.set_ylim(top = 1.5, bottom = 1e-6)
+        ax_R.set_ylim(top = 1.5, bottom = 1e-7)
         fig_R.savefig('../../Figures/_Summary/time/R_kappa-%.1f_Nr-%.0e_'%(kappa, N_r)+energy_model+'.pdf')
         plt.close(fig_R)
 
@@ -254,7 +254,7 @@ my_plot_layout(ax=ax_antigen, yscale = 'log', xscale = 'linear', ticks_labelsize
 ax_antigen.set_xlim(right = Tf, left = T0)
 ax_antigen.set_xticks([])
 #ax_antigen.set_xlim(right = 1e-2, left = 1e-11) #use 1e-3 for other plots
-ax_antigen.set_ylim(top = 1e15)
+ax_antigen.set_ylim(bottom = 1e8, top = 5e15)
 #ax_antigen.legend(title = r'$\kappa$', title_fontsize = 34, fontsize = 32)
 fig_antigen.savefig('../../Figures/_Summary/time/antigen.pdf')
 plt.close(fig_antigen)
