@@ -137,6 +137,26 @@ def get_data_ensemble_K_mf(folder_path):
 			
 	return data, return_data_type
 
+def get_data_ensemble_S_mf(folder_path):
+	return_data_type = 0 #default for returning processed data
+	if os.path.exists(folder_path+'/processed_data_S_mf.pkl'):
+		return_data_type = 1
+		print('Data exists already and is proccesed.  Loading it ...')
+		f = open(folder_path+'/processed_data_S_mf.pkl', 'rb')
+		data = pickle.load(f) 
+	else:
+		if os.path.exists(folder_path+'/energies_ensemble.pkl'):
+			print('Data is not processed. Picke object exists already. Loading it ...')
+			f = open(folder_path+'/energies_ensemble.pkl', 'rb')
+			data = pickle.load(f) 
+		else:
+			print(f'Pickling data ...')
+			data = pd.read_csv(folder_path+'/energies_ensemble.txt', sep = '\t', header=None)
+			f = open(folder_path+'/energies_ensemble.pkl', 'wb')
+			pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
+			
+	return data, return_data_type
+
 def get_data_ensemble_K_largest(folder_path):
 	return_data_type = 0 #default for returning processed data
 	if os.path.exists(folder_path+'/processed_data_K_largest.pkl'):
@@ -183,6 +203,46 @@ def get_data_ensemble_K_aging(folder_path):
 		return_data_type = 1
 		print('Data exists already and is proccesed.  Loading it ...')
 		f = open(folder_path+'/processed_data_K_aging.pkl', 'rb')
+		data = pickle.load(f) 
+	else:
+		if os.path.exists(folder_path+'/energies_ensemble.pkl'):
+			print('Data is not processed. Picke object exists already. Loading it ...')
+			f = open(folder_path+'/energies_ensemble.pkl', 'rb')
+			data = pickle.load(f) 
+		else:
+			print(f'Pickling data ...')
+			data = pd.read_csv(folder_path+'/energies_ensemble.txt', sep = '\t', header=None)
+			f = open(folder_path+'/energies_ensemble.pkl', 'wb')
+			pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
+			
+	return data, return_data_type
+
+def get_data_ensemble_ranking(folder_path):
+	return_data_type = 0 #default for returning processed data
+	if os.path.exists(folder_path+'/processed_data_ranking.pkl'):
+		return_data_type = 1
+		print('Data exists already and is proccesed.  Loading it ...')
+		f = open(folder_path+'/processed_data_ranking.pkl', 'rb')
+		data = pickle.load(f) 
+	else:
+		if os.path.exists(folder_path+'/energies_ensemble.pkl'):
+			print('Data is not processed. Picke object exists already. Loading it ...')
+			f = open(folder_path+'/energies_ensemble.pkl', 'rb')
+			data = pickle.load(f) 
+		else:
+			print(f'Pickling data ...')
+			data = pd.read_csv(folder_path+'/energies_ensemble.txt', sep = '\t', header=None)
+			f = open(folder_path+'/energies_ensemble.pkl', 'wb')
+			pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
+			
+	return data, return_data_type
+
+def get_data_ensemble_ranking_2(folder_path):
+	return_data_type = 0 #default for returning processed data
+	if os.path.exists(folder_path+'/processed_data_ranking_2.pkl'):
+		return_data_type = 1
+		print('Data exists already and is proccesed.  Loading it ...')
+		f = open(folder_path+'/processed_data_ranking_2.pkl', 'rb')
 		data = pickle.load(f) 
 	else:
 		if os.path.exists(folder_path+'/energies_ensemble.pkl'):

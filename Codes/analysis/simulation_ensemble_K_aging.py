@@ -136,9 +136,6 @@ for i_kappa, kappa in enumerate(kappas):
 			K = data[0]
 			Counter = data[1]
 			K_is = data[2]
-			
-			for j in range(int(len(K_is)/len(time))):
-				ax_K.plot(time, K_is[j*len(time):(j+1)*len(time)], color = 'limegreen', linewidth = 3, alpha = .9)
 		else:
 
 			K = np.zeros_like(time)
@@ -178,6 +175,9 @@ for i_kappa, kappa in enumerate(kappas):
 			f = open(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/processed_data_K_aging.pkl', 'wb')
 			pickle.dump([K, Counter, K_is], f, pickle.HIGHEST_PROTOCOL)	
 
+		for j in range(int(len(K_is)/len(time))):
+			ax_K.plot(time, K_is[j*len(time):(j+1)*len(time)], color = 'limegreen', linewidth = 3, alpha = .9)
+
 		#K = K/Counter
 		K = (K/Counter)
 		normalization = 1
@@ -203,6 +203,7 @@ for i_kappa, kappa in enumerate(kappas):
 		K_array = ((Nb/1)/Kds)
 		p_K = P_min_e_Q0(np.max(N_rs[1]), Q0, dE)#/K_array**2*(Nb/1)
 		p_K = p_K/np.sum(np.flip(p_K[:-1])/np.flip(K_array[:-1])*abs(np.diff(np.flip(K_array))))
+
 K_0 = 8e11
 delta_E_r = -(1/2)*np.log(0.1)# - np.log(np.max(N_rs[1]))*(1/1.8 - 1/2)
 ax_K.vlines(11.90, K_0 - K_0*(1-1/np.exp(delta_E_r)), K_0, color = 'goldenrod', linewidth = 4)

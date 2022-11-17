@@ -72,8 +72,8 @@ linear = 0
 # antigen = 'FTSENAYCGR'
 # antigen = 'TACNSEYPNTTK'
 antigen = 'EYTACNSEYPNTTKCGRWYCGRYPN' #L=25
-antigen = 'TACNSEYPNTTKCGRWYC' #L=18
-antigen = 'CMFILVWYAGTSQNEDHRKPFMRTPTRMCW' #L=30
+#antigen = 'TACNSEYPNTTKCGRWYC' #L=18
+#antigen = 'CMFILVWYAGTSQNEDHRKPFMRTPTRMCW' #L=30
 L=len(antigen)
 print('--------')
 print('L=%d'%(L))
@@ -106,7 +106,7 @@ print('Loops...')
 for N_r in N_rs:
     print('________')
     print('N_r = %.0e'%N_r)
-    fig_Q0, ax_Q0 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+    fig_Q0, ax_Q0 = plt.subplots(figsize=(5,4), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 
     #--------------------------Repertoire properties--------------------------
     beta_r, E_r, Kd_r = get_repertoire_properties(betas, Q0, Es, dE, N_r)
@@ -121,18 +121,18 @@ for N_r in N_rs:
         print('--------')
         print('kappa = %.2f...'%kappa)
 
-        fig_QR_all, ax_QR_all = plt.subplots(figsize=(12,7), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-        fig_QR_all_f, ax_QR_all_f = plt.subplots(figsize=(16,6), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+        fig_QR_all, ax_QR_all = plt.subplots(figsize=(6,3.5), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+        fig_QR_all_f, ax_QR_all_f = plt.subplots(figsize=(16*0.66,4), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.12, 'top': 0.96})
 
         ax_QR_all.plot(Kds, Q0*N_r, alpha = 1, color = 'grey', linewidth = 5, linestyle = '--')
         ax_QR_all.vlines(Kd_r, Q0[Kds==Kd_r]*N_r, N_r, alpha = 1, color = 'grey', linewidth = 3, linestyle = ':')
         ax_QR_all_f.plot(Kds, Q0*N_r, alpha = 1, color = 'grey', linewidth = 5, linestyle = '--')
         ax_QR_all_f.vlines(Kd_r, Q0[Kds==Kd_r]*N_r, N_r, alpha = 1, color = 'grey', linewidth = 3, linestyle = ':')
 
-        fig_R, ax_R = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-        fig_QR, ax_QR = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-        fig_QR2, ax_QR2 = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-        fig_m_bar, ax_m_bar = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+        fig_R, ax_R = plt.subplots(figsize=(8,6), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+        fig_QR, ax_QR = plt.subplots(figsize=(8,6), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+        fig_QR2, ax_QR2 = plt.subplots(figsize=(8,6), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+        fig_m_bar, ax_m_bar = plt.subplots(figsize=(8,6), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 
         beta_kappa, E_kappa, Kd_kappa = get_kappa_properties(betas, Q0, Es, dE, kappa)
         delta_t_n = (E_kappa-E_pr)*kappa/lambda_A
@@ -218,23 +218,23 @@ for N_r in N_rs:
         ax_R.set_xticks([])
         ax_R.set_xlim(right = 1e-2)
         ax_R.set_ylim(top = 1.5, bottom = 1e-8)
-        fig_R.savefig('../../Figures/_Summary/affinity/L30/R_kappa-%.1f_Nr-%.0e_'%(kappa, N_r)+model+'.pdf')
+        fig_R.savefig('../../Figures/_Summary/affinity/L25/R_kappa-%.1f_Nr-%.0e_'%(kappa, N_r)+model+'.pdf')
         plt.close(fig_R)
 
         my_plot_layout(ax=ax_QR, yscale = 'log', xscale = 'log', ticks_labelsize = 38)
         #ax_QR.set_xticks([])
         ax_QR.set_xlim(right = 1e-2) #use 1e-3 for other plots
         ax_QR.set_ylim(bottom = 1e-9, top = 1.5*N_r)
-        fig_QR.savefig('../../Figures/_Summary/affinity/L30/QR_kappa-%.1f_Nr-%.0e_'%(kappa, N_r)+model+'.pdf')
+        fig_QR.savefig('../../Figures/_Summary/affinity/L25/QR_kappa-%.1f_Nr-%.0e_'%(kappa, N_r)+model+'.pdf')
         plt.close(fig_QR)
 
         my_plot_layout(ax=ax_QR2, yscale = 'linear', xscale = 'log', ticks_labelsize = 30)
         #ax_QR2.set_xlim(right = 1e-3)
-        fig_QR2.savefig('../../Figures/_Summary/affinity/L30/QR2_kappa-%.1f_Nr-%.0e_'%(kappa, N_r)+model+'.pdf')
+        fig_QR2.savefig('../../Figures/_Summary/affinity/L25/QR2_kappa-%.1f_Nr-%.0e_'%(kappa, N_r)+model+'.pdf')
         plt.close(fig_QR2)
 
         my_plot_layout(ax=ax_m_bar, yscale = 'log', ticks_labelsize = 30)
-        fig_m_bar.savefig('../../Figures/_Summary/affinity/L30/m_bar_kappa-%.1f_Nr-%.0e_'%(kappa, N_r)+model+'.pdf')
+        fig_m_bar.savefig('../../Figures/_Summary/affinity/L25/m_bar_kappa-%.1f_Nr-%.0e_'%(kappa, N_r)+model+'.pdf')
         plt.close(fig_m_bar)
     
         my_plot_layout(ax=ax_QR_all, yscale = 'log', xscale = 'log', ticks_labelsize = 38)
@@ -242,21 +242,21 @@ for N_r in N_rs:
         ax_QR_all.set_xlim(right = 1e-0, left = 1e-11) #use 1e-3 for other plots
         ax_QR_all.set_ylim(bottom = 1e-9, top = 1.5*N_r)
         ax_QR_all.legend(title = r'$p$', title_fontsize = 32, fontsize = 30, loc = 4)
-        fig_QR_all.savefig('../../Figures/_Summary/affinity/L30/QR_all_kappa-%.1f_Nr-%.0e_'%(kappa, N_r)+model+'.pdf')
+        fig_QR_all.savefig('../../Figures/_Summary/affinity/L25/QR_all_kappa-%.1f_Nr-%.0e_'%(kappa, N_r)+model+'.pdf')
 
-        my_plot_layout(ax=ax_QR_all_f, yscale = 'log', xscale = 'log', ticks_labelsize = 38)
+        my_plot_layout(ax=ax_QR_all_f, yscale = 'log', xscale = 'log', ticks_labelsize = 34)
         #ax_QR_all_f.set_yticks([])
         ax_QR_all_f.set_xlim(right = 1e-0, left = 1e-11) #use 1e-3 for other plots
         ax_QR_all_f.set_ylim(bottom = 1e-9, top = 1.5*N_r)
         #ax_QR_all_f.legend(title = r'$p$', title_fontsize = 32, fontsize = 30)
-        fig_QR_all_f.savefig('../../Figures/_Summary/affinity/L30/QR_all_f_kappa-%.1f_Nr-%.0e_'%(kappa, N_r)+model+'.pdf')
+        fig_QR_all_f.savefig('../../Figures/_Summary/affinity/L25/QR_all_f_kappa-%.1f_Nr-%.0e_'%(kappa, N_r)+model+'.pdf')
         plt.close(fig_QR_all_f)
 
     my_plot_layout(ax=ax_Q0, yscale = 'log', xscale = 'log', ticks_labelsize = 38)
     #ax_Q_act.set_xticks([])
     ax_Q0.set_xlim(right = 1e1) #use 1e-3 for other plots
     ax_Q0.set_ylim(bottom = 1e-13, top = 1.5)
-    fig_Q0.savefig('../../Figures/_Summary/affinity/L30/Q0_Nr-%.0e_'%(N_r)+model+'.pdf')
+    fig_Q0.savefig('../../Figures/_Summary/affinity/L25/Q0_Nr-%.0e_'%(N_r)+model+'.pdf')
     plt.close(fig_Q0)
 
 

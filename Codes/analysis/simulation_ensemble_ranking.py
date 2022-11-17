@@ -21,7 +21,7 @@ k_pr = k_pr*24 #days^-1
 
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
-kappas = [2, 3, 4]
+kappas = [1, 2, 3, 4]
 #kappas = [3]
 
 my_red = np.array((228,75,41))/256.
@@ -42,7 +42,7 @@ transparency_n = [1]
 
 color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_brown, my_blue2, my_yellow, my_purple, my_green2])#
 #color_list = np.array([(228,75,41), (125,165,38), (76,109,166), (215,139,45)])
-color_list = np.array([my_blue2, my_green, my_gold, my_brown])
+color_list = np.array([my_red, my_blue2, my_green, my_gold, my_brown])
 
 #colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
 #colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
@@ -106,6 +106,10 @@ print('--------')
 print('Loops...')
 #--------------------------Loops--------------------------
 fig_ranking, ax_ranking = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+
+fig_exponents, ax_exponents = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+
+
 for i_kappa, kappa in enumerate((kappas)):
     fig_ranking_i, ax_ranking_i = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
     print('--------')
@@ -116,47 +120,72 @@ for i_kappa, kappa in enumerate((kappas)):
     #-----------------Loading data----------------------------
     parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
     #data = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/energies_ensemble.txt', sep = '\t', header=None)
-    data = get_data_ensemble(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
-
-    #activation_times_total = np.array([])
+    #data = get_data_ensemble(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
+    data, return_data_type = get_data_ensemble_ranking(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
     n_first_clones = 50
-    final_Nb = np.zeros(n_first_clones)
-    counts_final_Nb = np.zeros(n_first_clones)
-    max_rank = 0
-    for i_ens in tqdm(np.arange(N_ens)):
-        data_i = data.loc[data[4]==i_ens]
-        data_active = data_i.loc[data_i[1]==1]
-        t_act_data = np.min(data_active[3])
-        data_active = data_active.loc[data_active[3]<(t_act_data+1.0+0.1*(kappa-1))]
-        activation_times = np.array(data_active[3])
-        energies  = np.array(data_active[0])
 
-        #---------------------------- B cell linages ----------------------
-        clone_sizes = get_clones_sizes_C(len(activation_times), time, activation_times, lambda_B, C, dT)
-
-        #--------------------------t_C filter-------------------------
-        lim_size = 2
-        clone_sizes_C, activation_times_C, energies_C, filter_C, n_C = apply_filter_C(clone_sizes, activation_times, energies, lim_size)
+    if(return_data_type):
+        final_Nb = data[0]
+        counts_final_Nb = data[1]
+        trajectories = data[2]
+        trajectories_rank = data[3]
+    else:
+        #activation_times_total = np.array([])
         
-        sort_inds = clone_sizes_C[:, -1].argsort()
-        clone_sizes_C_sorted = clone_sizes_C[sort_inds, :][-int(n_first_clones*(4-3)):, :]
-        #activation_times_C_sorted = activation_times_C[sort_inds][-int(n_first_clones*(4-3)):]
-        #energies_C_sorted = energies_C[sort_inds][-int(n_first_clones*(4-3)):]
+        final_Nb = np.zeros(n_first_clones)
+        counts_final_Nb = np.zeros(n_first_clones)
+        max_rank = 50
 
-        biggest_clone_i = clone_sizes_C_sorted[-1, -1]
-        #ax_ranking.scatter(np.exp(energies_C_sorted[-1]), biggest_clone_i, color = colors_kappa[i_kappa], alpha = .25, edgecolor='black', linewidth=1, facecolor = colors_kappa[i_kappa])
-        #activation_times_total = np.append(activation_times_total, activation_times_C_sorted)
-        sorted_clones = np.flip(clone_sizes_C_sorted[:, -1])/biggest_clone_i
-        max_rank_i = len(sorted_clones)
-        for i in range(max_rank_i):
-            #final_Nb[i]+= np.log(sorted_clones[i])
-            final_Nb[i]+= (sorted_clones[i])
-            counts_final_Nb[i] += 1
-        if(max_rank_i>max_rank):
-            max_rank = max_rank_i
-        if(i_ens%10==0):
-            ax_ranking.step(np.arange(1, max_rank_i+1), sorted_clones, color = colors_kappa[i_kappa], linewidth = 1, alpha = .2)
-            ax_ranking_i.step(np.arange(1, max_rank_i+1), sorted_clones, color = colors_kappa[i_kappa], linewidth = 1, alpha = .2)
+        trajectories = np.array([], dtype = object)
+        trajectories_rank = np.array([])
+
+        for i_ens in tqdm(np.arange(N_ens)):
+            data_i = data.loc[data[4]==i_ens]
+            data_active = data_i.loc[data_i[1]==1]
+            t_act_data = np.min(data_active[3])
+            data_active = data_active.loc[data_active[3]<(t_act_data+1.0+0.1*(kappa-1))]
+            activation_times = np.array(data_active[3])
+            energies  = np.array(data_active[0])
+
+            #---------------------------- B cell linages ----------------------
+            clone_sizes = get_clones_sizes_C(len(activation_times), time, activation_times, lambda_B, C, dT)
+
+            #--------------------------t_C filter-------------------------
+            lim_size = 2
+            clone_sizes_C, activation_times_C, energies_C, filter_C, n_C = apply_filter_C(clone_sizes, activation_times, energies, lim_size)
+            
+            sort_inds = clone_sizes_C[:, -1].argsort()
+            clone_sizes_C_sorted = clone_sizes_C[sort_inds, :][-int(n_first_clones*(4-3)):, :]
+            #activation_times_C_sorted = activation_times_C[sort_inds][-int(n_first_clones*(4-3)):]
+            #energies_C_sorted = energies_C[sort_inds][-int(n_first_clones*(4-3)):]
+
+            biggest_clone_i = clone_sizes_C_sorted[-1, -1]
+            #ax_ranking.scatter(np.exp(energies_C_sorted[-1]), biggest_clone_i, color = colors_kappa[i_kappa], alpha = .25, edgecolor='black', linewidth=1, facecolor = colors_kappa[i_kappa])
+            #activation_times_total = np.append(activation_times_total, activation_times_C_sorted)
+            sorted_clones = np.flip(clone_sizes_C_sorted[:, -1])/biggest_clone_i
+            max_rank_i = len(sorted_clones)
+            if max_rank_i>1:
+                for i in range(max_rank_i):
+                    #final_Nb[i]+= np.log(sorted_clones[i])
+                    final_Nb[i]+= (sorted_clones[i])
+                    counts_final_Nb[i] += 1
+                if(max_rank_i<max_rank):
+                    max_rank = max_rank_i
+                if((i_ens%10==0) and (kappa==3.0)):
+                    trajectories = np.append(trajectories, sorted_clones)
+                    trajectories_rank = np.append(trajectories_rank, max_rank_i)
+
+        f = open(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/processed_data_ranking.pkl', 'wb')
+        pickle.dump([final_Nb, counts_final_Nb, trajectories, trajectories_rank], f, pickle.HIGHEST_PROTOCOL) 
+    
+    counter = 0
+    for j in range(len(trajectories_rank)):
+        ranks_j = np.arange(1, trajectories_rank[j]+1)
+        len_rank_j = len(ranks_j)
+        ax_ranking.plot(ranks_j, trajectories[counter:counter+len_rank_j], color = colors_kappa[i_kappa], linewidth = 1, alpha = .2)
+        ax_ranking_i.plot(ranks_j, trajectories[counter:counter+len_rank_j], color = colors_kappa[i_kappa], linewidth = 1, alpha = .2)
+        counter += len_rank_j
+
 
     #final_Nb = np.exp(final_Nb/counts_final_Nb)
     final_Nb = final_Nb/counts_final_Nb
@@ -169,6 +198,8 @@ for i_kappa, kappa in enumerate((kappas)):
     ax_ranking_i.plot(ranking, final_Nb, color = colors_kappa[i_kappa], linewidth = 0, marker = '*', alpha = 1, ms = 12)
     ax_ranking_i.plot(ranking, fit, color = colors_kappa[i_kappa], linewidth = 5, label = r'$%.d$'%(kappa), alpha = .8)
 
+    
+
     my_plot_layout(ax = ax_ranking_i, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
     ax_ranking_i.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
     #ax_ranking_i.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
@@ -177,6 +208,16 @@ for i_kappa, kappa in enumerate((kappas)):
     #ax_ranking_i.set_yticklabels([1, 0.1, 0.01])
     fig_ranking_i.savefig('../../Figures/1_Dynamics/Ensemble/Ranking_p-%.2f'%(kappa)+'_'+energy_model+'.pdf')
 
+kappas_theory = np.linspace(1, 4.1, 40)
+exponent = []
+for kappa in kappas_theory:
+    beta_kappa, E_kappa, Kd_kappa = get_kappa_properties(betas, Q0, Es, dE, kappa)
+    beta_act = np.min([beta_r, beta_kappa])
+    exponent.append(-kappa*lambda_B/(lambda_A*beta_act))
+
+ax_exponents.plot(kappas_theory, exponent, color = my_purple, linestyle = '-', marker = '', linewidth = 3, ms = 14, alpha = 1)
+
+
 my_plot_layout(ax = ax_ranking, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_ranking.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
 #ax_ranking.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
@@ -184,6 +225,15 @@ ax_ranking.set_ylim(bottom = 2e-2)
 #ax_ranking.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_ranking.set_yticklabels([1, 0.1, 0.01])
 fig_ranking.savefig('../../Figures/1_Dynamics/Ensemble/Ranking_'+energy_model+'.pdf')
+
+my_plot_layout(ax = ax_exponents, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+#ax_exponents.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
+#ax_exponents.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
+#ax_exponents.set_ylim(bottom = 2e-2)
+#ax_exponents.set_yticks([1, 0.1, 0.01, 0.001])
+#ax_exponents.set_yticklabels([1, 0.1, 0.01])
+fig_exponents.savefig('../../Figures/1_Dynamics/Ensemble/Exponent_'+energy_model+'.png')
+
 print('----END-----')
 
 

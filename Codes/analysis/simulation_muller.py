@@ -11,7 +11,7 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 N_ens = 1
 N_r = 2e8
 T0 = 3
-Tf = 8
+Tf = 10
 Tf_sim = 7
 #Tf = 10
 dT = 0.005
@@ -53,7 +53,7 @@ colors_R = []
 for i in range(len(kappas)):
     colors_R.append(['tab:grey', colors_kappa[i], colors_kappa[i], colors_kappa[i]])
 
-lambda_B = lambda_A
+lambda_B = lambda_A/2
 k_on = 1e6*24*3600; #(M*days)^-1
 N_c = 1e5
 #N_c = 1e5
@@ -110,7 +110,7 @@ fig, ax = plt.subplots(figsize = (18, 1), linewidth = 6, gridspec_kw={'left':0.0
 col_map = 'cividis'
 #mpl.colorbar.ColorbarBase(ax, cmap=col_map, orientation = 'vertical')
 # and create another colorbar with:
-colorbar = mpl.colorbar.ColorbarBase(ax, cmap=plt.get_cmap(col_map), orientation = 'horizontal')
+colorbar = mpl.colorbar.ColorbarBase(ax, cmap=plt.get_cmap(col_map + '_r'), orientation = 'horizontal')
 colorbar.set_ticks(np.linspace(0, 1, 5))
 #ax.set_xticks(np.linspace(0, 1, 5))
 ax.set_xticklabels([r'$%.0e$'%(np.exp(min_E + i*(max_E - min_E)/4)) for i in np.arange(0, 5, 1)], fontsize = 38)
@@ -127,7 +127,7 @@ for i_kappa, kappa in enumerate(kappas):
 	m_bar_theory = np.array([np.sum(N_r*calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*(t))/N_A, Es, kappa, lambda_A, N_c, dE)[3]*dE) for t in time])
 	t_act_theory = time[m_bar_theory>1][0]
 	for rep in range(1):
-		fig_muller, ax_muller = plt.subplots(figsize=(9,4), linewidth = 0, gridspec_kw={'left':0.005, 'right':.995, 'bottom':.02, 'top': 0.98}, dpi = 700, edgecolor = 'black')
+		fig_muller, ax_muller = plt.subplots(figsize=(9/1.5,4/1.5), linewidth = 0, gridspec_kw={'left':0.005, 'right':.995, 'bottom':.02, 'top': 0.98}, dpi = 700, edgecolor = 'black')
 		ax_muller.spines["top"].set_linewidth(3)
 		ax_muller.spines["left"].set_linewidth(3)
 		ax_muller.spines["right"].set_linewidth(3)
@@ -144,13 +144,12 @@ for i_kappa, kappa in enumerate(kappas):
 		print('Activated clones before filter:%d'%len(data_active[0]))
 		t_act_data = np.min(data_active[3])
 		print('t_act_data: %.2f'%t_act_data)
-		data_active = data_active.loc[data_active[3]<(t_act_data+1.3)]
+		data_active = data_active.loc[data_active[3]<(t_act_data+1.0+0.1*(kappa-1))]
 		activation_times = np.array(data_active[3])
 		print('Activated clones after filter:%d'%len(activation_times))
 		energies  = np.array(data_active[0])
 		ar1, ar2 = np.histogram(activation_times, bins = time)
 		m_data = np.cumsum(ar1)
-
 		#---------------------------- B cell linages ----------------------
 		clone_sizes = get_clones_sizes_C(int(m_data[-1]), time, activation_times, lambda_B, C, dT)
 		#-----------------------------Activation time------------------------
@@ -168,10 +167,14 @@ for i_kappa, kappa in enumerate(kappas):
 		total_pop = np.sum(clone_sizes, axis = 0)
 		total_pop_active = total_pop - total_pop[0] + 1
 		t_C = time[total_pop_active<(C-1)][-1] # Calculate time for reaching carrying capacity
-
 		#--------------------------t_C filter-------------------------
 		print('Applying filter...')
-		lim_size = 10
+		lim_size = 2
+		clone_sizes_C, activation_times_C, energies_C, filter_C, n_C = apply_filter_C(clone_sizes, activation_times, energies, lim_size)
+		ax_muller.vlines(np.min(activation_times_C), 0, 1, color = 'black', linewidth = 2, alpha = .8, linestyle = ':')
+		ax_muller.vlines(np.max(activation_times_C), 0, 1, color = 'black', linewidth = 2, alpha = .8, linestyle = '-')
+		print('Applying filter...')
+		lim_size = 20
 		clone_sizes_C, activation_times_C, energies_C, filter_C, n_C = apply_filter_C(clone_sizes, activation_times, energies, lim_size)
 		print('Activated clones:', np.shape(clone_sizes_C))
 
@@ -181,7 +184,7 @@ for i_kappa, kappa in enumerate(kappas):
 		entropy = -np.sum(bcell_freqs*np.log(bcell_freqs), axis = 0)
 
 		#------------------------- Stackplots -------------------------
-		greys = plt.cm.get_cmap(col_map+'_r', 50)
+		greys = plt.cm.get_cmap(col_map, 50)
 		min_bell_freq = np.min(bcell_freqs[:,-1])
 		
 		
@@ -189,8 +192,8 @@ for i_kappa, kappa in enumerate(kappas):
 		for c in np.flip(range(len(clone_sizes_C[:,0]))):
 			color_c = greys(int(50*(1-abs((energies_C[c]-min_E)/delta_E))))
 			ax_muller.stackplot(time, [(bcell_freqs[c, -1] - bcell_freqs[c, :])/2 + np.ones_like(bcell_freqs[0, :])*np.sum(bcell_freqs[:c, -1]), bcell_freqs[c, :], (bcell_freqs[c, -1] - bcell_freqs[c, :])/2], colors = ['white', color_c, 'white']);
-			if bcell_freqs[c, -1]>(0.10):
-				ax_muller.scatter(activation_times_C[c], (bcell_freqs[c, -1] - bcell_freqs[c, 0])/2 + np.sum(bcell_freqs[:c, -1]), marker = 'D', edgecolor='black', linewidth=1, facecolor = colors_kappa[i_kappa], s = 60)
+			#if bcell_freqs[c, -1]>(0.10):
+			#	ax_muller.scatter(activation_times_C[c], (bcell_freqs[c, -1] - bcell_freqs[c, 0])/2 + np.sum(bcell_freqs[:c, -1]), marker = 'D', edgecolor='black', linewidth=1, facecolor = colors_kappa[i_kappa], s = 60)
 
 		# for c in np.invert(range(len(clone_sizes_C[:,0]))):
 		# 	if bcell_freqs[c, -1]>(0.05):
@@ -208,8 +211,8 @@ for i_kappa, kappa in enumerate(kappas):
 		# 	for c in range(int(len(clone_sizes_C[:,0]))):
 		# 		ax_muller.plot(time, cumsum_freqs[c, :], linewidth = .00001*kappa, color = 'black')
 
-		ax_muller.vlines(t_act_theory, 0, 1, color = colors_kappa[i_kappa], linewidth = 2, alpha = .8, linestyle = ':')
-		ax_muller.vlines(t_act_theory+1.2, 0, 1, color = colors_kappa[i_kappa], linewidth = 2, alpha = .8, linestyle = '-')
+		#ax_muller.vlines(t_act_theory, 0, 1, color = 'black', linewidth = 2, alpha = .8, linestyle = ':')
+		#ax_muller.vlines(t_act_theory+1.2, 0, 1, color = 'black', linewidth = 2, alpha = .8, linestyle = '-')
 
 		my_plot_layout(ax = ax_muller, ticks_labelsize=38, yscale = 'linear')
 		ax_muller.set_yticks([])

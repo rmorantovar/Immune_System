@@ -7,7 +7,9 @@ warnings.filterwarnings("ignore")
 Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/'
 
 #--------------- PARAMETERS ---------------------
-N_ens = 200
+N_ens = 500
+N_enss = [N_ens, N_ens, N_ens+1, N_ens, N_ens]
+
 N_r = 2e8
 transparencies_p = [.8, 1, .8, .8, .8]
 
@@ -37,7 +39,7 @@ linear = 0
 
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
-kappas = [1, 2, 3, 4]#, 5]
+kappas = [1, 2, 2.5, 3, 4]#, 5]
 #kappas = [3]
 
 my_red = np.array((228,75,41))/256.
@@ -115,6 +117,7 @@ max_potency_simulations_std = dict()
 max_potency_theory = dict()
 
 for i_kappa, kappa in enumerate(kappas):
+	N_ens = N_enss[i_kappa]
 	m_bar_theory = np.array([np.sum(N_r*calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*(t))/N_A, Es, kappa, lambda_A, N_c, dE)[3]*dE) for t in time])
 	t_act_theory = time[m_bar_theory>1][0] 
 	print('--------')
@@ -178,25 +181,26 @@ for i_kappa, kappa in enumerate(kappas):
 		p_K = P_min_e_Q0(N_r, Q0, dE)#/K_array**2*(Nb/1)
 		p_K = p_K/np.sum(np.flip(p_K[:-1])/np.flip(K_array[:-1])*abs(np.diff(np.flip(K_array))))
 		Kd_r_renorm = Kds[(P_min_e_Q0(N_r, Q0, dE)/Kds)==np.max(P_min_e_Q0(N_r, Q0, dE)/Kds)]
-		ax_K_mf.hlines(0, .9/beta_r, 4.1/beta_r, linewidth = 2, color = 'black', linestyle = 'dashed')
+		ax_K_mf.hlines(0, .9, 4.1, linewidth = 2, color = 'black', linestyle = 'dashed')
 		QR = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*(t_act_1))/N_A, Es, kappa, lambda_A, N_c, dE)[3]
 		Kd_1_renorm = Kds[(QR/1)==np.max(QR/1)]
-		ax_K_mf.hlines(np.log10((C*1)/Kd_1_renorm/(C/Kd_r_renorm)), .9/beta_r, 4.1/beta_r, linewidth = 2, color = 'black', linestyle = 'dashed')
+		ax_K_mf.hlines(np.log10((C*1)/Kd_1_renorm/(C/Kd_r_renorm)), .9, 4.1, linewidth = 2, color = 'black', linestyle = 'dashed')
 		Kd_1_renorm = Kds[(QR/Kds)==np.max(QR/Kds)]
-		#ax_K_mf.hlines(np.log10((C*1)/Kd_1_renorm/(C/Kd_r_renorm)), .9/beta_r, 4.1/beta_r, linewidth = 2, color = 'black', linestyle = 'dashed')
+		#ax_K_mf.hlines(np.log10((C*1)/Kd_1_renorm/(C/Kd_r_renorm)), .9, 4.1, linewidth = 2, color = 'black', linestyle = 'dashed')
 		
 
 	max_potency_simulations[kappa] = np.mean(np.array(K_final)/(C/Kd_r_renorm))
 	max_potency_simulations_std[kappa] = np.sqrt(np.var((np.array(K_final)/(C/Kd_r_renorm))))
 
-ax_K_mf.plot(kappas/beta_r, np.log10(np.array(list(max_potency_simulations.values()))), color = my_purple2, linestyle = '', marker = 'D', linewidth = 3, label = 'Total', ms = 10, alpha = 1)
-ax_K_mf.errorbar(x=kappas/beta_r, y=np.log10(np.array(list(max_potency_simulations.values()))), yerr = 1.8*np.log10(np.array(list(max_potency_simulations_std.values()))), ls = 'none', color = my_purple2, linewidth = 2, alpha = .8)
+ax_K_mf.plot(kappas, np.log10(np.array(list(max_potency_simulations.values()))), color = my_purple2, linestyle = '', marker = 'D', linewidth = 3, label = 'Total', ms = 10, alpha = 1)
+ax_K_mf.errorbar(x=kappas, y=np.log10(np.array(list(max_potency_simulations.values()))), yerr = 1.8*np.log10(np.array(list(max_potency_simulations_std.values()))), ls = 'none', color = my_purple2, linewidth = 2, alpha = .8)
 
 #-------------------------# 
 print('--------')
 print('--- Processing largest clone ---')
 print('--------')
-N_enss = [200, 200, 200, 200]
+N_ens = 500
+N_enss = [N_ens, N_ens, N_ens+1, N_ens, N_ens]
 max_potency_simulations2 = dict()
 max_potency_simulations_std2 = dict()
 max_potency_theory2 = dict()
@@ -250,8 +254,8 @@ for i_kappa, kappa in enumerate(kappas):
 	max_potency_simulations2[kappa] = np.mean((np.array(final_biggest)/np.exp(final_biggest_affinity))/(C/Kd_r_renorm))
 	max_potency_simulations_std2[kappa] = np.sqrt(np.var(((np.array(final_biggest)/np.exp(final_biggest_affinity))/(C/Kd_r_renorm))))
 
-ax_K_mf.plot(kappas/beta_r, np.log10(np.array(list(max_potency_simulations2.values()))), color = my_purple, linestyle = '', marker = '*', linewidth = 3, label = 'Largest', ms = 14, alpha = 1)
-ax_K_mf.errorbar(x=kappas/beta_r, y=np.log10(np.array(list(max_potency_simulations2.values()))), yerr = 1.8*np.log10(np.array(list(max_potency_simulations_std2.values()))), ls = 'none', color = my_purple)
+ax_K_mf.plot(kappas, np.log10(np.array(list(max_potency_simulations2.values()))), color = my_purple, linestyle = '', marker = '*', linewidth = 3, label = 'Largest', ms = 14, alpha = 1)
+ax_K_mf.errorbar(x=kappas, y=np.log10(np.array(list(max_potency_simulations2.values()))), yerr = 1.8*np.log10(np.array(list(max_potency_simulations_std2.values()))), ls = 'none', color = my_purple)
 
 
 print('--------')
@@ -261,7 +265,7 @@ E_0_integral = np.log(Kd_r)
 E_0_integral = E_ms
 Nb_func = lambda C, tf, tb, lambda_B : C*np.exp(lambda_B*(tf-tb))/(C-1+np.exp(lambda_B*(tf-tb)))
 
-kappas_theory = np.linspace(1, 4.1, 20)
+kappas_theory = np.linspace(1, 4.1, 40)
 
 # for kappa in tqdm(kappas_theory):
 # 	beta_kappa, E_kappa, Kd_kappa = get_kappa_properties(betas, Q0, Es, dE, kappa)
@@ -292,10 +296,10 @@ kappas_theory = np.linspace(1, 4.1, 20)
 # 			normalization_theory = 1
 # 		max_potency_theory[kappa] = K - normalization_theory
 
-#ax_K_mf.plot(kappas_theory/beta_r, np.log10(np.array(list(max_potency_theory.values()))/(C/Kd_r_renorm)), color = my_purple2, linestyle = '-', marker = '', linewidth = 3, label = 'theory total', alpha = .8)
+#ax_K_mf.plot(kappas_theory, np.log10(np.array(list(max_potency_theory.values()))/(C/Kd_r_renorm)), color = my_purple2, linestyle = '-', marker = '', linewidth = 3, label = 'theory total', alpha = .8)
 
 y_interp1 = np.interp(kappas_theory, kappas, np.log10(np.array(list(max_potency_simulations.values()))))
-ax_K_mf.plot(kappas_theory/beta_r, y_interp1, color = my_purple2, linestyle = '-', marker = '', linewidth = 3, ms = 10, alpha = 1)
+ax_K_mf.plot(kappas_theory, y_interp1, color = my_purple2, linestyle = '-', marker = '', linewidth = 3, ms = 10, alpha = 1)
 
 
 print('--------')
@@ -317,16 +321,16 @@ print('--------')
 # 		normalization_theory = 1
 # 	max_potency_theory[kappa] = K - normalization_theory
 
-#ax_K_mf.plot(kappas_theory/beta_r, np.log10(np.array(list(max_potency_theory.values()))/(C/Kd_r_renorm))-0.4, color = my_purple, linestyle = '-', marker = '', linewidth = 3, label = 'theory largest', alpha = .8)
+#ax_K_mf.plot(kappas_theory, np.log10(np.array(list(max_potency_theory.values()))/(C/Kd_r_renorm))-0.4, color = my_purple, linestyle = '-', marker = '', linewidth = 3, label = 'theory largest', alpha = .8)
 
 y_interp2 = np.interp(kappas_theory, kappas, np.log10(np.array(list(max_potency_simulations2.values()))))
-ax_K_mf.plot(kappas_theory/beta_r, y_interp2, color = my_purple, linestyle = '-', marker = '', linewidth = 3, ms = 10, alpha = 1)
+ax_K_mf.plot(kappas_theory, y_interp2, color = my_purple, linestyle = '-', marker = '', linewidth = 3, ms = 10, alpha = 1)
 
 print('--------')
 
 my_plot_layout(ax = ax_K_mf, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-ax_K_mf.legend(fontsize = 26, title_fontsize = 30, loc = 4)
-ax_K_mf.set_xlim(left = 0.8/beta_r, right = 4.2/beta_r)
+ax_K_mf.legend(fontsize = 26, title_fontsize = 30, loc = 5)
+ax_K_mf.set_xlim(left = 0.8, right = 4.2)
 ax_K_mf.set_ylim(bottom = -3.0, top = 0.2)
 #ax_K_mf.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_K_mf.set_yticklabels([1, 0.1, 0.01])

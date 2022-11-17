@@ -20,7 +20,7 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 N_ens = 200
 N_r = 2e8
 T0 = 3
-Tf = 8
+Tf = 10
 Tf_sim = 7
 #Tf = 10
 dT = 0.01
@@ -29,7 +29,7 @@ k_pr = 1
 #k_pr = 180 # hour^-1
 k_pr = k_pr*24 #days^-1
 
-kappas = [3.0]
+kappas = [1.0]
 
 antigen_color = my_yellow/256.
 
@@ -47,7 +47,7 @@ for i in range(len(color_list)):
         colors_kappa.append(np.array(color_list[i]))
 colors_kappa = ['limegreen']
 
-lambda_B = lambda_A
+lambda_B = lambda_A/2
 k_on = 1e6*24*3600; #(M*days)^-1
 N_c = 1e5
 #N_c = 1e5
@@ -114,7 +114,7 @@ for i_kappa, kappa in enumerate((kappas)):
     best_clones = []
     for i_ens in tqdm(np.arange(N_ens)):
 
-        fig_muller, ax_muller = plt.subplots(figsize=(12,4), linewidth = 0, gridspec_kw={'left':0.005, 'right':.995, 'bottom':.02, 'top': 0.98}, dpi = 700, edgecolor = 'black')
+        fig_muller, ax_muller = plt.subplots(figsize=(4.5,2), linewidth = 0, gridspec_kw={'left':0.005, 'right':.995, 'bottom':.02, 'top': 0.98}, dpi = 700, edgecolor = 'black')
         ax_muller.spines["top"].set_linewidth(3)
         ax_muller.spines["left"].set_linewidth(3)
         ax_muller.spines["right"].set_linewidth(3)
@@ -124,7 +124,7 @@ for i_kappa, kappa in enumerate((kappas)):
         data_i = data.loc[data[4]==i_ens]
         data_active = data_i.loc[data_i[1]==1]
         t_act_data = np.min(data_active[3])
-        data_active = data_active.loc[data_active[3]<(t_act_data+1.3)]
+        data_active = data_active.loc[data_active[3]<(t_act_data+1.0+0.1*(kappa-1))]
         activation_times = np.array(data_active[3])
         energies  = np.array(data_active[0])
 
@@ -132,7 +132,10 @@ for i_kappa, kappa in enumerate((kappas)):
         clone_sizes = get_clones_sizes_C(len(activation_times), time, activation_times, lambda_B, C, dT)
 
         #--------------------------t_C filter-------------------------
-        lim_size = 10
+        if kappa == 1:
+            lim_size = 20
+        else:
+            lim_size = 2
         clone_sizes_C, activation_times_C, energies_C, filter_C, n_C = apply_filter_C(clone_sizes, activation_times, energies, lim_size)
     
         #-----------------------------Activation time------------------------
@@ -143,17 +146,13 @@ for i_kappa, kappa in enumerate((kappas)):
         total_pop_active = total_pop - total_pop[0] + 1
         t_C = time[total_pop_active<(C-1)][-1] # Calculate time for reaching carrying capacity
 
-        #--------------------------t_C filter-------------------------
-        lim_size = 10
-        clone_sizes_C, activation_times_C, energies_C, filter_C, n_C = apply_filter_C(clone_sizes, activation_times, energies, lim_size)
-
         total_pop_active = np.sum(clone_sizes_C, axis = 0) #C
         bcell_freqs = clone_sizes_C/total_pop_active
         bcell_freqs = clone_sizes_C/(np.sum(clone_sizes_C[:,-1]))
         entropy = -np.sum(bcell_freqs*np.log(bcell_freqs), axis = 0)
 
         #------------------------- Stackplots -------------------------
-        greys = plt.cm.get_cmap('cividis_r', 50)
+        greys = plt.cm.get_cmap('cividis', 50)
         min_bell_freq = np.min(bcell_freqs[:,-1])
         
         
