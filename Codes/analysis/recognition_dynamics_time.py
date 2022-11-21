@@ -7,20 +7,21 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 
 #--------------- PARAMETERS ---------------------
 N_ens = 1
-N_rs = [2e9]
+N_rs = [1e9]
 T0 = 0
 Tf = 9
 Tf_sim= 6.5
 #Tf = 10
 dT = 0.01
 lambda_A = 6
-k_pr = 1 # hour^-1
+k_pr = 1/120 #s^-1
+k_pr = k_pr*3600 # hour^-1
 #k_pr = 180 # hour^-1
 k_pr = k_pr*24 #days^-1
 
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
-kappas = [1, 2, 3, 4]
+kappas = [1, 2, 2.5, 3, 4]
 
 my_red = np.array((228,75,41))/256.
 my_purple = np.array((125,64,119))/256.
@@ -40,7 +41,7 @@ transparency_n = [1]
 
 color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_brown, my_blue2, my_yellow, my_purple, my_green2])#
 #color_list = np.array([(228,75,41), (125,165,38), (76,109,166), (215,139,45)])
-color_list = np.array([my_red, my_blue2, my_green, my_gold, my_brown])
+color_list = np.array([my_brown, my_green, my_red, my_blue2, my_gold])
 
 #colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
 #colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
@@ -57,7 +58,9 @@ lambda_B = lambda_A*.6
 k_on = 1e6*24*3600; #(M*days)^-1
 N_c = 1e5
 #N_c = 1e5
-E_ms = -27.63
+#E_ms = -27.63
+#E_ms = -25.32
+E_ms = -23.02
 C = 3e4
 
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
@@ -68,8 +71,9 @@ growth_models = [0]
 linear = 0
 
 
-antigen = 'EYTACNSEYPNTTKCGRWYCGRYPN'
-#antigen = 'TACNSEYPNTTKCGRWYC'
+#antigen = 'EYTACNSEYPNTTKCGRWYCGRYPN' #L=25
+#antigen = 'TACNSEYPNTTKCGRWYCAR' #L=20
+antigen = 'TACNSEYPNTTKCGRWYC' #L=18
 L=len(antigen)
 print('--------')
 print('L=%d'%(L))
@@ -93,7 +97,7 @@ Kds = np.exp(Es[:-1])
 beta_1, E_1, Kd_1 = get_kappa_properties(betas, Q0, Es, dE, 1)
 #--------------------------Proofreading properties--------------------------
 beta_pr, E_pr, Kd_pr = get_proofreading_properties(betas, Q0, Es, dE, k_pr, k_on)
-print('beta_pr = %.2f'%beta_pr)
+print('beta_a = %.2f'%beta_pr, 'K_a = %.2e'%Kd_pr)
 
 t_prime = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*N_c))
 print('--------')
@@ -109,12 +113,13 @@ for N_r in N_rs:
     fig_m_bar, ax_m_bar = plt.subplots(figsize=(12,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
     #--------------------------Repertoire properties--------------------------
     beta_r, E_r, Kd_r = get_repertoire_properties(betas, Q0, Es, dE, N_r)
-    print('beta_r = %.1f'%beta_r)
+    print('beta_r = %.1f'%beta_r, 'K_d_r = %.2e'%Kd_r)
 
     for i_kappa, kappa in enumerate(kappas):
         print('--------')
         print('kappa = %.2f...'%kappa)
         beta_kappa, E_kappa, Kd_kappa = get_kappa_properties(betas, Q0, Es, dE, kappa)
+        print('beta_kappa = %.2f...'%kappa, 'K_kappa = %.2e...'%Kd_kappa)
 
         fig_R, ax_R = plt.subplots(figsize=(10,5), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
         fig_K, ax_K = plt.subplots(figsize=(10,5), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
@@ -143,9 +148,12 @@ for N_r in N_rs:
         # ar1, ar2 = np.histogram(activation_times, bins = time)
         # m_data = np.cumsum(ar1)
 
-        ax_K.plot(time, (k_pr/k_on)*np.exp(lambda_A*(time - t_prime)/kappa), alpha = transparency_n[0], color = colors_kappa[i_kappa], linewidth = 5, linestyle = '-')
+        ax_K.plot(time[time>t_prime], (k_pr/k_on)*np.exp(lambda_A*(time[time>t_prime] - t_prime)/kappa), alpha = transparency_n[0], color = colors_kappa[i_kappa], linewidth = 5, linestyle = '-')
+        ax_K.hlines(Kd_pr, T0, t_prime, color = colors_kappa[i_kappa], linewidth = 5, linestyle = '-')
         ax_K.hlines(Kd_r, T0, Tf, color = 'grey', linestyle = ':')
         ax_K.hlines(Kd_kappa, T0, Tf, color = 'grey', linestyle = ':')
+        ax_K.vlines(t_prime, 1e-14, k_pr/k_on, color = 'grey', linestyle = ':')
+        ax_K.vlines(t_prime + kappa/lambda_A*(E_kappa - E_pr), 1e-14, Kd_kappa, color = 'grey', linestyle = ':')
         #--------------------------m_bar(t)---------------------------
         u_on, p_a, R, QR = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*time[0])/N_A, Es, kappa, lambda_A, N_c, dE)
         M_r = N_r*N_c*np.sum(Q0*p_a*dE)
@@ -188,6 +196,7 @@ for N_r in N_rs:
         print('t_act_theory: %.2f'%t_act)
 
         ax_N_b.plot(time, clone_sizes_C_sorted[-1, :], linewidth = 5, color = colors_R[i_kappa][2])
+        ax_N_b.hlines(C, T0, Tf, color = 'grey', linestyle = ':')
         for k in range(2, len(energies_C_sorted)+1, int(len(energies_C_sorted)/10)+1):
             ax_N_b.plot(time, clone_sizes_C_sorted[-k, :], linewidth = 3, color = colors_R[i_kappa][2], linestyle= '-', alpha = .8)
         #ax_N_b.vlines([t_act], 0, C, linestyle = '--', linewidth = 1, color = 'grey')
@@ -223,28 +232,28 @@ for N_r in N_rs:
         ax_R.set_xticks([])
         ax_R.set_xlim(right = Tf, left = T0)
         ax_R.set_ylim(bottom = 1e-7, top = 1.5)
-        fig_R.savefig('../../Figures/_Summary/time/R_kappa-%.1f_Nr-%.0e_'%(kappa, N_r)+energy_model+'.pdf')
+        fig_R.savefig('../../Figures/_Summary/time/L%d/R_kappa-%.1f_Nr-%.0e_'%(L, kappa, N_r)+energy_model+'.pdf')
         plt.close(fig_R)
 
         my_plot_layout(ax=ax_K, yscale = 'log', xscale = 'linear', ticks_labelsize = 38)
         ax_K.set_xticks([])
         ax_K.set_xlim(right = Tf, left = T0)
-        ax_K.set_ylim(bottom = 1e-15, top = 1e-4)
-        fig_K.savefig('../../Figures/_Summary/time/K_kappa-%.1f_Nr-%.0e_'%(kappa, N_r)+energy_model+'.pdf')
+        ax_K.set_ylim(bottom = 1e-10, top = 1e-3)
+        fig_K.savefig('../../Figures/_Summary/time/L%d/K_kappa-%.1f_Nr-%.0e_'%(L, kappa, N_r)+energy_model+'.pdf')
         plt.close(fig_K)
 
         my_plot_layout(ax=ax_L, yscale = 'log', xscale = 'linear', ticks_labelsize = 38)
         ax_L.set_xticks([])
         ax_L.set_xlim(right = Tf, left = T0)
-        ax_L.set_ylim(bottom = 1e-5, top = 1e6)
-        fig_L.savefig('../../Figures/_Summary/time/L_kappa-%.1f_Nr-%.0e_'%(kappa, N_r)+energy_model+'.pdf')
+        ax_L.set_ylim(bottom = 1e-3, top = 1e4)
+        fig_L.savefig('../../Figures/_Summary/time/L%d/L_kappa-%.1f_Nr-%.0e_'%(L, kappa, N_r)+energy_model+'.pdf')
         plt.close(fig_L)
 
         my_plot_layout(ax=ax_QR, yscale = 'log', xscale = 'linear', ticks_labelsize = 38)
         #ax_QR.set_xticks([])
         #ax_QR.set_xlim(right = 1e-2) #use 1e-3 for other plots
         ax_QR.set_ylim(bottom = 1e-8)
-        fig_QR.savefig('../../Figures/_Summary/time/QR_kappa-%.1f_Nr-%.0e_'%(kappa, N_r)+energy_model+'.pdf')
+        fig_QR.savefig('../../Figures/_Summary/time/L%d/QR_kappa-%.1f_Nr-%.0e_'%(L, kappa, N_r)+energy_model+'.pdf')
         plt.close(fig_QR)
 
         # my_plot_layout(ax=ax_QR2, yscale = 'linear', xscale = 'log', ticks_labelsize = 30)
@@ -254,11 +263,12 @@ for N_r in N_rs:
 
         my_plot_layout(ax=ax_N_b, yscale = 'log', ticks_labelsize = 38)
         ax_N_b.set_xlim(right = Tf, left = T0)
-        fig_N_b.savefig('../../Figures/_Summary/time/Bcell_clones-%.1f_Nr-%.0e_'%(kappa, N_r)+energy_model+'.pdf')
+        ax_N_b.set_ylim(bottom = 1e-1, top = 1e6)
+        fig_N_b.savefig('../../Figures/_Summary/time/L%d/Bcell_clones-%.1f_Nr-%.0e_'%(L, kappa, N_r)+energy_model+'.pdf')
         plt.close(fig_N_b)
 
     my_plot_layout(ax=ax_m_bar, yscale = 'log', ticks_labelsize = 30)
-    fig_m_bar.savefig('../../Figures/_Summary/time/m_bar_Nr-%.0e_'%(N_r)+energy_model+'.pdf')
+    fig_m_bar.savefig('../../Figures/_Summary/time/L%d/m_bar_Nr-%.0e_'%(L, N_r)+energy_model+'.pdf')
     plt.close(fig_m_bar)
     
     my_plot_layout(ax=ax_QR_all, yscale = 'log', xscale = 'linear', ticks_labelsize = 38)
@@ -266,7 +276,7 @@ for N_r in N_rs:
     #ax_QR_all.set_xlim(right = 1e-2, left = 1e-11) #use 1e-3 for other plots
     ax_QR_all.set_ylim(bottom = 1e-9)
     ax_QR_all.legend(title = r'$\kappa$', title_fontsize = 34, fontsize = 32)
-    fig_QR_all.savefig('../../Figures/_Summary/time/QR_all_Nr-%.0e_'%(N_r)+energy_model+'.pdf')
+    fig_QR_all.savefig('../../Figures/_Summary/time/L%d/QR_all_Nr-%.0e_'%(L, N_r)+energy_model+'.pdf')
     plt.close(fig_QR_all)
 
     # my_plot_layout(ax=ax_Q0, yscale = 'log', xscale = 'log', ticks_labelsize = 38)
@@ -280,9 +290,9 @@ my_plot_layout(ax=ax_antigen, yscale = 'log', xscale = 'linear', ticks_labelsize
 ax_antigen.set_xlim(right = Tf, left = T0)
 ax_antigen.set_xticks([])
 #ax_antigen.set_xlim(right = 1e-2, left = 1e-11) #use 1e-3 for other plots
-ax_antigen.set_ylim(bottom = 1e5, top = 1e16)
+ax_antigen.set_ylim(bottom = 1e3, top = 1e10)
 #ax_antigen.legend(title = r'$\kappa$', title_fontsize = 34, fontsize = 32)
-fig_antigen.savefig('../../Figures/_Summary/time/antigen.pdf')
+fig_antigen.savefig('../../Figures/_Summary/time/L%d/antigen.pdf'%(L))
 plt.close(fig_antigen)
 
 

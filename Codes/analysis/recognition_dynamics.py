@@ -7,20 +7,21 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 
 #--------------- PARAMETERS ---------------------
 N_ens = 1
-N_rs = [2e8]
+N_rs = [1e10]
 T0 = 3
 Tf = 10
 Tf_sim = 6.5
 #Tf = 10
 dT = 0.01
 lambda_A = 6
-k_pr = 1 # hour^-1
+k_pr = 1/60 #s^-1
+k_pr = k_pr*3600 # hour^-1
 #k_pr = 180 # hour^-1
 k_pr = k_pr*24 #days^-1
 
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
-kappas = np.flip([1, 2, 3, 4])
+kappas = np.flip([1, 2, 2.5, 3, 4])
 
 my_red = np.array((228,75,41))/256.
 my_purple = np.array((125,64,119))/256.
@@ -40,7 +41,7 @@ transparency_n = [1]
 
 color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_blue2, my_yellow, my_purple, my_green2])#
 #color_list = np.array([(228,75,41), (125,165,38), (76,109,166), (215,139,45)])
-color_list = np.array([my_red, my_blue2, my_green, my_gold, my_brown])
+color_list = np.array([my_brown, my_green, my_red, my_blue2, my_gold])
 
 #colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
 #colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
@@ -58,6 +59,7 @@ k_on = 1e6*24*3600; #(M*days)^-1
 N_c = 1e5
 #N_c = 1e5
 E_ms = -27.63
+E_ms = -25.32
 C = 3e4
 
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
@@ -73,6 +75,7 @@ linear = 0
 # antigen = 'TACNSEYPNTTK'
 antigen = 'EYTACNSEYPNTTKCGRWYCGRYPN' #L=25
 #antigen = 'TACNSEYPNTTKCGRWYC' #L=18
+#antigen = 'TACNSEYPNTTRAKCGRWYC' #L=20
 #antigen = 'CMFILVWYAGTSQNEDHRKPFMRTPTRMCW' #L=30
 L=len(antigen)
 print('--------')
@@ -218,23 +221,23 @@ for N_r in N_rs:
         ax_R.set_xticks([])
         ax_R.set_xlim(right = 1e-2)
         ax_R.set_ylim(top = 1.5, bottom = 1e-8)
-        fig_R.savefig('../../Figures/_Summary/affinity/L25/R_kappa-%.1f_Nr-%.0e_'%(kappa, N_r)+model+'.pdf')
+        fig_R.savefig('../../Figures/_Summary/affinity/L%d/R_kappa-%.1f_Nr-%.0e_'%(L, kappa, N_r)+model+'.pdf')
         plt.close(fig_R)
 
         my_plot_layout(ax=ax_QR, yscale = 'log', xscale = 'log', ticks_labelsize = 38)
         #ax_QR.set_xticks([])
         ax_QR.set_xlim(right = 1e-2) #use 1e-3 for other plots
         ax_QR.set_ylim(bottom = 1e-9, top = 1.5*N_r)
-        fig_QR.savefig('../../Figures/_Summary/affinity/L25/QR_kappa-%.1f_Nr-%.0e_'%(kappa, N_r)+model+'.pdf')
+        fig_QR.savefig('../../Figures/_Summary/affinity/L%d/QR_kappa-%.1f_Nr-%.0e_'%(L, kappa, N_r)+model+'.pdf')
         plt.close(fig_QR)
 
         my_plot_layout(ax=ax_QR2, yscale = 'linear', xscale = 'log', ticks_labelsize = 30)
         #ax_QR2.set_xlim(right = 1e-3)
-        fig_QR2.savefig('../../Figures/_Summary/affinity/L25/QR2_kappa-%.1f_Nr-%.0e_'%(kappa, N_r)+model+'.pdf')
+        fig_QR2.savefig('../../Figures/_Summary/affinity/L%d/QR2_kappa-%.1f_Nr-%.0e_'%(L, kappa, N_r)+model+'.pdf')
         plt.close(fig_QR2)
 
         my_plot_layout(ax=ax_m_bar, yscale = 'log', ticks_labelsize = 30)
-        fig_m_bar.savefig('../../Figures/_Summary/affinity/L25/m_bar_kappa-%.1f_Nr-%.0e_'%(kappa, N_r)+model+'.pdf')
+        fig_m_bar.savefig('../../Figures/_Summary/affinity/L%d/m_bar_kappa-%.1f_Nr-%.0e_'%(L, kappa, N_r)+model+'.pdf')
         plt.close(fig_m_bar)
     
         my_plot_layout(ax=ax_QR_all, yscale = 'log', xscale = 'log', ticks_labelsize = 38)
@@ -242,21 +245,21 @@ for N_r in N_rs:
         ax_QR_all.set_xlim(right = 1e-0, left = 1e-11) #use 1e-3 for other plots
         ax_QR_all.set_ylim(bottom = 1e-9, top = 1.5*N_r)
         ax_QR_all.legend(title = r'$p$', title_fontsize = 32, fontsize = 30, loc = 4)
-        fig_QR_all.savefig('../../Figures/_Summary/affinity/L25/QR_all_kappa-%.1f_Nr-%.0e_'%(kappa, N_r)+model+'.pdf')
+        fig_QR_all.savefig('../../Figures/_Summary/affinity/L%d/QR_all_kappa-%.1f_Nr-%.0e_'%(L, kappa, N_r)+model+'.pdf')
 
         my_plot_layout(ax=ax_QR_all_f, yscale = 'log', xscale = 'log', ticks_labelsize = 34)
         #ax_QR_all_f.set_yticks([])
         ax_QR_all_f.set_xlim(right = 1e-0, left = 1e-11) #use 1e-3 for other plots
         ax_QR_all_f.set_ylim(bottom = 1e-9, top = 1.5*N_r)
         #ax_QR_all_f.legend(title = r'$p$', title_fontsize = 32, fontsize = 30)
-        fig_QR_all_f.savefig('../../Figures/_Summary/affinity/L25/QR_all_f_kappa-%.1f_Nr-%.0e_'%(kappa, N_r)+model+'.pdf')
+        fig_QR_all_f.savefig('../../Figures/_Summary/affinity/L%d/QR_all_f_kappa-%.1f_Nr-%.0e_'%(L, kappa, N_r)+model+'.pdf')
         plt.close(fig_QR_all_f)
 
     my_plot_layout(ax=ax_Q0, yscale = 'log', xscale = 'log', ticks_labelsize = 38)
     #ax_Q_act.set_xticks([])
     ax_Q0.set_xlim(right = 1e1) #use 1e-3 for other plots
     ax_Q0.set_ylim(bottom = 1e-13, top = 1.5)
-    fig_Q0.savefig('../../Figures/_Summary/affinity/L25/Q0_Nr-%.0e_'%(N_r)+model+'.pdf')
+    fig_Q0.savefig('../../Figures/_Summary/affinity/L%d/Q0_Nr-%.0e_'%(L, N_r)+model+'.pdf')
     plt.close(fig_Q0)
 
 
