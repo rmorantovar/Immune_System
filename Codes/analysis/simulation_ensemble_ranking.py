@@ -99,7 +99,7 @@ print('beta_r = %.1f'%beta_r)
 
 #--------------------------Proofreading properties--------------------------
 beta_pr, E_pr, Kd_pr = get_proofreading_properties(betas, Q0, Es, dE, k_pr, k_on)
-print('beta_pr = %.2f'%beta_pr)
+print('beta_a = %.2f'%beta_pr, 'K_a = %.2e'%Kd_pr)
 
 t_prime = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*N_c))
 print('--------')

@@ -7,14 +7,14 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 
 #--------------- PARAMETERS ---------------------
 N_ens = 1
-N_rs = [1e9]
+N_rs = [1e8]
 T0 = 0
-Tf = 9
+Tf = 7
 Tf_sim= 6.5
 #Tf = 10
 dT = 0.01
 lambda_A = 6
-k_pr = 1/120 #s^-1
+k_pr = 1/(60*5) #s^-1
 k_pr = k_pr*3600 # hour^-1
 #k_pr = 180 # hour^-1
 k_pr = k_pr*24 #days^-1
@@ -56,11 +56,13 @@ for i in range(len(kappas)):
 
 lambda_B = lambda_A*.6
 k_on = 1e6*24*3600; #(M*days)^-1
-N_c = 1e5
+N_c = 1e5*1000
 #N_c = 1e5
 #E_ms = -27.63
-#E_ms = -25.32
-E_ms = -23.02
+E_ms = -25.32
+E_ms = -25
+#E_ms = -24
+#E_ms = -23.02
 C = 3e4
 
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
@@ -72,8 +74,8 @@ linear = 0
 
 
 #antigen = 'EYTACNSEYPNTTKCGRWYCGRYPN' #L=25
-#antigen = 'TACNSEYPNTTKCGRWYCAR' #L=20
-antigen = 'TACNSEYPNTTKCGRWYC' #L=18
+antigen = 'TACNSEYPNTTRAKCGRWYC' #L=20
+#antigen = 'TACNSEYPNTTKCGRWYC' #L=18
 L=len(antigen)
 print('--------')
 print('L=%d'%(L))
@@ -105,6 +107,16 @@ print('--------')
 
 fig_antigen, ax_antigen = plt.subplots(figsize=(10,5), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 ax_antigen.plot(time, np.exp(lambda_A*time)/(5*1e3), linewidth = 5, color = antigen_color)
+
+my_plot_layout(ax=ax_antigen, yscale = 'log', xscale = 'linear', ticks_labelsize = 38)
+ax_antigen.set_xlim(right = Tf, left = T0)
+ax_antigen.set_xticks([])
+#ax_antigen.set_xlim(right = 1e-2, left = 1e-11) #use 1e-3 for other plots
+ax_antigen.set_ylim(bottom = 1e1, top = 1e8)
+#ax_antigen.legend(title = r'$\kappa$', title_fontsize = 34, fontsize = 32)
+fig_antigen.savefig('../../Figures/_Summary/time/L%d/antigen.pdf'%(L))
+plt.close(fig_antigen)
+
 print('Loops...')
 for N_r in N_rs:
     print('________')
@@ -286,13 +298,6 @@ for N_r in N_rs:
     # fig_Q0.savefig('../../Figures/_Summary/time/Q0_Nr-%.0e_'%(N_r)+energy_model+'.pdf')
     # plt.close(fig_Q0)
 
-my_plot_layout(ax=ax_antigen, yscale = 'log', xscale = 'linear', ticks_labelsize = 38)
-ax_antigen.set_xlim(right = Tf, left = T0)
-ax_antigen.set_xticks([])
-#ax_antigen.set_xlim(right = 1e-2, left = 1e-11) #use 1e-3 for other plots
-ax_antigen.set_ylim(bottom = 1e3, top = 1e10)
-#ax_antigen.legend(title = r'$\kappa$', title_fontsize = 34, fontsize = 32)
-fig_antigen.savefig('../../Figures/_Summary/time/L%d/antigen.pdf'%(L))
-plt.close(fig_antigen)
+
 
 

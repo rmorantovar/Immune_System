@@ -9,14 +9,15 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 # ./EF_response_v3.x -a 6 -b 0.5 -k 1 -t 0 -T 7.5 -E TCRen -C 10000 -B 100000000 -s EYTACNSEYPNTTKCGRWYCGRYPN -q 2.0 --ensemble -N 10
 #--------------- PARAMETERS ---------------------
 N_ens = 1
-N_r = 2e8
-T0 = 3
-Tf = 10
+N_r = 1e8
+T0 = 0
+Tf = 7
 Tf_sim = 7
 #Tf = 10
 dT = 0.005
 lambda_A = 6
-k_pr = 1
+k_pr = 1/(60*5) #s^-1
+k_pr = k_pr*3600 # hour^-1
 #k_pr = 180 # hour^-1
 k_pr = k_pr*24 #days^-1
 
@@ -55,9 +56,10 @@ for i in range(len(kappas)):
 
 lambda_B = lambda_A/2
 k_on = 1e6*24*3600; #(M*days)^-1
-N_c = 1e5
+N_c = 1e5*1000
 #N_c = 1e5
 E_ms = -27.63
+E_ms = -25
 C = 3e4
 
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
@@ -71,8 +73,9 @@ linear = 0
 # antigen = 'FMLFMAVFVMTSWYC'
 # antigen = 'FTSENAYCGR'
 # antigen = 'TACNSEYPNTTK'
-antigen = 'EYTACNSEYPNTTKCGRWYCGRYPN'
+#antigen = 'EYTACNSEYPNTTKCGRWYCGRYPN'
 #antigen = 'TACNSEYPNTTKCGRWYC'
+antigen = 'TACNSEYPNTTRAKCGRWYC' #L=20
 L=len(antigen)
 print('--------')
 print('L=%d'%(L))
@@ -126,14 +129,14 @@ for i_kappa, kappa in enumerate(kappas):
 	beta_act = np.min([beta_r, beta_kappa])
 	m_bar_theory = np.array([np.sum(N_r*calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*(t))/N_A, Es, kappa, lambda_A, N_c, dE)[3]*dE) for t in time])
 	t_act_theory = time[m_bar_theory>1][0]
-	for rep in range(1):
+	for rep in [0, 1, 2]:
 		fig_muller, ax_muller = plt.subplots(figsize=(9/1.5,4/1.5), linewidth = 0, gridspec_kw={'left':0.005, 'right':.995, 'bottom':.02, 'top': 0.98}, dpi = 700, edgecolor = 'black')
 		ax_muller.spines["top"].set_linewidth(3)
 		ax_muller.spines["left"].set_linewidth(3)
 		ax_muller.spines["right"].set_linewidth(3)
 		ax_muller.spines["bottom"].set_linewidth(3)
 		#-----------------Loading data----------------------------
-		parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
+		parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 3.0, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
 		#data = pd.read_csv(Text_files_path + 'Dynamics/Trajectories/'+parameters_path+'/energies%d.txt'%rep, sep = '\t', header=None)
 		data = get_data(folder_path = Text_files_path + 'Dynamics/Trajectories/'+parameters_path, rep = rep)
 		#-----------------Filtering data----------------------------
@@ -177,7 +180,7 @@ for i_kappa, kappa in enumerate(kappas):
 		lim_size = 20
 		clone_sizes_C, activation_times_C, energies_C, filter_C, n_C = apply_filter_C(clone_sizes, activation_times, energies, lim_size)
 		print('Activated clones:', np.shape(clone_sizes_C))
-
+		sort_inds = activation_times_C.argsort()
 		total_pop_active = np.sum(clone_sizes_C, axis = 0) #C
 		bcell_freqs = clone_sizes_C/total_pop_active
 		bcell_freqs = clone_sizes_C/(np.sum(clone_sizes_C[:,-1]))
@@ -192,8 +195,8 @@ for i_kappa, kappa in enumerate(kappas):
 		for c in np.flip(range(len(clone_sizes_C[:,0]))):
 			color_c = greys(int(50*(1-abs((energies_C[c]-min_E)/delta_E))))
 			ax_muller.stackplot(time, [(bcell_freqs[c, -1] - bcell_freqs[c, :])/2 + np.ones_like(bcell_freqs[0, :])*np.sum(bcell_freqs[:c, -1]), bcell_freqs[c, :], (bcell_freqs[c, -1] - bcell_freqs[c, :])/2], colors = ['white', color_c, 'white']);
-			#if bcell_freqs[c, -1]>(0.10):
-			#	ax_muller.scatter(activation_times_C[c], (bcell_freqs[c, -1] - bcell_freqs[c, 0])/2 + np.sum(bcell_freqs[:c, -1]), marker = 'D', edgecolor='black', linewidth=1, facecolor = colors_kappa[i_kappa], s = 60)
+			if activation_times_C[c] in activation_times_C[sort_inds[:3]]:
+				ax_muller.scatter(activation_times_C[c], (bcell_freqs[c, -1] - bcell_freqs[c, 0])/2 + np.sum(bcell_freqs[:c, -1]), marker = 'D', edgecolor='black', linewidth=1, facecolor = 'white', s = 60, zorder = 20)
 
 		# for c in np.invert(range(len(clone_sizes_C[:,0]))):
 		# 	if bcell_freqs[c, -1]>(0.05):

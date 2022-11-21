@@ -247,7 +247,7 @@ void generate_Bcells_with_e(int N, int L, int L_alphabet, vector<bcell> & Bcells
         
         // Create a bcell and add it to the vector
         bcell bcell_i(L, L_alphabet, E_matrix, Sequence, Antigen, energy_model, r);
-        bcell_i.e = bcell_i.e - e_MS - 27.63;
+        bcell_i.e = bcell_i.e - e_MS - 25.0;
         Bcells[n]  = bcell_i;
     }
 }

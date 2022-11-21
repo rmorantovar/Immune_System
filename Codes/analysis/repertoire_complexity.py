@@ -87,9 +87,9 @@ Alphabet = np.loadtxt(Text_files_path+'Input_files/Alphabet_'+model+'.txt', dtyp
 print(Alphabet)
 
 #--------------------------Loops--------------------------
-K_naive = 1e-6
+K_naive = 1e-7
 print('Loops...')
-kappa = 3.0
+kappa = 2.0
 fig_L, ax_L = plt.subplots()
 fig_L2, ax_L2 = plt.subplots()
 Ls = np.arange(10, 30, 2)
@@ -102,7 +102,7 @@ K_ms = []
 for i_L, L in enumerate(tqdm(Ls)):
     K = 0
     K_0 = 0
-    for i in range(5):
+    for i in range(20):
         #--------------------------Energy Motif--------------------------
         antigen = np.random.choice(Alphabet, L)
         PWM_data, M, Alphabet = get_motif(antigen, model, Text_files_path)
@@ -123,8 +123,8 @@ for i_L, L in enumerate(tqdm(Ls)):
 
         beta_kappa, E_kappa, Kd_kappa = get_kappa_properties(betas, Q0, Es, dE, kappa)
         K += Kd_kappa
-    K_0 /=5
-    K /= 5
+    K_0 /=20
+    K /= 20
     K_kappas.append(K)
     K_ms.append(K_0)
     if(K<K_naive):

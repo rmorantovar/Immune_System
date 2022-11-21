@@ -7,14 +7,14 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 
 #--------------- PARAMETERS ---------------------
 N_ens = 1
-N_rs = [1e10]
-T0 = 3
+N_rs = [1e8]
+T0 = 0
 Tf = 10
 Tf_sim = 6.5
 #Tf = 10
 dT = 0.01
 lambda_A = 6
-k_pr = 1/60 #s^-1
+k_pr = 1/(5*60) #s^-1
 k_pr = k_pr*3600 # hour^-1
 #k_pr = 180 # hour^-1
 k_pr = k_pr*24 #days^-1
@@ -54,12 +54,15 @@ colors_R = []
 for i in range(len(kappas)):
     colors_R.append([colors_kappa[i], colors_kappa[i], colors_kappa[i], colors_kappa[i]])
 
-lambda_B = lambda_A
+lambda_B = lambda_A*.5
 k_on = 1e6*24*3600; #(M*days)^-1
-N_c = 1e5
+N_c = 1e5*1000
 #N_c = 1e5
 E_ms = -27.63
 E_ms = -25.32
+E_ms = -25
+#E_ms = -24
+#E_ms = -23
 C = 3e4
 
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
@@ -73,9 +76,9 @@ linear = 0
 # antigen = 'FMLFMAVFVMTSWYC'
 # antigen = 'FTSENAYCGR'
 # antigen = 'TACNSEYPNTTK'
-antigen = 'EYTACNSEYPNTTKCGRWYCGRYPN' #L=25
+#antigen = 'EYTACNSEYPNTTKCGRWYCGRYPN' #L=25
 #antigen = 'TACNSEYPNTTKCGRWYC' #L=18
-#antigen = 'TACNSEYPNTTRAKCGRWYC' #L=20
+antigen = 'TACNSEYPNTTRAKCGRWYC' #L=20
 #antigen = 'CMFILVWYAGTSQNEDHRKPFMRTPTRMCW' #L=30
 L=len(antigen)
 print('--------')
@@ -100,7 +103,7 @@ Kds = np.exp(Es[:-1])
 beta_1, E_1, Kd_1 = get_kappa_properties(betas, Q0, Es, dE, 1)
 #--------------------------Proofreading properties--------------------------
 beta_pr, E_pr, Kd_pr = get_proofreading_properties(betas, Q0, Es, dE, k_pr, k_on)
-print('beta_pr = %.2f'%beta_pr)
+print('beta_a = %.2f'%beta_pr, 'K_a = %.2e'%Kd_pr)
 
 t_prime = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*N_c))
 print('--------')
@@ -113,7 +116,7 @@ for N_r in N_rs:
 
     #--------------------------Repertoire properties--------------------------
     beta_r, E_r, Kd_r = get_repertoire_properties(betas, Q0, Es, dE, N_r)
-    print('beta_r = %.1f'%beta_r)
+    print('beta_r = %.1f'%beta_r, 'K_d_r = %.2e'%Kd_r)
 
     ax_Q0.plot(Kds, Q0, alpha = 1, color = 'grey', linewidth = 5, linestyle = '--')
     ax_Q0.plot(Kds, P_min_e(N_r, avg_E, var_E, Es[:-1], dE), linestyle = '--', marker = '',  color = 'black', ms = 2, linewidth = 4)
@@ -122,15 +125,15 @@ for N_r in N_rs:
     
     for i_kappa, kappa in enumerate(kappas):
         print('--------')
-        print('kappa = %.2f...'%kappa)
 
-        fig_QR_all, ax_QR_all = plt.subplots(figsize=(6,3.5), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+        #fig_QR_all, ax_QR_all = plt.subplots(figsize=(6,3.5), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
         fig_QR_all_f, ax_QR_all_f = plt.subplots(figsize=(16*0.66,4), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.12, 'top': 0.96})
 
-        ax_QR_all.plot(Kds, Q0*N_r, alpha = 1, color = 'grey', linewidth = 5, linestyle = '--')
-        ax_QR_all.vlines(Kd_r, Q0[Kds==Kd_r]*N_r, N_r, alpha = 1, color = 'grey', linewidth = 3, linestyle = ':')
+        #ax_QR_all.plot(Kds, Q0*N_r, alpha = 1, color = 'grey', linewidth = 5, linestyle = '--')
+        #ax_QR_all.vlines(Kd_r, Q0[Kds==Kd_r]*N_r, N_r, alpha = 1, color = 'grey', linewidth = 3, linestyle = ':')
         ax_QR_all_f.plot(Kds, Q0*N_r, alpha = 1, color = 'grey', linewidth = 5, linestyle = '--')
         ax_QR_all_f.vlines(Kd_r, Q0[Kds==Kd_r]*N_r, N_r, alpha = 1, color = 'grey', linewidth = 3, linestyle = ':')
+        ax_QR_all_f.vlines(Kd_pr, Q0[Kds==Kd_pr]*N_r, N_r, alpha = 1, color = 'grey', linewidth = 1, linestyle = '-.')
 
         fig_R, ax_R = plt.subplots(figsize=(8,6), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
         fig_QR, ax_QR = plt.subplots(figsize=(8,6), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
@@ -138,6 +141,7 @@ for N_r in N_rs:
         fig_m_bar, ax_m_bar = plt.subplots(figsize=(8,6), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 
         beta_kappa, E_kappa, Kd_kappa = get_kappa_properties(betas, Q0, Es, dE, kappa)
+        print('beta_kappa = %.2f...'%kappa, 'K_kappa = %.2e...'%Kd_kappa)
         delta_t_n = (E_kappa-E_pr)*kappa/lambda_A
         t_n = t_prime + delta_t_n
 
@@ -166,7 +170,7 @@ for N_r in N_rs:
         m_f_expected = np.sum(N_r*QR*dE)
         print('Activated clones expected:%.d'%m_f_expected)
 
-        days = [t_act-2*1.2, t_act-1.2, t_act, t_act+1.2]
+        days = [t_act-2*1.2, t_act-1.2, t_act, t_act+1]
         #days = np.linspace(1, Tf-0.5, 3)
 
 
@@ -180,15 +184,15 @@ for N_r in N_rs:
                 
                 ax_QR.plot(Kds, QR*N_r, color = colors_R[3-i_kappa][i_t], linewidth = 5, linestyle = '-')
                 
-                ax_QR_all.plot(Kds, QR*N_r, color = colors_kappa[3-i_kappa], linewidth = 5, linestyle = '-', label = r'$%d$'%(kappa), alpha = .8)
+                #ax_QR_all.plot(Kds, QR*N_r, color = colors_kappa[3-i_kappa], linewidth = 5, linestyle = '-', label = r'$%d$'%(kappa), alpha = .8)
                 
                 ax_QR_all_f.plot(Kds, QR*N_r, color = colors_kappa[3-i_kappa], linewidth = 5, linestyle = ':', alpha = .6)
 
                 #ax_QR_all.vlines(Kds[QR==np.max(QR)], 1e-9, (Q0*N_r)[QR==np.max(QR)], color = colors_kappa[3-i_kappa], linewidth = 3, linestyle = '--')
                 ax_QR_all_f.vlines(Kds[QR==np.max(QR)], 1e-9, (Q0*N_r)[QR==np.max(QR)], color = colors_kappa[3-i_kappa], linewidth = 4, linestyle = ':', alpha = .6)
                 
-                ax_QR_all.plot(Kds[Kds==Kd_kappa], (Q0*N_r)[Kds==Kd_kappa], markerfacecolor = colors_kappa[3-i_kappa], marker = '*', ms = 22, markeredgecolor='black', alpha = .6)
-                ax_QR_all.plot(Kds[QR==np.max(QR)], (Q0*N_r)[QR==np.max(QR)], markerfacecolor = colors_kappa[3-i_kappa], marker = 'D', ms = 16, markeredgecolor='black', alpha = .6)
+                #ax_QR_all.plot(Kds[Kds==Kd_kappa], (Q0*N_r)[Kds==Kd_kappa], markerfacecolor = colors_kappa[3-i_kappa], marker = '*', ms = 22, markeredgecolor='black', alpha = .6)
+                #ax_QR_all.plot(Kds[QR==np.max(QR)], (Q0*N_r)[QR==np.max(QR)], markerfacecolor = colors_kappa[3-i_kappa], marker = 'D', ms = 16, markeredgecolor='black', alpha = .6)
 
                 ax_QR_all_f.plot(Kds[QR==np.max(QR)], (Q0*N_r)[QR==np.max(QR)], markerfacecolor = colors_kappa[3-i_kappa], marker = 'D', ms = 16, markeredgecolor='black', alpha = .6)
                 ax_QR_all_f.plot(Kds[Kds==Kd_kappa], (Q0*N_r)[Kds==Kd_kappa], markerfacecolor = colors_kappa[3-i_kappa], marker = '*', ms = 22, markeredgecolor='black', alpha = .6)
@@ -240,12 +244,12 @@ for N_r in N_rs:
         fig_m_bar.savefig('../../Figures/_Summary/affinity/L%d/m_bar_kappa-%.1f_Nr-%.0e_'%(L, kappa, N_r)+model+'.pdf')
         plt.close(fig_m_bar)
     
-        my_plot_layout(ax=ax_QR_all, yscale = 'log', xscale = 'log', ticks_labelsize = 38)
-        #ax_QR_all.set_xticks([])
-        ax_QR_all.set_xlim(right = 1e-0, left = 1e-11) #use 1e-3 for other plots
-        ax_QR_all.set_ylim(bottom = 1e-9, top = 1.5*N_r)
-        ax_QR_all.legend(title = r'$p$', title_fontsize = 32, fontsize = 30, loc = 4)
-        fig_QR_all.savefig('../../Figures/_Summary/affinity/L%d/QR_all_kappa-%.1f_Nr-%.0e_'%(L, kappa, N_r)+model+'.pdf')
+        # my_plot_layout(ax=ax_QR_all, yscale = 'log', xscale = 'log', ticks_labelsize = 38)
+        # #ax_QR_all.set_xticks([])
+        # ax_QR_all.set_xlim(right = 1e-0, left = 1e-11) #use 1e-3 for other plots
+        # ax_QR_all.set_ylim(bottom = 1e-9, top = 1.5*N_r)
+        # ax_QR_all.legend(title = r'$p$', title_fontsize = 32, fontsize = 30, loc = 4)
+        # fig_QR_all.savefig('../../Figures/_Summary/affinity/L%d/QR_all_kappa-%.1f_Nr-%.0e_'%(L, kappa, N_r)+model+'.pdf')
 
         my_plot_layout(ax=ax_QR_all_f, yscale = 'log', xscale = 'log', ticks_labelsize = 34)
         #ax_QR_all_f.set_yticks([])
