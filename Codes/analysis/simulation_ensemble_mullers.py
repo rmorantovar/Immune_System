@@ -17,19 +17,20 @@ my_cyan = 'tab:cyan'
 Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/'
 
 #--------------- PARAMETERS ---------------------
-N_ens = 200
-N_r = 2e8
-T0 = 3
-Tf = 10
+N_ens = 500
+N_r = 1e7
+T0 = 0
+Tf = 8
 Tf_sim = 7
 #Tf = 10
 dT = 0.01
 lambda_A = 6
-k_pr = 1
+k_pr = 1/(60*5) #s^-1
+k_pr = k_pr*3600 # hour^-1
 #k_pr = 180 # hour^-1
 k_pr = k_pr*24 #days^-1
 
-kappas = [1.0]
+kappas = [3.0]
 
 antigen_color = my_yellow/256.
 
@@ -49,9 +50,10 @@ colors_kappa = ['limegreen']
 
 lambda_B = lambda_A/2
 k_on = 1e6*24*3600; #(M*days)^-1
-N_c = 1e5
+N_c = 1e5*1000
 #N_c = 1e5
-E_ms = -27.63
+#E_ms = -27.63
+E_ms = -25
 C = 3e4
 
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
@@ -62,7 +64,8 @@ growth_models = [0]
 linear = 0
 
 
-antigen = 'EYTACNSEYPNTTKCGRWYCGRYPN'
+antigen = 'TACNSEYPNTTRAKCGRWYC' #L=20
+
 L=len(antigen)
 print('--------')
 print('L=%d'%(L))
@@ -105,16 +108,16 @@ for i_kappa, kappa in enumerate((kappas)):
     m_bar_theory = np.array([np.sum(N_r*calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*(t))/N_A, Es, kappa, lambda_A, N_c, dE)[3]*dE) for t in time])
     t_act_theory = time[m_bar_theory>1][0]
     #-----------------Loading data----------------------------
-    parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
+    parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 3.0, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
     #data = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/energies_ensemble.txt', sep = '\t', header=None)
-    data = get_data_ensemble(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
+    data = get_data_ensemble(folder_path = Text_files_path + 'Dynamics/Ensemble/L%d/'%L+parameters_path)
 
     #activation_times_total = np.array([])
     biggest_clones = []
     best_clones = []
     for i_ens in tqdm(np.arange(N_ens)):
 
-        fig_muller, ax_muller = plt.subplots(figsize=(4.5,2), linewidth = 0, gridspec_kw={'left':0.005, 'right':.995, 'bottom':.02, 'top': 0.98}, dpi = 700, edgecolor = 'black')
+        fig_muller, ax_muller = plt.subplots(figsize=(4.5,3), linewidth = 0, gridspec_kw={'left':0.005, 'right':.995, 'bottom':.02, 'top': 0.98}, dpi = 700, edgecolor = 'black')
         ax_muller.spines["top"].set_linewidth(3)
         ax_muller.spines["left"].set_linewidth(3)
         ax_muller.spines["right"].set_linewidth(3)
@@ -137,7 +140,7 @@ for i_kappa, kappa in enumerate((kappas)):
         else:
             lim_size = 2
         clone_sizes_C, activation_times_C, energies_C, filter_C, n_C = apply_filter_C(clone_sizes, activation_times, energies, lim_size)
-    
+        sort_inds = activation_times_C.argsort()
         #-----------------------------Activation time------------------------
         t_act = get_t_act(time, N_r, Q0, k_on, k_pr, lambda_A, Es, dE, kappa, N_c)
 
@@ -160,23 +163,23 @@ for i_kappa, kappa in enumerate((kappas)):
         for c in np.flip(range(len(clone_sizes_C[:,0]))):
             color_c = greys(int(50*(1-abs((energies_C[c]-min_E)/delta_E))))
             ax_muller.stackplot(time, [(bcell_freqs[c, -1] - bcell_freqs[c, :])/2 + np.ones_like(bcell_freqs[0, :])*np.sum(bcell_freqs[:c, -1]), bcell_freqs[c, :], (bcell_freqs[c, -1] - bcell_freqs[c, :])/2], colors = ['white', color_c, 'white']);
-            if bcell_freqs[c, -1]>(0.10):
-                ax_muller.scatter(activation_times_C[c], (bcell_freqs[c, -1] - bcell_freqs[c, 0])/2 + np.sum(bcell_freqs[:c, -1]), marker = 'D', edgecolor='black', linewidth=1, facecolor = colors_kappa[i_kappa], s = 60)
+            if activation_times_C[c] in activation_times_C[sort_inds[:3]]:
+                ax_muller.scatter(activation_times_C[c], (bcell_freqs[c, -1] - bcell_freqs[c, 0])/2 + np.sum(bcell_freqs[:c, -1]), marker = 'D', edgecolor='black', linewidth=1, facecolor = 'white', s = 60, zorder = 20)
 
         cumsum_freqs = np.cumsum(bcell_freqs, axis = 0)
 
         # if(i_kappa!=4):
         #   for c in range(int(len(clone_sizes_C[:,0]))):
         #       ax_muller.plot(time, cumsum_freqs[c, :], linewidth = .00001*kappa, color = 'black')
-        ax_muller.vlines(t_act_theory, 0, 1, color = colors_kappa[i_kappa], linewidth = 2, alpha = .8, linestyle = '--')
-        ax_muller.vlines(t_act_theory+1.2, 0, 1, color = colors_kappa[i_kappa], linewidth = 2, alpha = .8, linestyle = ':')
+        ax_muller.vlines(t_act_theory, 0, 1, color = 'black', linewidth = 2, alpha = .8, linestyle = '--')
+        ax_muller.vlines(t_act_theory+1.2, 0, 1, color = 'black', linewidth = 2, alpha = .8, linestyle = ':')
         my_plot_layout(ax = ax_muller, ticks_labelsize=38, yscale = 'linear')
         ax_muller.set_yticks([])
         #ax_muller.set_xticks(np.arange(Tf))
         ax_muller.set_xticks([])
         ax_muller.set_xlim(T0, Tf)
         ax_muller.set_ylim(0, 1)
-        fig_muller.savefig('../../Figures/1_Dynamics/Ensemble/Mullers/B_cell_clones_N_r%.e_kappa-%.2f_%d_'%(N_r,kappa, i_ens)+energy_model+'.pdf', edgecolor=fig_muller.get_edgecolor())
+        fig_muller.savefig('../../Figures/1_Dynamics/Ensemble/L%d/Mullers/B_cell_clones_N_r%.e_kappa-%.2f_%d_'%(L,N_r,kappa, i_ens)+energy_model+'.pdf', edgecolor=fig_muller.get_edgecolor())
         plt.close(fig_muller)
 
 

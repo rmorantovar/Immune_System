@@ -11,7 +11,7 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 N_ens = 1
 N_r = 1e8
 T0 = 0
-Tf = 7
+Tf = 8
 Tf_sim = 7
 #Tf = 10
 dT = 0.005
@@ -76,6 +76,7 @@ linear = 0
 #antigen = 'EYTACNSEYPNTTKCGRWYCGRYPN'
 #antigen = 'TACNSEYPNTTKCGRWYC'
 antigen = 'TACNSEYPNTTRAKCGRWYC' #L=20
+
 L=len(antigen)
 print('--------')
 print('L=%d'%(L))

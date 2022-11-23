@@ -55,7 +55,7 @@ antigen_color = my_yellow
 
 color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_brown, my_blue2, my_yellow, my_purple, my_green2])#
 color_list = np.array([my_red, my_green, my_blue2, my_gold, my_purple])
-color_list = np.array([my_green])
+color_list = np.array([my_red])
 
 colors_kappa = []
 for i in range(len(color_list)):
@@ -122,7 +122,7 @@ for i_kappa, kappa in enumerate(kappas):
 		#-----------------Loading data----------------------------
 		parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
 		#data = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/energies_ensemble.txt', sep = '\t', header=None)
-		data, return_data_type = get_data_ensemble_K_elite(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
+		data, return_data_type = get_data_ensemble_K_elite(folder_path = Text_files_path + 'Dynamics/Ensemble/L%d/'%L+parameters_path)
 		
 		if(return_data_type):
 			K_final_all = data[0]
@@ -157,7 +157,7 @@ for i_kappa, kappa in enumerate(kappas):
 						K_final_all.append(K_i_all[-1])
 						Counter_all+=1
 
-			f = open(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/processed_data_K_elite.pkl', 'wb')
+			f = open(Text_files_path + 'Dynamics/Ensemble/L%d/'%L+parameters_path+'/processed_data_K_elite.pkl', 'wb')
 			pickle.dump([K_final_all, Counter_all], f, pickle.HIGHEST_PROTOCOL)	
 
 	counter_total+=Counter_all
@@ -167,11 +167,12 @@ for i_kappa, kappa in enumerate(kappas):
 	#K_data_all = np.histogram(np.log10(np.array(K_final_all)), bins = np.linspace(10.5, 14, 34), density = False)
 	K_data_all = np.histogram(np.log10(np.array(K_final_all)), bins = 'auto', density = True)
 	
-	ax_K_distribution.plot(10**(K_data_all[1][:-1]), K_data_all[0]/Counter_all, color = 'limegreen', linestyle='', marker = 'D', linewidth = 2, ms = 5, label = r'$p=%.1f$'%(kappa))
+	ax_K_distribution.plot(10**(K_data_all[1][:-1]), K_data_all[0]/Counter_all, color = 'orange', linestyle='', marker = 'D', linewidth = 2, ms = 5, label = r'$p=%.1f$'%(kappa))
 
-	ax_K_distribution2.plot(10**(K_data_all[1][:-1]), 1-np.cumsum(K_data_all[0]*np.diff(K_data_all[1])/Counter_all), color = 'limegreen', linestyle='-', marker = '', linewidth = 5, ms = 8, label = r'$p=%.1f$'%(kappa), zorder = 20)
+	ax_K_distribution2.plot(10**(K_data_all[1][:-1]), 1-np.cumsum(K_data_all[0]*np.diff(K_data_all[1])/Counter_all), color = 'orange', linestyle='-', marker = '', linewidth = 5, ms = 8, label = r'$p=%.1f$'%(kappa), zorder = 20)
 	
-	ax_K_distribution2.vlines(8e11, 1e-5, 1, color = my_green, linestyle=':', linewidth = 4)		
+	ax_K_distribution2.vlines(8e11, 1e-5, 1, color = my_red, linestyle=':', linewidth = 4)		
+
 print(counter_total)
 
 # Printing K from Gumbel
@@ -199,7 +200,7 @@ ax_K_distribution.set_xlim(left = 5*10**(10), right = 10**(14.5))
 #ax_K_distribution.set_xticks([])
 #ax_K_distribution.set_yticks([])
 #ax_K_distribution.set_yticklabels([1, 0.1, 0.01])
-fig_K_distribution.savefig('../../Figures/1_Dynamics/Ensemble/K_elite_P_'+energy_model+'_p-%.1f.pdf'%(kappa))
+fig_K_distribution.savefig('../../Figures/1_Dynamics/Ensemble/L%d/K_elite_P_'%L+energy_model+'_p-%.1f.pdf'%(kappa))
 
 my_plot_layout(ax = ax_K_distribution2, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_K_distribution2.legend(fontsize = 28, title_fontsize = 30, loc = 0)
@@ -208,7 +209,7 @@ ax_K_distribution2.set_xlim(left = 6*10**(11), right = 6*10**(13))
 #ax_K_distribution2.set_xticks([])
 #ax_K_distribution2.set_yticks([])
 #ax_K_distribution2.set_yticklabels([1, 0.1, 0.01])
-fig_K_distribution2.savefig('../../Figures/1_Dynamics/Ensemble/K_elite_F_'+energy_model+'_p-%.1f.pdf'%(kappa))
+fig_K_distribution2.savefig('../../Figures/1_Dynamics/Ensemble/L%d/K_elite_F_'%L+energy_model+'_p-%.1f.pdf'%(kappa))
 
 
 

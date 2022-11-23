@@ -270,6 +270,8 @@ ax_exponents_2.plot(kappas_theory, exponent_theory2, color = 'navy', linestyle =
 ax_exponents_2.plot(kappas, exponent_sim2, color = 'navy', linestyle = '', marker = 'D', linewidth = 3, ms = 14, alpha = 1)
 ax_exponents_2.errorbar(x=kappas, y=exponent_sim2, yerr = 1.8*np.sqrt(pcov[1,1]), ls = 'none', color = 'navy', alpha = .6)
 
+ax_exponents.vlines(beta_r, -1, -.45, lw = 1, ls = '--', color = 'black')
+
 my_plot_layout(ax = ax_exponents, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 #ax_exponents.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
 #ax_exponents.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
