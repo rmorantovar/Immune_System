@@ -188,8 +188,10 @@ for i_kappa, kappa in enumerate((kappas)):
     fit_N = ranking**(-kappa*lambda_B/(lambda_A*beta_act))
     fit_K = ranking**(1/(beta_act))
 
-    e_array = np.logspace(0, .8) 
+    e_array = np.logspace(0, .75) 
+    x_array = np.logspace(-1.4, 0)
     fit = e_array**(-kappa*lambda_B/(lambda_A))
+    #fit = x_array**(-lambda_A/(kappa*lambda_B))
 
     if(kappa>beta_r):
         ax_ranking.plot(final_Nb, final_E, color = colors_kappa[i_kappa], linewidth = 0, marker = '*', alpha = 1, ms = 12)
