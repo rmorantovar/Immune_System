@@ -41,7 +41,7 @@ transparency_n = [1]
 
 color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_blue2, my_yellow, my_purple, my_green2])#
 #color_list = np.array([(228,75,41), (125,165,38), (76,109,166), (215,139,45)])
-color_list = np.array([my_brown, my_green, my_red, my_blue2, my_gold])
+color_list = np.array([my_blue2, my_green, my_brown, my_red, my_gold])
 
 #colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
 #colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
@@ -161,7 +161,7 @@ for N_r in N_rs:
         m_bar = np.array([np.sum(N_r*calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*(t))/N_A, Es, kappa, lambda_A, N_c, dE)[3]*dE) for t in time]) 
         m_bar_approx = ((k_on*M_r)/(N_A*lambda_A))*(np.exp(lambda_A*time))
 
-        ax_m_bar.plot(time, m_bar, linewidth = 4, linestyle = '-', color = colors_kappa[3-i_kappa])
+        ax_m_bar.plot(time, m_bar, linewidth = 4, linestyle = '-', color = colors_kappa[4-i_kappa])
         ax_m_bar.plot(time, m_bar_approx, linewidth = 3, linestyle = '--', color = 'black')
         ax_m_bar.hlines(1, T0, Tf, color = 'grey', linestyle = ':')
         t_act = time[m_bar>1][0]
@@ -180,46 +180,46 @@ for N_r in N_rs:
             #----------------------------------------------------------------
             #--------------------------QR_all(E, t)---------------------------
             if i_t==2:
-                ax_R.plot(Kds, R, color = colors_R[3-i_kappa][i_t], linewidth = 5, linestyle = '-')
+                ax_R.plot(Kds, R, color = colors_R[4-i_kappa][i_t], linewidth = 5, linestyle = '-')
                 
-                ax_QR.plot(Kds, QR*N_r, color = colors_R[3-i_kappa][i_t], linewidth = 5, linestyle = '-')
+                ax_QR.plot(Kds, QR*N_r, color = colors_R[4-i_kappa][i_t], linewidth = 5, linestyle = '-')
                 
-                #ax_QR_all.plot(Kds, QR*N_r, color = colors_kappa[3-i_kappa], linewidth = 5, linestyle = '-', label = r'$%d$'%(kappa), alpha = .8)
+                #ax_QR_all.plot(Kds, QR*N_r, color = colors_kappa[4-i_kappa], linewidth = 5, linestyle = '-', label = r'$%d$'%(kappa), alpha = .8)
                 
-                ax_QR_all_f.plot(Kds, QR*N_r, color = colors_kappa[3-i_kappa], linewidth = 5, linestyle = ':', alpha = .6)
+                ax_QR_all_f.plot(Kds, QR*N_r, color = colors_kappa[4-i_kappa], linewidth = 5, linestyle = ':', alpha = .6)
 
-                #ax_QR_all.vlines(Kds[QR==np.max(QR)], 1e-9, (Q0*N_r)[QR==np.max(QR)], color = colors_kappa[3-i_kappa], linewidth = 3, linestyle = '--')
-                ax_QR_all_f.vlines(Kds[QR==np.max(QR)], 1e-9, (Q0*N_r)[QR==np.max(QR)], color = colors_kappa[3-i_kappa], linewidth = 4, linestyle = ':', alpha = .6)
+                #ax_QR_all.vlines(Kds[QR==np.max(QR)], 1e-9, (Q0*N_r)[QR==np.max(QR)], color = colors_kappa[4-i_kappa], linewidth = 3, linestyle = '--')
+                ax_QR_all_f.vlines(Kds[QR==np.max(QR)], 1e-9, (Q0*N_r)[QR==np.max(QR)], color = colors_kappa[4-i_kappa], linewidth = 4, linestyle = ':', alpha = .6)
                 
-                #ax_QR_all.plot(Kds[Kds==Kd_kappa], (Q0*N_r)[Kds==Kd_kappa], markerfacecolor = colors_kappa[3-i_kappa], marker = '*', ms = 22, markeredgecolor='black', alpha = .6)
-                #ax_QR_all.plot(Kds[QR==np.max(QR)], (Q0*N_r)[QR==np.max(QR)], markerfacecolor = colors_kappa[3-i_kappa], marker = 'D', ms = 16, markeredgecolor='black', alpha = .6)
+                #ax_QR_all.plot(Kds[Kds==Kd_kappa], (Q0*N_r)[Kds==Kd_kappa], markerfacecolor = colors_kappa[4-i_kappa], marker = '*', ms = 22, markeredgecolor='black', alpha = .6)
+                #ax_QR_all.plot(Kds[QR==np.max(QR)], (Q0*N_r)[QR==np.max(QR)], markerfacecolor = colors_kappa[4-i_kappa], marker = 'D', ms = 16, markeredgecolor='black', alpha = .6)
 
-                ax_QR_all_f.plot(Kds[QR==np.max(QR)], (Q0*N_r)[QR==np.max(QR)], markerfacecolor = colors_kappa[3-i_kappa], marker = 'D', ms = 16, markeredgecolor='black', alpha = .6)
-                ax_QR_all_f.plot(Kds[Kds==Kd_kappa], (Q0*N_r)[Kds==Kd_kappa], markerfacecolor = colors_kappa[3-i_kappa], marker = '*', ms = 22, markeredgecolor='black', alpha = .6)
+                ax_QR_all_f.plot(Kds[QR==np.max(QR)], (Q0*N_r)[QR==np.max(QR)], markerfacecolor = colors_kappa[4-i_kappa], marker = 'D', ms = 16, markeredgecolor='black', alpha = .6)
+                ax_QR_all_f.plot(Kds[Kds==Kd_kappa], (Q0*N_r)[Kds==Kd_kappa], markerfacecolor = colors_kappa[4-i_kappa], marker = '*', ms = 22, markeredgecolor='black', alpha = .6)
 
             if i_t==3:
 
-                ax_R.plot(Kds, R, color = colors_R[3-i_kappa][i_t], linewidth = 5, linestyle = '-', alpha = .6)
-                ax_QR.plot(Kds, QR*N_r, color = colors_R[3-i_kappa][i_t], linewidth = 5, linestyle = '-', alpha = .6)
+                ax_R.plot(Kds, R, color = colors_R[4-i_kappa][i_t], linewidth = 5, linestyle = '-', alpha = .6)
+                ax_QR.plot(Kds, QR*N_r, color = colors_R[4-i_kappa][i_t], linewidth = 5, linestyle = '-', alpha = .6)
 
-                ax_QR_all_f.plot(Kds, QR*N_r, color = colors_kappa[3-i_kappa], linewidth = 5, linestyle = '-', alpha = .8)
-                ax_QR_all_f.plot(Kds[QR==np.max(QR)], (Q0*N_r)[QR==np.max(QR)], markerfacecolor = colors_kappa[3-i_kappa], marker = 'o', ms = 16, alpha = .6, markeredgecolor='black')
+                ax_QR_all_f.plot(Kds, QR*N_r, color = colors_kappa[4-i_kappa], linewidth = 5, linestyle = '-', alpha = .8)
+                ax_QR_all_f.plot(Kds[QR==np.max(QR)], (Q0*N_r)[QR==np.max(QR)], markerfacecolor = colors_kappa[4-i_kappa], marker = 'o', ms = 16, alpha = .6, markeredgecolor='black')
                 #if kappa!=1:
-                ax_QR_all_f.vlines(Kds[QR==np.max(QR)], 1e-9, (Q0*N_r)[QR==np.max(QR)], color = colors_kappa[3-i_kappa], linewidth = 4, linestyle = '-', alpha = .6)
+                ax_QR_all_f.vlines(Kds[QR==np.max(QR)], 1e-9, (Q0*N_r)[QR==np.max(QR)], color = colors_kappa[4-i_kappa], linewidth = 4, linestyle = '-', alpha = .6)
             
 
                 
             else:
                 #--------------------------R(E, t) and QR(E, t)---------------------------
-                ax_R.plot(Kds, R, alpha = transparency_n[0], color = colors_R[3-i_kappa][i_t], linewidth = 4, linestyle = '--')
-                ax_QR.plot(Kds, QR*N_r, alpha = transparency_n[0], color = colors_R[3-i_kappa][i_t], linewidth = 4, linestyle = '--')
+                ax_R.plot(Kds, R, alpha = transparency_n[0], color = colors_R[4-i_kappa][i_t], linewidth = 4, linestyle = '--')
+                ax_QR.plot(Kds, QR*N_r, alpha = transparency_n[0], color = colors_R[4-i_kappa][i_t], linewidth = 4, linestyle = '--')
                 #-------FOR Q0--------- 
                 #ax_QR.vlines(Kd_r, 0, .5, color = 'black', linestyle = 'dashed')
                 #ax_QR.vlines([Kd_kappa, Kd_1], ax_QR.get_ylim()[0], N_r*Q0[Kds<np.exp(E_n)][-1], color = 'grey', linestyle = 'dotted', linewidth = 4)       
                 #ax_Q_act.hlines(N_r*Q0[Ks<np.exp(E_r)][-1], ax_Q_act.get_xlim()[0], np.exp(E_r), alpha = 1, color = 'black', linestyle = ':')
 
         
-        ax_QR2.plot(Kds, QR/np.sum(QR*dE), alpha = transparency_n[0], color = colors_R[3-i_kappa][i_t], linewidth = 5, linestyle = '-')
+        ax_QR2.plot(Kds, QR/np.sum(QR*dE), alpha = transparency_n[0], color = colors_R[4-i_kappa][i_t], linewidth = 5, linestyle = '-')
 
         my_plot_layout(ax=ax_R, yscale = 'log', xscale = 'log', ticks_labelsize = 38)
         ax_R.set_xticks([])

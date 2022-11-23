@@ -7,24 +7,25 @@ warnings.filterwarnings("ignore")
 Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/'
 
 #--------------- PARAMETERS ---------------------
-N_ens = 200
-N_r = 2e8
+N_ens = 500
+N_r = 1e8
 transparencies_p = [.8, 1, .8, .8, .8]
 
-T0 = 3
-Tf = 12
+T0 = 0
+Tf = 10
 Tf_sim = 7
 #Tf = 10
 dT = 0.05
 lambda_A = 6
-k_pr = 1
-#k_pr = 180 # hour^-1
+k_pr = 1/(60*5) #s^-1
+k_pr = k_pr*3600 # hour^-1
 k_pr = k_pr*24 #days^-1
 lambda_B = lambda_A/2
 k_on = 1e6*24*3600; #(M*days)^-1
-N_c = 1e5
+N_c = 1e5*1000
 #N_c = 1e5
-E_ms = -27.63
+#E_ms = -27.63
+E_ms = -25
 C = 3e4
 AA = 1
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
@@ -57,7 +58,7 @@ antigen_color = my_yellow/256.
 transparency_n = [1]
 
 color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_brown, my_blue2, my_yellow, my_purple, my_green2])#
-color_list = np.array([my_red, my_blue2, my_green, my_gold, my_brown])
+color_list = np.array([my_blue2, my_green, my_red, my_gold])
 #color_list = np.array([my_green, my_blue2, my_gold])
 
 colors_kappa = []
@@ -69,12 +70,10 @@ colors_R = []
 for i in range(len(kappas)):
     colors_R.append([colors_kappa[i], colors_kappa[i], colors_kappa[i], colors_kappa[i]])
 
-# antigen = 'CMFILVWYAGTSQNEDHRKPFMRTP'
-# antigen = 'FMLFMAVFVMTSWYC'
-# antigen = 'FTSENAYCGR'
-# antigen = 'TACNSEYPNTTK'
-antigen = 'EYTACNSEYPNTTKCGRWYCGRYPN'
-#antigen = 'TACNSEYPNTTKCGRWYC'
+#antigen = 'EYTACNSEYPNTTKCGRWYCGRYPN' #L=25
+antigen = 'TACNSEYPNTTRAKCGRWYC' #L=20
+#antigen = 'TACNSEYPNTTKCGRWYC' #L=18
+
 L=len(antigen)
 print('--------')
 print('L=%d'%(L))
@@ -122,10 +121,10 @@ for i_kappa, kappa in enumerate(kappas):
 	if kappa==1:
 		t_act_1 = t_act_theory
 	#-----------------Loading data----------------------------
-	parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
+	parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 3.0, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
 	#data = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/energies_ensemble.txt', sep = '\t', header=None)
 	#data = get_data_ensemble(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
-	data, return_data_type = get_data_ensemble_K(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
+	data, return_data_type = get_data_ensemble_K(folder_path = Text_files_path + 'Dynamics/Ensemble/L%d/'%L+parameters_path)
 
 	if(return_data_type):
 		K = data[0]
@@ -164,7 +163,7 @@ for i_kappa, kappa in enumerate(kappas):
 				#if(i_ens%1==0):
 				#	ax_K.plot(time, K_i, color = colors_kappa[i_kappa], alpha = .1, linewidth = 1)
 
-		f = open(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/processed_data_K.pkl', 'wb')
+		f = open(Text_files_path + 'Dynamics/Ensemble/L%d/'%L+parameters_path+'/processed_data_K.pkl', 'wb')
 		pickle.dump([K, Counter], f, pickle.HIGHEST_PROTOCOL)	
 
 	K = (K/Counter)
@@ -206,9 +205,10 @@ print('--------')
 # 		normalization_theory = 1
 # 	max_potency_theory[kappa] = K - normalization_theory
 
-
-ax_K.plot(time, ((1.08*C*np.exp(1.02*lambda_B*(time-t_act_1+.45)**(0.695)))/(1.08*C+(np.exp(1.02*lambda_B*(time-t_act_1+.45)**(0.695))-1)))/Kd_r_renorm/(C/Kd_r_renorm), linewidth = 5, color = 'black', linestyle = 'dotted', zorder = -20)
-
+a = .065
+b = .72
+c = 1.14
+ax_K.plot(time, ((1.08*C*np.exp(c*lambda_B*(time-t_act_1+a)**(b)))/(1.08*C+(np.exp(c*lambda_B*(time-t_act_1+a)**(b))-1)))/Kd_r_renorm/(C/Kd_r_renorm), linewidth = 5, color = 'black', linestyle = 'dotted', zorder = -20)
 
 print(Kds[betas[:-1]>1][-1])
 t_growth = (1/lambda_B)*np.log(C/50)
@@ -218,11 +218,11 @@ t_growth = (1/lambda_B)*np.log(C/50)
 
 my_plot_layout(ax = ax_K, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_K.legend(fontsize = 28, title_fontsize = 30, title = r'$p$', loc = 4)
-ax_K.set_xlim(left = 4.5, right = Tf)
+ax_K.set_xlim(left = 2, right = Tf-2)
 ax_K.set_ylim(bottom = 1e-3, top = 2e0)
 #ax_K.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_K.set_yticklabels([1, 0.1, 0.01])
-fig_K.savefig('../../Figures/1_Dynamics/Ensemble/K_'+energy_model+'.pdf')
+fig_K.savefig('../../Figures/1_Dynamics/Ensemble/L%d/K_'%L+energy_model+'.pdf')
 
 
 

@@ -8,15 +8,15 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 
 #--------------- PARAMETERS ---------------------
 N_ens = 500
-N_r = 2e8
-T0 = 3
-Tf = 12
+N_r = 1e8
+T0 = 0
+Tf = 8
 Tf_sim = 6.5
 #Tf = 10
 dT = 0.05
 lambda_A = 6
-k_pr = 1
-#k_pr = 180 # hour^-1
+k_pr = 1/(60*5) #s^-1
+k_pr = k_pr*3600 # hour^-1
 k_pr = k_pr*24 #days^-1
 
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
@@ -42,7 +42,7 @@ transparency_n = [1]
 
 color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_brown, my_blue2, my_yellow, my_purple, my_green2])#
 #color_list = np.array([(228,75,41), (125,165,38), (76,109,166), (215,139,45)])
-color_list = np.array([my_red, my_blue2, my_green, my_gold, my_brown])
+color_list = np.array([my_blue2, my_green, my_red, my_gold])
 
 #colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
 #colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
@@ -57,9 +57,10 @@ for i in range(len(kappas)):
 
 lambda_B = lambda_A/2
 k_on = 1e6*24*3600; #(M*days)^-1
-N_c = 1e5
+N_c = 1e5*1000
 #N_c = 1e5
-E_ms = -27.63
+#E_ms = -27.63
+E_ms = -25
 C = 3e4
 
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
@@ -69,12 +70,10 @@ models_name = ['exponential']#, 'linear',]
 growth_models = [0]
 linear = 0
 
-# antigen = 'CMFILVWYAGTSQNEDHRKPFMRTP'
-# antigen = 'FMLFMAVFVMTSWYC'
-# antigen = 'FTSENAYCGR'
-# antigen = 'TACNSEYPNTTK'
-antigen = 'EYTACNSEYPNTTKCGRWYCGRYPN'
-#antigen = 'TACNSEYPNTTKCGRWYC'
+#antigen = 'EYTACNSEYPNTTKCGRWYCGRYPN' #L=25
+antigen = 'TACNSEYPNTTRAKCGRWYC' #L=20
+#antigen = 'TACNSEYPNTTKCGRWYC' #L=18'
+
 L=len(antigen)
 print('--------')
 print('L=%d'%(L))
@@ -118,10 +117,10 @@ for i_kappa, kappa in enumerate((kappas)):
     beta_act = np.min([beta_r, beta_kappa])
 
     #-----------------Loading data----------------------------
-    parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
+    parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 3.0, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
     #data = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/energies_ensemble.txt', sep = '\t', header=None)
     #data = get_data_ensemble(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
-    data, return_data_type = get_data_ensemble_ranking(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
+    data, return_data_type = get_data_ensemble_ranking(folder_path = Text_files_path + 'Dynamics/Ensemble/L%d/'%L+parameters_path)
     n_first_clones = 50
 
     if(return_data_type):
@@ -175,7 +174,7 @@ for i_kappa, kappa in enumerate((kappas)):
                     trajectories = np.append(trajectories, sorted_clones)
                     trajectories_rank = np.append(trajectories_rank, max_rank_i)
 
-        f = open(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/processed_data_ranking.pkl', 'wb')
+        f = open(Text_files_path + 'Dynamics/Ensemble/L%d/'%L+parameters_path+'/processed_data_ranking.pkl', 'wb')
         pickle.dump([final_Nb, counts_final_Nb, trajectories, trajectories_rank], f, pickle.HIGHEST_PROTOCOL) 
     
     counter = 0
@@ -206,7 +205,7 @@ for i_kappa, kappa in enumerate((kappas)):
     ax_ranking_i.set_ylim(bottom = 2e-2)
     #ax_ranking_i.set_yticks([1, 0.1, 0.01, 0.001])
     #ax_ranking_i.set_yticklabels([1, 0.1, 0.01])
-    fig_ranking_i.savefig('../../Figures/1_Dynamics/Ensemble/Ranking_p-%.2f'%(kappa)+'_'+energy_model+'.pdf')
+    fig_ranking_i.savefig('../../Figures/1_Dynamics/Ensemble/L%d/Ranking_p-%.2f'%(L, kappa)+'_'+energy_model+'.pdf')
 
 kappas_theory = np.linspace(1, 4.1, 40)
 exponent = []
@@ -224,7 +223,7 @@ ax_ranking.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
 ax_ranking.set_ylim(bottom = 2e-2)
 #ax_ranking.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_ranking.set_yticklabels([1, 0.1, 0.01])
-fig_ranking.savefig('../../Figures/1_Dynamics/Ensemble/Ranking_'+energy_model+'.pdf')
+fig_ranking.savefig('../../Figures/1_Dynamics/Ensemble/L%d/Ranking_'%L+energy_model+'.pdf')
 
 my_plot_layout(ax = ax_exponents, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 #ax_exponents.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
@@ -232,7 +231,7 @@ my_plot_layout(ax = ax_exponents, xscale='linear', yscale= 'linear', ticks_label
 #ax_exponents.set_ylim(bottom = 2e-2)
 #ax_exponents.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_exponents.set_yticklabels([1, 0.1, 0.01])
-fig_exponents.savefig('../../Figures/1_Dynamics/Ensemble/Exponent_'+energy_model+'.png')
+fig_exponents.savefig('../../Figures/1_Dynamics/Ensemble/L%d/Exponent_'%L+energy_model+'.png')
 
 print('----END-----')
 

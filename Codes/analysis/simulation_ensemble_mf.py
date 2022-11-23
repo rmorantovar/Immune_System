@@ -8,25 +8,26 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 
 #--------------- PARAMETERS ---------------------
 N_ens = 500
-N_enss = [N_ens, N_ens, N_ens+1, N_ens, N_ens]
+N_enss = [N_ens, N_ens, N_ens, N_ens, N_ens]
 
-N_r = 2e8
+N_r = 1e8
 transparencies_p = [.8, 1, .8, .8, .8]
 
-T0 = 3
-Tf = 12
+T0 = 0
+Tf = 10
 Tf_sim = 7
 #Tf = 10
 dT = 0.05
 lambda_A = 6
-k_pr = 1
-#k_pr = 180 # hour^-1
+k_pr = 1/(60*5) #s^-1
+k_pr = k_pr*3600 # hour^-1
 k_pr = k_pr*24 #days^-1
 lambda_B = lambda_A/2
 k_on = 1e6*24*3600; #(M*days)^-1
-N_c = 1e5
+N_c = 1e5*1000
 #N_c = 1e5
-E_ms = -27.63
+#E_ms = -27.63
+E_ms = -25
 C = 3e4
 AA = 1
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
@@ -39,7 +40,7 @@ linear = 0
 
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
-kappas = [1, 2, 2.5, 3, 4]#, 5]
+kappas = [1, 2, 3, 4]#, 5]
 #kappas = [3]
 
 my_red = np.array((228,75,41))/256.
@@ -59,7 +60,7 @@ antigen_color = my_yellow/256.
 transparency_n = [1]
 
 color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_brown, my_blue2, my_yellow, my_purple, my_green2])#
-color_list = np.array([my_red, my_blue2, my_green, my_gold, my_brown])
+color_list = np.array([my_blue2, my_green, my_brown, my_red, my_gold])
 #color_list = np.array([my_green, my_blue2, my_gold])
 
 colors_kappa = []
@@ -71,12 +72,10 @@ colors_R = []
 for i in range(len(kappas)):
     colors_R.append([colors_kappa[i], colors_kappa[i], colors_kappa[i], colors_kappa[i]])
 
-# antigen = 'CMFILVWYAGTSQNEDHRKPFMRTP'
-# antigen = 'FMLFMAVFVMTSWYC'
-# antigen = 'FTSENAYCGR'
-# antigen = 'TACNSEYPNTTK'
-antigen = 'EYTACNSEYPNTTKCGRWYCGRYPN'
-#antigen = 'TACNSEYPNTTKCGRWYC'
+#antigen = 'EYTACNSEYPNTTKCGRWYCGRYPN' #L=25
+antigen = 'TACNSEYPNTTRAKCGRWYC' #L=20
+#antigen = 'TACNSEYPNTTKCGRWYC' #L=18'
+
 L=len(antigen)
 print('--------')
 print('L=%d'%(L))
@@ -127,10 +126,10 @@ for i_kappa, kappa in enumerate(kappas):
 	if kappa==1:
 		t_act_1 = t_act_theory
 	#-----------------Loading data----------------------------
-	parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
+	parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 3.0, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
 	#data = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/energies_ensemble.txt', sep = '\t', header=None)
 	#data = get_data_ensemble(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
-	data, return_data_type = get_data_ensemble_K_mf(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
+	data, return_data_type = get_data_ensemble_K_mf(folder_path = Text_files_path + 'Dynamics/Ensemble/L%d/'%L+parameters_path)
 
 	if(return_data_type):
 		K_final = data[0]
@@ -165,7 +164,7 @@ for i_kappa, kappa in enumerate(kappas):
 				#if(i_ens%1==0):
 				#	ax_K.plot(time, K_i, color = colors_kappa[i_kappa], alpha = .1, linewidth = 1)
 
-		f = open(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/processed_data_K_mf.pkl', 'wb')
+		f = open(Text_files_path + 'Dynamics/Ensemble/L%d/'%L+parameters_path+'/processed_data_K_mf.pkl', 'wb')
 		pickle.dump([K_final, Counter], f, pickle.HIGHEST_PROTOCOL)	
 
 
@@ -192,15 +191,16 @@ for i_kappa, kappa in enumerate(kappas):
 	max_potency_simulations[kappa] = np.mean(np.array(K_final)/(C/Kd_r_renorm))
 	max_potency_simulations_std[kappa] = np.sqrt(np.var((np.array(K_final)/(C/Kd_r_renorm))))
 
+ax_mf.vlines(beta_r, -3.5, 1, ls = '--', lw = 0.8, color = 'k')
 ax_mf.plot(kappas, np.log10(np.array(list(max_potency_simulations.values()))), color = my_purple2, linestyle = '', marker = 'D', linewidth = 3, label = 'Total', ms = 10, alpha = 1)
-ax_mf.errorbar(x=kappas, y=np.log10(np.array(list(max_potency_simulations.values()))), yerr = 1.8*np.log10(np.array(list(max_potency_simulations_std.values()))), ls = 'none', color = my_purple2, linewidth = 2, alpha = .8)
+#ax_mf.errorbar(x=kappas, y=np.log10(np.array(list(max_potency_simulations.values()))), yerr = 1.8*np.log10(np.array(list(max_potency_simulations_std.values()))), ls = 'none', color = my_purple2, linewidth = 2, alpha = .8)
 
 #-------------------------# 
 print('--------')
 print('--- Processing largest clone ---')
 print('--------')
 N_ens = 500
-N_enss = [N_ens, N_ens, N_ens+1, N_ens, N_ens]
+N_enss = [N_ens, N_ens, N_ens, N_ens, N_ens]
 max_potency_simulations2 = dict()
 max_potency_simulations_std2 = dict()
 max_potency_theory2 = dict()
@@ -215,10 +215,10 @@ for i_kappa, kappa in enumerate(kappas):
 	beta_act = np.min([beta_r, beta_kappa])
 
 	#-----------------Loading data----------------------------
-	parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
+	parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 3.0, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
 	#data = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/energies_ensemble.txt', sep = '\t', header=None)
 	#data = get_data_ensemble(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
-	data, return_data_type = get_data_ensemble_K_largest(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
+	data, return_data_type = get_data_ensemble_K_largest(folder_path = Text_files_path + 'Dynamics/Ensemble/L%d/'%L+parameters_path)
 
 	if(return_data_type):
 		final_biggest = data[0]
@@ -248,14 +248,14 @@ for i_kappa, kappa in enumerate(kappas):
 				final_biggest_affinity.append(energies_C_all[clone_sizes_C_all[:,-1]==np.max(clone_sizes_C_all[:,-1])][0])
 				final_biggest.append(np.max(clone_sizes_C_all[:,-1]))
 
-		f = open(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/processed_data_K_largest.pkl', 'wb')
+		f = open(Text_files_path + 'Dynamics/Ensemble/L%d/'%L+parameters_path+'/processed_data_K_largest.pkl', 'wb')
 		pickle.dump([final_biggest, final_biggest_affinity], f, pickle.HIGHEST_PROTOCOL)	
 		
 	max_potency_simulations2[kappa] = np.mean((np.array(final_biggest)/np.exp(final_biggest_affinity))/(C/Kd_r_renorm))
 	max_potency_simulations_std2[kappa] = np.sqrt(np.var(((np.array(final_biggest)/np.exp(final_biggest_affinity))/(C/Kd_r_renorm))))
 
 ax_mf.plot(kappas, np.log10(np.array(list(max_potency_simulations2.values()))), color = my_purple2, linestyle = '', marker = '*', linewidth = 3, label = 'Largest', ms = 14, alpha = .6)
-ax_mf.errorbar(x=kappas, y=np.log10(np.array(list(max_potency_simulations2.values()))), yerr = 1.8*np.log10(np.array(list(max_potency_simulations_std2.values()))), ls = 'none', color = my_purple2, alpha = .6)
+#ax_mf.errorbar(x=kappas, y=np.log10(np.array(list(max_potency_simulations2.values()))), yerr = 1.8*np.log10(np.array(list(max_potency_simulations_std2.values()))), ls = 'none', color = my_purple2, alpha = .6)
 
 
 print('--------')
@@ -334,7 +334,7 @@ ax_mf.tick_params(axis='y', colors=my_purple2)
 my_plot_layout(ax = ax_mf, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 #ax_mf.legend(fontsize = 26, title_fontsize = 30, loc = 8)
 ax_mf.set_xlim(left = 0.8, right = 4.2)
-ax_mf.set_ylim(bottom = -3.0, top = 0.2)
+ax_mf.set_ylim(bottom = -3.5, top = 0.2)
 #ax_mf.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_mf.set_yticklabels([1, 0.1, 0.01])
 
@@ -355,10 +355,10 @@ for i_kappa, kappa in enumerate(kappas):
 	beta_kappa, E_kappa, Kd_kappa = get_kappa_properties(betas, Q0, Es, dE, kappa)
 
 	#-----------------Loading data----------------------------
-	parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
+	parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 3.0, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
 	#data = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/energies_ensemble.txt', sep = '\t', header=None)
 	#data = get_data_ensemble(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
-	data, return_data_type = get_data_ensemble_S_mf(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
+	data, return_data_type = get_data_ensemble_S_mf(folder_path = Text_files_path + 'Dynamics/Ensemble/L%d/'%L+parameters_path)
 
 	if(return_data_type):
 		S_final = data[0]
@@ -393,7 +393,7 @@ for i_kappa, kappa in enumerate(kappas):
 			#if(i_ens%1==0):
 			#	ax_mf.plot(time, entropy_i, color = colors_kappa[  i_kappa], alpha = .1, linewidth = 1)
 
-		f = open(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/processed_data_S_mf.pkl', 'wb')
+		f = open(Text_files_path + 'Dynamics/Ensemble/L%d/'%L+parameters_path+'/processed_data_S_mf.pkl', 'wb')
 		pickle.dump([S_final, Counter], f, pickle.HIGHEST_PROTOCOL)	
 
 	max_entropy_simulations[kappa] = np.mean(np.array(S_final))
@@ -419,7 +419,7 @@ ax_mf_2.set_xlim(left = 0.8, right = 4.2)
 #ax_mf_2.set_yticklabels([1, 0.1, 0.01])
 
 
-fig_mf.savefig('../../Figures/1_Dynamics/Ensemble/MF_'+energy_model+'.pdf')
+fig_mf.savefig('../../Figures/1_Dynamics/Ensemble/L%d/MF_'%L+energy_model+'.pdf')
 
 
 
