@@ -17,7 +17,7 @@ linestyles_N_r = [['-', '--', '--', '--'], ['-'], ['-']]
 transparencies_N_r = [[1, 1, 1, 1], [.4], [.4]]
 
 T0 = 0
-Tf = 8
+Tf = 10
 Tf_sim = 7
 #Tf = 10
 dT = 0.05
@@ -25,13 +25,13 @@ lambda_A = 6
 k_pr = 1/(60*5) #s^-1
 k_pr = k_pr*3600 # hour^-1
 k_pr = k_pr*24 #days^-1
-lambda_B = lambda_A/2
+lambda_B = 3 * np.log(2) #(days)^-1
 k_on = 1e6*24*3600; #(M*days)^-1
 N_c = 1e5*1000
 #N_c = 1e5
 #E_ms = -27.63
 E_ms = -25
-C = 3e4
+C = 1e4
 AA = 1
 
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
@@ -208,15 +208,15 @@ for i_kappa, kappa in enumerate(kappas):
 
 K_0 = 6e-1
 delta_E_r = -(1/2)*np.log(0.1)# - np.log(np.max(N_rs[1]))*(1/1.8 - 1/2)
-ax_K.vlines(7.90, (K_0 - K_0*(1-1/np.exp(delta_E_r))), K_0, color = 'goldenrod', linewidth = 4)
-ax_K.hlines(2.e5/(C/Kd_r_renorm), 4.2, 4.2 + 0.5*np.log(10)/2, color = 'goldenrod', linewidth = 4)
+ax_K.vlines(8.90, (K_0 - K_0*(1-1/np.exp(delta_E_r))), K_0, color = 'darkgrey', linewidth = 4)
+ax_K.hlines(2.e5/(C/Kd_r_renorm), 4.2, 4.2 + 0.5*np.log(10)/2, color = 'darkgrey', linewidth = 4)
 
 custom_lines.append(Line2D([0], [0], color = 'orange', lw=3))
 custom_labels.append('Elite')
 
-a = .065
-b = .72
-c = 1.14
+a = .39
+b = .74
+c = 1.16
 
 #ax_K.plot(time, ((C*np.exp(lambda_B*(time-t_act_1)))/(C+(np.exp(lambda_B*(time-t_act_1))-1)))/Kd_r_renorm, linewidth = 4, color = 'black', linestyle = 'dotted')
 Kd_r_renorm = Kds[(P_min_e_Q0(np.max(N_rs[0]), Q0, dE)/Kds)==np.max(P_min_e_Q0(np.max(N_rs[0]), Q0, dE)/Kds)]
@@ -226,7 +226,7 @@ ax_K.plot(time, ((1.08*C*np.exp(c*lambda_B*(time-t_act_1+a)**(b)))/(1.08*C+(np.e
 
 my_plot_layout(ax = ax_K, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_K.legend(handles = custom_lines, labels = custom_labels, fontsize = 26, title_fontsize = 28, title = r'$N_r$')
-ax_K.set_xlim(left = 3, right = Tf)
+ax_K.set_xlim(left = 3, right = Tf-1)
 ax_K.set_ylim(bottom = 1e-2)
 #ax_K.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_K.set_yticklabels([1, 0.1, 0.01])

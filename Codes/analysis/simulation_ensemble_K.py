@@ -20,13 +20,14 @@ lambda_A = 6
 k_pr = 1/(60*5) #s^-1
 k_pr = k_pr*3600 # hour^-1
 k_pr = k_pr*24 #days^-1
-lambda_B = lambda_A/2
+lambda_B = 3 * np.log(2) #(days)^-1
 k_on = 1e6*24*3600; #(M*days)^-1
 N_c = 1e5*1000
 #N_c = 1e5
 #E_ms = -27.63
 E_ms = -25
-C = 3e4
+C = 1e4
+
 AA = 1
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
 energy_models = ['MJ']
@@ -205,9 +206,9 @@ print('--------')
 # 		normalization_theory = 1
 # 	max_potency_theory[kappa] = K - normalization_theory
 
-a = .065
-b = .72
-c = 1.14
+a = .39
+b = .74
+c = 1.16
 ax_K.plot(time, ((1.08*C*np.exp(c*lambda_B*(time-t_act_1+a)**(b)))/(1.08*C+(np.exp(c*lambda_B*(time-t_act_1+a)**(b))-1)))/Kd_r_renorm/(C/Kd_r_renorm), linewidth = 5, color = 'black', linestyle = 'dotted', zorder = -20)
 
 print(Kds[betas[:-1]>1][-1])
@@ -218,7 +219,7 @@ t_growth = (1/lambda_B)*np.log(C/50)
 
 my_plot_layout(ax = ax_K, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_K.legend(fontsize = 28, title_fontsize = 30, title = r'$p$', loc = 4)
-ax_K.set_xlim(left = 2, right = Tf-2)
+ax_K.set_xlim(left = 2, right = Tf-1)
 ax_K.set_ylim(bottom = 1e-3, top = 2e0)
 #ax_K.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_K.set_yticklabels([1, 0.1, 0.01])

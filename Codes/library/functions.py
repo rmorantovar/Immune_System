@@ -285,7 +285,7 @@ def get_clones_sizes_C(n_act, time, activation_times, lambda_B, C, dT):
 			tb = activation_times[i]
 			Nb = clone_sizes[i, i_t]# * np.heaviside(tb-t)
 			N = np.sum(clone_sizes[:, i_t]) - np.sum(clone_sizes[:, 0])
-			clone_sizes[i, i_t+1] = Nb + delta_Nb(t, tb, Nb, N, lambda_B, C)*dT
+			clone_sizes[i, i_t+1] = Nb + delta_Nb(t, tb, Nb, N, lambda_B, C+n_act)*dT
 	return clone_sizes
 
 def get_motif(antigen, Matrix, Text_files_path):

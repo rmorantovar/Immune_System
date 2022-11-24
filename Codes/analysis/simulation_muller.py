@@ -11,15 +11,22 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 N_ens = 1
 N_r = 1e8
 T0 = 0
-Tf = 8
+Tf = 10
 Tf_sim = 7
 #Tf = 10
-dT = 0.005
+dT = 0.05
 lambda_A = 6
 k_pr = 1/(60*5) #s^-1
 k_pr = k_pr*3600 # hour^-1
-#k_pr = 180 # hour^-1
 k_pr = k_pr*24 #days^-1
+lambda_B = 3 * np.log(2) #(days)^-1
+k_on = 1e6*24*3600; #(M*days)^-1
+N_c = 1e5*1000
+#N_c = 1e5
+#E_ms = -27.63
+E_ms = -25
+C = 1e4
+AA = 1
 
 kappas = [1, 2, 3, 4]
 
@@ -53,14 +60,6 @@ for i in range(len(color_list)):
 colors_R = []
 for i in range(len(kappas)):
     colors_R.append(['tab:grey', colors_kappa[i], colors_kappa[i], colors_kappa[i]])
-
-lambda_B = lambda_A/2
-k_on = 1e6*24*3600; #(M*days)^-1
-N_c = 1e5*1000
-#N_c = 1e5
-E_ms = -27.63
-E_ms = -25
-C = 3e4
 
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
 energy_models = ['MJ']
@@ -139,7 +138,7 @@ for i_kappa, kappa in enumerate(kappas):
 		#-----------------Loading data----------------------------
 		parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 3.0, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
 		#data = pd.read_csv(Text_files_path + 'Dynamics/Trajectories/'+parameters_path+'/energies%d.txt'%rep, sep = '\t', header=None)
-		data = get_data(folder_path = Text_files_path + 'Dynamics/Trajectories/'+parameters_path, rep = rep)
+		data = get_data(folder_path = Text_files_path + 'Dynamics/Trajectories/L%d/'%L+parameters_path, rep = rep)
 		#-----------------Filtering data----------------------------
 		min_e_data = np.min(data[0])
 		max_e_data = np.max(data[0])
@@ -222,7 +221,7 @@ for i_kappa, kappa in enumerate(kappas):
 		ax_muller.set_yticks([])
 		#ax_muller.set_xticks(np.arange(Tf))
 		ax_muller.set_xticks([])
-		ax_muller.set_xlim(T0, Tf)
+		ax_muller.set_xlim(T0, Tf-2)
 		ax_muller.set_ylim(0, 1)
 		fig_muller.savefig('../../Figures/1_Dynamics/Trajectories/Muller/B_cell_clones_kappa-%.2f_%d_'%(kappa, rep)+energy_model+'.pdf', edgecolor=fig_muller.get_edgecolor())
 		#fig_muller.savefig('../../Figures/1_Dynamics/Trajectories/Muller/B_cell_clones_kappa-%.2f_%d_'%(kappa, rep)+energy_model+'.png', edgecolor=fig_muller.get_edgecolor())

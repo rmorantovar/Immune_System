@@ -10,14 +10,21 @@ N_ens = 1
 N_rs = [1e8]
 T0 = 0
 Tf = 10
-Tf_sim = 6.5
+Tf_sim = 7
 #Tf = 10
-dT = 0.01
+dT = 0.05
 lambda_A = 6
-k_pr = 1/(5*60) #s^-1
+k_pr = 1/(60*5) #s^-1
 k_pr = k_pr*3600 # hour^-1
-#k_pr = 180 # hour^-1
 k_pr = k_pr*24 #days^-1
+lambda_B = 3 * np.log(2) #(days)^-1
+k_on = 1e6*24*3600; #(M*days)^-1
+N_c = 1e5*1000
+#N_c = 1e5
+#E_ms = -27.63
+E_ms = -25
+C = 1e4
+AA = 1
 
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
@@ -53,17 +60,6 @@ for i in range(len(color_list)):
 colors_R = []
 for i in range(len(kappas)):
     colors_R.append([colors_kappa[i], colors_kappa[i], colors_kappa[i], colors_kappa[i]])
-
-lambda_B = lambda_A*.5
-k_on = 1e6*24*3600; #(M*days)^-1
-N_c = 1e5*1000
-#N_c = 1e5
-E_ms = -27.63
-E_ms = -25.32
-E_ms = -25
-#E_ms = -24
-#E_ms = -23
-C = 3e4
 
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
 energy_models = ['MJ']

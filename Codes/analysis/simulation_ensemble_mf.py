@@ -22,14 +22,15 @@ lambda_A = 6
 k_pr = 1/(60*5) #s^-1
 k_pr = k_pr*3600 # hour^-1
 k_pr = k_pr*24 #days^-1
-lambda_B = lambda_A/2
+lambda_B = 3 * np.log(2) #(days)^-1
 k_on = 1e6*24*3600; #(M*days)^-1
 N_c = 1e5*1000
 #N_c = 1e5
 #E_ms = -27.63
 E_ms = -25
-C = 3e4
+C = 1e4
 AA = 1
+
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
 energy_models = ['MJ']
 energy_model = 'MJ'
