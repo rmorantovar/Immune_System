@@ -41,7 +41,7 @@ linear = 0
 
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
-kappas = [1, 2, 3, 4]#, 5]
+kappas = [1, 2, 2.5, 3, 4]#, 5]
 #kappas = [3]
 
 my_red = np.array((228,75,41))/256.
@@ -193,7 +193,7 @@ for i_kappa, kappa in enumerate(kappas):
 	max_potency_simulations_std[kappa] = np.sqrt(np.var((np.array(K_final)/(C/Kd_r_renorm))))
 
 ax_mf.vlines(beta_r, -3.5, 1, ls = '--', lw = 0.8, color = 'k')
-ax_mf.plot(kappas, np.log10(np.array(list(max_potency_simulations.values()))), color = my_purple2, linestyle = '', marker = 'D', linewidth = 3, label = 'Total', ms = 10, alpha = 1)
+ax_mf.plot(kappas, (np.array(list(max_potency_simulations.values()))), color = my_purple2, linestyle = '-', marker = 'D', linewidth = 3, label = 'Total', ms = 10, alpha = 1)
 #ax_mf.errorbar(x=kappas, y=np.log10(np.array(list(max_potency_simulations.values()))), yerr = 1.8*np.log10(np.array(list(max_potency_simulations_std.values()))), ls = 'none', color = my_purple2, linewidth = 2, alpha = .8)
 
 #-------------------------# 
@@ -205,6 +205,10 @@ N_enss = [N_ens, N_ens, N_ens, N_ens, N_ens]
 max_potency_simulations2 = dict()
 max_potency_simulations_std2 = dict()
 max_potency_theory2 = dict()
+
+max_potency_simulations3 = dict()
+max_potency_simulations_std3 = dict()
+max_potency_theory3 = dict()
 
 for i_kappa, kappa in enumerate(kappas):
 	N_ens = N_enss[i_kappa]
@@ -224,9 +228,11 @@ for i_kappa, kappa in enumerate(kappas):
 	if(return_data_type):
 		final_biggest = data[0]
 		final_biggest_affinity = data[1]
+		final_highest_potency = data[2]
 	else:	
 		final_biggest = []
 		final_biggest_affinity = []
+		final_highest_potency = []
 
 		for i_ens in tqdm(np.arange(N_ens)):
 			data_i = data.loc[data[4]==i_ens]
@@ -243,19 +249,26 @@ for i_kappa, kappa in enumerate(kappas):
 			#--------------------------t_C filter-------------------------
 			lim_size = 2
 			clone_sizes_C_all, activation_times_C_all, energies_C_all, filter_C_all, n_C_all = apply_filter_C(clone_sizes_all, activation_times_all, energies_all, lim_size)
-					#-------Simulations-------
+			#-------Simulations-------
+			potencies_C = (clone_sizes_C_all.T/np.exp(energies_C_all)).T
+
 			if(len(energies_C_all)>0):
 				
 				final_biggest_affinity.append(energies_C_all[clone_sizes_C_all[:,-1]==np.max(clone_sizes_C_all[:,-1])][0])
 				final_biggest.append(np.max(clone_sizes_C_all[:,-1]))
+				final_highest_potency.append(np.max(potencies_C[:,-1]))
 
 		f = open(Text_files_path + 'Dynamics/Ensemble/L%d/'%L+parameters_path+'/processed_data_K_largest.pkl', 'wb')
-		pickle.dump([final_biggest, final_biggest_affinity], f, pickle.HIGHEST_PROTOCOL)	
+		pickle.dump([final_biggest, final_biggest_affinity, final_highest_potency], f, pickle.HIGHEST_PROTOCOL)	
 		
 	max_potency_simulations2[kappa] = np.mean((np.array(final_biggest)/np.exp(final_biggest_affinity))/(C/Kd_r_renorm))
 	max_potency_simulations_std2[kappa] = np.sqrt(np.var(((np.array(final_biggest)/np.exp(final_biggest_affinity))/(C/Kd_r_renorm))))
 
-ax_mf.plot(kappas, np.log10(np.array(list(max_potency_simulations2.values()))), color = my_purple2, linestyle = '', marker = '*', linewidth = 3, label = 'Largest', ms = 14, alpha = .6)
+	max_potency_simulations3[kappa] = np.mean((np.array(final_highest_potency))/(C/Kd_r_renorm))
+	max_potency_simulations_std3[kappa] = np.sqrt(np.var((np.array(final_highest_potency))/(C/Kd_r_renorm)))
+
+ax_mf.plot(kappas, (np.array(list(max_potency_simulations2.values()))), color = my_purple2, linestyle = '--', marker = '*', linewidth = 3, label = 'Largest', ms = 14, alpha = .8)
+#ax_mf.plot(kappas, np.log10(np.array(list(max_potency_simulations3.values()))), color = my_purple2, linestyle = '', marker = '*', linewidth = 3, label = 'Largest', ms = 14, alpha = .6)
 #ax_mf.errorbar(x=kappas, y=np.log10(np.array(list(max_potency_simulations2.values()))), yerr = 1.8*np.log10(np.array(list(max_potency_simulations_std2.values()))), ls = 'none', color = my_purple2, alpha = .6)
 
 
@@ -299,8 +312,8 @@ kappas_theory = np.linspace(1, 4.1, 40)
 
 #ax_mf.plot(kappas_theory, np.log10(np.array(list(max_potency_theory.values()))/(C/Kd_r_renorm)), color = my_purple2, linestyle = '-', marker = '', linewidth = 3, label = 'theory total', alpha = .8)
 
-y_interp1 = np.interp(kappas_theory, kappas, np.log10(np.array(list(max_potency_simulations.values()))))
-ax_mf.plot(kappas_theory, y_interp1, color = my_purple2, linestyle = '-', marker = '', linewidth = 3, ms = 10, alpha = 1)
+y_interp1 = np.interp(kappas_theory, kappas, (np.array(list(max_potency_simulations.values()))))
+#ax_mf.plot(kappas_theory, y_interp1, color = my_purple2, linestyle = '-', marker = '', linewidth = 3, ms = 10, alpha = 1)
 
 
 print('--------')
@@ -324,18 +337,21 @@ print('--------')
 
 #ax_mf.plot(kappas_theory, np.log10(np.array(list(max_potency_theory.values()))/(C/Kd_r_renorm))-0.4, color = my_purple, linestyle = '-', marker = '', linewidth = 3, label = 'theory largest', alpha = .8)
 
-y_interp2 = np.interp(kappas_theory, kappas, np.log10(np.array(list(max_potency_simulations2.values()))))
-ax_mf.plot(kappas_theory, y_interp2, color = my_purple2, linestyle = '-', marker = '', linewidth = 3, ms = 10, alpha = .6)
+y_interp2 = np.interp(kappas_theory, kappas, (np.array(list(max_potency_simulations2.values()))))
+#ax_mf.plot(kappas_theory, y_interp2, color = my_purple2, linestyle = ':', marker = '', linewidth = 3, ms = 10, alpha = .8)
+
+y_interp3 = np.interp(kappas_theory, kappas, (np.array(list(max_potency_simulations3.values()))))
+#ax_mf.plot(kappas_theory, y_interp3, color = my_purple2, linestyle = '-', marker = '', linewidth = 3, ms = 10, alpha = .6)
 
 
 ax_mf.spines['top'].set_color(my_purple2)
 ax_mf.xaxis.label.set_color(my_purple2)
 ax_mf.tick_params(axis='y', colors=my_purple2)
 
-my_plot_layout(ax = ax_mf, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+my_plot_layout(ax = ax_mf, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 #ax_mf.legend(fontsize = 26, title_fontsize = 30, loc = 8)
 ax_mf.set_xlim(left = 0.8, right = 4.2)
-ax_mf.set_ylim(bottom = -3.5, top = 0.2)
+ax_mf.set_ylim(bottom = 1e-3, top = 1.1)
 #ax_mf.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_mf.set_yticklabels([1, 0.1, 0.01])
 
@@ -401,12 +417,13 @@ for i_kappa, kappa in enumerate(kappas):
 	max_entropy_simulations_std[kappa] = np.sqrt(np.var((np.array(S_final))))
 
 
-ax_mf_2.plot(kappas, np.array(list(max_entropy_simulations.values())), color = 'olive', linestyle = '', marker = 'D', linewidth = 3, label = 'Total', ms = 10, alpha = 1)
+ax_mf_2.plot(kappas, np.array(list(max_entropy_simulations.values())), color = 'olive', linestyle = '-', marker = 'D', linewidth = 3, label = 'Total', ms = 10, alpha = 1)
 
-kappas_theory = np.linspace(.5, 4, 40)
+kappas_theory = np.linspace(.5, 4, 400)
 y_interp2 = np.interp(kappas_theory, kappas, np.array(list(max_entropy_simulations.values())))
-ax_mf_2.plot(kappas_theory, y_interp2, color = 'olive', linestyle = '-', marker = '', linewidth = 3, ms = 10, alpha = 1)
-ax_mf_2.hlines(3.3, .8, 4.2, color = 'olive', ls = 'dashed', lw = 1.5)
+#ax_mf_2.plot(kappas_theory, y_interp2, color = 'olive', linestyle = '-', marker = '', linewidth = 3, ms = 10, alpha = 1)
+
+ax_mf_2.scatter(kappas_theory[y_interp2>3.3][-1], 3.3, s = 140, facecolors='none', edgecolors='olive', marker = 'o', lw=2)
 
 ax_mf_2.spines['top'].set_color('olive')
 ax_mf_2.xaxis.label.set_color('olive')

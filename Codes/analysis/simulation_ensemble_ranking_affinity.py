@@ -99,7 +99,7 @@ print('beta_r = %.1f'%beta_r)
 
 #--------------------------Proofreading properties--------------------------
 beta_pr, E_pr, Kd_pr = get_proofreading_properties(betas, Q0, Es, dE, k_pr, k_on)
-print('beta_a = %.2f'%beta_pr, 'K_a = %.2e'%Kd_pr)
+print('beta_pr = %.2f'%beta_pr)
 
 t_prime = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*N_c))
 print('--------')
@@ -116,24 +116,25 @@ for i_kappa, kappa in enumerate((kappas)):
 
     #-----------------Loading data----------------------------
     parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 3.0, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
-    data, return_data_type = get_data_ensemble_ranking_combined(folder_path = Text_files_path + 'Dynamics/Ensemble/L%d/'%L+parameters_path)
+    #data = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/energies_ensemble.txt', sep = '\t', header=None)
+    #data = get_data_ensemble(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
+    data, return_data_type = get_data_ensemble_ranking_2(folder_path = Text_files_path + 'Dynamics/Ensemble/L%d/'%L+parameters_path)
+    
     n_first_clones = 50
-
     if(return_data_type):
-        final_Nb = data[0]
-        final_E = data[1]
-        counts_final_Nb = data[2]
-        trajectories = data[3]
-        trajectories2 = data[4]
-        trajectories_rank = data[5]
+        final_E = data[0]
+        counts_final_E = data[1]
+        trajectories = data[2]
+        trajectories_rank = data[3]
     else:
-        final_Nb = np.zeros(n_first_clones)
-        counts_final_Nb = np.zeros(n_first_clones)
+
+        #activation_times_total = np.array([])
+        
         final_E = np.zeros(n_first_clones)
+        counts_final_E = np.zeros(n_first_clones)
         max_rank = 50
 
         trajectories = np.array([], dtype = object)
-        trajectories2 = np.array([], dtype = object)
         trajectories_rank = np.array([])
 
         for i_ens in tqdm(np.arange(N_ens)):
@@ -151,64 +152,64 @@ for i_kappa, kappa in enumerate((kappas)):
             lim_size = 2
             clone_sizes_C, activation_times_C, energies_C, filter_C, n_C = apply_filter_C(clone_sizes, activation_times, energies, lim_size)
             
-            sort_inds = clone_sizes_C[:, -1].argsort()
-            clone_sizes_C_sorted = clone_sizes_C[sort_inds,:][-int(n_first_clones*(4-3)):, :]
-            biggest_clone_i = clone_sizes_C_sorted[-1, -1]
-            sorted_clones = np.flip(clone_sizes_C_sorted[:, -1])/biggest_clone_i
-            energies_C_sorted = energies_C[sort_inds][-int(n_first_clones*(4-3)):]
-            best_clone_i = energies_C_sorted[-1]
-            sorted_clones2 = np.exp(np.flip(energies_C_sorted))/np.exp(best_clone_i)
-            max_rank_i = len(sorted_clones)
-            if max_rank_i>1:
-                for i in range(max_rank_i):
-                    final_Nb[i]+= (sorted_clones[i])
-                    final_E[i]+= np.log(sorted_clones2[i])
-                    counts_final_Nb[i] += 1
-                if(max_rank_i<max_rank):
-                    max_rank = max_rank_i
-                if((i_ens%10==0) and (kappa==3.0)):
-                    trajectories = np.append(trajectories, sorted_clones)
-                    trajectories2 = np.append(trajectories2, sorted_clones2)
-                    trajectories_rank = np.append(trajectories_rank, max_rank_i)
+            sort_inds = energies_C.argsort()
+            #clone_sizes_C_sorted = clone_sizes_C[sort_inds, :][:int(n_first_clones*(4-3)), :]
+            #activation_times_C_sorted = activation_times_C[sort_inds][:int(n_first_clones*(4-3))]
+            energies_C_sorted = energies_C[sort_inds][:int(n_first_clones*(4-3))]
 
-        f = open(Text_files_path + 'Dynamics/Ensemble/L%d/'%L+parameters_path+'/processed_data_ranking_combined.pkl', 'wb')
-        pickle.dump([final_Nb, final_E, counts_final_Nb, trajectories, trajectories2, trajectories_rank], f, pickle.HIGHEST_PROTOCOL) 
+            best_clone_i = energies_C_sorted[0]
+            #ax_ranking.scatter(np.exp(energies_C_sorted[-1]), biggest_clone_i, color = colors_kappa[i_kappa], alpha = .25, edgecolor='black', linewidth=1, facecolor = colors_kappa[i_kappa])
+            #activation_times_total = np.append(activation_times_total, activation_times_C_sorted)
+            sorted_clones = np.exp(energies_C_sorted)/np.exp(best_clone_i)
+            max_rank_i = len(sorted_clones)
+
+            for i in range(max_rank_i):
+                final_E[i]+= np.log(sorted_clones[i])
+                #final_E[i]+= (sorted_clones[i])
+                counts_final_E[i] += 1
+            if(max_rank_i<max_rank):
+                max_rank = max_rank_i
+            if((i_ens%10==0) and (kappa==3.0)):
+                trajectories = np.append(trajectories, sorted_clones)
+                trajectories_rank = np.append(trajectories_rank, max_rank_i)
+
+        f = open(Text_files_path + 'Dynamics/Ensemble/L%d/'%L+parameters_path+'/processed_data_ranking_2.pkl', 'wb')
+        pickle.dump([final_E, counts_final_E, trajectories, trajectories_rank], f, pickle.HIGHEST_PROTOCOL)  
+
+    final_E = np.exp(final_E/counts_final_E)
 
     counter = 0
     for j in range(len(trajectories_rank)):
         ranks_j = np.arange(1, trajectories_rank[j]+1)
         len_rank_j = len(ranks_j)
-        #ax_ranking.plot(trajectories[counter:counter+len_rank_j], trajectories2[counter:counter+len_rank_j], color = colors_kappa[i_kappa], linewidth = 1, alpha = .2)
+        ax_ranking.plot(ranks_j, trajectories[counter:counter+len_rank_j], color = colors_kappa[i_kappa], linewidth = 1, alpha = .2)
+        ax_ranking_i.plot(ranks_j, trajectories[counter:counter+len_rank_j], color = colors_kappa[i_kappa], linewidth = 1, alpha = .2)
         counter += len_rank_j
 
-    final_Nb = final_Nb/counts_final_Nb
-    final_E = np.exp(final_E/counts_final_Nb)
 
     ranking = np.arange(1, n_first_clones+1)
+    fit = ranking**(1/(beta_act))
+    ax_ranking.plot(ranking, final_E[:n_first_clones], color = colors_kappa[i_kappa], linewidth = 0, marker = '*', alpha = 1, ms = 12)
+    ax_ranking.plot(ranking, fit, color = colors_kappa[i_kappa], linewidth = 5, label = r'$%.d$'%(kappa), alpha = .8)
 
-    fit_N = ranking**(-kappa*lambda_B/(lambda_A*beta_act))
-    fit_K = ranking**(1/(beta_act))
+    ax_ranking_i.plot(ranking, final_E[:n_first_clones], color = colors_kappa[i_kappa], linewidth = 0, marker = '*', alpha = 1, ms = 12)
+    ax_ranking_i.plot(ranking, fit, color = colors_kappa[i_kappa], linewidth = 5, label = r'$%.d$'%(kappa), alpha = .8)
 
-    e_array = np.logspace(0, .75) 
-    x_array = np.logspace(-1.4, 0)
-    fit = e_array**(-kappa*lambda_B/(lambda_A))
-    #fit = x_array**(-lambda_A/(kappa*lambda_B))
-
-    if(kappa>beta_r):
-        ax_ranking.plot(final_Nb, final_E, color = colors_kappa[i_kappa], linewidth = 0, marker = '*', alpha = 1, ms = 12, label = r'$%.d$'%(kappa))
-        ax_ranking.plot(fit, e_array, color = colors_kappa[i_kappa], linewidth = 5, alpha = .8)
-    else:
-        ax_ranking.plot(final_Nb, final_E, color = colors_kappa[i_kappa], linewidth = 0, marker = '*', alpha = .8, ms = 8, label = r'$%.d$'%(kappa))
-        #ax_ranking.plot(fit, e_array, color = colors_kappa[i_kappa], linewidth = 2, label = r'$%.d$'%(kappa), alpha = .8)
+    my_plot_layout(ax = ax_ranking_i, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+    ax_ranking_i.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
+    #ax_ranking_i.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
+    ax_ranking_i.set_ylim(top = 2e2)
+    #ax_ranking_i.set_yticks([1, 0.1, 0.01, 0.001])
+    #ax_ranking_i.set_yticklabels([1, 0.1, 0.01])
+    fig_ranking_i.savefig('../../Figures/1_Dynamics/Ensemble/L%d/Ranking_2_p-%.2f'%(L, kappa)+'_'+energy_model+'.pdf')
 
 my_plot_layout(ax = ax_ranking, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-#ax_ranking.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
+ax_ranking.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
 #ax_ranking.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
-#ax_ranking.set_ylim(bottom = 2e-2)
+ax_ranking.set_ylim(top = 1e2)
 #ax_ranking.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_ranking.set_yticklabels([1, 0.1, 0.01])
-fig_ranking.savefig('../../Figures/1_Dynamics/Ensemble/L%d/Ranking_combined_'%L+energy_model+'.pdf')
-
+fig_ranking.savefig('../../Figures/1_Dynamics/Ensemble/L%d/Ranking_2_'%L+energy_model+'.pdf')
 
 print('----END-----')
 

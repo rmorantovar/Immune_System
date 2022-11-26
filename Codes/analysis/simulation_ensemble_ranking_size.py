@@ -30,7 +30,7 @@ AA = 1
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
 kappas = [1, 2, 3, 4]
-#kappas = [3]
+kappas = [1, 3]
 
 my_red = np.array((228,75,41))/256.
 my_purple = np.array((125,64,119))/256.
@@ -51,6 +51,7 @@ transparency_n = [1]
 color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_brown, my_blue2, my_yellow, my_purple, my_green2])#
 #color_list = np.array([(228,75,41), (125,165,38), (76,109,166), (215,139,45)])
 color_list = np.array([my_blue2, my_green, my_red, my_gold])
+color_list = np.array([my_blue2, my_red])
 
 #colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
 #colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
@@ -105,9 +106,6 @@ print('--------')
 print('Loops...')
 #--------------------------Loops--------------------------
 fig_ranking, ax_ranking = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-
-fig_exponents, ax_exponents = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-
 
 for i_kappa, kappa in enumerate((kappas)):
     fig_ranking_i, ax_ranking_i = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
@@ -212,24 +210,16 @@ for kappa in kappas_theory:
     beta_act = np.min([beta_r, beta_kappa])
     exponent.append(-kappa*lambda_B/(lambda_A*beta_act))
 
-ax_exponents.plot(kappas_theory, exponent, color = my_purple, linestyle = '-', marker = '', linewidth = 3, ms = 14, alpha = 1)
 
 
 my_plot_layout(ax = ax_ranking, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_ranking.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
 #ax_ranking.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
-ax_ranking.set_ylim(bottom = 2e-2)
+ax_ranking.set_ylim(bottom = 7e-2)
 #ax_ranking.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_ranking.set_yticklabels([1, 0.1, 0.01])
 fig_ranking.savefig('../../Figures/1_Dynamics/Ensemble/L%d/Ranking_'%L+energy_model+'.pdf')
 
-my_plot_layout(ax = ax_exponents, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-#ax_exponents.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
-#ax_exponents.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
-#ax_exponents.set_ylim(bottom = 2e-2)
-#ax_exponents.set_yticks([1, 0.1, 0.01, 0.001])
-#ax_exponents.set_yticklabels([1, 0.1, 0.01])
-fig_exponents.savefig('../../Figures/1_Dynamics/Ensemble/L%d/Exponent_'%L+energy_model+'.png')
 
 print('----END-----')
 

@@ -105,10 +105,10 @@ fig_antigen, ax_antigen = plt.subplots(figsize=(10,5), gridspec_kw={'left':0.12,
 ax_antigen.plot(time, np.exp(lambda_A*time)/(5*1e3), linewidth = 5, color = antigen_color)
 
 my_plot_layout(ax=ax_antigen, yscale = 'log', xscale = 'linear', ticks_labelsize = 38)
-ax_antigen.set_xlim(right = Tf, left = T0)
+ax_antigen.set_xlim(right = Tf-2, left = T0)
 ax_antigen.set_xticks([])
 #ax_antigen.set_xlim(right = 1e-2, left = 1e-11) #use 1e-3 for other plots
-ax_antigen.set_ylim(bottom = 1e3, top = 1e8)
+ax_antigen.set_ylim(bottom = 1e3, top = 1e7)
 #ax_antigen.legend(title = r'$\kappa$', title_fontsize = 34, fontsize = 32)
 fig_antigen.savefig('../../Figures/_Summary/time/L%d/antigen.pdf'%(L))
 plt.close(fig_antigen)
@@ -242,22 +242,22 @@ for N_r in N_rs:
 
         my_plot_layout(ax=ax_R, yscale = 'log', xscale = 'linear', ticks_labelsize = 38)
         ax_R.set_xticks([])
-        ax_R.set_xlim(right = Tf, left = T0)
+        ax_R.set_xlim(right = Tf-2, left = T0)
         ax_R.set_ylim(bottom = 1e-5, top = 1.5)
         fig_R.savefig('../../Figures/_Summary/time/L%d/R_kappa-%.1f_Nr-%.0e_'%(L, kappa, N_r)+energy_model+'.pdf')
         plt.close(fig_R)
 
         my_plot_layout(ax=ax_K, yscale = 'log', xscale = 'linear', ticks_labelsize = 38)
         ax_K.set_xticks([])
-        ax_K.set_xlim(right = Tf, left = T0)
-        ax_K.set_ylim(bottom = 1e-9, top = 1e-4)
+        ax_K.set_xlim(right = Tf-2, left = T0)
+        ax_K.set_ylim(bottom = 1e-9, top = 1e-5)
         fig_K.savefig('../../Figures/_Summary/time/L%d/K_kappa-%.1f_Nr-%.0e_'%(L, kappa, N_r)+energy_model+'.pdf')
         plt.close(fig_K)
 
         my_plot_layout(ax=ax_L, yscale = 'log', xscale = 'linear', ticks_labelsize = 38)
         ax_L.set_xticks([])
-        ax_L.set_xlim(right = Tf, left = T0)
-        ax_L.set_ylim(bottom = 1e-2, top = 1e3)
+        ax_L.set_xlim(right = Tf-2, left = T0)
+        ax_L.set_ylim(bottom = 1e-1, top = 1e3)
         fig_L.savefig('../../Figures/_Summary/time/L%d/L_kappa-%.1f_Nr-%.0e_'%(L, kappa, N_r)+energy_model+'.pdf')
         plt.close(fig_L)
 
@@ -274,8 +274,8 @@ for N_r in N_rs:
         # plt.close(fig_QR2)
 
         my_plot_layout(ax=ax_N_b, yscale = 'log', ticks_labelsize = 38)
-        ax_N_b.set_xlim(right = Tf, left = T0)
-        ax_N_b.set_ylim(bottom = 1e0, top = 1.05e5)
+        ax_N_b.set_xlim(right = Tf-2, left = T0)
+        ax_N_b.set_ylim(bottom = 1e0, top = 1.05e4)
         fig_N_b.savefig('../../Figures/_Summary/time/L%d/Bcell_clones-%.1f_Nr-%.0e_'%(L, kappa, N_r)+energy_model+'.pdf')
         plt.close(fig_N_b)
 
