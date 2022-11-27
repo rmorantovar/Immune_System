@@ -109,7 +109,7 @@ min_E = -17.8
 min_E = -19.0
 max_E = -7.5
 
-fig, ax = plt.subplots(figsize = (18, 1), linewidth = 6, gridspec_kw={'left':0.06, 'right':.94, 'bottom':.01, 'top': .44})
+fig, ax = plt.subplots(figsize = (12, 1), linewidth = 6, gridspec_kw={'left':0.06, 'right':.94, 'bottom':.01, 'top': .44})
 col_map = 'cividis'
 #mpl.colorbar.ColorbarBase(ax, cmap=col_map, orientation = 'vertical')
 # and create another colorbar with:
@@ -175,7 +175,9 @@ for i_kappa, kappa in enumerate(kappas):
 		lim_size = 2
 		clone_sizes_C, activation_times_C, energies_C, filter_C, n_C = apply_filter_C(clone_sizes, activation_times, energies, lim_size)
 		ax_muller.vlines(np.min(activation_times_C), 0, 1, color = 'black', linewidth = 2, alpha = .8, linestyle = ':')
-		ax_muller.vlines(np.max(activation_times_C), 0, 1, color = 'black', linewidth = 2, alpha = .8, linestyle = '-')
+		print('min time : %.2f'%np.min(activation_times_C))
+		ax_muller.vlines(np.max(activation_times_C), 0, 1, color = 'black', linewidth = 2, alpha = .8, linestyle = ':')
+		print('max time : %.2f'%np.max(activation_times_C))
 		print('Applying filter...')
 		lim_size = 20
 		clone_sizes_C, activation_times_C, energies_C, filter_C, n_C = apply_filter_C(clone_sizes, activation_times, energies, lim_size)
