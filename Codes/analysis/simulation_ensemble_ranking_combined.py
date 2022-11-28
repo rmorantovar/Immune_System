@@ -198,7 +198,7 @@ for i_kappa, kappa in enumerate((kappas)):
         ax_ranking.plot(final_Nb, final_E, color = colors_kappa[i_kappa], linewidth = 0, marker = '*', alpha = 1, ms = 12, label = r'$%.d$'%(kappa))
         ax_ranking.plot(fit, e_array, color = colors_kappa[i_kappa], linewidth = 5, alpha = .8)
     else:
-        ax_ranking.plot(final_Nb, final_E, color = colors_kappa[i_kappa], linewidth = 0, marker = '*', alpha = .8, ms = 8, label = r'$%.d$'%(kappa))
+        ax_ranking.plot(final_Nb, final_E, color = colors_kappa[i_kappa], linewidth = 0, marker = '*', alpha = .8, ms = 12, label = r'$%.d$'%(kappa))
         #ax_ranking.plot(fit, e_array, color = colors_kappa[i_kappa], linewidth = 2, label = r'$%.d$'%(kappa), alpha = .8)
 
 my_plot_layout(ax = ax_ranking, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )

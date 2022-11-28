@@ -49,6 +49,7 @@ transparency_n = [1]
 color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_blue2, my_yellow, my_purple, my_green2])#
 #color_list = np.array([(228,75,41), (125,165,38), (76,109,166), (215,139,45)])
 color_list = np.array([my_blue2, my_green, my_brown, my_red, my_gold])
+color_list = np.array([my_blue, my_blue, my_blue, my_blue, my_blue])
 
 #colors_kappa = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
 #colors_kappa = np.flip(['tab:blue','tab:green','tab:red'])
@@ -128,8 +129,8 @@ for N_r in N_rs:
         #ax_QR_all.plot(Kds, Q0*N_r, alpha = 1, color = 'grey', linewidth = 5, linestyle = '--')
         #ax_QR_all.vlines(Kd_r, Q0[Kds==Kd_r]*N_r, N_r, alpha = 1, color = 'grey', linewidth = 3, linestyle = ':')
         ax_QR_all_f.plot(Kds, Q0*N_r, alpha = 1, color = 'grey', linewidth = 5, linestyle = '--')
-        ax_QR_all_f.vlines(Kd_r, Q0[Kds==Kd_r]*N_r, N_r, alpha = 1, color = 'grey', linewidth = 3, linestyle = ':')
-        ax_QR_all_f.vlines(Kd_pr, Q0[Kds==Kd_pr]*N_r, N_r, alpha = 1, color = 'grey', linewidth = 1, linestyle = '-.')
+        #ax_QR_all_f.vlines(Kd_r, Q0[Kds==Kd_r]*N_r, N_r, alpha = 1, color = 'grey', linewidth = 3, linestyle = ':')
+        #ax_QR_all_f.vlines(Kd_pr, Q0[Kds==Kd_pr]*N_r, N_r, alpha = 1, color = 'grey', linewidth = 1, linestyle = '-.')
 
         fig_R, ax_R = plt.subplots(figsize=(8,6), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
         fig_QR, ax_QR = plt.subplots(figsize=(8,6), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
@@ -182,10 +183,10 @@ for N_r in N_rs:
                 
                 #ax_QR_all.plot(Kds, QR*N_r, color = colors_kappa[4-i_kappa], linewidth = 5, linestyle = '-', label = r'$%d$'%(kappa), alpha = .8)
                 
-                ax_QR_all_f.plot(Kds, QR*N_r, color = colors_kappa[4-i_kappa], linewidth = 5, linestyle = ':', alpha = .6)
+                ax_QR_all_f.plot(Kds, QR*N_r, color = colors_kappa[4-i_kappa], linewidth = 5, linestyle = '--', alpha = .6)
 
                 #ax_QR_all.vlines(Kds[QR==np.max(QR)], 1e-9, (Q0*N_r)[QR==np.max(QR)], color = colors_kappa[4-i_kappa], linewidth = 3, linestyle = '--')
-                ax_QR_all_f.vlines(Kds[QR==np.max(QR)], 1e-9, (Q0*N_r)[QR==np.max(QR)], color = colors_kappa[4-i_kappa], linewidth = 4, linestyle = ':', alpha = .6)
+                ax_QR_all_f.vlines(Kds[QR==np.max(QR)], 1e-9, (Q0*N_r)[QR==np.max(QR)], color = colors_kappa[4-i_kappa], linewidth = 4, linestyle = '--', alpha = .6)
                 
                 #ax_QR_all.plot(Kds[Kds==Kd_kappa], (Q0*N_r)[Kds==Kd_kappa], markerfacecolor = colors_kappa[4-i_kappa], marker = '*', ms = 22, markeredgecolor='black', alpha = .6)
                 #ax_QR_all.plot(Kds[QR==np.max(QR)], (Q0*N_r)[QR==np.max(QR)], markerfacecolor = colors_kappa[4-i_kappa], marker = 'D', ms = 16, markeredgecolor='black', alpha = .6)

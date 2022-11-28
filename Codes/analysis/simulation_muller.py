@@ -28,7 +28,7 @@ E_ms = -25
 C = 1e4
 AA = 1
 
-kappas = [1, 2, 3, 4]
+kappas = [1, 3]
 
 my_red = np.array((228,75,41))/256.
 my_purple = np.array((125,64,119))/256.
@@ -109,14 +109,14 @@ min_E = -17.8
 min_E = -19.0
 max_E = -7.5
 
-fig, ax = plt.subplots(figsize = (12, 1), linewidth = 6, gridspec_kw={'left':0.06, 'right':.94, 'bottom':.01, 'top': .44})
+fig, ax = plt.subplots(figsize = (12, 1), linewidth = 6, gridspec_kw={'left':0.1, 'right':.9, 'bottom':.01, 'top': .3})
 col_map = 'cividis'
 #mpl.colorbar.ColorbarBase(ax, cmap=col_map, orientation = 'vertical')
 # and create another colorbar with:
 colorbar = mpl.colorbar.ColorbarBase(ax, cmap=plt.get_cmap(col_map + '_r'), orientation = 'horizontal')
 colorbar.set_ticks(np.linspace(0, 1, 5))
 #ax.set_xticks(np.linspace(0, 1, 5))
-ax.set_xticklabels([r'$%.0e$'%(np.exp(min_E + i*(max_E - min_E)/4)) for i in np.arange(0, 5, 1)], fontsize = 38)
+ax.set_xticklabels([r'$%.0f \cdot 10^{%d}$'%(10**(np.log10(np.exp(min_E + i*(max_E - min_E)/4))%1), int(np.log10(np.exp(min_E + i*(max_E - min_E)/4)))) for i in np.arange(0, 5, 1)], fontsize = 38)
 ax.xaxis.tick_top()
 fig.savefig("../../Figures/1_Dynamics/Trajectories/Muller/colorbar.pdf")
 
@@ -129,7 +129,7 @@ for i_kappa, kappa in enumerate(kappas):
 	beta_act = np.min([beta_r, beta_kappa])
 	m_bar_theory = np.array([np.sum(N_r*calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*(t))/N_A, Es, kappa, lambda_A, N_c, dE)[3]*dE) for t in time])
 	t_act_theory = time[m_bar_theory>1][0]
-	for rep in [0, 1, 2]:
+	for rep in [0, 1, 2, 3]:
 		fig_muller, ax_muller = plt.subplots(figsize=(9/1.5,4/1.5), linewidth = 0, gridspec_kw={'left':0.005, 'right':.995, 'bottom':.02, 'top': 0.98}, dpi = 700, edgecolor = 'black')
 		ax_muller.spines["top"].set_linewidth(3)
 		ax_muller.spines["left"].set_linewidth(3)
@@ -174,9 +174,9 @@ for i_kappa, kappa in enumerate(kappas):
 		print('Applying filter...')
 		lim_size = 2
 		clone_sizes_C, activation_times_C, energies_C, filter_C, n_C = apply_filter_C(clone_sizes, activation_times, energies, lim_size)
-		ax_muller.vlines(np.min(activation_times_C), 0, 1, color = 'black', linewidth = 2, alpha = .8, linestyle = ':')
+		ax_muller.vlines(t_act_theory, 0, 1, color = 'black', linewidth = 2, alpha = .8, linestyle = '--')
 		print('min time : %.2f'%np.min(activation_times_C))
-		ax_muller.vlines(np.max(activation_times_C), 0, 1, color = 'black', linewidth = 2, alpha = .8, linestyle = ':')
+		#ax_muller.vlines(np.max(activation_times_C), 0, 1, color = 'black', linewidth = 2, alpha = .8, linestyle = ':')
 		print('max time : %.2f'%np.max(activation_times_C))
 		print('Applying filter...')
 		lim_size = 20
@@ -192,41 +192,27 @@ for i_kappa, kappa in enumerate(kappas):
 		greys = plt.cm.get_cmap(col_map, 50)
 		min_bell_freq = np.min(bcell_freqs[:,-1])
 		
-		
 		delta_E = max_E - min_E
+		counter_final = 0
 		for c in np.flip(range(len(clone_sizes_C[:,0]))):
 			color_c = greys(int(50*(1-abs((energies_C[c]-min_E)/delta_E))))
 			ax_muller.stackplot(time, [(bcell_freqs[c, -1] - bcell_freqs[c, :])/2 + np.ones_like(bcell_freqs[0, :])*np.sum(bcell_freqs[:c, -1]), bcell_freqs[c, :], (bcell_freqs[c, -1] - bcell_freqs[c, :])/2], colors = ['white', color_c, 'white']);
 			if activation_times_C[c] in activation_times_C[sort_inds[:3]]:
 				ax_muller.scatter(activation_times_C[c], (bcell_freqs[c, -1] - bcell_freqs[c, 0])/2 + np.sum(bcell_freqs[:c, -1]), marker = 'D', edgecolor='black', linewidth=1, facecolor = 'white', s = 60, zorder = 20)
-
-		# for c in np.invert(range(len(clone_sizes_C[:,0]))):
-		# 	if bcell_freqs[c, -1]>(0.05):
-		# 		ax_muller.stackplot(time, [(bcell_freqs[c, -1] - bcell_freqs[c, :])/2 + np.ones_like(bcell_freqs[0, :])*np.sum(bcell_freqs[:c, -1]), bcell_freqs[c, :], (bcell_freqs[c, -1] - bcell_freqs[c, :])/2], colors = ['white', colors_kappa[i_kappa], 'white']);
-		# 		ax_muller.scatter(activation_times_C[c], (bcell_freqs[c, -1] - bcell_freqs[c, 0])/2 + np.sum(bcell_freqs[:c, -1]), marker = 'D', edgecolor='black', linewidth=1, facecolor = colors_kappa[i_kappa], s = 40)
-
-		# 	else:
-		# 		col = greys(np.random.randint(10, 40))
-		# 		ax_muller.stackplot(time, [(bcell_freqs[c, -1] - bcell_freqs[c, :])/2 + np.ones_like(bcell_freqs[0, :])*np.sum(bcell_freqs[:c, -1]), bcell_freqs[c, :], (bcell_freqs[c, -1] - bcell_freqs[c, :])/2], colors = ['white', col, 'white']);
-
+			if (activation_times_C[c] in activation_times_C[sort_inds[-1:]]):
+				if(np.random.randint(0, 2)>0 and counter_final==0):
+					ax_muller.scatter(activation_times_C[c], (bcell_freqs[c, -1] - bcell_freqs[c, 0])/2 + np.sum(bcell_freqs[:c, -1]), marker = 'o', edgecolor='black', linewidth=1, facecolor = 'white', s = 60, zorder = 20)
+					counter_final+=1
 
 		cumsum_freqs = np.cumsum(bcell_freqs, axis = 0)
-
-		# if(i_kappa!=4):
-		# 	for c in range(int(len(clone_sizes_C[:,0]))):
-		# 		ax_muller.plot(time, cumsum_freqs[c, :], linewidth = .00001*kappa, color = 'black')
-
-		#ax_muller.vlines(t_act_theory, 0, 1, color = 'black', linewidth = 2, alpha = .8, linestyle = ':')
-		#ax_muller.vlines(t_act_theory+1.2, 0, 1, color = 'black', linewidth = 2, alpha = .8, linestyle = '-')
 
 		my_plot_layout(ax = ax_muller, ticks_labelsize=38, yscale = 'linear')
 		ax_muller.set_yticks([])
 		#ax_muller.set_xticks(np.arange(Tf))
 		ax_muller.set_xticks([])
-		ax_muller.set_xlim(T0, Tf-2)
+		ax_muller.set_xlim(T0, Tf-1)
 		ax_muller.set_ylim(0, 1)
 		fig_muller.savefig('../../Figures/1_Dynamics/Trajectories/Muller/B_cell_clones_kappa-%.2f_%d_'%(kappa, rep)+energy_model+'.pdf', edgecolor=fig_muller.get_edgecolor())
-		#fig_muller.savefig('../../Figures/1_Dynamics/Trajectories/Muller/B_cell_clones_kappa-%.2f_%d_'%(kappa, rep)+energy_model+'.png', edgecolor=fig_muller.get_edgecolor())
 		plt.close(fig_muller)
 
 

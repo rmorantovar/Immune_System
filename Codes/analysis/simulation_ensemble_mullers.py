@@ -117,6 +117,7 @@ for i_kappa, kappa in enumerate((kappas)):
     for i_ens in tqdm(np.arange(N_ens)):
 
         fig_muller, ax_muller = plt.subplots(figsize=(4.5,3), linewidth = 0, gridspec_kw={'left':0.005, 'right':.995, 'bottom':.02, 'top': 0.98}, dpi = 700, edgecolor = 'black')
+        #fig_muller, ax_muller = plt.subplots(figsize = (12, 1), linewidth = 6, gridspec_kw={'left':0.1, 'right':.9, 'bottom':.01, 'top': .3}, dpi = 700, edgecolor = 'black')
         ax_muller.spines["top"].set_linewidth(3)
         ax_muller.spines["left"].set_linewidth(3)
         ax_muller.spines["right"].set_linewidth(3)
@@ -171,12 +172,12 @@ for i_kappa, kappa in enumerate((kappas)):
         #   for c in range(int(len(clone_sizes_C[:,0]))):
         #       ax_muller.plot(time, cumsum_freqs[c, :], linewidth = .00001*kappa, color = 'black')
         ax_muller.vlines(t_act_theory, 0, 1, color = 'black', linewidth = 2, alpha = .8, linestyle = '--')
-        ax_muller.vlines(t_act_theory+1.2, 0, 1, color = 'black', linewidth = 2, alpha = .8, linestyle = ':')
+        #ax_muller.vlines(t_act_theory+1.2, 0, 1, color = 'black', linewidth = 2, alpha = .8, linestyle = ':')
         my_plot_layout(ax = ax_muller, ticks_labelsize=38, yscale = 'linear')
         ax_muller.set_yticks([])
         #ax_muller.set_xticks(np.arange(Tf))
         ax_muller.set_xticks([])
-        ax_muller.set_xlim(T0, Tf)
+        ax_muller.set_xlim(T0, Tf-1)
         ax_muller.set_ylim(0, 1)
         fig_muller.savefig('../../Figures/1_Dynamics/Ensemble/L%d/Mullers/B_cell_clones_N_r%.e_kappa-%.2f_%d_'%(L,N_r,kappa, i_ens)+energy_model+'.pdf', edgecolor=fig_muller.get_edgecolor())
         plt.close(fig_muller)
