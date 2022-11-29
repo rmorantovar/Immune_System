@@ -173,7 +173,7 @@ for i_kappa, kappa in enumerate((kappas)):
     ranking = np.arange(1, n_first_clones+1)
     popt, pcov = curve_fit(my_linear_func, np.log(ranking[~np.isnan(final_Nb)][:10]), np.log(final_Nb[~np.isnan(final_Nb)][:10]))
 
-    exponent_sim.append(popt[1])
+    exponent_sim.append(-popt[1])
 
     print('--------')
 
@@ -254,23 +254,24 @@ for kappa in kappas_theory:
     if(kappa<beta_r):
         beta_kappa, E_kappa, Kd_kappa = get_kappa_properties(betas, Q0, Es, dE, kappa)
         beta_act = np.min([beta_r, beta_kappa])
-        exponent_theory.append(-kappa*lambda_B/(lambda_A*beta_act))
+        exponent_theory.append(kappa*lambda_B/(lambda_A*beta_act))
         exponent_theory2.append(1/(beta_act))
     else:
         beta_kappa, E_kappa, Kd_kappa = get_kappa_properties(betas, Q0, Es, dE, kappa)
         beta_act = np.min([beta_r, beta_kappa])
-        exponent_theory.append(-kappa*lambda_B/(lambda_A*beta_act*1))
+        exponent_theory.append(kappa*lambda_B/(lambda_A*beta_act*1))
         exponent_theory2.append(1/(beta_act*1))
 
-ax_exponents.plot(kappas_theory, exponent_theory, color = 'turquoise', linestyle = '-', marker = '', linewidth = 3, ms = 14, alpha = 1)
-ax_exponents.plot(kappas, exponent_sim, color = 'turquoise', linestyle = '', marker = 'D', linewidth = 3, ms = 14, alpha = 1)
-ax_exponents.errorbar(x=kappas, y=exponent_sim, yerr = 1.8*np.sqrt(pcov[1,1]), ls = 'none', color = 'turquoise', alpha = .6)
-ax_exponents_2 = ax_exponents.twinx()
-ax_exponents_2.plot(kappas_theory, exponent_theory2, color = 'navy', linestyle = '-', marker = '', linewidth = 3, ms = 14, alpha = 1)
-ax_exponents_2.plot(kappas, exponent_sim2, color = 'navy', linestyle = '', marker = 'D', linewidth = 3, ms = 14, alpha = 1)
-ax_exponents_2.errorbar(x=kappas, y=exponent_sim2, yerr = 1.8*np.sqrt(pcov[1,1]), ls = 'none', color = 'navy', alpha = .6)
+ax_exponents.plot(kappas_theory, exponent_theory, color = 'indigo', linestyle = '-', marker = '', linewidth = 3, ms = 14, alpha = 1)
+ax_exponents.plot(kappas, exponent_sim, color = 'indigo', linestyle = '', marker = 'D', linewidth = 3, ms = 14, alpha = 1)
+ax_exponents.errorbar(x=kappas, y=exponent_sim, yerr = 1.8*np.sqrt(pcov[1,1]), ls = 'none', color = 'indigo', alpha = .6)
+ax_exponents.vlines(beta_r, .33, .65, lw = 1, ls = '--', color = 'black')
 
-ax_exponents.vlines(beta_r, -.7, -.32, lw = 1, ls = '--', color = 'black')
+
+ax_exponents_2 = ax_exponents.twinx()
+ax_exponents_2.plot(kappas_theory, exponent_theory2, color = 'olive', linestyle = '-', marker = '', linewidth = 3, ms = 14, alpha = 1)
+ax_exponents_2.plot(kappas, exponent_sim2, color = 'olive', linestyle = '', marker = 'D', linewidth = 3, ms = 14, alpha = 1)
+ax_exponents_2.errorbar(x=kappas, y=exponent_sim2, yerr = 1.8*np.sqrt(pcov[1,1]), ls = 'none', color = 'olive', alpha = .6)
 
 my_plot_layout(ax = ax_exponents, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 #ax_exponents.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')

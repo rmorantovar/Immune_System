@@ -123,8 +123,8 @@ for N_r in N_rs:
     for i_kappa, kappa in enumerate(kappas):
         print('--------')
 
-        #fig_QR_all, ax_QR_all = plt.subplots(figsize=(6,3.5), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
-        fig_QR_all_f, ax_QR_all_f = plt.subplots(figsize=(16*0.66,4), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.12, 'top': 0.96})
+        #fig_QR_all_f, ax_QR_all_f = plt.subplots(figsize=(16*0.33,4), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.12, 'top': 0.96})
+        fig_QR_all_f, ax_QR_all_f = plt.subplots(figsize=(4.5*2,3*0.8*2), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.12, 'top': 0.96})
 
         #ax_QR_all.plot(Kds, Q0*N_r, alpha = 1, color = 'grey', linewidth = 5, linestyle = '--')
         #ax_QR_all.vlines(Kd_r, Q0[Kds==Kd_r]*N_r, N_r, alpha = 1, color = 'grey', linewidth = 3, linestyle = ':')

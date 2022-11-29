@@ -181,7 +181,7 @@ for i_kappa, kappa in enumerate(kappas):
 		p_K = P_min_e_Q0(N_r, Q0, dE)#/K_array**2*(Nb/1)
 		p_K = p_K/np.sum(np.flip(p_K[:-1])/np.flip(K_array[:-1])*abs(np.diff(np.flip(K_array))))
 		Kd_r_renorm = Kds[(P_min_e_Q0(N_r, Q0, dE)/Kds)==np.max(P_min_e_Q0(N_r, Q0, dE)/Kds)]
-		ax_mf.hlines(0, .9, 4.1, linewidth = 2, color = my_purple2, linestyle = 'dotted')
+		ax_mf.hlines(0, .9, 4.1, linewidth = 2, color = 'indigo', linestyle = 'dotted')
 		QR = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*(t_act_1))/N_A, Es, kappa, lambda_A, N_c, dE)[3]
 		Kd_1_renorm = Kds[(QR/1)==np.max(QR/1)]
 		#ax_mf.hlines(np.log10((C*1)/Kd_1_renorm/(C/Kd_r_renorm)), .9, 4.1, linewidth = 2, color = 'black', linestyle = 'dotted')
@@ -193,8 +193,8 @@ for i_kappa, kappa in enumerate(kappas):
 	max_potency_simulations_std[kappa] = np.sqrt(np.var((np.array(K_final)/(C/Kd_r_renorm))))
 
 ax_mf.vlines(beta_r, -3.5, 1, ls = '--', lw = 0.8, color = 'k')
-ax_mf.plot(kappas, (np.array(list(max_potency_simulations.values()))), color = my_purple2, linestyle = '-', marker = 'D', linewidth = 3, label = 'Total', ms = 10, alpha = 1)
-#ax_mf.errorbar(x=kappas, y=np.log10(np.array(list(max_potency_simulations.values()))), yerr = 1.8*np.log10(np.array(list(max_potency_simulations_std.values()))), ls = 'none', color = my_purple2, linewidth = 2, alpha = .8)
+ax_mf.plot(kappas, (np.array(list(max_potency_simulations.values()))), color = 'indigo', linestyle = '-', marker = 'D', linewidth = 3, label = 'Total', ms = 10, alpha = 1)
+#ax_mf.errorbar(x=kappas, y=(np.array(list(max_potency_simulations.values()))), yerr = (np.array(list(max_potency_simulations_std.values()))), ls = 'none', color = 'indigo', linewidth = 2, alpha = .8)
 
 #-------------------------# 
 print('--------')
@@ -267,9 +267,9 @@ for i_kappa, kappa in enumerate(kappas):
 	max_potency_simulations3[kappa] = np.mean((np.array(final_highest_potency))/(C/Kd_r_renorm))
 	max_potency_simulations_std3[kappa] = np.sqrt(np.var((np.array(final_highest_potency))/(C/Kd_r_renorm)))
 
-ax_mf.plot(kappas, (np.array(list(max_potency_simulations2.values()))), color = my_purple2, linestyle = '--', marker = '*', linewidth = 3, label = 'Largest', ms = 14, alpha = .8)
-#ax_mf.plot(kappas, np.log10(np.array(list(max_potency_simulations3.values()))), color = my_purple2, linestyle = '', marker = '*', linewidth = 3, label = 'Largest', ms = 14, alpha = .6)
-#ax_mf.errorbar(x=kappas, y=np.log10(np.array(list(max_potency_simulations2.values()))), yerr = 1.8*np.log10(np.array(list(max_potency_simulations_std2.values()))), ls = 'none', color = my_purple2, alpha = .6)
+ax_mf.plot(kappas, (np.array(list(max_potency_simulations2.values()))), color = 'indigo', linestyle = '--', marker = '*', linewidth = 3, label = 'Largest', ms = 14, alpha = .8)
+#ax_mf.plot(kappas, np.log10(np.array(list(max_potency_simulations3.values()))), color = 'indigo', linestyle = '', marker = '*', linewidth = 3, label = 'Largest', ms = 14, alpha = .6)
+#ax_mf.errorbar(x=kappas, y=(np.array(list(max_potency_simulations2.values()))), yerr = (np.array(list(max_potency_simulations_std2.values()))), ls = 'none', color = 'indigo', alpha = .6)
 
 
 print('--------')
@@ -310,10 +310,10 @@ kappas_theory = np.linspace(1, 4.1, 40)
 # 			normalization_theory = 1
 # 		max_potency_theory[kappa] = K - normalization_theory
 
-#ax_mf.plot(kappas_theory, np.log10(np.array(list(max_potency_theory.values()))/(C/Kd_r_renorm)), color = my_purple2, linestyle = '-', marker = '', linewidth = 3, label = 'theory total', alpha = .8)
+#ax_mf.plot(kappas_theory, np.log10(np.array(list(max_potency_theory.values()))/(C/Kd_r_renorm)), color = 'indigo', linestyle = '-', marker = '', linewidth = 3, label = 'theory total', alpha = .8)
 
 y_interp1 = np.interp(kappas_theory, kappas, (np.array(list(max_potency_simulations.values()))))
-#ax_mf.plot(kappas_theory, y_interp1, color = my_purple2, linestyle = '-', marker = '', linewidth = 3, ms = 10, alpha = 1)
+#ax_mf.plot(kappas_theory, y_interp1, color = 'indigo', linestyle = '-', marker = '', linewidth = 3, ms = 10, alpha = 1)
 
 
 print('--------')
@@ -338,15 +338,15 @@ print('--------')
 #ax_mf.plot(kappas_theory, np.log10(np.array(list(max_potency_theory.values()))/(C/Kd_r_renorm))-0.4, color = my_purple, linestyle = '-', marker = '', linewidth = 3, label = 'theory largest', alpha = .8)
 
 y_interp2 = np.interp(kappas_theory, kappas, (np.array(list(max_potency_simulations2.values()))))
-#ax_mf.plot(kappas_theory, y_interp2, color = my_purple2, linestyle = ':', marker = '', linewidth = 3, ms = 10, alpha = .8)
+#ax_mf.plot(kappas_theory, y_interp2, color = 'indigo', linestyle = ':', marker = '', linewidth = 3, ms = 10, alpha = .8)
 
 y_interp3 = np.interp(kappas_theory, kappas, (np.array(list(max_potency_simulations3.values()))))
-#ax_mf.plot(kappas_theory, y_interp3, color = my_purple2, linestyle = '-', marker = '', linewidth = 3, ms = 10, alpha = .6)
+#ax_mf.plot(kappas_theory, y_interp3, color = 'indigo', linestyle = '-', marker = '', linewidth = 3, ms = 10, alpha = .6)
 
 
-ax_mf.spines['top'].set_color(my_purple2)
-ax_mf.xaxis.label.set_color(my_purple2)
-ax_mf.tick_params(axis='y', colors=my_purple2)
+ax_mf.spines['top'].set_color('indigo')
+ax_mf.xaxis.label.set_color('indigo')
+ax_mf.tick_params(axis='y', colors='indigo')
 
 my_plot_layout(ax = ax_mf, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 #ax_mf.legend(fontsize = 26, title_fontsize = 30, loc = 8)
@@ -418,12 +418,14 @@ for i_kappa, kappa in enumerate(kappas):
 
 
 ax_mf_2.plot(kappas, np.array(list(max_entropy_simulations.values())), color = 'olive', linestyle = '-', marker = 'D', linewidth = 3, label = 'Total', ms = 10, alpha = 1)
+#ax_mf_2.errorbar(x=kappas, y=(np.array(list(max_entropy_simulations.values()))), yerr = (np.array(list(max_entropy_simulations_std.values()))), ls = 'none', color = 'olive', alpha = .6)
 
 kappas_theory = np.linspace(.5, 4, 400)
 y_interp2 = np.interp(kappas_theory, kappas, np.array(list(max_entropy_simulations.values())))
 #ax_mf_2.plot(kappas_theory, y_interp2, color = 'olive', linestyle = '-', marker = '', linewidth = 3, ms = 10, alpha = 1)
 
-ax_mf_2.scatter(kappas_theory[y_interp2>3.3][-1], 3.3, s = 140, facecolors='none', edgecolors='olive', marker = 'o', lw=2)
+ax_mf_2.scatter(kappas_theory[y_interp2>4.0][-1], 4.0, s = 140, facecolors='none', edgecolors='olive', marker = 'o', lw=2)
+ax_mf_2.errorbar(x = kappas_theory[y_interp2>4.0][-1], y = 4.0, yerr = 0.6, ls = 'none', color = 'olive', alpha = .6)
 
 ax_mf_2.spines['top'].set_color('olive')
 ax_mf_2.xaxis.label.set_color('olive')

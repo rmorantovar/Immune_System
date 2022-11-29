@@ -130,7 +130,8 @@ for i_kappa, kappa in enumerate(kappas):
 	m_bar_theory = np.array([np.sum(N_r*calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*(t))/N_A, Es, kappa, lambda_A, N_c, dE)[3]*dE) for t in time])
 	t_act_theory = time[m_bar_theory>1][0]
 	for rep in [0, 1, 2, 3]:
-		fig_muller, ax_muller = plt.subplots(figsize=(9/1.5,4/1.5), linewidth = 0, gridspec_kw={'left':0.005, 'right':.995, 'bottom':.02, 'top': 0.98}, dpi = 700, edgecolor = 'black')
+		#fig_muller, ax_muller = plt.subplots(figsize=(9/1.5,4/1.5), linewidth = 0, gridspec_kw={'left':0.005, 'right':.995, 'bottom':.02, 'top': 0.98}, dpi = 700, edgecolor = 'black')
+		fig_muller, ax_muller = plt.subplots(figsize=(4.5,3*0.8), linewidth = 0, gridspec_kw={'left':0.005, 'right':.995, 'bottom':.02, 'top': 0.98}, dpi = 700, edgecolor = 'black')
 		ax_muller.spines["top"].set_linewidth(3)
 		ax_muller.spines["left"].set_linewidth(3)
 		ax_muller.spines["right"].set_linewidth(3)

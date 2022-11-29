@@ -204,7 +204,7 @@ for i_kappa, kappa in enumerate((kappas)):
     fig_ranking_i.savefig('../../Figures/1_Dynamics/Ensemble/L%d/Ranking_2_p-%.2f'%(L, kappa)+'_'+energy_model+'.pdf')
 
 my_plot_layout(ax = ax_ranking, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-ax_ranking.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
+#ax_ranking.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
 #ax_ranking.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
 ax_ranking.set_ylim(top = 1e2)
 #ax_ranking.set_yticks([1, 0.1, 0.01, 0.001])

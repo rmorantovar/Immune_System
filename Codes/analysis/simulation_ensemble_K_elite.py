@@ -20,9 +20,9 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 #--------------- PARAMETERS ---------------------
 #N_ensss = [[200], [501, 502, 503, 504, 505, 506, 507, 508, 509, 400, 300, 200, 100, 50], [200, 150, 100], [200, 100], [200]]
 #N_ensss = [[400, 401, 402, 403, 404, 405, 406, 407, 408, 409, 501, 502, 503, 504, 505, 506, 507, 508, 509]] #for p=2.5
-N_ensss = [[50, 100, 150, 200] + [400+i for i in range(1, 10)] + [500+i for i in range(0, 91)] + [1000+i for i in range(1, 51)]] #for p=3
+N_ensss = [[1000+i for i in range(1, 21)]] #for p=3
 
-N_r = 2e8
+N_r = 1e8
 
 T0 = 0
 Tf = 10
@@ -67,7 +67,10 @@ colors_R = []
 for i in range(len(kappas)):
     colors_R.append([colors_kappa[i], colors_kappa[i], colors_kappa[i], colors_kappa[i]])
 
-antigen = 'EYTACNSEYPNTTKCGRWYCGRYPN'
+#antigen = 'EYTACNSEYPNTTKCGRWYCGRYPN' #L=25
+antigen = 'TACNSEYPNTTRAKCGRWYC' #L=20
+#antigen = 'TACNSEYPNTTKCGRWYC' #L=18'
+
 L=len(antigen)
 print('--------')
 print('L=%d'%(L))
@@ -121,7 +124,7 @@ for i_kappa, kappa in enumerate(kappas):
 		print('N_ens = %d'%N_ens)
 
 		#-----------------Loading data----------------------------
-		parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 0.5, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
+		parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 3.0, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
 		#data = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/energies_ensemble.txt', sep = '\t', header=None)
 		data, return_data_type = get_data_ensemble_K_elite(folder_path = Text_files_path + 'Dynamics/Ensemble/L%d/'%L+parameters_path)
 		
