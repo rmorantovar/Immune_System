@@ -246,7 +246,7 @@ for i_kappa, kappa in enumerate((kappas)):
 
 # ----- THEORY -------
 
-kappas_theory = np.linspace(1, 4.1, 40)
+kappas_theory = np.linspace(1, 4.1, 400)
 exponent_theory = []
 exponent_theory2 = []
 
@@ -267,6 +267,11 @@ ax_exponents.plot(kappas, exponent_sim, color = 'indigo', linestyle = '', marker
 ax_exponents.errorbar(x=kappas, y=exponent_sim, yerr = 1.8*np.sqrt(pcov[1,1]), ls = 'none', color = 'indigo', alpha = .6)
 ax_exponents.vlines(beta_r, .33, .65, lw = 1, ls = '--', color = 'black')
 
+ax_exponents.scatter(kappas_theory[np.array(exponent_theory)<0.60][-1], 0.60, s = 140, facecolors='none', edgecolors='indigo', marker = 'o', lw=2)
+ax_exponents.errorbar(x = kappas_theory[np.array(exponent_theory)<0.60][-1], y = 0.60, yerr = 0.02, ls = 'none', color = 'indigo', alpha = .6)
+
+ax_exponents.scatter(kappas_theory[np.array(exponent_theory)<0.57][-1], 0.57, s = 140, facecolors='none', edgecolors='indigo', marker = '^', lw=2)
+ax_exponents.errorbar(x = kappas_theory[np.array(exponent_theory)<0.57][-1], y = 0.57, yerr = 0.12, ls = 'none', color = 'indigo', alpha = .6)
 
 ax_exponents_2 = ax_exponents.twinx()
 ax_exponents_2.plot(kappas_theory, exponent_theory2, color = 'olive', linestyle = '-', marker = '', linewidth = 3, ms = 14, alpha = 1)
