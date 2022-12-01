@@ -97,6 +97,26 @@ def get_data_ensemble(folder_path):
 		pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
 		return data
 
+def get_data_ensemble_times(folder_path):
+	return_data_type = 0 #default for returning processed data
+	if os.path.exists(folder_path+'/processed_data_times.pkl'):
+		return_data_type = 1
+		print('Data exists already and is proccesed.  Loading it ...')
+		f = open(folder_path+'/processed_data_times.pkl', 'rb')
+		data = pickle.load(f) 
+	else:
+		if os.path.exists(folder_path+'/energies_ensemble.pkl'):
+			print('Data is not processed. Picke object exists already. Loading it ...')
+			f = open(folder_path+'/energies_ensemble.pkl', 'rb')
+			data = pickle.load(f) 
+		else:
+			print(f'Pickling data ...')
+			data = pd.read_csv(folder_path+'/energies_ensemble.txt', sep = '\t', header=None)
+			f = open(folder_path+'/energies_ensemble.pkl', 'wb')
+			pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
+			
+	return data, return_data_type
+
 def get_data_ensemble_K(folder_path):
 	return_data_type = 0 #default for returning processed data
 	if os.path.exists(folder_path+'/processed_data_K.pkl'):

@@ -29,6 +29,7 @@ C = 1e4
 AA = 1
 
 kappas = [1, 3]
+t_fs = [2.48, 4.15]
 
 my_red = np.array((228,75,41))/256.
 my_purple = np.array((125,64,119))/256.
@@ -106,8 +107,8 @@ t_prime = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*N_c))
 print('--------')
 
 min_E = -17.8
-min_E = -19.0
-max_E = -7.5
+min_E = -19.5
+max_E = -8
 
 fig, ax = plt.subplots(figsize = (12, 1), linewidth = 6, gridspec_kw={'left':0.1, 'right':.9, 'bottom':.01, 'top': .3})
 col_map = 'cividis'
@@ -175,7 +176,7 @@ for i_kappa, kappa in enumerate(kappas):
 		print('Applying filter...')
 		lim_size = 2
 		clone_sizes_C, activation_times_C, energies_C, filter_C, n_C = apply_filter_C(clone_sizes, activation_times, energies, lim_size)
-		ax_muller.vlines(t_act_theory, 0, 1, color = 'black', linewidth = 2, alpha = .8, linestyle = '--')
+		ax_muller.vlines([t_act_theory, t_fs[i_kappa]], 0, 1, color = 'black', linewidth = 2, alpha = 1, linestyle = '--')
 		print('min time : %.2f'%np.min(activation_times_C))
 		#ax_muller.vlines(np.max(activation_times_C), 0, 1, color = 'black', linewidth = 2, alpha = .8, linestyle = ':')
 		print('max time : %.2f'%np.max(activation_times_C))
@@ -200,10 +201,10 @@ for i_kappa, kappa in enumerate(kappas):
 			ax_muller.stackplot(time, [(bcell_freqs[c, -1] - bcell_freqs[c, :])/2 + np.ones_like(bcell_freqs[0, :])*np.sum(bcell_freqs[:c, -1]), bcell_freqs[c, :], (bcell_freqs[c, -1] - bcell_freqs[c, :])/2], colors = ['white', color_c, 'white']);
 			if activation_times_C[c] in activation_times_C[sort_inds[:3]]:
 				ax_muller.scatter(activation_times_C[c], (bcell_freqs[c, -1] - bcell_freqs[c, 0])/2 + np.sum(bcell_freqs[:c, -1]), marker = 'D', edgecolor='black', linewidth=1, facecolor = 'white', s = 60, zorder = 20)
-			if (activation_times_C[c] in activation_times_C[sort_inds[-1:]]):
-				if(np.random.randint(0, 2)>0 and counter_final==0):
-					ax_muller.scatter(activation_times_C[c], (bcell_freqs[c, -1] - bcell_freqs[c, 0])/2 + np.sum(bcell_freqs[:c, -1]), marker = 'o', edgecolor='black', linewidth=1, facecolor = 'white', s = 60, zorder = 20)
-					counter_final+=1
+			# if (activation_times_C[c] in activation_times_C[sort_inds[-1:]]):
+			# 	if(np.random.randint(0, 2)>0 and counter_final==0):
+			# 		ax_muller.scatter(activation_times_C[c], (bcell_freqs[c, -1] - bcell_freqs[c, 0])/2 + np.sum(bcell_freqs[:c, -1]), marker = 'o', edgecolor='black', linewidth=1, facecolor = 'white', s = 60, zorder = 20)
+			# 		counter_final+=1
 
 		cumsum_freqs = np.cumsum(bcell_freqs, axis = 0)
 
