@@ -20,7 +20,7 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 #--------------- PARAMETERS ---------------------
 #N_ensss = [[200], [501, 502, 503, 504, 505, 506, 507, 508, 509, 400, 300, 200, 100, 50], [200, 150, 100], [200, 100], [200]]
 #N_ensss = [[400, 401, 402, 403, 404, 405, 406, 407, 408, 409, 501, 502, 503, 504, 505, 506, 507, 508, 509]] #for p=2.5
-N_ensss = [[1000+i for i in range(1, 80)]] #for p=3
+N_ensss = [[1000+i for i in range(1, 82)]] #for p=3
 
 N_r = 1e8
 

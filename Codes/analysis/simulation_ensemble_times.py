@@ -39,7 +39,7 @@ linear = 0
 
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
-kappas = [1, 2, 3, 4]#, 5]
+kappas = [1, 2, 2.5, 3, 4]#, 5]
 #kappas = [3]
 
 my_red = np.array((228,75,41))/256.
@@ -59,17 +59,12 @@ antigen_color = my_yellow/256.
 transparency_n = [1]
 
 color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_brown, my_blue2, my_yellow, my_purple, my_green2])#
-color_list = np.array([my_blue2, my_green, my_red, my_gold])
+color_list = np.array([my_blue2, my_green, my_brown, my_red, my_gold])
 #color_list = np.array([my_green, my_blue2, my_gold])
 
 colors_kappa = []
 for i in range(len(color_list)):
         colors_kappa.append(np.array(color_list[i]))
-
-#colors_R = [['tab:grey', 'tab:grey', 'tab:blue', 'tab:blue'], ['tab:grey', 'tab:grey', 'tab:green', 'tab:green'], ['tab:grey', 'tab:grey', 'tab:red', 'tab:red'], ['tab:red', 'tab:red', 'tab:red', 'tab:red']]
-colors_R = []
-for i in range(len(kappas)):
-    colors_R.append([colors_kappa[i], colors_kappa[i], colors_kappa[i], colors_kappa[i]])
 
 #antigen = 'EYTACNSEYPNTTKCGRWYCGRYPN' #L=25
 antigen = 'TACNSEYPNTTRAKCGRWYC' #L=20
@@ -90,7 +85,7 @@ for i in np.arange(L):
     PWM_data[:,i]-=np.min(PWM_data[:,i], axis=0)
 
 #--------------------------Entropy function--------------------------
-Es, dE, Q0, betas = calculate_Q0(0.01, 50, 400000, PWM_data, E_ms, L)
+Es, dE, Q0, betas = calculate_Q0(0.1, 50, 400000, PWM_data, E_ms, L)
 Kds = np.exp(Es[:-1])
 
 #--------------------------Repertoire properties--------------------------
@@ -103,6 +98,7 @@ beta_pr, E_pr, Kd_pr = get_proofreading_properties(betas, Q0, Es, dE, k_pr, k_on
 print('beta_pr = %.2f'%beta_pr)
 
 t_prime = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*N_c))
+
 print('--------')
 print('Loops...')
 #--------------------------Loops--------------------------
@@ -114,6 +110,9 @@ max_potency_theory = dict()
 
 t_act_p = []
 t_f_p = []
+
+t_act_p2 = []
+t_f_p2 = []
 
 for i_kappa, kappa in enumerate(kappas):
 	m_bar_theory = np.array([np.sum(N_r*calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*(t))/N_A, Es, kappa, lambda_A, N_c, dE)[3]*dE) for t in time])
@@ -150,9 +149,6 @@ for i_kappa, kappa in enumerate(kappas):
 			#--------------------------t_C filter-------------------------
 			lim_size = 2
 			clone_sizes_C, activation_times_C, energies_C, filter_C, n_C = apply_filter_C(clone_sizes, activation_times, energies, lim_size)
-
-			
-
 			#-------Simulations-------
 			if(len(energies_C)>1):
 				t_acts.append(np.min(activation_times_C))
@@ -165,8 +161,47 @@ for i_kappa, kappa in enumerate(kappas):
 	t_act_p.append(np.mean(t_acts))
 	t_f_p.append(np.mean(t_fs))
 
-ax_times.plot(kappas, t_act_p, color = colors_kappa[i_kappa], alpha = 1, linewidth = 5, linestyle = '-', marker = 'D', ms = 20, label = r'$%d$'%(kappa))
-ax_times.plot(kappas, t_f_p, color = colors_kappa[i_kappa], alpha = 1, linewidth = 5, linestyle = '-', marker = 'o', ms = 20)
+	t_act_p2.append(np.std(t_acts))
+	t_f_p2.append(np.std(t_fs))
+
+	parts = ax_times.violinplot(t_acts, positions = [kappa])
+
+	for pc in parts['bodies']:
+		pc.set_facecolor(colors_kappa[3])
+		pc.set_edgecolor('black')
+		pc.set_alpha(.6)
+	for partname in ('cbars','cmins','cmaxes'):
+		vp = parts[partname]
+		vp.set_edgecolor('darkred')
+		vp.set_linewidth(1)
+
+kappas_theory = np.linspace(1, 4, 50)
+t_theory = np.ones_like(kappas_theory)
+t_theory2 = np.ones_like(kappas_theory)
+
+for i, kappa in enumerate(kappas_theory):
+	m_bar_theory = np.array([np.sum(N_r*calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*(t))/N_A, Es, kappa, lambda_A, N_c, dE)[3]*dE) for t in time])
+	t_act_numeric = time[m_bar_theory>1][0]
+	t_theory2[i] = t_act_numeric
+	beta_kappa, E_kappa, Kd_kappa = get_kappa_properties(betas, Q0, Es, dE, kappa)
+	if(kappa<beta_r):
+		t_theory[i] = t_prime + kappa/lambda_A*np.log(Kd_kappa/Kd_pr) - 1/lambda_A*np.log(N_r*Q0[Es[:-1]<E_kappa][-1])
+	else:
+		t_theory[i] = t_prime + kappa/lambda_A*np.log(Kd_r/Kd_pr)
+
+#t_theory = t_theory/t_theory[0]*t_act_p[0]
+#t_theory = t_theory/t_theory[-1]*t_act_p[-1]
+print(t_prime)
+
+ax_times.plot(kappas, t_act_p, color = colors_kappa[3], alpha = 1, linewidth = 3, linestyle = '', marker = 'D', ms = 15, label = r'$t_{\rm act}$')
+ax_times.errorbar(x = kappas, y = t_act_p, yerr = t_act_p2, ls = 'none', color = colors_kappa[3], alpha = .6)
+ax_times.plot(kappas_theory, t_theory, color = colors_kappa[3], alpha = 1, linewidth = 4, linestyle = '-', marker = '', ms = 15)
+ax_times.plot(kappas_theory, t_theory2, color = colors_kappa[3], alpha = 1, linewidth = 4, linestyle = ':', marker = '', ms = 15)
+
+ax_times.plot(kappas, t_f_p, color = colors_kappa[2], alpha = 1, linewidth = 3, linestyle = '', marker = 'o', ms = 15, label = r'$t_f$')
+ax_times.errorbar(x = kappas, y = t_f_p, yerr = t_f_p2, ls = 'none', color = colors_kappa[3], alpha = .6)
+
+ax_times.hlines(t_prime, 1, 4, color = 'gray', ls = '--')
 
 print('t_acts =', t_act_p )
 print('t_fs = ', t_f_p)

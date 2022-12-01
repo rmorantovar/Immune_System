@@ -118,7 +118,7 @@ for i_kappa, kappa in enumerate((kappas)):
     parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 3.0, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
     #data = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/energies_ensemble.txt', sep = '\t', header=None)
     #data = get_data_ensemble(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
-    data, return_data_type = get_data_ensemble_ranking_2(folder_path = Text_files_path + 'Dynamics/Ensemble/L%d/'%L+parameters_path)
+    data, return_data_type = get_data_ensemble_ranking_4(folder_path = Text_files_path + 'Dynamics/Ensemble/L%d/'%L+parameters_path)
     
     n_first_clones = 50
     if(return_data_type):
@@ -160,11 +160,11 @@ for i_kappa, kappa in enumerate((kappas)):
             best_clone_i = energies_C_sorted[0]
             #ax_ranking.scatter(np.exp(energies_C_sorted[-1]), biggest_clone_i, color = colors_kappa[i_kappa], alpha = .25, edgecolor='black', linewidth=1, facecolor = colors_kappa[i_kappa])
             #activation_times_total = np.append(activation_times_total, activation_times_C_sorted)
-            sorted_clones = np.exp(energies_C_sorted)/np.exp(best_clone_i)
+            sorted_clones = np.exp(-energies_C_sorted)/np.exp(-best_clone_i)
             max_rank_i = len(sorted_clones)
 
             for i in range(max_rank_i):
-                final_E[i]+= (sorted_clones[i])
+                final_E[i]+= sorted_clones[i]
                 #final_E[i]+= (sorted_clones[i])
                 counts_final_E[i] += 1
             if(max_rank_i<max_rank):
@@ -173,7 +173,7 @@ for i_kappa, kappa in enumerate((kappas)):
                 trajectories = np.append(trajectories, sorted_clones)
                 trajectories_rank = np.append(trajectories_rank, max_rank_i)
 
-        f = open(Text_files_path + 'Dynamics/Ensemble/L%d/'%L+parameters_path+'/processed_data_ranking_2.pkl', 'wb')
+        f = open(Text_files_path + 'Dynamics/Ensemble/L%d/'%L+parameters_path+'/processed_data_ranking_4.pkl', 'wb')
         pickle.dump([final_E, counts_final_E, trajectories, trajectories_rank], f, pickle.HIGHEST_PROTOCOL)  
 
     final_E = (final_E/counts_final_E)
@@ -188,7 +188,8 @@ for i_kappa, kappa in enumerate((kappas)):
 
 
     ranking = np.arange(1, n_first_clones+1)
-    fit = ranking**(1/(beta_act))
+    fit = ranking**(-1/(beta_act))
+    
     ax_ranking.plot(ranking, final_E[:n_first_clones], color = colors_kappa[i_kappa], linewidth = 0, marker = '*', alpha = 1, ms = 12)
     ax_ranking.plot(ranking, fit, color = colors_kappa[i_kappa], linewidth = 5, label = r'$%.d$'%(kappa), alpha = .8)
 
@@ -201,15 +202,15 @@ for i_kappa, kappa in enumerate((kappas)):
     ax_ranking_i.set_ylim(top = 2e2)
     #ax_ranking_i.set_yticks([1, 0.1, 0.01, 0.001])
     #ax_ranking_i.set_yticklabels([1, 0.1, 0.01])
-    fig_ranking_i.savefig('../../Figures/1_Dynamics/Ensemble/L%d/Ranking_2_p-%.2f'%(L, kappa)+'_'+energy_model+'.pdf')
+    fig_ranking_i.savefig('../../Figures/1_Dynamics/Ensemble/L%d/Ranking_4_p-%.2f'%(L, kappa)+'_'+energy_model+'.pdf')
 
 my_plot_layout(ax = ax_ranking, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 #ax_ranking.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
 #ax_ranking.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
-ax_ranking.set_ylim(top = 1.5e2)
+ax_ranking.set_ylim(bottom = 1e-2)
 #ax_ranking.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_ranking.set_yticklabels([1, 0.1, 0.01])
-fig_ranking.savefig('../../Figures/1_Dynamics/Ensemble/L%d/Ranking_2_'%L+energy_model+'.pdf')
+fig_ranking.savefig('../../Figures/1_Dynamics/Ensemble/L%d/Ranking_4_'%L+energy_model+'.pdf')
 
 print('----END-----')
 

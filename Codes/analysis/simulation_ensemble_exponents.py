@@ -264,7 +264,7 @@ for kappa in kappas_theory:
 
 ax_exponents.plot(kappas_theory, exponent_theory, color = 'indigo', linestyle = '-', marker = '', linewidth = 3, ms = 14, alpha = 1)
 ax_exponents.plot(kappas, exponent_sim, color = 'indigo', linestyle = '', marker = 'D', linewidth = 3, ms = 14, alpha = 1)
-ax_exponents.errorbar(x=kappas, y=exponent_sim, yerr = 1.8*np.sqrt(pcov[1,1]), ls = 'none', color = 'indigo', alpha = .6)
+ax_exponents.errorbar(x=kappas, y=exponent_sim, yerr = np.sqrt(pcov[1,1]), ls = 'none', color = 'indigo', alpha = .6)
 ax_exponents.vlines(beta_r, .33, .65, lw = 1, ls = '--', color = 'black')
 
 ax_exponents.scatter(kappas_theory[np.array(exponent_theory)<0.60][-1], 0.60, s = 140, facecolors='none', edgecolors='indigo', marker = 'o', lw=2)
@@ -276,7 +276,7 @@ ax_exponents.errorbar(x = kappas_theory[np.array(exponent_theory)<0.57][-1], y =
 ax_exponents_2 = ax_exponents.twinx()
 ax_exponents_2.plot(kappas_theory, exponent_theory2, color = 'olive', linestyle = '-', marker = '', linewidth = 3, ms = 14, alpha = 1)
 ax_exponents_2.plot(kappas, exponent_sim2, color = 'olive', linestyle = '', marker = 'D', linewidth = 3, ms = 14, alpha = 1)
-ax_exponents_2.errorbar(x=kappas, y=exponent_sim2, yerr = 1.8*np.sqrt(pcov[1,1]), ls = 'none', color = 'olive', alpha = .6)
+ax_exponents_2.errorbar(x=kappas, y=exponent_sim2, yerr = np.sqrt(pcov[1,1]), ls = 'none', color = 'olive', alpha = .6)
 
 my_plot_layout(ax = ax_exponents, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 #ax_exponents.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')

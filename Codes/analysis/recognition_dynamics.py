@@ -96,7 +96,7 @@ avg_E = np.sum([np.mean(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))]) + E_
 var_E = np.sum([np.var(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))])
 
 #--------------------------Entropy function--------------------------
-Es, dE, Q0, betas = calculate_Q0(0.01, 50, 400000, PWM_data, E_ms, L)
+Es, dE, Q0, betas = calculate_Q0(0.05, 50, 400000, PWM_data, E_ms, L)
 Kds = np.exp(Es[:-1])
 beta_1, E_1, Kd_1 = get_kappa_properties(betas, Q0, Es, dE, 1)
 #--------------------------Proofreading properties--------------------------
