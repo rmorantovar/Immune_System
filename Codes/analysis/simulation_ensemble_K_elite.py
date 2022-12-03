@@ -20,7 +20,7 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 #--------------- PARAMETERS ---------------------
 #N_ensss = [[200], [501, 502, 503, 504, 505, 506, 507, 508, 509, 400, 300, 200, 100, 50], [200, 150, 100], [200, 100], [200]]
 #N_ensss = [[400, 401, 402, 403, 404, 405, 406, 407, 408, 409, 501, 502, 503, 504, 505, 506, 507, 508, 509]] #for p=2.5
-N_ensss = [[1000+i for i in range(1, 82)]] #for p=3
+N_ensss = [[1000+i for i in range(1, 100)]] #for p=3
 
 N_r = 1e8
 
@@ -200,6 +200,11 @@ fit_tail *= (1-np.cumsum(K_data_all[0]*np.diff(K_data_all[1])))[((K_data_all[1][
 #print((1-np.cumsum(np.flip(p_K[:-1])/np.flip(K_array[:-1])*abs(np.diff(np.flip(K_array)))))[(np.flip(K_array)[:-1]/normalization_all)<27.5][-1])
 ax_K_distribution2.plot(K_array_tail/(C/Kd_r_renorm), fit_tail, linewidth = 4, color = 'black', linestyle = 'dashed')
 
+exponent_2 = (lambda_A*beta_r)/(lambda_B*kappa)
+fit2 = (K_array_tail**(-exponent_2))/((10**11.2)**(-exponent_2))
+fit2 *= (1-np.cumsum(K_data_all[0]*np.diff(K_data_all[1])))[((K_data_all[1][:-1]))<11.2][-1]
+ax_K_distribution2.plot(K_array_tail/(C/Kd_r_renorm), fit2, linewidth = 4, color = 'black', linestyle = 'dashed')
+
 my_plot_layout(ax = ax_K_distribution, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 #ax_K_distribution.legend(fontsize = 32, title_fontsize = 34, title = r'$p$', loc = 4)
 ax_K_distribution.set_ylim(bottom = 5e-6, top = 3)
@@ -211,7 +216,7 @@ fig_K_distribution.savefig('../../Figures/1_Dynamics/Ensemble/L%d/K_elite_P_'%L+
 
 my_plot_layout(ax = ax_K_distribution2, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_K_distribution2.legend(fontsize = 28, title_fontsize = 30, loc = 0)
-ax_K_distribution2.set_ylim(bottom = 1e-5, top = 1.05)
+ax_K_distribution2.set_ylim(bottom = 6e-6, top = 1.05)
 ax_K_distribution2.set_xlim(left = 8*10**(10)/(C/Kd_r_renorm), right = 2*10**(13)/(C/Kd_r_renorm))
 #ax_K_distribution2.set_xticks([])
 #ax_K_distribution2.set_yticks([])

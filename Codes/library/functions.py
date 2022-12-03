@@ -208,10 +208,12 @@ def get_data_ensemble_K_elite(folder_path):
 		if os.path.exists(folder_path+'/energies_ensemble.pkl'):
 			print('Data is not processed. Picke object exists already. Loading it ...')
 			f = open(folder_path+'/energies_ensemble.pkl', 'rb')
-			data = pickle.load(f) 
+			data = pickle.load(f)
+			print('pkl file has been read...')
 		else:
 			print(f'Pickling data ...')
-			data = pd.read_csv(folder_path+'/energies_ensemble.txt', sep = '\t', header=None)
+			data = pd.read_csv(folder_path+'/energies_ensemble.txt', sep = '\t', header=None, engine = 'c')
+			print('txt file has been read...')
 			f = open(folder_path+'/energies_ensemble.pkl', 'wb')
 			pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
 			
@@ -248,10 +250,12 @@ def get_data_ensemble_K_L(folder_path):
 		if os.path.exists(folder_path+'/energies_ensemble.pkl'):
 			print('Data is not processed. Picke object exists already. Loading it ...')
 			f = open(folder_path+'/energies_ensemble.pkl', 'rb')
-			data = pickle.load(f) 
+			data = pickle.load(f)
+			print('pkl file has been read...')
 		else:
 			print(f'Pickling data ...')
-			data = pd.read_csv(folder_path+'/energies_ensemble.txt', sep = '\t', header=None)
+			data = pd.read_csv(folder_path+'/energies_ensemble.txt', sep = '\t', header=None, engine = 'c')
+			print('txt file has been read...')
 			f = open(folder_path+'/energies_ensemble.pkl', 'wb')
 			pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
 			

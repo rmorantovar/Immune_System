@@ -106,6 +106,7 @@ print('--------')
 print('Loops...')
 #--------------------------Loops--------------------------
 fig_ranking, ax_ranking = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+fig_ranking_log, ax_ranking_log = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 
 for i_kappa, kappa in enumerate((kappas)):
     fig_ranking_i, ax_ranking_i = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
@@ -122,14 +123,16 @@ for i_kappa, kappa in enumerate((kappas)):
     if(return_data_type):
         final_Nb = data[0]
         final_E = data[1]
-        counts_final_Nb = data[2]
-        trajectories = data[3]
-        trajectories2 = data[4]
-        trajectories_rank = data[5]
+        final_E_log = data[2]
+        counts_final_Nb = data[3]
+        trajectories = data[4]
+        trajectories2 = data[5]
+        trajectories_rank = data[6]
     else:
         final_Nb = np.zeros(n_first_clones)
         counts_final_Nb = np.zeros(n_first_clones)
         final_E = np.zeros(n_first_clones)
+        final_E_log = np.zeros(n_first_clones)
         max_rank = 50
 
         trajectories = np.array([], dtype = object)
@@ -157,12 +160,13 @@ for i_kappa, kappa in enumerate((kappas)):
             sorted_clones = np.flip(clone_sizes_C_sorted[:, -1])/biggest_clone_i
             energies_C_sorted = energies_C[sort_inds][-int(n_first_clones*(4-3)):]
             best_clone_i = energies_C_sorted[-1]
-            sorted_clones2 = np.exp(np.flip(energies_C_sorted))/np.exp(best_clone_i)
+            sorted_clones2 = np.exp(-np.flip(energies_C_sorted))/np.exp(-best_clone_i)
             max_rank_i = len(sorted_clones)
             if max_rank_i>1:
                 for i in range(max_rank_i):
-                    final_Nb[i]+= (sorted_clones[i])
-                    final_E[i]+= np.log(sorted_clones2[i])
+                    final_Nb[i]+= (sorted_clones[i])                    
+                    final_E[i]+= (sorted_clones2[i])
+                    final_E_log[i]+= np.log(sorted_clones2[i])
                     counts_final_Nb[i] += 1
                 if(max_rank_i<max_rank):
                     max_rank = max_rank_i
@@ -172,7 +176,7 @@ for i_kappa, kappa in enumerate((kappas)):
                     trajectories_rank = np.append(trajectories_rank, max_rank_i)
 
         f = open(Text_files_path + 'Dynamics/Ensemble/L%d/'%L+parameters_path+'/processed_data_ranking_combined.pkl', 'wb')
-        pickle.dump([final_Nb, final_E, counts_final_Nb, trajectories, trajectories2, trajectories_rank], f, pickle.HIGHEST_PROTOCOL) 
+        pickle.dump([final_Nb, final_E, final_E_log, counts_final_Nb, trajectories, trajectories2, trajectories_rank], f, pickle.HIGHEST_PROTOCOL) 
 
     counter = 0
     for j in range(len(trajectories_rank)):
@@ -182,24 +186,36 @@ for i_kappa, kappa in enumerate((kappas)):
         counter += len_rank_j
 
     final_Nb = final_Nb/counts_final_Nb
-    final_E = np.exp(final_E/counts_final_Nb)
+    final_E = (final_E/counts_final_Nb)
+    final_E_log = np.exp(final_E_log/counts_final_Nb)
 
     ranking = np.arange(1, n_first_clones+1)
 
     fit_N = ranking**(-kappa*lambda_B/(lambda_A*beta_act))
     fit_K = ranking**(1/(beta_act))
 
-    e_array = np.logspace(0, .75) 
+    e_array = np.logspace(-.2, 0)
+    e_array = np.logspace(0, 0.8, 10) 
     x_array = np.logspace(-1.4, 0)
     fit = e_array**(-kappa*lambda_B/(lambda_A))
+    #fit/=e_array[0]**(-kappa*lambda_B/(lambda_A))
+    #fit*=final_Nb[-1]
+    fit/=e_array[0]**(-kappa*lambda_B/(lambda_A))
+    fit*=final_Nb[0]
+
     #fit = x_array**(-lambda_A/(kappa*lambda_B))
 
     if(kappa>beta_r):
         ax_ranking.plot(final_E, final_Nb, color = colors_kappa[i_kappa], linewidth = 0, marker = '*', alpha = 1, ms = 12, label = r'$%.d$'%(kappa))
         ax_ranking.plot(e_array, fit, color = colors_kappa[i_kappa], linewidth = 5, alpha = .8)
+
+        ax_ranking_log.plot(final_E_log, final_Nb, color = colors_kappa[i_kappa], linewidth = 0, marker = '*', alpha = 1, ms = 12, label = r'$%.d$'%(kappa))
+        ax_ranking_log.plot(e_array, fit, color = colors_kappa[i_kappa], linewidth = 5, alpha = .8)
     else:
-        ax_ranking.plot(final_E, final_Nb, color = colors_kappa[i_kappa], linewidth = 0, marker = '*', alpha = .8, ms = 12, label = r'$%.d$'%(kappa))
-        #ax_ranking.plot(fit, e_array, color = colors_kappa[i_kappa], linewidth = 2, label = r'$%.d$'%(kappa), alpha = .8)
+        ax_ranking.plot(final_E, final_Nb, color = colors_kappa[i_kappa], linewidth = 0, marker = 'o', alpha = .8, ms = 12, label = r'$%.d$'%(kappa))
+
+        ax_ranking_log.plot(final_E_log, final_Nb, color = colors_kappa[i_kappa], linewidth = 0, marker = 'o', alpha = .8, ms = 12, label = r'$%.d$'%(kappa))
+        #ax_ranking.plot(e_array, fit, color = colors_kappa[i_kappa], linewidth = 2, alpha = .8)
 
 my_plot_layout(ax = ax_ranking, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 #ax_ranking.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
@@ -208,6 +224,14 @@ my_plot_layout(ax = ax_ranking, xscale='log', yscale= 'log', ticks_labelsize= 30
 #ax_ranking.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_ranking.set_yticklabels([1, 0.1, 0.01])
 fig_ranking.savefig('../../Figures/1_Dynamics/Ensemble/L%d/Ranking_combined_'%L+energy_model+'.pdf')
+
+my_plot_layout(ax = ax_ranking_log, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+#ax_ranking_log.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
+#ax_ranking_log.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
+#ax_ranking_log.set_ylim(bottom = 2e-2)
+#ax_ranking_log.set_yticks([1, 0.1, 0.01, 0.001])
+#ax_ranking_log.set_yticklabels([1, 0.1, 0.01])
+fig_ranking_log.savefig('../../Figures/1_Dynamics/Ensemble/L%d/Ranking_combined_log_'%L+energy_model+'.pdf')
 
 
 print('----END-----')

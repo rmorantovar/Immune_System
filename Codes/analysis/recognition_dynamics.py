@@ -178,6 +178,8 @@ for N_r in N_rs:
             #----------------------------------------------------------------
             #--------------------------QR_all(E, t)---------------------------
             if i_t==2:
+
+                print('K_p = %.2e'%Kd_kappa)
                 ax_R.plot(Kds, R, color = colors_R[4-i_kappa][i_t], linewidth = 5, linestyle = '-')
                 
                 ax_QR.plot(Kds, QR*N_r, color = colors_R[4-i_kappa][i_t], linewidth = 5, linestyle = '-')

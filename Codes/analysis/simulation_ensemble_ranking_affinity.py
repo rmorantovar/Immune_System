@@ -106,6 +106,7 @@ print('--------')
 print('Loops...')
 #--------------------------Loops--------------------------
 fig_ranking, ax_ranking = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+fig_ranking_log, ax_ranking_log = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
 
 for i_kappa, kappa in enumerate((kappas)):
     fig_ranking_i, ax_ranking_i = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
@@ -123,14 +124,16 @@ for i_kappa, kappa in enumerate((kappas)):
     n_first_clones = 50
     if(return_data_type):
         final_E = data[0]
-        counts_final_E = data[1]
-        trajectories = data[2]
-        trajectories_rank = data[3]
+        final_E_log = data[1]
+        counts_final_E = data[2]
+        trajectories = data[3]
+        trajectories_rank = data[4]
     else:
 
         #activation_times_total = np.array([])
         
         final_E = np.zeros(n_first_clones)
+        final_E_log = np.zeros(n_first_clones)
         counts_final_E = np.zeros(n_first_clones)
         max_rank = 50
 
@@ -165,7 +168,7 @@ for i_kappa, kappa in enumerate((kappas)):
 
             for i in range(max_rank_i):
                 final_E[i]+= (sorted_clones[i])
-                #final_E[i]+= (sorted_clones[i])
+                final_E_log[i]+= np.log(sorted_clones[i])
                 counts_final_E[i] += 1
             if(max_rank_i<max_rank):
                 max_rank = max_rank_i
@@ -174,15 +177,17 @@ for i_kappa, kappa in enumerate((kappas)):
                 trajectories_rank = np.append(trajectories_rank, max_rank_i)
 
         f = open(Text_files_path + 'Dynamics/Ensemble/L%d/'%L+parameters_path+'/processed_data_ranking_2.pkl', 'wb')
-        pickle.dump([final_E, counts_final_E, trajectories, trajectories_rank], f, pickle.HIGHEST_PROTOCOL)  
+        pickle.dump([final_E, final_E_log, counts_final_E, trajectories, trajectories_rank], f, pickle.HIGHEST_PROTOCOL)  
 
     final_E = (final_E/counts_final_E)
+    final_E_log = np.exp(final_E_log/counts_final_E)
 
     counter = 0
     for j in range(len(trajectories_rank)):
         ranks_j = np.arange(1, trajectories_rank[j]+1)
         len_rank_j = len(ranks_j)
         ax_ranking.plot(ranks_j, trajectories[counter:counter+len_rank_j], color = colors_kappa[i_kappa], linewidth = 1, alpha = .2)
+        ax_ranking_log.plot(ranks_j, trajectories[counter:counter+len_rank_j], color = colors_kappa[i_kappa], linewidth = 1, alpha = .2)
         ax_ranking_i.plot(ranks_j, trajectories[counter:counter+len_rank_j], color = colors_kappa[i_kappa], linewidth = 1, alpha = .2)
         counter += len_rank_j
 
@@ -191,6 +196,9 @@ for i_kappa, kappa in enumerate((kappas)):
     fit = ranking**(1/(beta_act))
     ax_ranking.plot(ranking, final_E[:n_first_clones], color = colors_kappa[i_kappa], linewidth = 0, marker = '*', alpha = 1, ms = 12)
     ax_ranking.plot(ranking, fit, color = colors_kappa[i_kappa], linewidth = 5, label = r'$%.d$'%(kappa), alpha = .8)
+
+    ax_ranking_log.plot(ranking, final_E_log[:n_first_clones], color = colors_kappa[i_kappa], linewidth = 0, marker = '*', alpha = 1, ms = 12)
+    ax_ranking_log.plot(ranking, fit, color = colors_kappa[i_kappa], linewidth = 5, label = r'$%.d$'%(kappa), alpha = .8)
 
     ax_ranking_i.plot(ranking, final_E[:n_first_clones], color = colors_kappa[i_kappa], linewidth = 0, marker = '*', alpha = 1, ms = 12)
     ax_ranking_i.plot(ranking, fit, color = colors_kappa[i_kappa], linewidth = 5, label = r'$%.d$'%(kappa), alpha = .8)
@@ -210,6 +218,14 @@ ax_ranking.set_ylim(top = 1.5e2)
 #ax_ranking.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_ranking.set_yticklabels([1, 0.1, 0.01])
 fig_ranking.savefig('../../Figures/1_Dynamics/Ensemble/L%d/Ranking_2_'%L+energy_model+'.pdf')
+
+my_plot_layout(ax = ax_ranking_log, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+#ax_ranking_log.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
+#ax_ranking_log.set_xlim(left = np.exp(E_ms+2), right = np.exp(E_ms+29))
+ax_ranking_log.set_ylim(top = 1.5e2)
+#ax_ranking_log.set_yticks([1, 0.1, 0.01, 0.001])
+#ax_ranking_log.set_yticklabels([1, 0.1, 0.01])
+fig_ranking_log.savefig('../../Figures/1_Dynamics/Ensemble/L%d/Ranking_2_log_'%L+energy_model+'.pdf')
 
 print('----END-----')
 

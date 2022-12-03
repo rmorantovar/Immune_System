@@ -8,13 +8,12 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 
 #--------------- PARAMETERS ---------------------
 N_ens = 500
-N_enss = [[500, 500, 500, 500]]#, 502, 503, 504, 505, 506, 507, 508, 509, 400, 300, 200, 100, 50], [301, 302, 303, 304, 305, 306, 307, 308, 309]]
+N_enss = [[500, 500, 500, 500, 500, 500, 500, 500, 500, 500]]#, 502, 503, 504, 505, 506, 507, 508, 509, 400, 300, 200, 100, 50], [301, 302, 303, 304, 305, 306, 307, 308, 309]]
 #N_rs = [[2e8], [2e8, 2e8/2, 2e8/5, 2e8/10], [2e8], [2e8]]
-N_rs = [[1e8, 1e8/2, 1e8/5, 1e8/10]]
-N_rs = [[1e8, 1e8/10]]
-linewidths_N_r = [[5, 4, 3, 2], [5], [5]]
-linestyles_N_r = [['-', '--', '--', '--'], ['-'], ['-']]
-transparencies_N_r = [[1, 1, 1, 1], [.4], [.4]]
+N_rs = [[1e5, 2e5, 5e5, 1e6, 2e6, 5e6, 1e7, 2e7, 5e7]]
+linewidths_N_r = [[6, 5, 4, 3, 2, 1, 0.5, 0.5, 0.5, 0.5, 0.5], [5], [5]]
+linestyles_N_r = [['--', '--', '--', '-', '--', '--', '--', '--', '--', '--'], ['-'], ['-']]
+transparencies_N_r = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [.4], [.4]]
 
 T0 = 0
 Tf = 10
@@ -32,7 +31,6 @@ N_c = 1e5*1000
 #E_ms = -27.63
 E_ms = -25
 C = 1e4
-AA = 1
 
 time = np.linspace(T0, Tf, int((Tf-T0)/dT))
 energy_models = ['MJ']
@@ -44,7 +42,7 @@ linear = 0
 
 kappas = [2.2, 2.0, 1.8, 1.5]#, 1]
 kappas = [1.4, 1.8, 2.2]
-kappas = [3.0]
+kappas = [2.0]
 #kappas = [3]
 
 my_red = np.array((228,75,41))/256.
@@ -95,7 +93,7 @@ for i in np.arange(L):
     PWM_data[:,i]-=np.min(PWM_data[:,i], axis=0)
 
 #--------------------------Entropy function--------------------------
-Es, dE, Q0, betas = calculate_Q0(0.01, 50, 400000, PWM_data, E_ms, L)
+Es, dE, Q0, betas = calculate_Q0(0.1, 50, 400000, PWM_data, E_ms, L)
 Kds = np.exp(Es[:-1])
 
 #--------------------------Proofreading properties--------------------------
@@ -107,15 +105,33 @@ print('--------')
 print('Loops...')
 #--------------------------Loops--------------------------
 fig_K, ax_K = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+fig_K_bar, ax_K_bar = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+
 m_bar_theory = np.array([np.sum(1e8*calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*(t))/N_A, Es, 1, lambda_A, N_c, dE)[3]*dE) for t in time])
 t_act_theory = time[m_bar_theory>1][0] 
 t_act_1 = t_act_theory
+
+# Printing K from Gumbel
+Nb = C
+#K_array = np.log(1/(1+(Kds/((AA*(Nb))/1))))
+K_array = ((Nb/1)/Kds)
+p_K = P_min_e_Q0(1e10, Q0, dE)#/K_array**2*(Nb/1)
+p_K = p_K/np.sum(np.flip(p_K[:-1])/np.flip(K_array[:-1])*abs(np.diff(np.flip(K_array))))
+Kd_r_renorm = Kds[(P_min_e_Q0(1e10, Q0, dE)/Kds)==np.max(P_min_e_Q0(1e10, Q0, dE)/Kds)]
+ax_K.hlines(1, 0, Tf, linewidth = 2, color = 'black', linestyle = 'dashed')
+
+QR = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*(t_act_1))/N_A, Es, 1, lambda_A, N_c, dE)[3]
+Kd_1_renorm = Kds[(QR/1)==np.max(QR/1)]
+ax_K.hlines((C*1)/Kd_1_renorm/(C/Kd_r_renorm), 0, Tf, linewidth = 2, color = 'black', linestyle = 'dashed')
+
 for i_kappa, kappa in enumerate(kappas):
 	print('--------')
 	print('kappa = %.2f...'%kappa)
 	beta_kappa, E_kappa, Kd_kappa = get_kappa_properties(betas, Q0, Es, dE, kappa)
 	custom_lines = []
 	custom_labels = []
+	max_potency_simulations = dict()
+	max_potency_simulations_std = dict()
 	for i_N_r, N_r in enumerate(N_rs[i_kappa]):
 		N_ens = N_enss[i_kappa][i_N_r]
 		#--------------------------Repertoire properties--------------------------
@@ -130,34 +146,16 @@ for i_kappa, kappa in enumerate(kappas):
 		parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, N_r)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_pr-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 3.0, k_pr/24, kappa, N_c, linear, N_ens)+energy_model
 		#data = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/energies_ensemble.txt', sep = '\t', header=None)
 		#data = get_data_ensemble(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
-		data, return_data_type = get_data_ensemble_K_aging(folder_path = Text_files_path + 'Dynamics/Ensemble/L%d/'%L+parameters_path)
-
-		if(N_r == 1e8):
-			normalization = 1#K[-1]
-			# Printing K from Gumbel
-			Nb = C
-			#K_array = np.log(1/(1+(Kds/((AA*(Nb))/1))))
-			K_array = ((Nb/1)/Kds)
-			p_K = P_min_e_Q0(N_r, Q0, dE)#/K_array**2*(Nb/1)
-			p_K = p_K/np.sum(np.flip(p_K[:-1])/np.flip(K_array[:-1])*abs(np.diff(np.flip(K_array))))
-			Kd_r_renorm = Kds[(P_min_e_Q0(N_r, Q0, dE)/Kds)==np.max(P_min_e_Q0(N_r, Q0, dE)/Kds)]
-			ax_K.hlines(1, 0, Tf, linewidth = 2, color = 'black', linestyle = 'dashed')
-			
-			QR = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*(t_act_1))/N_A, Es, 1, lambda_A, N_c, dE)[3]
-			Kd_1_renorm = Kds[(QR/1)==np.max(QR/1)]
-			ax_K.hlines((C*1)/Kd_1_renorm/(C/Kd_r_renorm), 0, Tf, linewidth = 2, color = 'black', linestyle = 'dashed')
+		data, return_data_type = get_data_ensemble_K_L(folder_path = Text_files_path + 'Dynamics/Ensemble/L%d/'%L+parameters_path)	
 
 		if(return_data_type):
-			K = data[0]
+			K= data[0]
 			Counter = data[1]
-			K_is = data[2]
+			K_final = data[2]
 		else:
-
 			K = np.zeros_like(time)
 			K_final = []
 			Counter = 0
-			K_is = np.array([], dtype = object)
-
 			for i_ens in tqdm(np.arange(N_ens)):
 				data_i = data.loc[data[4]==i_ens]
 				data_active = data_i.loc[data_i[1]==1]
@@ -178,59 +176,81 @@ for i_kappa, kappa in enumerate(kappas):
 				K_i = [(np.sum(((clone_sizes_C[:,t]-1)/1)/Kds_C)) for t in np.arange(len(time))]
 
 				if(np.sum(K_i)!=0):
-					#K += K_i
 					K += K_i
 					K_final.append(K_i[-1])
 					Counter+=1
 				
-				if(((K_i[-1]/(C/Kd_r_renorm))>5e0) and (N_r == 1e8)) :
-					ax_K.plot(time, K_i/(C/Kd_r_renorm), color = 'orange', linewidth = 3, alpha = .9)
-					K_is = np.append(K_is, K_i)
-
-			f = open(Text_files_path + 'Dynamics/Ensemble/L%d/'%L+parameters_path+'/processed_data_K_aging.pkl', 'wb')
-			pickle.dump([K, Counter, K_is], f, pickle.HIGHEST_PROTOCOL)	
+			f = open(Text_files_path + 'Dynamics/Ensemble/L%d/'%L+parameters_path+'/processed_data_K_L.pkl', 'wb')
+			pickle.dump([K, Counter, K_final], f, pickle.HIGHEST_PROTOCOL)	
 
 		K = (K/Counter)
-		
-		normalization = 1
 		
 		if(kappa!=1.0):
 
 			ax_K.plot(time, K/(C/Kd_r_renorm), color = colors_kappa[i_kappa], alpha = .9, linewidth = linewidths_N_r[i_kappa][i_N_r], linestyle = linestyles_N_r[i_kappa][i_N_r])
 			custom_lines.append(Line2D([0], [0], color=colors_kappa[i_kappa], lw=linewidths_N_r[i_kappa][i_N_r], ls = linestyles_N_r[i_kappa][i_N_r]))
 			custom_labels.append(r'$%.0f \cdot 10^{%d}$'%(10**(np.log10(N_r)%1), int(np.log10(N_r))))
-
-			for j in range(int(len(K_is)/len(time))):
-				ax_K.plot(time, K_is[j*len(time):(j+1)*len(time)]/(C/Kd_r_renorm), color = 'orange', linewidth = 3, alpha = .9)
 	
-		#Nb = np.exp(lambda_B*Tf)*((k_on*N_c)/(lambda_A*N_A))**(lambda_B/lambda_A)*(k_pr/k_on)**(kappa*lambda_B/lambda_A)*Kds**(-kappa*lambda_B/lambda_A)
+		max_potency_simulations[N_r] = np.mean(np.array(K_final)/(C/Kd_r_renorm))
+		max_potency_simulations_std[N_r] = np.sqrt(np.var((np.array(K_final)/(C/Kd_r_renorm))))
 
 
-K_0 = 4.5e-1
-delta_E_r = -(1/3.8)*np.log(0.1)# - np.log(np.max(N_rs[1]))*(1/1.8 - 1/2)
+K_0 = 6e-1
+delta_E_r = -(1/2)*np.log(0.1)# - np.log(np.max(N_rs[1]))*(1/1.8 - 1/2)
 ax_K.vlines(8.90, (K_0 - K_0*(1-1/np.exp(delta_E_r))), K_0, color = 'darkgrey', linewidth = 4)
 ax_K.hlines(2.e5/(C/Kd_r_renorm), 4.2, 4.2 + 0.5*np.log(10)/2, color = 'darkgrey', linewidth = 4)
 
-custom_lines.append(Line2D([0], [0], color = 'orange', lw=3))
-custom_labels.append('Elite')
+# custom_lines.append(Line2D([0], [0], color = 'orange', lw=3))
+# custom_labels.append('Elite')
 
 a = .39
 b = .74
 c = 1.16
+ax_K.plot(time, ((1.08*C*np.exp(c*lambda_B*(time-t_act_1+a)**(b)))/(1.08*C+(np.exp(c*lambda_B*(time-t_act_1+a)**(b))-1)))/Kd_r_renorm/(C/Kd_r_renorm), linewidth = 5, color = 'black', linestyle = 'dotted', zorder = -20) 
 
-#ax_K.plot(time, ((C*np.exp(lambda_B*(time-t_act_1)))/(C+(np.exp(lambda_B*(time-t_act_1))-1)))/Kd_r_renorm, linewidth = 4, color = 'black', linestyle = 'dotted')
-Kd_r_renorm = Kds[(P_min_e_Q0(np.max(N_rs[0]), Q0, dE)/Kds)==np.max(P_min_e_Q0(np.max(N_rs[0]), Q0, dE)/Kds)]
-ax_K.plot(time, ((1.08*C*np.exp(c*lambda_B*(time-t_act_1+a)**(b)))/(1.08*C+(np.exp(c*lambda_B*(time-t_act_1+a)**(b))-1)))/Kd_r_renorm/(C/Kd_r_renorm), linewidth = 5, color = 'black', linestyle = 'dotted', zorder = -20)
-#Kd_r_renorm = Kds[(P_min_e_Q0(np.min(N_rs[1]), Q0, dE)/Kds)==np.max(P_min_e_Q0(np.min(N_rs[1]), Q0, dE)/Kds)] #for the aged repertoire
-#ax_K.plot(time, ((1.08*C*np.exp(1.02*lambda_B*(time-t_act_1+.45-0.5*np.log(10)/2)**(0.695)))/(1.08*C+(np.exp(1.02*lambda_B*(time-t_act_1+.45-0.5*np.log(10)/2)**(0.695))-1)))/Kd_r_renorm, linewidth = 5, color = 'black', linestyle = 'dotted', zorder = -20)
+
+N_r_theory = np.logspace(5, 8, 50)
+
+beta_tail = np.ones_like(N_r_theory)
+for n, N_r in enumerate(N_r_theory):
+	beta_r, E_r, Kd_r = get_repertoire_properties(betas, Q0, Es, dE, N_r)
+	beta_tail[n] = np.exp(np.mean(np.log(betas[betas>beta_r])))
+	#beta_tail[n] = np.mean(betas[betas>beta_r])
+fit = N_r_theory**(1/beta_tail)
+fit/=(1e5**(1/beta_tail))
+fit*=np.array(list(max_potency_simulations.values()))[0]
+
+ax_K_bar.plot(N_rs[0], (np.array(list(max_potency_simulations.values()))), color = 'indigo', linestyle = '', marker = 'D', linewidth = 3, ms = 10, alpha = 1)
+#ax_K_bar.errorbar(x = N_rs[0], y = (np.array(list(max_potency_simulations.values()))), yerr = (np.array(list(max_potency_simulations_std.values()))), ls = 'none', color = 'indigo', alpha = .6)
+
+popt, pcov = curve_fit(my_linear_func, np.log(N_rs[0][1:-4]), np.log(np.array(list(max_potency_simulations.values()))[1:-4]))
+
+ax_K_bar.plot(N_r_theory, fit, color = 'indigo', linestyle = '-', marker = '', linewidth = 3, label = r'$1/\bar \beta^{\rm tail} = %.2f$'%(1/beta_tail[beta_tail<3.84][0]), ms = 10, alpha = 1)
+ax_K_bar.plot(N_r_theory, np.exp(my_linear_func(np.log(N_r_theory), *popt)), color = 'indigo', linestyle = '--', marker = '', linewidth = 3, label = '$%.2f\pm%.2f$ (fit)'%(popt[1], np.sqrt(pcov[1,1])), ms = 10, alpha = .6)
+
+print('%.2e'%np.min(Kds))
+print('%.2e'%Kds[betas[:-1]<(1/popt[1])][0])
+print('%.2e'%Kds[betas[:-1]<(beta_r)][0])
+
+print(np.exp(np.mean(np.log(betas[betas>beta_r]))), (np.max(betas)-beta_r)/2)
+
+print(betas[betas>beta_r])
 
 my_plot_layout(ax = ax_K, xscale='linear', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 ax_K.legend(handles = custom_lines, labels = custom_labels, fontsize = 26, title_fontsize = 28, title = r'$N_r$')
-ax_K.set_xlim(left = 3, right = Tf-1)
-ax_K.set_ylim(bottom = 1e-2, top = 10)
+ax_K.set_xlim(left = 2, right = Tf)
+ax_K.set_ylim(bottom = 1e-3, top = 2e0)
 #ax_K.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_K.set_yticklabels([1, 0.1, 0.01])
-fig_K.savefig('../../Figures/1_Dynamics/Ensemble/L%d/K_aging_'%L+energy_model+'.pdf')
+fig_K.savefig('../../Figures/1_Dynamics/Ensemble/L%d/K_L_'%L+energy_model+'_toy.pdf')
+
+my_plot_layout(ax = ax_K_bar, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+ax_K_bar.legend(fontsize = 26, title_fontsize = 28, title = r'Exponent')
+#ax_K_bar.set_xlim(left = 1, right = Tf-1)
+#ax_K_bar.set_ylim(bottom = 1e-3, top = 2e0)
+#ax_K_bar.set_yticks([1, 0.1, 0.01, 0.001])
+#ax_K_bar.set_yticklabels([1, 0.1, 0.01])
+fig_K_bar.savefig('../../Figures/1_Dynamics/Ensemble/L%d/K_L_bar_'%L+energy_model+'_toy.pdf')
 
 
 
