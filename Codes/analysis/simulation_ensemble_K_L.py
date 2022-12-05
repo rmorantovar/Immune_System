@@ -8,12 +8,12 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 
 #--------------- PARAMETERS ---------------------
 N_ens = 500
-N_enss = [[500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500]]#, 502, 503, 504, 505, 506, 507, 508, 509, 400, 300, 200, 100, 50], [301, 302, 303, 304, 305, 306, 307, 308, 309]]
+N_enss = [[500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500]]#, 502, 503, 504, 505, 506, 507, 508, 509, 400, 300, 200, 100, 50], [301, 302, 303, 304, 305, 306, 307, 308, 309]]
 #N_rs = [[2e8], [2e8, 2e8/2, 2e8/5, 2e8/10], [2e8], [2e8]]
-N_rs = [[1e8*100, 1e8*10, 1e8*5, 1e8, 1e8/2, 1e8/5, 1e8/10, 1e8/20, 1e8/100, 1e8/200, 1e8/1000]]
-linewidths_N_r = [[6, 5, 4, 3, 2, 1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5], [5], [5]]
-linestyles_N_r = [['--', '--', '--', '-', '--', '--', '--', '--', '--', '--', '--'], ['-'], ['-']]
-transparencies_N_r = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [.4], [.4]]
+N_rs = [[1e4, 1e5, 5e5, 1e6, 5e6, 1e7, 2e7, 5e7, 1e8, 5e8, 1e9, 1e10]]
+linewidths_N_r = [[5, 4, 3, 2, 1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]]
+linestyles_N_r = [['--', '--', '-', '--', '--', '--', '--', '--', '--', '--', '--', '--']]
+transparencies_N_r = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]
 
 T0 = 0
 Tf = 10
@@ -192,6 +192,7 @@ for i_kappa, kappa in enumerate(kappas):
 			custom_labels.append(r'$%.0f \cdot 10^{%d}$'%(10**(np.log10(N_r)%1), int(np.log10(N_r))))
 	
 		max_potency_simulations[N_r] = np.mean(np.array(K_final)/(C/Kd_r_renorm))
+		print(N_r, max_potency_simulations[N_r])
 		max_potency_simulations_std[N_r] = np.sqrt(np.var((np.array(K_final)/(C/Kd_r_renorm))))
 
 
@@ -209,30 +210,32 @@ c = 1.16
 ax_K.plot(time, ((1.08*C*np.exp(c*lambda_B*(time-t_act_1+a)**(b)))/(1.08*C+(np.exp(c*lambda_B*(time-t_act_1+a)**(b))-1)))/Kd_r_renorm/(C/Kd_r_renorm), linewidth = 5, color = 'black', linestyle = 'dotted', zorder = -20) 
 
 
-N_r_theory = np.logspace(5, 10, 50)
+N_r_theory = np.logspace(np.log10(1e3), 10, 50)
 
 beta_tail = np.ones_like(N_r_theory)
 for n, N_r in enumerate(N_r_theory):
 	beta_r, E_r, Kd_r = get_repertoire_properties(betas, Q0, Es, dE, N_r)
-	beta_tail[n] = np.exp(np.mean(np.log(betas[betas>beta_r])))
+	#beta_tail[n] = np.exp(np.mean(np.log(betas[betas>beta_r])))
 	#beta_tail[n] = np.mean(betas[betas>beta_r])
+	beta_tail[n] = (np.max(betas)-beta_r)/2
+print(1/beta_tail)
 fit = N_r_theory**(1/beta_tail)
-fit/=(1e8**(1/beta_tail))
-fit*=np.array(list(max_potency_simulations.values()))[3]
+fit/=(N_r_theory[N_r_theory<1e4][-1]**(1/beta_tail[N_r_theory<1e4][-1]))
+fit*=np.array(list(max_potency_simulations.values()))[0]
 
 ax_K_bar.plot(N_rs[0], (np.array(list(max_potency_simulations.values()))), color = 'indigo', linestyle = '', marker = 'D', linewidth = 3, ms = 10, alpha = 1)
 #ax_K_bar.errorbar(x = N_rs[0], y = (np.array(list(max_potency_simulations.values()))), yerr = (np.array(list(max_potency_simulations_std.values()))), ls = 'none', color = 'indigo', alpha = .6)
 
-popt, pcov = curve_fit(my_linear_func, np.log(N_rs[0][1:-4]), np.log(np.array(list(max_potency_simulations.values()))[1:-4]))
+popt, pcov = curve_fit(my_linear_func, np.log(N_rs[0][0:-4]), np.log(np.array(list(max_potency_simulations.values()))[0:-4]))
 
-ax_K_bar.plot(N_r_theory, fit, color = 'indigo', linestyle = '-', marker = '', linewidth = 3, label = r'$1/\bar \beta^{\rm tail} = %.2f$'%(1/beta_tail[beta_tail<3.84][0]), ms = 10, alpha = 1)
+ax_K_bar.plot(N_r_theory, fit, color = 'indigo', linestyle = '-', marker = '', linewidth = 3, label = r'$1/\bar \beta^{\rm tail}(L)$', ms = 10, alpha = 1)
 ax_K_bar.plot(N_r_theory, np.exp(my_linear_func(np.log(N_r_theory), *popt)), color = 'indigo', linestyle = '--', marker = '', linewidth = 3, label = '$%.2f\pm%.2f$ (fit)'%(popt[1], np.sqrt(pcov[1,1])), ms = 10, alpha = .6)
 
 print('%.2e'%np.min(Kds))
 print('%.2e'%Kds[betas[:-1]<(1/popt[1])][0])
 print('%.2e'%Kds[betas[:-1]<(beta_r)][0])
 
-print(np.exp(np.mean(np.log(betas[betas>beta_r]))), (np.max(betas)-beta_r)/2)
+print(np.exp(np.mean(np.log(betas[betas>beta_r]))), np.mean((betas[betas>beta_r])), (np.max(betas)-beta_r)/2)
 
 print(betas[betas>beta_r])
 
@@ -245,7 +248,7 @@ ax_K.set_ylim(bottom = 1e-3, top = 2e0)
 fig_K.savefig('../../Figures/1_Dynamics/Ensemble/L%d/K_L_'%L+energy_model+'.pdf')
 
 my_plot_layout(ax = ax_K_bar, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-ax_K_bar.legend(fontsize = 26, title_fontsize = 28, title = r'Exponent')
+ax_K_bar.legend(fontsize = 26, title_fontsize = 28)
 #ax_K_bar.set_xlim(left = 1, right = Tf-1)
 #ax_K_bar.set_ylim(bottom = 1e-3, top = 2e0)
 #ax_K_bar.set_yticks([1, 0.1, 0.01, 0.001])

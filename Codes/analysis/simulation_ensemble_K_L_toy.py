@@ -8,12 +8,12 @@ Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_Sy
 
 #--------------- PARAMETERS ---------------------
 N_ens = 500
-N_enss = [[500, 500, 500, 500, 500, 500, 500, 500, 500, 500]]#, 502, 503, 504, 505, 506, 507, 508, 509, 400, 300, 200, 100, 50], [301, 302, 303, 304, 305, 306, 307, 308, 309]]
+N_enss = [[500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500]]#, 502, 503, 504, 505, 506, 507, 508, 509, 400, 300, 200, 100, 50], [301, 302, 303, 304, 305, 306, 307, 308, 309]]
 #N_rs = [[2e8], [2e8, 2e8/2, 2e8/5, 2e8/10], [2e8], [2e8]]
-N_rs = [[1e5, 2e5, 5e5, 1e6, 2e6, 5e6, 1e7, 2e7, 5e7]]
-linewidths_N_r = [[6, 5, 4, 3, 2, 1, 0.5, 0.5, 0.5, 0.5, 0.5], [5], [5]]
-linestyles_N_r = [['--', '--', '--', '-', '--', '--', '--', '--', '--', '--'], ['-'], ['-']]
-transparencies_N_r = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [.4], [.4]]
+N_rs = [[1e3, 2e3, 1e4, 1e5, 2e5, 5e5, 1e6, 2e6, 5e6, 1e7, 2e7, 5e7, 2e8]]
+linewidths_N_r = [[0.5, 0.5, 0.5, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0 ,1.5, 2, 3, 4], [5], [5]]
+linestyles_N_r = [['--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--'], ['-'], ['-']]
+transparencies_N_r = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [.4], [.4]]
 
 T0 = 0
 Tf = 10
@@ -115,9 +115,9 @@ t_act_1 = t_act_theory
 Nb = C
 #K_array = np.log(1/(1+(Kds/((AA*(Nb))/1))))
 K_array = ((Nb/1)/Kds)
-p_K = P_min_e_Q0(1e10, Q0, dE)#/K_array**2*(Nb/1)
+p_K = P_min_e_Q0(2e7, Q0, dE)#/K_array**2*(Nb/1)
 p_K = p_K/np.sum(np.flip(p_K[:-1])/np.flip(K_array[:-1])*abs(np.diff(np.flip(K_array))))
-Kd_r_renorm = Kds[(P_min_e_Q0(1e10, Q0, dE)/Kds)==np.max(P_min_e_Q0(1e10, Q0, dE)/Kds)]
+Kd_r_renorm = Kds[(P_min_e_Q0(2e7, Q0, dE)/Kds)==np.max(P_min_e_Q0(2e7, Q0, dE)/Kds)]
 ax_K.hlines(1, 0, Tf, linewidth = 2, color = 'black', linestyle = 'dashed')
 
 QR = calculate_QR(Q0, k_on, k_pr, np.exp(lambda_A*(t_act_1))/N_A, Es, 1, lambda_A, N_c, dE)[3]
@@ -209,23 +209,24 @@ c = 1.16
 ax_K.plot(time, ((1.08*C*np.exp(c*lambda_B*(time-t_act_1+a)**(b)))/(1.08*C+(np.exp(c*lambda_B*(time-t_act_1+a)**(b))-1)))/Kd_r_renorm/(C/Kd_r_renorm), linewidth = 5, color = 'black', linestyle = 'dotted', zorder = -20) 
 
 
-N_r_theory = np.logspace(5, 8, 50)
+N_r_theory = np.logspace(3, 10, 100)
 
 beta_tail = np.ones_like(N_r_theory)
 for n, N_r in enumerate(N_r_theory):
 	beta_r, E_r, Kd_r = get_repertoire_properties(betas, Q0, Es, dE, N_r)
-	beta_tail[n] = np.exp(np.mean(np.log(betas[betas>beta_r])))
+	#beta_tail[n] = np.exp(np.mean(np.log(betas[betas>beta_r])))
 	#beta_tail[n] = np.mean(betas[betas>beta_r])
+	beta_tail[n] = (1/np.max(betas)-1/beta_r)/2
 fit = N_r_theory**(1/beta_tail)
-fit/=(1e5**(1/beta_tail))
-fit*=np.array(list(max_potency_simulations.values()))[0]
+fit/=(2e7**(1/beta_tail[N_r_theory<1e7][-1]))
+fit*=np.array(list(max_potency_simulations.values()))[10]
 
 ax_K_bar.plot(N_rs[0], (np.array(list(max_potency_simulations.values()))), color = 'indigo', linestyle = '', marker = 'D', linewidth = 3, ms = 10, alpha = 1)
 #ax_K_bar.errorbar(x = N_rs[0], y = (np.array(list(max_potency_simulations.values()))), yerr = (np.array(list(max_potency_simulations_std.values()))), ls = 'none', color = 'indigo', alpha = .6)
 
-popt, pcov = curve_fit(my_linear_func, np.log(N_rs[0][1:-4]), np.log(np.array(list(max_potency_simulations.values()))[1:-4]))
+popt, pcov = curve_fit(my_linear_func, np.log(N_rs[0][0:-4]), np.log(np.array(list(max_potency_simulations.values()))[0:-4]))
 
-ax_K_bar.plot(N_r_theory, fit, color = 'indigo', linestyle = '-', marker = '', linewidth = 3, label = r'$1/\bar \beta^{\rm tail} = %.2f$'%(1/beta_tail[beta_tail<3.84][0]), ms = 10, alpha = 1)
+ax_K_bar.plot(N_r_theory, fit, color = 'indigo', linestyle = '-', marker = '', linewidth = 3, label = r'$1/\bar \beta^{\rm tail}(L)$', ms = 10, alpha = 1)
 ax_K_bar.plot(N_r_theory, np.exp(my_linear_func(np.log(N_r_theory), *popt)), color = 'indigo', linestyle = '--', marker = '', linewidth = 3, label = '$%.2f\pm%.2f$ (fit)'%(popt[1], np.sqrt(pcov[1,1])), ms = 10, alpha = .6)
 
 print('%.2e'%np.min(Kds))
