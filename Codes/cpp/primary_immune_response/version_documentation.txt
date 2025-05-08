@@ -1,0 +1,5 @@
+EF_dynamics.x versions
+
+_v3: Can choose the energy model to use (07.09.22)
+
+Name changed to Primary_immune_response_local.cpp (also with a server version) (19.10.22)

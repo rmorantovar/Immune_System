@@ -1,0 +1,3 @@
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/rmorantovar/gsl/lib
+./primary_immune_response.x -a 6 -b 0.5 -k 1 -t 0 -T 7.5 -E TCRen -C 100000 -B 200000000 -s EYTACNSEYPNTTKCGRWYCGRYPN -q 2.5 --ensemble -N 1

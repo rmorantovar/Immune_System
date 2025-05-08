@@ -1,0 +1,11 @@
+C++ --std=gnu++17 ../Cpp/EF_dynamics.cpp -lgsl -lgslcblas -o EF_response_v2.x
+
+c++ --std=gnu++17 ../cpp/Primary_immune_response_local.cpp -lgsl -lgslcblas -o primary_immune_response_iMac.x
+
+c++ --std=gnu++17 ../cpp/Primary_immune_response_local.cpp -lgsl -lgslcblas -o immune_response_binary_local.x	(updated on 01.02.23)
+
+In server : 
+
+c++ --std=gnu++17 -I/home/rmorantovar/gsl/include -L/home/rmorantovar/gsl/lib ../cpp/Primary_immune_response_binary_server.cpp -lgsl -lgslcblas -o immune_response_elite_binary_server.x	(updated on 02.02.23) 
+
+c++ --std=gnu++17 -I/home/rmorantovar/gsl/include -L/home/rmorantovar/gsl/lib ../cpp/Primary_immune_response_binary_server.cpp -lgsl -lgslcblas -o immune_response_binary_server.x	(updated on 02.02.23)
