@@ -156,9 +156,219 @@ def generate_repertoire_Me_seqs(Alphabet, motif, cum_Omega_0, Es_avg, time_array
 
     return properties
 
-# -------
+# Define the merged and unified version of generate_repertoire_Me
+
+def generate_repertoire_Me_new(
+    Alphabet,
+    motif,
+    Q0s=None,
+    Ess=None,
+    dEs=None,
+    cum_Omega_0=None,
+    Es_avg=None,
+    time_array=None,
+    ensemble_id=0,
+    L0=1000,
+    l=10,
+    t_lim=5.0,
+    E_lim=20.0,
+    E_ms=None,
+    p=2,
+    pmem=2,
+    k_step=1.0,
+    lamA=0.1,
+    infection=1,
+    chunk_size=100,
+    memory_clones=None,
+    input_memory_file=None,
+    N_epi=1,
+    DDE=0.0,
+    use_seqs=False
+):
+
+    """
+    Simulates the activation of immune cell repertoires under naive or memory conditions.
+
+    This function supports two modes:
+    - Energy-based: Directly samples energies from precomputed distributions (default).
+    - Sequence-based: Samples sequences and computes energies from a motif matrix.
+
+    Parameters
+    ----------
+    Alphabet : list
+        List of amino acids or sequence characters (used in sequence reconstruction).
+    motif : np.ndarray
+        Motif matrix representing binding preferences per epitope.
+    Q0s : list of np.ndarray, optional
+        Base distributions used for energy sampling (used if `use_seqs=False`).
+    Ess : list of np.ndarray, optional
+        Energy values corresponding to Q0s (used if `use_seqs=False`).
+    dEs : list of np.ndarray, optional
+        Energy bin widths used with Q0s (used if `use_seqs=False`).
+    cum_Omega_0 : np.ndarray, optional
+        Cumulative distribution used for sequence-based sampling (not used here but kept for compatibility).
+    Es_avg : np.ndarray, optional
+        Average energy values for sequences (not used here but kept for compatibility).
+    time_array : np.ndarray
+        Time grid over which activation is evaluated.
+    ensemble_id : int, default=0
+        ID of the simulated repertoire ensemble.
+    L0 : int, default=1000
+        Total number of cells to simulate.
+    l : int, default=10
+        Length of each sequence.
+    t_lim : float, default=5.0
+        Time threshold for successful activation.
+    E_lim : float, default=20.0
+        Maximum allowed energy for activation.
+    E_ms : list or np.ndarray
+        Energy offsets to apply for each epitope.
+    p : float, default=2
+        Hill coefficient for naive clone activation.
+    pmem : float, default=2
+        Hill coefficient for memory clone activation.
+    k_step : float, default=1.0
+        Step affinity constant (controls nonlinearity).
+    lamA : float, default=0.1
+        Activation rate constant.
+    infection : int, default=1
+        Whether to include memory clones (>1 means include).
+    chunk_size : int, default=100
+        Number of clones processed per simulation chunk.
+    memory_clones : pd.DataFrame, optional
+        Preloaded memory clone data (required if `use_seqs=False` and `infection > 1`).
+    input_memory_file : str, optional
+        Path to CSV file with memory clone data (required if `use_seqs=True` and `infection > 1`).
+    N_epi : int, default=1
+        Number of epitopes in the simulation.
+    DDE : float, default=0.0
+        Energy correction to apply to memory clones.
+    use_seqs : bool, default=False
+        Whether to use sequence-based simulation (True) or energy-based (False).
+
+    Returns
+    -------
+    properties : list of dict
+        A list of dictionaries, each representing an activated clone with:
+        - 'ens_id': int, ensemble ID
+        - 'E': float, energy
+        - 't': float, activation time
+        - 'epi': int, epitope index
+        - 'm': int, memory flag (0 = naive, 1 = memory)
+        - Optionally 'seq' or 'id' depending on mode
+    """
+
+    k_on = 1e6 * 24 * 3600
+    b0 = 1e5
+    N_A = 6.022e23
+    b0_scaled = (b0 * 10 * k_on) / (lamA * N_A)
+    K_step = k_step / k_on if not use_seqs else k_on / k_step
+    times = time_array
+    exp_lamA_times = np.exp(lamA * times)
+    properties = []
+
+    for j in range(L0 // chunk_size):
+        if use_seqs:
+            seqs_flat = np.random.randint(0, 20, size=(int(chunk_size) * l))
+            R = np.tile(np.arange(20), (int(chunk_size)*l, 1)).T
+        else:
+            seqs_flat = np.random.rand(chunk_size)
+
+        for epi in range(N_epi):
+            if use_seqs:
+                Es = calculate_Es(motif, seqs_flat, R, l, 20, chunk_size, E_ms[epi])
+                Es_idx = np.arange(int(chunk_size))[Es < np.min(Es) + 4]
+                Es = Es[Es < np.min(Es) + 4]
+                seqs = seqs_flat.reshape(int(chunk_size), l)[Es_idx]
+                for i, E in enumerate(Es):
+                    factor = b0_scaled / (1 + (K_step * np.exp(E))**p)
+                    F1 = 1 - np.exp(-factor * (exp_lamA_times - 1))
+                    r1 = np.random.random()
+                    t1 = times[np.searchsorted(F1, r1) - 1]
+                    if t1 < t_lim:
+                        properties.append({
+                            'ens_id': ensemble_id,
+                            'E': E,
+                            't': t1,
+                            'seq': list(seqs[i]),
+                            'epi': epi + 1,
+                            'm': 0
+                        })
+            else:
+                cum_Omega = np.cumsum(Q0s[epi] * dEs[epi])[::]
+                E_idx = np.searchsorted(cum_Omega, seqs_flat) - 1
+                Energies = Ess[epi][E_idx]
+                Energies = Energies[Energies < np.min(Energies) + 4]
+                factors = b0_scaled / (1 + (np.exp(Energies) / K_step))**p
+                for i, factor in enumerate(factors):
+                    F1 = 1 - np.exp(-factor * (exp_lamA_times - 1))
+                    r1 = np.random.random()
+                    t1 = times[np.searchsorted(F1, r1) - 1]
+                    if t1 < t_lim:
+                        properties.append({
+                            'ens_id': ensemble_id,
+                            'E': Energies[i],
+                            'id': seqs_flat[i],
+                            't': t1,
+                            'epi': epi + 1,
+                            'm': 0
+                        })
+
+    # Memory clones
+    if infection > 1:
+        if use_seqs:
+            memory_clones = pd.read_csv(input_memory_file, converters={"seq": literal_eval})
+        if memory_clones is not None and len(memory_clones.index) > 0:
+            memory_clones = memory_clones.loc[memory_clones['ens_id'] == ensemble_id]
+
+            if use_seqs:
+                pre_memory_idx = []
+                for index, row in memory_clones.iterrows():
+                    pre_memory_idx += [index] * int(row['N'])
+                memory_idx = np.random.choice(pre_memory_idx, 1000, replace=False)
+                memory = np.array(memory_clones['seq'].iloc[memory_idx])
+
+                for seq in memory:
+                    proto_E = seq
+                    for epi in range(N_epi):
+                        E = calculate_energy(motif[:, epi*l:(epi+1)*l], proto_E) + E_ms[epi]
+                        if E < E_lim:
+                            F1 = 1 - np.exp(-(b0 * 10 * k_on) / (lamA * N_A * (1 + (k_on * np.exp(E)) / k_step)**p) * (np.exp(lamA * times) - 1))
+                            r1 = np.random.random()
+                            t1 = times[np.searchsorted(F1, r1) - 1]
+                            if t1 < t_lim:
+                                properties.append({
+                                    'ens_id': ensemble_id,
+                                    'E': E,
+                                    't': t1,
+                                    'seq': list(seq),
+                                    'epi': epi + 1,
+                                    'm': 1
+                                })
+            else:
+                for index, row in memory_clones.iterrows():
+                    E = row['E'] + DDE
+                    N0 = row['N']
+                    epi = row['epi']
+                    id_clone = row['id']
+                    if E < E_lim:
+                        F1 = 1 - np.exp(-b0_scaled / (1 + (np.exp(E) / K_step))**pmem * (np.exp(lamA * times) - 1))
+                        r1 = np.random.random(int(N0))
+                        t1 = times[np.searchsorted(F1, r1) - 1]
+                        mask = t1 < t_lim
+                        properties.extend([{
+                            'ens_id': ensemble_id,
+                            'E': E,
+                            'id': id_clone,
+                            't': t1_i,
+                            'epi': epi,
+                            'm': 1
+                        } for t1_i in t1[mask]])
+
+    return properties
 
 # -------
+
 def expansions(data, time_array, p, lamB, C, dT):
     data_active = data.copy
     data_active = data.loc[data['t']<= np.min(data['t']) + 1/lamB*np.log(C/100)]
@@ -264,6 +474,7 @@ def group_by_clones(df_expansion):
     return df_grouped
 
 # -------
+
 def response(Alphabet, motif, Q0s, Ess, dEs, time_array, dT, ensemble_id, L0, l, t_lim, E_lim, E_ms, p, pmem, k_step, lamA, lamB, C, infection, chunk_size, memory_clones, N_epi, DDE):
     props_activation = generate_repertoire_Me(Alphabet, motif, Q0s, Ess, dEs, time_array, ensemble_id, L0, l, t_lim, E_lim, E_ms, p, pmem, k_step, lamA, infection, chunk_size, memory_clones, N_epi, DDE)
     df_props_activation = pd.DataFrame(props_activation)
