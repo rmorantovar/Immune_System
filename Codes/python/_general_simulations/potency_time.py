@@ -134,17 +134,17 @@ def main():
 
 			# colors = [colors[c] for c in np.argsort(E_rs)]
 			Kstar_dom = np.exp(-np.min(E_rs))
-			data_activation = pd.read_csv(output_file1)
-			# data_activation['N_t'] = data_activation['N_t'].apply(lambda x: np.array(x, dtype=np.float32))
+			data_activation = pd.read_csv(output_file1, converters={"N_t": literal_eval})
+			data_activation['N_t'] = data_activation['N_t'].apply(lambda x: np.array(x, dtype=np.float32))
 			if not potency_all:
 				output_file1_pot = os.path.join(output_dir1, 'potency_' + str(a1+1) + '.csv')
 				# if not os.path.isfile(output_file1_pot):
 				try:
-					data_activation['Z'] = data_activation['N']/np.exp(data_activation['E'])
+					data_activation['Z_t'] = data_activation['N_t']/np.exp(data_activation['E'])
 					data_activation_mod = data_activation.groupby(['ens_id', 'epi', 'm']).agg({'E':'mean', 
 																't':'mean', 
-																'Z':'sum'}).reset_index() 
-					# data_activation_mod['Z'] = data_activation_mod['Z'].apply(lambda x: list(x))
+																'Z_t':'sum'}).reset_index() 
+					data_activation_mod['Z_t'] = data_activation_mod['Z_t'].apply(lambda x: list(x))
 					data_activation_mod.to_csv(output_dir1 + '/potency_' + str(a1+1) + '.csv', index = False)
 
 				except FileNotFoundError:

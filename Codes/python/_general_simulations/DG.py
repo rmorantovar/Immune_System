@@ -10,18 +10,18 @@ def main():
 	parser = argparse.ArgumentParser(description="Generate random sequences and save properties to a CSV file.")
 
 	# Define command-line arguments with explanations
-	parser.add_argument('--N_ant', type=int, default=8, help="Number of antigens.")
+	parser.add_argument('--N_ant', type=int, default=100, help="Number of antigens.")
 	parser.add_argument('--N_ens', type=int, default=1, help="Number of times to execute the process.")
 	parser.add_argument('--N_inf', type=int, default=1, help="Number of infections.")
 	parser.add_argument('--N_evo', type=int, default=0, help="Evolution count.")
-	parser.add_argument('--N_epi', type=int, default=2, help="Number of epitopes.")
-	parser.add_argument('--L0', type=int, default=10**6, help="Number of random sequences.")
+	parser.add_argument('--N_epi', type=int, default=3, help="Number of epitopes.")
+	parser.add_argument('--L0', type=int, default=10**8, help="Number of random sequences.")
 	parser.add_argument('--l', type=int, default=16, help="Length of the sequences.")
 	parser.add_argument('--t_lim', type=float, default=8.0, help="Activation time threshold.")
 	parser.add_argument('--E_lim', type=float, default=-6.0, help="Threshold for the sum of entries.")
 	parser.add_argument('--E_m', type=float, default=-24, help="Energy threshold.")
 	parser.add_argument('--chunk_size', type=int, default=100000000, help="Size of each chunk.")
-	parser.add_argument('--p', type=float, default=3, help="Number of steps.")
+	parser.add_argument('--p', type=float, default=4.0, help="Number of steps.")
 	parser.add_argument('--k_step', type=float, default=720, help="Step rate.")
 	parser.add_argument('--lamA', type=float, default=6.0, help="Antigen growth rate A.")
 	parser.add_argument('--lamB', type=float, default=2.0, help="Antigen growth rate B.")
@@ -30,12 +30,12 @@ def main():
 	parser.add_argument('--antigen', type=str, default='TACNSYPNTAKCRWYR', help="Antigen sequence.")
 	parser.add_argument('--energy_model', type=str, default='TCRen', help="Energy model.")
 	parser.add_argument('--seqs', type=int, default=1, help="Number of sequences.")
-	parser.add_argument('--one_WT', type=int, default=1, help="Single WT flag.")
-	parser.add_argument('--secondary', type=int, default=1, help="Secondary infection flag.")
+	parser.add_argument('--one_WT', type=int, default=0, help="Single WT flag.")
+	parser.add_argument('--secondary', type=int, default=0, help="Secondary infection flag.")
 	parser.add_argument('--secondary_all', type=int, default=0, help="Secondary all infections flag.")
 	parser.add_argument('--pro', type=str, default='epitope_complexity', help="Project name.")
-	parser.add_argument('--subpro', type=str, default='Panel', help="Subproject name.")
-	parser.add_argument('--exp', type=int, default=4, help="Experiment ID.")
+	parser.add_argument('--subpro', type=str, default='epistasis', help="Subproject name.")
+	parser.add_argument('--exp', type=int, default=0, help="Experiment ID.")
     
 	args = parser.parse_args()
 
@@ -82,7 +82,7 @@ def main():
 	experiment = args.exp
 	root_dir = f"/Users/robertomorantovar/Dropbox/Research/Immune_system/{project}/{subproject}/{experiment}"
 	pars_dir_1 = f"/L0-{int(L0/10**int(np.log10(L0)))}e{int(np.log10(L0))}_p-{p}_k_step-{k_step}_lamA-{lamA}_lamB-{lamB}"
-	pars_dir_2 = f"/N_ens-{N_ens}_N_epi-{N_epi}"#_N_evo-{N_evo}"
+	pars_dir_2 = f"/N_ant-{N_ant}_N_ens-{N_ens}_N_epi-{N_epi}"#_N_evo-{N_evo}"
 	antigens_data = pd.read_csv(root_dir + pars_dir_1 + pars_dir_2 + "/antigens.csv", converters={"antigen": literal_eval})
 	antigens = antigens_data['antigen']
 	# print(antigens)
