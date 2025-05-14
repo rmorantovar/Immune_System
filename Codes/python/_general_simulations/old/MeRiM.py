@@ -1,5 +1,5 @@
 import sys
-sys.path.append('../../my_lib/')
+sys.path.append('../../lib/')
 from funcs import*
 
 '''
@@ -15,19 +15,18 @@ To run this simulations, you should have created a file antigens.txt in the corr
 def main():
 	# Setting up command-line argument parser
 	parser = argparse.ArgumentParser(description="Generate random sequences and save properties to a CSV file.")
-	parser.add_argument('--N_ant', type=int, default=100, help="Number of antigens.")
-	parser.add_argument('--N_ens', type=int, default=1, help="Number of times to execute the process.")
-	parser.add_argument('--N_inf', type=int, default=1, help="Number of infections.")
+	parser.add_argument('--N_ant', type=int, default=1, help="Number of antigens.")
+	parser.add_argument('--N_ens', type=int, default=100, help="Number of times to execute the process.")
+	parser.add_argument('--N_inf', type=int, default=2, help="Number of infections.")
 	parser.add_argument('--N_evo', type=int, default = -1)
-	parser.add_argument('--N_epi', type=int, default = 3)
+	parser.add_argument('--N_epi', type=int, default = 1)
 	parser.add_argument('--L0', type=int, default=10**8, help="Number of random sequences.")
 	parser.add_argument('--l', type=int, default=16, help="Length of the sequences.")
 	parser.add_argument('--t_lim', type=float, default=8., help="Threshold for activation time.") # Use 8 for L0>1e6
 	parser.add_argument('--E_lim', type=float, default=-7., help="Threshold for the sum of entries.") # Use -6 for L0>1e6
 	parser.add_argument('--E_m', type=float, default=-24, help="Threshold for the sum of entries.")
 	parser.add_argument('--chunk_size', type=int, default=1000000, help="Size of each chunk.")
-	parser.add_argument('--p', type=float, default=4.0, help="# steps.")
-	parser.add_argument('--pmem', type=float, default=1, help="# steps for memory.")
+	parser.add_argument('--p', type=float, default=4, help="# steps.")
 	parser.add_argument('--k_step', type=float, default=720, help="Step rate.")
 	parser.add_argument('--lamA', type=float, default=6., help="Antigen growth rate.")
 	parser.add_argument('--lamB', type=float, default=2., help="Antigen growth rate.")
@@ -38,11 +37,11 @@ def main():
 	parser.add_argument('--energy_model', type=str, default = 'TCRen')
 	parser.add_argument('--seqs', type=int, default = 1)
 	parser.add_argument('--one_WT', type=int, default = 0)
-	parser.add_argument('--secondary', type=int, default = 0)
-	parser.add_argument('--secondary_all', type=int, default = 1)
-	parser.add_argument('--pro', type=str, default='epitope_complexity', help="project.")
-	parser.add_argument('--subpro', type=str, default='epistasis', help="subproject.")
-	parser.add_argument('--exp', type=int, default=0, help="experiment.")
+	parser.add_argument('--secondary', type=int, default = 1)
+	parser.add_argument('--secondary_all', type=int, default = 0)
+	parser.add_argument('--pro', type=str, default='memory_response', help="project.")
+	parser.add_argument('--subpro', type=str, default='Z_dynamics', help="subproject.")
+	parser.add_argument('--exp', type=int, default=4, help="experiment.")
 	args = parser.parse_args()
 
 	# ------------ PARAMETERS AND INPUTS ------------
@@ -61,7 +60,6 @@ def main():
 	else:
 		chunk_size = args.L0
 	p = args.p
-	pmem = args.pmem
 	k_step = args.k_step
 	lamA = args.lamA
 	lamB = args.lamB
@@ -80,7 +78,7 @@ def main():
 		N_evo = 'R'
 
 	dT = 0.002
-	C = 2e4
+	C = 1e4
 	T = 12
 	time_array = np.linspace(0, T, int((T-0)/dT))
 	Alphabet = np.loadtxt('../../in/Alphabet_'+energy_model+'.txt', dtype=bytes, delimiter='\t').astype(str)
@@ -90,11 +88,12 @@ def main():
 	experiment = args.exp
 	root_dir = f"/Users/robertomorantovar/Dropbox/Research/Immune_system/{project}/{subproject}/{experiment}"
 	pars_dir_1 = f"/L0-{int(L0/10**int(np.log10(L0)))}e{int(np.log10(L0))}_p-{p}_k_step-{k_step}_lamA-{lamA}_lamB-{lamB}"
-	pars_dir_2 = f"/N_ant-{N_ant}_N_ens-{N_ens}_N_epi-{N_epi}"#_N_evo-{N_evo}"
-	antigens = pd.read_csv(root_dir + pars_dir_1 + pars_dir_2 + "/antigens.csv", converters={"antigen": literal_eval})
+	pars_dir_2 = f"/N_ant-{N_ant}_N_ens-{N_ens}_N_epi-{N_epi}_N_evo-{N_evo}"
+	antigens_data = pd.read_csv(root_dir + pars_dir_1 + pars_dir_2 + "/antigens.csv", converters={"antigen": literal_eval})
 	# antigens_data = pd.read_csv(root_dir + pars_dir_1 + pars_dir_2 + "/antigens.csv")
-	# antigens = antigens_data['antigen']
+	antigens = antigens_data['antigen']
 	# print("PANEL OF ANTIGENS:")
+	# print(antigens)
 
 	# ------------ ------------ ------------
 
@@ -102,18 +101,15 @@ def main():
 	print('Starting simulation ...')
 
 	if one_WT:
-		WTs = antigens.iloc[[0]]
+		WTs = [antigens.iloc[0]]
 	else:
-		WTs = antigens.sample(n=20, replace = False)
+		WTs = list(antigens)
 
-	print(WTs)
-	for index, row in WTs.iterrows():
-		antigen1_ = row['antigen']
-		a1 = index
+	for a1, antigen1_ in enumerate(WTs):
 		# antigen1 = from_aa_to_i(antigen1_, energy_model, '../../') 
 		print('	primary infection...')
 		print(antigen1_)
-		output_dir1 = root_dir + pars_dir_1 + pars_dir_2 + "/%d"%(a1)
+		output_dir1 = root_dir + pars_dir_1 + pars_dir_2 + "/%d"%(a1+1)
 
 		input_file1 = ''
 		output_file1 = os.path.join(output_dir1, 'activated_repertoire.csv')
@@ -143,6 +139,7 @@ def main():
 			Q0s.append(Q0)
 			Ess.append(Es)
 			dEs.append(dE)
+		# print(E_ms)
 		if constant_potency:
 			for epi in range(N_epi):
 				#choose second option below to keep potency fixed
@@ -150,32 +147,60 @@ def main():
 					Ess[epi] = Ess[epi] - E_rs0[epi] + np.mean(E_rs)
 				if experiment == 2:
 					Ess[epi] = Ess[epi] - E_rs0[epi] - 16
+		# print(E_rs, [Ess[i][0] for i in range(N_epi)])
+
+		# print('prueba', calculate_energy(motif, [18, 3, 9, 7, 0, 12, 14, 9, 15, 11, 14, 10, 4, 19, 3, 17])+ E_ms[0] )
 		if not os.path.isfile(output_file1):
 			# Execute process
-			df_response = ensemble_of_responses(Alphabet, motif, Q0s, Ess, dEs, time_array, dT, N_ens, L0, l, t_lim, E_lim, E_ms, p, pmem, k_step, lamA, lamB, C, 1, chunk_size, input_file1, N_epi, 0)
+			df_response = ensemble_of_responses(Alphabet, motif, Q0s, Ess, dEs, time_array, dT, N_ens, L0, l, t_lim, E_lim, E_ms, p, k_step, lamA, lamB, C, 1, chunk_size, input_file1, N_epi, 0)
 			os.makedirs(output_dir1, exist_ok=True)
 			df_response = df_response.sort_values(by=['ens_id', 'epi', 't'], ascending=[True, True, True])
 			df_response.to_csv(output_file1, index=False)
 
 		print('	primary infection terminated')
 
-		# Modify to work properly with antigens as a df !!!!!!
-		if secondary: # Do I want secondary infections? 
+		if secondary: # Do I want secondary infections?
 			print('	secondary infection...')
 			if secondary_all: # Do I want secondary infections with all the pathogens in the panel?
-				# for i_DDE, DDE in enumerate(tqdm(np.linspace(0., 8, 9))):
-				for i_DDE, DDE in enumerate(tqdm([0.0])):
+				for a2, antigen2_ in enumerate(tqdm(antigens)):
+					# antigen2 = antigen2_.replace('-', '')
+					# antigen2 = from_aa_to_i(antigen2_, energy_model, '../../')
+					
 					input_file2 = os.path.join(output_dir1, 'activated_repertoire.csv')
-					output_dir2 = output_dir1 + "/%d"%(i_DDE)
+					output_dir2 = output_dir1 + "/%d"%(a2+1)
 					output_file2 = os.path.join(output_dir2, 'activated_repertoire.csv')
-					# THE SECONDARY INFECTION MUST BE MODIFY TO THE NEW ENSEMBLE_OF_RESPONSES() FUNCTION!!!!!!!
+
+					# The secondary infection must be modify to the new ensemble_of_responses() function!!!!!!!
 					if os.path.isfile(input_file2):
 						if not os.path.isfile(output_file2):
+							# Calculate motif
+							motif = get_motif(antigen2, energy_model, '../../')*1.2 # Change depending if antigens are strings or ints
+							E_ms = np.ones(N_epi)
+							for epi in range(N_epi):
+								E_m = -3
+								# Normalize motif
+								for i in range(l):
+									E_m+=np.min(motif[:, epi*l:(epi+1)*l][:, i], axis=0)
+									motif[:, epi*l:(epi+1)*l][:, i] -= np.min(motif[:, epi*l:(epi+1)*l][:, i], axis=0)
+								
+								E_ms[epi] = E_m
+
+								# print('Master sequence binding energy = ', E_m, r'$%.1e$'%(np.exp(E_m)))
+
+								# Calculate Q0, Es, dE, betas
+								Es, dE, Q0, betas = calculate_Q0(0.01, 50, 400000, motif[:, epi*l:(epi+1)*l], 0, l)
+								#--------------------------Repertoire properties--------------------------
+								beta_r, E_r, Kd_r = get_repertoire_properties(betas, Q0, Es, dE, L0)
+								Es = Es - E_r - 18
+
 							# Execute process
-							df_response = ensemble_of_responses(Alphabet, motif, Q0s, Ess, dEs, time_array, dT, N_ens, L0, l, t_lim, E_lim, E_ms, p, pmem, k_step, lamA, lamB, C, 2, chunk_size, input_file2, N_epi, DDE)
-							os.makedirs(output_dir2, exist_ok=True)
-							df_response = df_response.sort_values(by=['ens_id', 'epi', 't'], ascending=[True, True, True])
-							df_response.to_csv(output_file2, index=False)
+							df_activation = ensemble_of_activations_Me(Alphabet, motif, np.cumsum(Q0*dE)[::2], Es[:-1][::2], time_array, N_ens, L0, l, t_lim, E_lim, E_ms, p, k_step, lamA, 2, chunk_size, input_file2, N_epi, seqs = seqs)
+							if len(np.where(np.array([len(df_activation.loc[df_activation['ens_id']==k].index) for k in range(N_ens)]) == 0)[0])==0:
+								df_expansion = ensemble_of_expansions(df_activation, time_array[::1], N_ens, p, lamB, C, dT)
+								#df_expansion = df_expansion.groupby(['ens_id', 'E'], as_index=False).agg({'time': 'mean', 'm': 'mean', 'n': 'sum', 'sequence':'first'})
+								os.makedirs(output_dir2, exist_ok=True)
+								df_expansion = df_expansion.sort_values(by=['ens_id', 'epi', 't'], ascending=[True, True, True])
+								df_expansion.to_csv(output_file2, index=False)
 
 			else: # Do I want secondary infections only with the WT pathogen?
 				for inf in tqdm(range(N_inf-1)): # How many WT recurrent infections?
@@ -183,14 +208,14 @@ def main():
 					# antigen2_seq = from_aa_to_i(antigen1, energy_model, '../../')
 					
 					input_file2 = os.path.join(output_dir1, 'activated_repertoire.csv')
-					output_dir2 = output_dir1 + "/%d"%(a1)
+					output_dir2 = output_dir1 + "/%d"%(a1+1)
 					output_file2 = os.path.join(output_dir2, 'activated_repertoire.csv')
 					
 					# THE SECONDARY INFECTION MUST BE MODIFY TO THE NEW ENSEMBLE_OF_RESPONSES() FUNCTION!!!!!!!
 					if os.path.isfile(input_file2):
 						if not os.path.isfile(output_file2):
 							# Execute process
-							df_response = ensemble_of_responses(Alphabet, motif, Q0s, Ess, dEs, time_array, dT, N_ens, L0, l, t_lim, E_lim, E_ms, p, pmem, k_step, lamA, lamB, C, inf+2, chunk_size, input_file2, N_epi)
+							df_response = ensemble_of_responses(Alphabet, motif, Q0s, Ess, dEs, time_array, dT, N_ens, L0, l, t_lim, E_lim, E_ms, p, k_step, lamA, lamB, C, inf+2, chunk_size, input_file2, N_epi, 0)
 							os.makedirs(output_dir2, exist_ok=True)
 							df_response = df_response.sort_values(by=['ens_id', 'epi', 't'], ascending=[True, True, True])
 							df_response.to_csv(output_file2, index=False)
