@@ -1,5 +1,5 @@
 import sys
-sys.path.append('../../lib/')
+sys.path.append('../../my_lib/')
 from funcs import*
 # from classes import*
 #from functions_2 import*
@@ -123,7 +123,7 @@ def main():
 			#--------------------------Repertoire properties--------------------------
 			beta_r, E_r, Kd_r = get_repertoire_properties(betas, Q0, Es, dE, L0)
 			E_rs[epi] = E_r
-		print(np.exp(E_ms), np.exp(E_rs))
+		# print(np.exp(E_ms), np.exp(E_rs))
 
 		colors = [colors[c] for c in np.argsort(E_rs)]
 		Kstar_dom = np.exp(-np.min(E_rs))
@@ -131,7 +131,7 @@ def main():
 		output_file1_DG = os.path.join(output_dir1, 'DG.csv')
 		# if not os.path.isfile(output_file1_DG):
 		try:
-			data_activation = pd.read_csv(output_file1, usecols=['ens_id', 'E', 'seq', 'epi', 'm', 'N'])
+			data_activation = pd.read_csv(output_file1, converters={"seq": literal_eval})
 			for a_test, antigen_test in enumerate((antigens)):
 				# ---------------------Calculate motif---------------------
 				motif = get_motif(antigen_test, energy_model, '../../')*1.2
@@ -146,8 +146,8 @@ def main():
 				Es_test = []
 				for index, row in data_activation[['seq', 'epi']].iterrows():
 					epi = row['epi'] - 1
-					seq_aa = row['seq']
-					seq_i = from_aa_to_i(seq_aa, energy_model, '../../')
+					seq_i = row['seq']
+					# seq_i = from_aa_to_i(seq_aa, energy_model, '../../')
 					E = calculate_energy(motif[:, epi*l:(epi+1)*l], seq_i) + E_ms[epi]
 					Es_test.append(E)
 				data_activation[str(a_test+1)] = Es_test

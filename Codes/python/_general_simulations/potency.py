@@ -1,5 +1,5 @@
 import sys
-sys.path.append('../../lib/')
+sys.path.append('../../my_lib/')
 from funcs import*
 # from classes import*
 #from functions_2 import*
