@@ -105,7 +105,7 @@ def main():
 		print('primary infection')
 		print(a1+1)
 		output_dir1 = root_dir + pars_dir_1 + pars_dir_2 + "/%d"%(a1+1)
-		output_file1 = os.path.join(output_dir1, 'activated_repertoire.csv')
+		input_file1 = os.path.join(output_dir1, 'activated_repertoire.csv')
 
 		# ---------------------Calculate motif---------------------
 		motif = get_motif(antigen1_, energy_model, '../../')*1.2
@@ -131,8 +131,10 @@ def main():
 		output_file1_DG = os.path.join(output_dir1, 'DG.csv')
 		# if not os.path.isfile(output_file1_DG):
 		try:
-			data_activation = pd.read_csv(output_file1, converters={"seq": literal_eval})
+			data_activation = pd.read_csv(input_file1, converters={"seq": literal_eval})
+			Es_test_dict = {}
 			for a_test, antigen_test in enumerate((antigens)):
+				col_name = f"{a_test+1}"
 				# ---------------------Calculate motif---------------------
 				motif = get_motif(antigen_test, energy_model, '../../')*1.2
 				E_ms = np.zeros(N_epi)
@@ -150,7 +152,9 @@ def main():
 					# seq_i = from_aa_to_i(seq_aa, energy_model, '../../')
 					E = calculate_energy(motif[:, epi*l:(epi+1)*l], seq_i) + E_ms[epi]
 					Es_test.append(E)
-				data_activation[str(a_test+1)] = Es_test
+				# data_activation[str(a_test+1)] = Es_test
+				Es_test_dict[col_name] = Es_test
+			data_activation = pd.concat([data_activation, pd.DataFrame(Es_test_dict)], axis=1)
 			data_activation.to_csv(output_dir1 + '/DG.csv', index = False)
 		except FileNotFoundError:
 			print(f'skipping primary infection with antigen # {a1+1}')

@@ -36,7 +36,7 @@ def main():
 	parser.add_argument('--pro', type=str, default='epitope_complexity', help="Project name.")
 	parser.add_argument('--subpro', type=str, default='epistasis', help="Subproject name.")
 	parser.add_argument('--exp', type=int, default=0, help="Experiment ID.")
-	parser.add_argument('--potency_all', type = int, default = 0)
+	parser.add_argument('--potency_all', type = int, default = 1)
 
 	args = parser.parse_args()
 
@@ -157,11 +157,11 @@ def main():
 					# if not os.path.isfile(output_file1_pot):
 					try:
 						data_activation['E'] = data_DG[str(a_test+1)]
-						data_activation['Z_t'] = data_activation['N_t']/np.exp(data_activation['E'])
+						data_activation['Z'] = data_activation['N']/np.exp(data_activation['E'])
 						data_activation_mod = data_activation.groupby(['ens_id', 'epi', 'm']).agg({'E':'mean', 
 																	't':'mean', 
-																	'Z_t':'sum'}).reset_index() 
-						data_activation_mod['Z_t'] = data_activation_mod['Z_t'].apply(lambda x: list(x))
+																	'Z':'sum'}).reset_index() 
+						# data_activation_mod['Z'] = data_activation_mod['Z'].apply(lambda x: list(x))
 						data_activation_mod.to_csv(output_dir1 + '/potency_' + str(a_test+1) + '.csv', index = False)
 
 					except FileNotFoundError:

@@ -104,15 +104,15 @@ def main():
 	if one_WT:
 		WTs = antigens.iloc[[0]]
 	else:
-		WTs = antigens.sample(n=1, replace = False)
+		WTs = antigens.sample(n=9, replace = False)
 
 	print(WTs)
 	for index, row in WTs.iterrows():
 		antigen_kappa1 = row['antigen']
 		kappa1 = index
-		print('	primary infection with kappa ', kappa1)
+		print('	primary infection with kappa ', kappa1+1)
 		print(antigen_kappa1)
-		output_dir1 = root_dir + pars_dir_1 + pars_dir_2 + "/%d"%(kappa1)
+		output_dir1 = root_dir + pars_dir_1 + pars_dir_2 + "/%d"%(kappa1+1)
 		output_file1 = os.path.join(output_dir1, 'activated_repertoire.csv')
 		input_file1 = ''
 
@@ -127,7 +127,7 @@ def main():
 			# Execute process
 			# df_response = ensemble_of_responses(Alphabet, motif, Q0s, Ess, dEs, time_array, dT, N_ens, L0, l, t_lim, E_lim, Es_ms, p, pmem, k_step, lamA, lamB, C, 1, chunk_size, input_file1, N_epi, 0, use_seqs = use_seqs)
 			df_response = ensemble_of_responses(Alphabet=Alphabet, motif=motif, Q0s=Q0s, Ess=Ess, dEs=dEs,
-				time_array=time_array,dT=dT, N_ens=N_ens, L0=L0, l=l, t_lim=t_lim, E_lim=E_lim, E_ms=Es_ms,
+				time_array=time_array,dT=dT, N_ens=N_ens, L0=L0, l=l, t_lim=t_lim, E_lim=E_lim, Es_ms=Es_ms,
 				p=p, pmem=pmem, k_step=k_step, lamA=lamA, lamB=lamB, C=C, infection=1, chunk_size=chunk_size,
 				input_memory_file=input_file1, N_epi=N_epi, DDE=0, use_seqs=use_seqs, n_jobs=-1)
 			os.makedirs(output_dir1, exist_ok=True)
@@ -160,7 +160,7 @@ def main():
 					# antigen2_seq = from_aa_to_i(antigen1, energy_model, '../../')
 					
 					input_file2 = os.path.join(output_dir1, 'activated_repertoire.csv')
-					output_dir2 = output_dir1 + "/%d"%(kappa1)
+					output_dir2 = output_dir1 + "/%d"%(kappa1+1)
 					output_file2 = os.path.join(output_dir2, 'activated_repertoire.csv')
 					
 					# THE SECONDARY INFECTION MUST BE MODIFY TO THE NEW ENSEMBLE_OF_RESPONSES() FUNCTION!!!!!!!
