@@ -1,2 +1,2 @@
 # Evolution_Immune_System
-Evolutionary perspective of how does the immune system work
+How does the adaptive immune system learns?
