@@ -132,8 +132,6 @@ def main():
 				print(np.exp(E_m), np.exp(E_r))
 				print(E_m, E_r)
 
-			# colors = [colors[c] for c in np.argsort(E_rs)]
-			Kstar_dom = np.exp(-np.min(E_rs))
 			data_activation = pd.read_csv(output_file1)
 			# data_activation['N_t'] = data_activation['N_t'].apply(lambda x: np.array(x, dtype=np.float32))
 			if not potency_all:
