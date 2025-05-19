@@ -33,6 +33,7 @@ def main():
 	parser.add_argument('--one_WT', type=int, default=0, help="Single WT flag.")
 	parser.add_argument('--secondary', type=int, default=0, help="Secondary infection flag.")
 	parser.add_argument('--secondary_all', type=int, default=0, help="Secondary all infections flag.")
+	parser.add_argument('--add_mutant', type=int, default=0, help="add mutant.")
 	parser.add_argument('--pro', type=str, default='epitope_complexity', help="Project name.")
 	parser.add_argument('--subpro', type=str, default='epistasis', help="Subproject name.")
 	parser.add_argument('--exp', type=int, default=0, help="Experiment ID.")
@@ -67,6 +68,7 @@ def main():
 	one_WT = args.one_WT
 	secondary = args.secondary
 	secondary_all = args.secondary_all
+	add_mutant = args.add_mutant
 
 	if N_evo == -1:
 		N_evo = 'R'
@@ -101,42 +103,43 @@ def main():
 	lss = ['-', '--']
 	lws = [1, 2]
 
-	for a1, antigen1_ in enumerate(WTs):
+	for kappa1, antigen_kappa1 in enumerate(WTs):
 		print('primary infection')
-		print(a1+1)
-		output_dir1 = root_dir + pars_dir_1 + pars_dir_2 + "/%d"%(a1+1)
+		print(kappa1+1)
+		output_dir1 = root_dir + pars_dir_1 + pars_dir_2 + "/%d"%(kappa1+1)
 		input_file1 = os.path.join(output_dir1, 'activated_repertoire.csv')
-
-		# ---------------------Calculate motif---------------------
-		motif = get_motif(antigen1_, energy_model, '../../')*1.2
-		E_ms = np.zeros(N_epi)
-		E_rs = np.zeros(N_epi)
-		for epi in range(N_epi):
-			E_m = -3
-			# Normalize motif
-			for i in range(l):
-				E_m+=np.min(motif[:, epi*l:(epi+1)*l][:, i], axis=0)
-				motif[:, epi*l:(epi+1)*l][:, i] -= np.min(motif[:, epi*l:(epi+1)*l][:, i], axis=0)
-			E_ms[epi] = E_m
-			# Calculate Q0, Es, dE, betas
-			Es, dE, Q0, betas = calculate_Q0(0.01, 50, 100000, motif[:, epi*l:(epi+1)*l], E_m, l)
-			#--------------------------Repertoire properties--------------------------
-			beta_r, E_r, Kd_r = get_repertoire_properties(betas, Q0, Es, dE, L0)
-			E_rs[epi] = E_r
-		# print(np.exp(E_ms), np.exp(E_rs))
-
-		colors = [colors[c] for c in np.argsort(E_rs)]
-		Kstar_dom = np.exp(-np.min(E_rs))
-
 		output_file1_DG = os.path.join(output_dir1, 'DG.csv')
-		# if not os.path.isfile(output_file1_DG):
-		try:
+		if os.path.isfile(input_file1):
+			# ---------------------Calculate motif---------------------
+			motif = get_motif(antigen_kappa1, energy_model, '../../')*1.2
+			E_ms = np.zeros(N_epi)
+			E_rs = np.zeros(N_epi)
+			for epi in range(N_epi):
+				E_m = -3
+				# Normalize motif
+				for i in range(l):
+					E_m+=np.min(motif[:, epi*l:(epi+1)*l][:, i], axis=0)
+					motif[:, epi*l:(epi+1)*l][:, i] -= np.min(motif[:, epi*l:(epi+1)*l][:, i], axis=0)
+				E_ms[epi] = E_m
+				# Calculate Q0, Es, dE, betas
+				Es, dE, Q0, betas = calculate_Q0(0.01, 50, 100000, motif[:, epi*l:(epi+1)*l], E_m, l)
+				#--------------------------Repertoire properties--------------------------
+				beta_r, E_r, Kd_r = get_repertoire_properties(betas, Q0, Es, dE, L0)
+				E_rs[epi] = E_r
+			# print(np.exp(E_ms), np.exp(E_rs))
+
+			colors = [colors[c] for c in np.argsort(E_rs)]
+			Kstar_dom = np.exp(-np.min(E_rs))
+			possible_muts = np.random.choice(range(20), 3)
+			print(possible_muts)
+			# possible_pos_mut = np.random.choice([i*l for i in range(N_epi)])
+			# if not os.path.isfile(output_file1_DG):
 			data_activation = pd.read_csv(input_file1, converters={"seq": literal_eval})
 			Es_test_dict = {}
-			for a_test, antigen_test in enumerate((antigens)):
-				col_name = f"{a_test+1}"
+			for alpha, antigen_alpha in enumerate((antigens)):
+				col_name = f"{alpha+1}"
 				# ---------------------Calculate motif---------------------
-				motif = get_motif(antigen_test, energy_model, '../../')*1.2
+				motif = get_motif(antigen_alpha, energy_model, '../../')*1.2
 				E_ms = np.zeros(N_epi)
 				for epi in range(N_epi):
 					E_m = -3
@@ -152,27 +155,49 @@ def main():
 					# seq_i = from_aa_to_i(seq_aa, energy_model, '../../')
 					E = calculate_energy(motif[:, epi*l:(epi+1)*l], seq_i) + E_ms[epi]
 					Es_test.append(E)
-				# data_activation[str(a_test+1)] = Es_test
+				# data_activation[str(alpha+1)] = Es_test
 				Es_test_dict[col_name] = Es_test
+				if add_mutant:
+					for i_mut, mut_pos in enumerate([i*l for i in range(N_epi)]):
+						col_mut_name = f"{alpha+1}" + "_" + f"{mut_pos}" + "_" + f"{antigen_alpha[mut_pos]}" + "_" + f"{possible_muts[i_mut]}"
+						antigen_mut_alpha = antigen_alpha.copy()
+						antigen_mut_alpha[mut_pos] = possible_muts[i_mut]
+						# ---------------------Calculate motif---------------------
+						motif = get_motif(antigen_mut_alpha, energy_model, '../../')*1.2
+						E_ms = np.zeros(N_epi)
+						for epi in range(N_epi):
+							E_m = -3
+							# Normalize motif
+							for i in range(l):
+								E_m+=np.min(motif[:, epi*l:(epi+1)*l][:, i], axis=0)
+								motif[:, epi*l:(epi+1)*l][:, i] -= np.min(motif[:, epi*l:(epi+1)*l][:, i], axis=0)
+							E_ms[epi] = E_m
+						Es_test = []
+						for index, row in data_activation[['seq', 'epi']].iterrows():
+							epi = row['epi'] - 1
+							seq_i = row['seq']
+							# seq_i = from_aa_to_i(seq_aa, energy_model, '../../')
+							E = calculate_energy(motif[:, epi*l:(epi+1)*l], seq_i) + E_ms[epi]
+							Es_test.append(E)
+						# data_activation[str(alpha+1)] = Es_test
+						Es_test_dict[col_mut_name] = Es_test
+
 			data_activation = pd.concat([data_activation, pd.DataFrame(Es_test_dict)], axis=1)
-			data_activation.to_csv(output_dir1 + '/DG.csv', index = False)
-		except FileNotFoundError:
-			print(f'skipping primary infection with antigen # {a1+1}')
-			continue
+			data_activation.to_csv(output_file1_DG, index = False)
 			
 		if secondary: # Are there seconda infections?
 			if secondary_all: # Do I want secondary infections with all the pathogens in the panel?
 				for a2, antigen2_ in enumerate(tqdm(antigens)):
-					output_dir2 = root_dir + pars_dir_1 + pars_dir_2 + "/%d"%(a1+1) + "/%d"%(a2+1)
+					output_dir2 = root_dir + pars_dir_1 + pars_dir_2 + "/%d"%(kappa1+1) + "/%d"%(a2+1)
 					output_file2 = os.path.join(output_dir2, 'activated_repertoire.csv')
 
 					output_file2_DG = os.path.join(output_dir2, 'DG.csv')
 					# if not os.path.isfile(output_file2_DG):
 					try:
 						data_activation = pd.read_csv(output_file2, usecols=['ens_id', 'E', 'seq', 'epi', 'm', 'N'])
-						for a_test, antigen_test in enumerate((antigens)):
+						for alpha, antigen_alpha in enumerate((antigens)):
 							# ---------------------Calculate motif---------------------
-							motif = get_motif(antigen_test, energy_model, '../../')*1.2
+							motif = get_motif(antigen_alpha, energy_model, '../../')*1.2
 							E_ms = np.zeros(N_epi)
 							for epi in range(N_epi):
 								E_m = -3
@@ -188,7 +213,7 @@ def main():
 								seq_i = from_aa_to_i(seq_aa, energy_model, '../../')
 								E = calculate_energy(motif[:, epi*l:(epi+1)*l], seq_i) + E_ms[epi]
 								Es_test.append(E)
-							data_activation[str(a_test+1)] = Es_test
+							data_activation[str(alpha+1)] = Es_test
 						data_activation.to_csv(output_dir2 + '/DG.csv', index = False)
 					except FileNotFoundError:
 						print(f'skipping second infection with antigen # {a2+1}')
@@ -199,7 +224,7 @@ def main():
 					# antigen2_seq = from_aa_to_i(antigen1, energy_model, '../../')
 					
 					input_file2 = os.path.join(output_dir1, 'activated_repertoire.csv')
-					output_dir1 = output_dir1 + "/%d"%(a1+1)
+					output_dir1 = output_dir1 + "/%d"%(kappa1+1)
 					output_file2 = os.path.join(output_dir1, 'activated_repertoire.csv')
 
 					# if os.path.isfile(input_file2):
@@ -208,9 +233,9 @@ def main():
 						try:
 							# if os.path.isfile(output_file2):
 							data_activation = pd.read_csv(output_file2, usecols=['ens_id', 'E', 'seq', 'epi', 'm', 'N'])
-							for a_test, antigen_test in enumerate((antigens)):
+							for alpha, antigen_alpha in enumerate((antigens)):
 								# ---------------------Calculate motif---------------------
-								motif = get_motif(antigen_test, energy_model, '../../')*1.2
+								motif = get_motif(antigen_alpha, energy_model, '../../')*1.2
 								E_ms = np.zeros(N_epi)
 								for epi in range(N_epi):
 									E_m = -3
@@ -226,7 +251,7 @@ def main():
 									seq_i = from_aa_to_i(seq_aa, energy_model, '../../')
 									E = calculate_energy(motif[:, epi*l:(epi+1)*l], seq_i) + E_ms[epi]
 									Es_test.append(E)
-								data_activation[str(a_test+1)] = Es_test
+								data_activation[str(alpha+1)] = Es_test
 							data_activation.to_csv(output_dir1 + '/DG.csv', index = False)
 						except FileNotFoundError:
 							print(f'skipping infection # {inf+2}')

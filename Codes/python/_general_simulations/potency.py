@@ -33,6 +33,7 @@ def main():
 	parser.add_argument('--one_WT', type=int, default=0, help="Single WT flag.")
 	parser.add_argument('--secondary', type=int, default=0, help="Secondary infection flag.")
 	parser.add_argument('--secondary_all', type=int, default=1, help="Secondary all infections flag.")
+	parser.add_argument('--add_mutant', type=int, default=0, help="add mutant.")
 	parser.add_argument('--pro', type=str, default='epitope_complexity', help="Project name.")
 	parser.add_argument('--subpro', type=str, default='epistasis', help="Subproject name.")
 	parser.add_argument('--exp', type=int, default=0, help="Experiment ID.")
@@ -69,6 +70,7 @@ def main():
 	secondary = args.secondary
 	secondary_all = args.secondary_all
 	potency_all = args.potency_all
+	add_mutant = args.add_mutant
 
 	if N_evo == -1:
 		N_evo = 'R'
@@ -103,17 +105,17 @@ def main():
 	lss = ['-', '--']
 	lws = [1, 2]
 
-	for a1, antigen1_ in enumerate(WTs):
+	for kappa1, antigen_kappa1 in enumerate(WTs):
 		print('primary infection')
-		print(a1+1)
-		# antigen1 = antigen1_.replace('-', '')
+		print(kappa1+1)
+		# antigen1 = antigen_kappa1.replace('-', '')
 		# antigen1_seq = from_aa_to_i(antigen1, energy_model, '../../')
-		output_dir1 = root_dir + pars_dir_1 + pars_dir_2 + "/%d"%(a1+1)
-		output_file1 = os.path.join(output_dir1, 'activated_repertoire.csv')
-		output_file1_DG = os.path.join(output_dir1, 'DG.csv')
-		if os.path.isfile(output_file1):
+		output_dir1 = root_dir + pars_dir_1 + pars_dir_2 + "/%d"%(kappa1+1)
+		input_file1 = os.path.join(output_dir1, 'activated_repertoire.csv')
+		input_file1_DG = os.path.join(output_dir1, 'DG.csv')
+		if os.path.isfile(input_file1):
 			# ---------------------Calculate motif---------------------
-			motif = get_motif(antigen1_, energy_model, '../../')*1.2
+			motif = get_motif(antigen_kappa1, energy_model, '../../')*1.2
 			E_ms = np.zeros(N_epi)
 			E_rs = np.zeros(N_epi)
 			for epi in range(N_epi):
@@ -122,7 +124,7 @@ def main():
 				for i in range(l):
 					E_m+=np.min(motif[:, epi*l:(epi+1)*l][:, i], axis=0)
 					motif[:, epi*l:(epi+1)*l][:, i] -= np.min(motif[:, epi*l:(epi+1)*l][:, i], axis=0)
-				E_m = -23
+				# E_m = -23
 				E_ms[epi] = E_m
 				# Calculate Q0, Es, dE, betas
 				Es, dE, Q0, betas = calculate_Q0(0.01, 50, 100000, motif[:, epi*l:(epi+1)*l], E_m, l)
@@ -132,47 +134,43 @@ def main():
 				print(np.exp(E_m), np.exp(E_r))
 				print(E_m, E_r)
 
-			data_activation = pd.read_csv(output_file1)
+			data_activation = pd.read_csv(input_file1)
 			# data_activation['N_t'] = data_activation['N_t'].apply(lambda x: np.array(x, dtype=np.float32))
-			if not potency_all:
-				output_file1_pot = os.path.join(output_dir1, 'potency_' + str(a1+1) + '.csv')
-				# if not os.path.isfile(output_file1_pot):
-				try:
+			if potency_all:
+				data_DG = pd.read_csv(input_file1_DG)
+				output_file1_pot = os.path.join(output_dir1, 'potency.csv')
+				potency_dict = {}
+				if not os.path.isfile(output_file1_pot):
+					for alpha in data_DG.columns[7:].to_numpy():
+						col_name = f"{alpha}"
+						data_activation['E'] = data_DG[str(alpha)]
+						data_activation['Z'] = data_activation['N']/np.exp(data_activation['E'])
+						data_activation_mod = data_activation.groupby(['ens_id', 'epi', 'm']).agg({'E':'mean', 
+																't':'mean', 
+																'Z':'sum'}).reset_index()
+						potency_dict[col_name] = data_activation_mod['Z'].to_numpy()
+						
+					data_activation_mod = data_activation_mod.drop('Z', axis = 1)
+					data_activation_mod = pd.concat([data_activation_mod, pd.DataFrame(potency_dict)], axis=1)
+					data_activation_mod.to_csv(output_file1_pot, index = False)
+
+			else:
+				output_file1_pot = os.path.join(output_dir1, 'potency_' + str(kappa1+1) + '.csv')
+				if not os.path.isfile(output_file1_pot):
 					data_activation['Z'] = data_activation['N']/np.exp(data_activation['E'])
 					data_activation_mod = data_activation.groupby(['ens_id', 'epi', 'm']).agg({'E':'mean', 
 																't':'mean', 
 																'Z':'sum'}).reset_index() 
 					# data_activation_mod['Z'] = data_activation_mod['Z'].apply(lambda x: list(x))
-					data_activation_mod.to_csv(output_dir1 + '/potency_' + str(a1+1) + '.csv', index = False)
+					data_activation_mod.to_csv(output_file1_pot, index = False)
 
-				except FileNotFoundError:
-					print(f'skipping primary infection with antigen # {a1+1}')
-					continue
-			else:
-				data_DG = pd.read_csv(output_file1_DG)
-				for a_test, antigen_test in enumerate((antigens)):
-					output_file1_pot = os.path.join(output_dir1, 'potency_' + str(a_test+1) + '.csv')
-					# if not os.path.isfile(output_file1_pot):
-					try:
-						data_activation['E'] = data_DG[str(a_test+1)]
-						data_activation['Z'] = data_activation['N']/np.exp(data_activation['E'])
-						data_activation_mod = data_activation.groupby(['ens_id', 'epi', 'm']).agg({'E':'mean', 
-																	't':'mean', 
-																	'Z':'sum'}).reset_index() 
-						# data_activation_mod['Z'] = data_activation_mod['Z'].apply(lambda x: list(x))
-						data_activation_mod.to_csv(output_dir1 + '/potency_' + str(a_test+1) + '.csv', index = False)
 
-					except FileNotFoundError:
-						print(f'skipping primary infection with antigen # {a1+1}')
-						continue
-
-			
 		if secondary: # Are there seconda infections?
 			if secondary_all: # Do I want secondary infections with all the pathogens in the panel?
 				for a2, antigen2_ in enumerate(tqdm(antigens)):
 					# antigen2 = antigen2_.replace('-', '')
 					# antigen2_seq = from_aa_to_i(antigen2, energy_model, '../../')
-					output_dir2 = root_dir + pars_dir_1 + pars_dir_2 + "/%d"%(a1+1) + "/%d"%(a2+1)
+					output_dir2 = root_dir + pars_dir_1 + pars_dir_2 + "/%d"%(kappa1+1) + "/%d"%(a2+1)
 					output_file2 = os.path.join(output_dir2, 'activated_repertoire.csv')
 					output_file2_DG = os.path.join(output_dir2, 'DG.csv')
 
@@ -193,17 +191,17 @@ def main():
 							continue
 					else:
 						data_DG = pd.read_csv(output_file2_DG)
-						for a_test, antigen_test in enumerate((antigens)):
-							output_file2_pot = os.path.join(output_dir2, 'potency_' + str(a_test+1) + '.csv')
+						for alpha, antigen_alpha in enumerate((antigens)):
+							output_file2_pot = os.path.join(output_dir2, 'potency_' + str(alpha+1) + '.csv')
 							# if not os.path.isfile(output_file2_pot):
 							try:
-								data_activation['E'] = data_DG[str(a_test+1)]
+								data_activation['E'] = data_DG[str(alpha+1)]
 								data_activation['Z_t'] = data_activation['N_t']/np.exp(data_activation['E'])
 								data_activation_mod = data_activation.groupby(['ens_id', 'epi', 'm']).agg({'E':'mean', 
 																			't':'mean', 
 																			'Z_t':'sum'}).reset_index() 
 								data_activation_mod['Z_t'] = data_activation_mod['Z_t'].apply(lambda x: list(x))
-								data_activation_mod.to_csv(output_dir2 + '/potency_' + str(a_test+1) + '.csv', index = False)
+								data_activation_mod.to_csv(output_dir2 + '/potency_' + str(alpha+1) + '.csv', index = False)
 
 							except FileNotFoundError:
 								print(f'skipping primary infection with antigen # {a2+1}')
@@ -215,11 +213,11 @@ def main():
 					# antigen2_seq = from_aa_to_i(antigen1, energy_model, '../../')
 					
 					input_file2 = os.path.join(output_dir1, 'activated_repertoire.csv')
-					output_dir1 = output_dir1 + "/%d"%(a1+1)
+					output_dir1 = output_dir1 + "/%d"%(kappa1+1)
 					output_file2 = os.path.join(output_dir1, 'activated_repertoire.csv')
 
 					# if os.path.isfile(input_file2):
-					output_file1_pot = os.path.join(output_dir1, 'potency_' + str(a1+1) + '.csv')
+					output_file1_pot = os.path.join(output_dir1, 'potency_' + str(kappa1+1) + '.csv')
 					if not os.path.isfile(output_file1_pot):
 						try:
 							# if os.path.isfile(output_file2):
@@ -230,7 +228,7 @@ def main():
 																		't':'mean', 
 																		'Z_t':'sum'}).reset_index()
 							data_activation_mod['Z_t'] = data_activation_mod['Z_t'].apply(lambda x: list(x))
-							data_activation_mod.to_csv(output_dir1 + '/potency_' + str(a1+1) + '.csv', index = False)
+							data_activation_mod.to_csv(output_dir1 + '/potency_' + str(kappa1+1) + '.csv', index = False)
 						except FileNotFoundError:
 							print(f'skipping infection # {inf+2}')
 							continue
