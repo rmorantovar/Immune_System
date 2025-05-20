@@ -15,7 +15,7 @@ def main():
 	parser.add_argument('--N_inf', type=int, default=1, help="Number of infections.")
 	parser.add_argument('--N_evo', type=int, default=0, help="Evolution count.")
 	parser.add_argument('--N_epi', type=int, default=3, help="Number of epitopes.")
-	parser.add_argument('--L0', type=int, default=10**8, help="Number of random sequences.")
+	parser.add_argument('--L0', type=int, default=10**7, help="Number of random sequences.")
 	parser.add_argument('--l', type=int, default=16, help="Length of the sequences.")
 	parser.add_argument('--t_lim', type=float, default=8.0, help="Activation time threshold.")
 	parser.add_argument('--E_lim', type=float, default=-6.0, help="Threshold for the sum of entries.")
@@ -108,8 +108,6 @@ def main():
 	for kappa1, antigen_kappa1 in enumerate(WTs):
 		print('primary infection')
 		print(kappa1+1)
-		# antigen1 = antigen_kappa1.replace('-', '')
-		# antigen1_seq = from_aa_to_i(antigen1, energy_model, '../../')
 		output_dir1 = root_dir + pars_dir_1 + pars_dir_2 + "/%d"%(kappa1+1)
 		input_file1 = os.path.join(output_dir1, 'activated_repertoire.csv')
 		input_file1_DG = os.path.join(output_dir1, 'DG.csv')
@@ -145,9 +143,7 @@ def main():
 						col_name = f"{alpha}"
 						data_activation['E'] = data_DG[str(alpha)]
 						data_activation['Z'] = data_activation['N']/np.exp(data_activation['E'])
-						data_activation_mod = data_activation.groupby(['ens_id', 'epi', 'm']).agg({'E':'mean', 
-																't':'mean', 
-																'Z':'sum'}).reset_index()
+						data_activation_mod = data_activation.groupby(['ens_id', 'epi', 'm']).agg({'E':'mean', 'Z':'sum'}).reset_index()
 						potency_dict[col_name] = data_activation_mod['Z'].to_numpy()
 						
 					data_activation_mod = data_activation_mod.drop('Z', axis = 1)

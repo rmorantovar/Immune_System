@@ -105,29 +105,41 @@ def main():
 	lss = ['-', '--']
 	lws = [1, 2]
 
+	effects = []
+	effects0 = []
 	for kappa1, antigen_kappa1 in enumerate(WTs):
-		print('primary infection')
-		print(kappa1+1)
-		# antigen1 = antigen_kappa1.replace('-', '')
-		# antigen1_seq = from_aa_to_i(antigen1, energy_model, '../../')
+		print('primary infection', kappa1+1)
 		output_dir1 = root_dir + pars_dir_1 + pars_dir_2 + "/%d"%(kappa1+1)
 		input_file1_potency = os.path.join(output_dir1, 'potency.csv')
-		print(input_file1_potency)
 		if os.path.isfile(input_file1_potency):
-			data_activation = pd.read_csv(input_file1_potency)
-			effects = []
-			for i_alpha, alpha in enumerate(data_activation.columns[5:].to_numpy()): 
+			data_potency = pd.read_csv(input_file1_potency)
+			
+			for i_alpha, alpha in enumerate(data_potency.columns[4:].to_numpy()): 
 				if i_alpha%4==0:
-					potencies_alpha = data_activation[alpha]
-					print(potencies_alpha)
-				if i_alpha%4==1:
-					potencies_alpha_prime = data_activation[alpha]
-					print(potencies_alpha_prime)
-					effects.append(np.log(np.sum(potencies_alpha_prime)/np.sum(potencies_alpha)))
+					if int(alpha) == kappa1+1:
+						print(data_potency[alpha]/np.sum(data_potency[alpha]))
+					potencies_alpha = data_potency[alpha]
+				else:
+					potencies_alpha_prime = data_potency[alpha]
+					effects.append(
+						{'kappa' : kappa1 + 1, 
+						 'alpha' : i_alpha//4 + 1,
+						 'mut' : alpha, 
+						 'DDG' : -np.log(np.sum(potencies_alpha_prime)/np.sum(potencies_alpha))})
+					for j in range(len(potencies_alpha_prime)):
+						effects0.append(
+							{'kappa' : kappa1 + 1, 
+							 'alpha' : i_alpha//4 + 1,
+							 'mut' : alpha, 
+							 'epi' : j + 1,
+							 'DDG' : -np.log((potencies_alpha_prime[j])/(potencies_alpha[j]))})
 
-			plt.hist(effects)
-			plt.show()
 
+	effects_df = pd.DataFrame(effects)
+	effects_df.to_csv(root_dir + pars_dir_1 + pars_dir_2 + '/DDG_epis.csv', index = False)
+
+	effects0_df = pd.DataFrame(effects0)
+	effects0_df.to_csv(root_dir + pars_dir_1 + pars_dir_2 + '/DDG_epis_epi.csv', index = False)
 	
 
 	# Print Final execution time
