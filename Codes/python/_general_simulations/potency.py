@@ -111,7 +111,8 @@ def main():
 		output_dir1 = root_dir + pars_dir_1 + pars_dir_2 + "/%d"%(kappa1+1)
 		input_file1 = os.path.join(output_dir1, 'activated_repertoire.csv')
 		input_file1_DG = os.path.join(output_dir1, 'DG.csv')
-		if os.path.isfile(input_file1):
+		output_file1_pot = os.path.join(output_dir1, 'potency.csv')
+		if os.path.isfile(input_file1) and not os.path.isfile(output_file1_pot):
 			# ---------------------Calculate motif---------------------
 			motif = get_motif(antigen_kappa1, energy_model, '../../')*1.2
 			E_ms = np.zeros(N_epi)
@@ -136,7 +137,7 @@ def main():
 			# data_activation['N_t'] = data_activation['N_t'].apply(lambda x: np.array(x, dtype=np.float32))
 			if potency_all:
 				data_DG = pd.read_csv(input_file1_DG)
-				output_file1_pot = os.path.join(output_dir1, 'potency.csv')
+				
 				potency_dict = {}
 				if not os.path.isfile(output_file1_pot):
 					for alpha in data_DG.columns[7:].to_numpy():

@@ -20,7 +20,7 @@ def main():
 	parser.add_argument('--N_inf', type=int, default=1, help="Number of infections.")
 	parser.add_argument('--N_evo', type=int, default = -1)
 	parser.add_argument('--N_epi', type=int, default = 3)
-	parser.add_argument('--L0', type=int, default=10**8, help="Number of random sequences.")
+	parser.add_argument('--L0', type=int, default=10**7, help="Number of random sequences.")
 	parser.add_argument('--l', type=int, default=16, help="Length of the sequences.")
 	parser.add_argument('--t_lim', type=float, default=8., help="Threshold for activation time.") # Use 8 for L0>1e6
 	parser.add_argument('--E_lim', type=float, default=-7., help="Threshold for the sum of entries.") # Use -6 for L0>1e6
@@ -36,7 +36,7 @@ def main():
 	# parser.add_argument('--antigen', type=str, default='TACNSEYPNTTRAKCGRWYR')
 	parser.add_argument('--antigen', type=str, default='TACNSYPNTAKCRWYR')
 	parser.add_argument('--energy_model', type=str, default = 'TCRen')
-	parser.add_argument('--use_seqs', type=int, default = 0)
+	parser.add_argument('--use_seqs', type=int, default = 1)
 	parser.add_argument('--one_WT', type=int, default = 0)
 	parser.add_argument('--secondary', type=int, default = 0)
 	parser.add_argument('--secondary_all', type=int, default = 1)
@@ -104,7 +104,7 @@ def main():
 	if one_WT:
 		WTs = antigens.iloc[[0]]
 	else:
-		WTs = antigens.sample(n=9, replace = False)
+		WTs = antigens.sample(n=5, replace = False)
 
 	print(WTs)
 	for index, row in WTs.iterrows():

@@ -105,42 +105,32 @@ def main():
 	lss = ['-', '--']
 	lws = [1, 2]
 
-	effects = []
-	effects0 = []
-	for kappa1, antigen_kappa1 in enumerate(WTs):
-		print('primary infection', kappa1+1)
-		output_dir1 = root_dir + pars_dir_1 + pars_dir_2 + "/%d"%(kappa1+1)
-		input_file1_potency = os.path.join(output_dir1, 'potency.csv')
-		if os.path.isfile(input_file1_potency):
-			data_potency = pd.read_csv(input_file1_potency)
-			
-			for i_alpha, alpha in enumerate(data_potency.columns[4:].to_numpy()): 
-				if i_alpha%4==0:
-					if int(alpha) == kappa1+1:
-						print(data_potency[alpha]/np.sum(data_potency[alpha]))
-					potencies_alpha = data_potency[alpha]
-				else:
-					potencies_alpha_prime = data_potency[alpha]
-					effects.append(
-						{'kappa' : kappa1 + 1, 
-						 'alpha' : i_alpha//4 + 1,
-						 'mut' : alpha, 
-						 'DDG' : -np.log(np.sum(potencies_alpha_prime)/np.sum(potencies_alpha))})
-					for j in range(len(potencies_alpha_prime)):
-						effects0.append(
-							{'kappa' : kappa1 + 1, 
-							 'alpha' : i_alpha//4 + 1,
-							 'mut' : alpha, 
-							 'epi' : j + 1,
-							 'DDG' : -np.log((potencies_alpha_prime[j])/(potencies_alpha[j]))})
-
-
-	effects_df = pd.DataFrame(effects)
-	effects_df.to_csv(root_dir + pars_dir_1 + pars_dir_2 + '/DDG_epis.csv', index = False)
-
-	effects0_df = pd.DataFrame(effects0)
-	effects0_df.to_csv(root_dir + pars_dir_1 + pars_dir_2 + '/DDG_epis_epi.csv', index = False)
+	effects_df = pd.read_csv(root_dir + pars_dir_1 + pars_dir_2 + '/DDG_epis.csv')
+	effects0_df = pd.read_csv(root_dir + pars_dir_1 + pars_dir_2 + '/DDG_epis_epi.csv')
 	
+	output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/'+project+'/'+subproject
+	os.makedirs(output_plot, exist_ok=True)
+
+	mutations = ['_0_3_19', '_16_13_18', '_32_7_15']
+	
+	for mutation in mutations:
+
+		fig, ax = plt.subplots(figsize=(5*1.62, 5), gridspec_kw={'left':0.10, 'right':.95, 'bottom':.1, 'top': 0.95})
+
+		for kappa, antigen_kappa in enumerate((WTs)):
+			for alpha, antigen_alpha in enumerate((antigens)):
+				DDG = effects_df[(effects_df['mut'].str.endswith(mutation)) & (effects_df['alpha']==alpha+1) & (effects_df['kappa']==kappa+1)]['DDG']
+				distance = hamming_distance(antigen_kappa, antigen_alpha)
+				if len(DDG) ==1:
+					ax.scatter(distance, DDG, facecolors = 'none', edgecolors = my_blue, alpha = 1)
+
+		my_plot_layout(ax = ax, xscale='linear', yscale= 'linear', ticks_labelsize= 24, x_fontsize=30, y_fontsize=30)
+		# ax.set_xticks([])
+		# ax.set_yticks([])
+		# ax.set_ylim(bottom = -0.3, top = 7.3)
+		# ax.set_xlim(left = -0.3, right = 7.3)
+		ax.legend(fontsize = 16, loc = 0, title = r'$p_m$', title_fontsize = 18)
+		fig.savefig(output_plot + '/DDG_distance' + mutation + '.pdf')
 
 	# Print Final execution time
 	end_time = time.time()

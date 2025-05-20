@@ -103,13 +103,14 @@ def main():
 	lss = ['-', '--']
 	lws = [1, 2]
 
+	possible_muts = np.random.choice(range(20), 3)
 	for kappa1, antigen_kappa1 in enumerate(WTs):
 		print('primary infection')
 		print(kappa1+1)
 		output_dir1 = root_dir + pars_dir_1 + pars_dir_2 + "/%d"%(kappa1+1)
 		input_file1 = os.path.join(output_dir1, 'activated_repertoire.csv')
 		output_file1_DG = os.path.join(output_dir1, 'DG.csv')
-		if os.path.isfile(input_file1):
+		if os.path.isfile(input_file1) and not os.path.isfile(output_file1_DG):
 			# ---------------------Calculate motif---------------------
 			motif = get_motif(antigen_kappa1, energy_model, '../../')*1.2
 			E_ms = np.zeros(N_epi)
@@ -130,8 +131,7 @@ def main():
 
 			colors = [colors[c] for c in np.argsort(E_rs)]
 			Kstar_dom = np.exp(-np.min(E_rs))
-			possible_muts = np.random.choice(range(20), 3)
-			print(possible_muts)
+
 			# possible_pos_mut = np.random.choice([i*l for i in range(N_epi)])
 			# if not os.path.isfile(output_file1_DG):
 			data_activation = pd.read_csv(input_file1, converters={"seq": literal_eval})
