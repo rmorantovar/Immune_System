@@ -1,11 +1,11 @@
 import sys
-sys.path.append('../lib/')
-sys.path.append('../../lib/')
+sys.path.append('../my_lib/')
+sys.path.append('../../my_lib/')
 from functions_2 import*
 plt.rcParams['text.usetex'] = True
 
 Text_files_path = '/Users/robertomorantovar/Library/CloudStorage/Dropbox/Research/Immune_system/primary_response/in/'
-
+output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures'
 #--------------- PARAMETERS ---------------------
 N_ens = 1
 L_0s = [1e9]
@@ -105,15 +105,29 @@ for L_0 in L_0s:
     print('beta_r = %.1f'%beta_r, 'K_d_r = %.2e'%Kd_r)
 
     ax_Q0.plot(Kds, Q0*L_0, alpha = 1, color = 'grey', linewidth = 5, linestyle = '--')
-    #ax_Q0.plot(Kds, P_min_e(L_0, avg_E, var_E, Es[:-1], dE), linestyle = '--', marker = '',  color = 'black', ms = 2, linewidth = 3, alpha = .6)
-    ax_Q0.plot(Kds, P_min_e_Q0(L_0, Q0, dE)*L_0, linestyle = ':', marker = '',  color = 'grey', ms = 2, linewidth = 3, alpha = .6)
+    # ax_Q0.plot(Kds, P_min_e(L_0, avg_E, var_E, Es[:-1], dE), linestyle = '--', marker = '',  color = 'black', ms = 2, linewidth = 3, alpha = .6)
+    ax_Q0.plot(Kds, P_min_e_Q0(L_0, Q0, dE)*L_0, linestyle = ':', marker = '',  color = 'grey', ms = 2, linewidth = 3, alpha = 1)
+    ax_Q0.vlines(Kd_r, 1e-6, 1e9, linestyle = ':', color = 'grey', linewidth = 2, alpha = .6)
+    u_on, p_a, R, QR = calculate_QR(Q0, k_on, k_step, np.exp(lambda_A*time[0])/N_A, Es, 3, lambda_A, b0, dE)
+    K_array_t = np.exp(time*(lambda_A/3))*(k_step/k_on)
+    p_a = (1+Kd_r/(k_step/k_on))**-3
+    p_t_E = u_on*p_a*np.exp(lambda_A*np.log(K_array_t/(k_step/k_on))/(lambda_A/3))*np.exp(-(1/lambda_A)*(np.exp(lambda_A*np.log(K_array_t/(k_step/k_on))/(lambda_A/3)) - 1))/(lambda_A/3)
+    ax_Q0.plot(K_array_t, p_t_E*L_0, linestyle = ':', marker = '',  color = my_blue, ms = 2, linewidth = 3, alpha = 1)
+    print(np.exp(time*(lambda_A/3)))
     #ax_Q0.plot(Kds, Kds**(beta_r)/(Ks[P_min_e(L_0, avg_E, var_E, Es[:-1], dE)==np.max(P_min_e(L_0, avg_E, var_E, Es[:-1], dE))]**(beta_r))*np.max(P_min_e(L_0, avg_E, var_E, Es[:-1], dE)), linestyle = '-', marker = '',  color = 'black', ms = 2, linewidth = 4 )
 
     my_plot_layout(ax=ax_Q0, yscale = 'log', xscale = 'log', ticks_labelsize = 30)
     #ax_Q_act.set_xticks([])
     ax_Q0.set_xlim(right = 1.2) #use 1e-3 for other plots
-    ax_Q0.set_ylim(bottom = 1e-15*L_0, top = 1.5*L_0)
-    fig_Q0.savefig('../../../Figures/primary_response/_Summary/affinity/L%d/Q0_Nr-%.0e_'%(L, L_0)+model+'.pdf')
+    ax_Q0.set_ylim(bottom = 1e-15)#, top = 1.5*L_0)
+    fig_Q0.savefig(output_plot + '/primary_response/_Summary/affinity/L%d/Q0_Nr-%.0e_'%(L, L_0)+model+'1.pdf')
+
+    my_plot_layout(ax=ax_Q0, yscale = 'linear', xscale = 'log', ticks_labelsize = 30)
+    #ax_Q_act.set_xticks([])
+    ax_Q0.set_xlim(right = 1.2) #use 1e-3 for other plots
+    ax_Q0.set_ylim(bottom = 1e-15)#, top = 1.5*L_0)
+    fig_Q0.savefig(output_plot + '/primary_response/_Summary/affinity/L%d/Q0_Nr-%.0e_'%(L, L_0)+model+'2.pdf')
+
     plt.close(fig_Q0)
 
     fig_QR_all_f, ax_QR_all_f = plt.subplots(figsize=(5*1.62,5), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
@@ -226,23 +240,23 @@ for L_0 in L_0s:
         #ax_R.set_xticks([])
         ax_R.set_xlim(right = 1e-2)
         ax_R.set_ylim(top = 1.5, bottom = 1e-8)
-        fig_R.savefig('../../../Figures/primary_response/_Summary/affinity/L%d/R_p-%.1f_Nr-%.0e_'%(L, p, L_0)+model+'.pdf')
+        fig_R.savefig(output_plot + '/primary_response/_Summary/affinity/L%d/R_p-%.1f_Nr-%.0e_'%(L, p, L_0)+model+'.pdf')
         plt.close(fig_R)
 
         my_plot_layout(ax=ax_QR, yscale = 'log', xscale = 'log', ticks_labelsize = 30, x_fontsize=30, y_fontsize=30 )
         #ax_QR.set_xticks([])
         ax_QR.set_xlim(right = 9e-2, left = np.exp(E_ms)) #use 1e-3 for other plots
         ax_QR.set_ylim(bottom = 1e-8, top = L_0)
-        fig_QR.savefig('../../../Figures/primary_response/_Summary/affinity/L%d/QR_p-%.1f_Nr-%.0e_'%(L, p, L_0)+model+'.pdf')
+        fig_QR.savefig(output_plot + '/primary_response/_Summary/affinity/L%d/QR_p-%.1f_Nr-%.0e_'%(L, p, L_0)+model+'.pdf')
         plt.close(fig_QR)
 
         my_plot_layout(ax=ax_QR2, yscale = 'linear', xscale = 'log', ticks_labelsize = 30, x_fontsize=30, y_fontsize=30 )
         #ax_QR2.set_xlim(right = 1e-3)
-        fig_QR2.savefig('../../../Figures/primary_response/_Summary/affinity/L%d/QR2_p-%.1f_Nr-%.0e_'%(L, p, L_0)+model+'.pdf')
+        fig_QR2.savefig(output_plot + '/primary_response/_Summary/affinity/L%d/QR2_p-%.1f_Nr-%.0e_'%(L, p, L_0)+model+'.pdf')
         plt.close(fig_QR2)
 
         my_plot_layout(ax=ax_m_bar, yscale = 'log', ticks_labelsize = 30, x_fontsize=30, y_fontsize=30 )
-        fig_m_bar.savefig('../../../Figures/primary_response/_Summary/affinity/L%d/m_bar_p-%.1f_Nr-%.0e_'%(L, p, L_0)+model+'.pdf')
+        fig_m_bar.savefig(output_plot + '/primary_response/_Summary/affinity/L%d/m_bar_p-%.1f_Nr-%.0e_'%(L, p, L_0)+model+'.pdf')
         plt.close(fig_m_bar)
     
         # my_plot_layout(ax=ax_QR_all, yscale = 'log', xscale = 'log', ticks_labelsize = 38)
@@ -257,7 +271,7 @@ for L_0 in L_0s:
     ax_QR_all_f.set_xlim(right = 1e-1, left = np.exp(E_ms)) #use 1e-3 for other plots
     ax_QR_all_f.set_ylim(bottom = 1e-9, top = L_0)
     #ax_QR_all_f.legend(title = r'$p$', title_fontsize = 32, fontsize = 30)
-    fig_QR_all_f.savefig('../../../Figures/primary_response/_Summary/affinity/L%d/QR_all_f_Nr-%.0e_'%(L, L_0)+model+'.pdf')
+    fig_QR_all_f.savefig(output_plot + '/primary_response/_Summary/affinity/L%d/QR_all_f_Nr-%.0e_'%(L, L_0)+model+'.pdf')
     plt.close(fig_QR_all_f)
 
 
