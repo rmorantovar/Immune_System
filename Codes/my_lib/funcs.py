@@ -5,159 +5,6 @@ from funcs_mini import*
 
 # Function to generate random sequences and compute properties
 
-# def generate_repertoire_Me(Alphabet, motif, Q0s, Ess, dEs, time_array, ensemble_id, L0, l, t_lim, E_lim, E_ms, p, pmem, k_step, lamA, infection, chunk_size, memory_clones, N_epi, DDE):
-#     lamA = lamA
-#     k_on = 1e6*24*3600; #(M*days)^-1
-#     b0 = 1e5
-#     b0_scaled = (b0 * 10 * k_on) / (lamA * N_A)
-#     K_step = k_step/k_on
-#     times = time_array
-#     exp_lamA_times = np.exp(lamA * times)
-#     properties = []
-#     for j in range(L0 // chunk_size):        
-#         for epi in range(N_epi):
-#             seqs_flat = np.random.rand(chunk_size)
-#             cum_Omega_0 = np.cumsum(Q0s[epi]*dEs[epi])[::]
-#             E_idx = np.searchsorted(cum_Omega_0,seqs_flat)-1
-#             Energies = Ess[epi][E_idx]
-#             Energies = Energies[Energies < np.min(Energies) + 4]
-#             factors = b0_scaled / (1 + (np.exp(Energies)/K_step))**p
-#             for i, factor in enumerate(factors):
-#                 F1 = 1 - np.exp(-factor * (exp_lamA_times - 1))
-#                 r1 = np.random.random()
-#                 t1 = times[np.searchsorted(F1,r1)-1]
-#                 if t1 < t_lim:
-#                     properties.append({
-#                         'ens_id': ensemble_id,
-#                         'E': Energies[i],
-#                         'id': seqs_flat[i],
-#                         't': t1,
-#                         'epi': epi+1,
-#                         'm' : 0
-#                     })
-
-#     if infection > 1:
-#         if len(memory_clones.index) > 0:
-#             memory_clones = memory_clones.loc[memory_clones['ens_id'] == ensemble_id]
-#             # sampled_memory = memory_clones.sample(n=50000, weights='N', replace=True)
-#             for index, row in memory_clones.iterrows():
-#                 E = row['E'] + DDE
-#                 N0 = row['N']
-#                 epi = row['epi']
-#                 id_clone = row['id']
-#                 if E < E_lim:
-#                     F1 = 1-np.exp(-b0_scaled /(1+ (np.exp(E)/K_step))**pmem * (np.exp(lamA*times)-1)) # Here change p for 1 
-#                     # for n0 in range(int(N0)): # to account for more than 1 cell per lineage
-#                     r1 = np.random.random(int(N0))
-#                     #t1 = times[F1<r1][-1]
-#                     t1 = times[np.searchsorted(F1,r1)-1]
-#                     mask = t1 < t_lim
-#                     properties.extend([{
-#                                     'ens_id': ensemble_id,
-#                                     'E': E,
-#                                     'id': id_clone,
-#                                     't': t1_i,
-#                                     'epi': epi,
-#                                     'm': 1} for t1_i in t1[mask]])
-
-#     return properties
-
-# def generate_repertoire_Me_seqs(Alphabet, motif, cum_Omega_0, Es_avg, time_array, ensemble_id, L0, l, t_lim, E_lim, E_ms, p, k_step, lamA, infection, chunk_size, input_memory_file, N_epi):
-#     lamA = lamA
-#     k_on = 1e6*24*3600; #(M*days)^-1
-#     b0 = 1e5
-#     N0=1
-#     b0_scaled = (b0 * 10 * k_on) / (lamA * N_A)
-#     K_step = k_on / k_step
-#     times = time_array
-#     exp_lamA_times = np.exp(lamA * times)
-#     properties = []
-#     R = np.tile(np.arange(20), (int(chunk_size)*l, 1)).T
-#     for j in range(L0 // chunk_size):
-#         # print(j)
-#         seqs_flat = np.random.randint(0, 20, size=(int(chunk_size) * l))
-#         for epi in range(N_epi):
-#             Es = calculate_Es(motif[:, epi*l:(epi+1)*l], seqs_flat, R, l, 20, chunk_size, E_ms[epi])
-#             Es_idx = np.arange(int(chunk_size))[Es < np.min(Es) + 4]
-#             Es = Es[Es < np.min(Es) + 4]
-#             seqs = seqs_flat.reshape(int(chunk_size), l)[Es_idx]
-#             for i, E in enumerate(Es):
-#                 factor = b0_scaled / (1 + (K_step * np.exp(E))**p)
-#                 F1 = 1 - np.exp(-factor * (exp_lamA_times - 1))
-#                 r1 = np.random.random()
-#                 t1 = times[np.searchsorted(F1,r1)-1]
-#                 if t1 < t_lim:
-#                     properties.append({
-#                         'ens_id': ensemble_id,
-#                         'E': E,
-#                         't': t1, 
-#                         # 'seq': from_i_to_aa_Alphabet(Alphabet, proto_E),
-#                         'seq': list(seqs[i]),
-#                         'epi': epi+1,
-#                         'm' : 0
-#                     })
-
-#     # for _ in range(L0 // chunk_size):
-#     #     proto_Es = np.random.randint(0, 20, size=(chunk_size, l))
-#     #     for proto_E in proto_Es:
-#     #         for epi in range(N_epi):
-#     #             E = calculate_energy(motif[:, epi*l:(epi+1)*l], proto_E) + E_ms[epi]
-#     #             # print(E)
-#     #             if E < E_lim:
-#     #                 F1 = 1-np.exp(-(b0*10*k_on)/(lamA*N_A*(1+ (k_on*np.exp(E))/k_step)**p)*(np.exp(lamA*times)-1))
-#     #                 r1 = np.random.random()
-#     #                 t1 = times[np.searchsorted(F1,r1)-1]
-#     #                 if t1 < t_lim:
-#     #                     properties.append({
-#     #                         'ens_id': ensemble_id,
-#     #                         'E': E,
-#     #                         't': t1, 
-#     #                         # 'seq': from_i_to_aa_Alphabet(Alphabet, proto_E),
-#     #                         'seq': list(proto_E),
-#     #                         'epi': epi+1,
-#     #                         'm' : 0
-#     #                     })
-
-#     if infection > 1:
-#         memory_clones = pd.read_csv(input_memory_file, converters={"seq": literal_eval})
-#         memory_clones = memory_clones.loc[memory_clones['ens_id'] == ensemble_id]
-#         if len(memory_clones.index) > 0:
-#             pre_memory_idx = []
-#             for index, row in memory_clones.iterrows():
-#                 # seqs_memory += [row['seq']]*row['N']
-#                 pre_memory_idx += [index]*int(row['N'])
-#             memory_idx = np.random.choice(pre_memory_idx, 1000, replace = False)
-#             memory = np.array(memory_clones['seq'].iloc[memory_idx])
-#             #memory = memory_clones['seq'].sample(n = 1000, replace = True, weights = np.array(memory_clones['n']))
-#             # print(len(seqs_memory))
-            
-#             for seq in memory:
-#                 # proto_E = from_aa_to_i_Alphabet(Alphabet, seq_aa)
-#                 proto_E = seq
-#                 for epi in range(N_epi):
-#                     E = calculate_energy(motif[:, epi*l:(epi+1)*l], proto_E) + E_ms[epi]
-#                     #for cell in range(int(clone['n'])):
-#                     if E < E_lim:
-#                         F1 = 1-np.exp(-(b0*10*k_on)/(lamA*N_A*(1+ (k_on*np.exp(E))/k_step)**p)*(np.exp(lamA*times)-1))
-#                         # for n0 in range(int(N0)): # to account for more than 1 cell per lineage
-#                         r1 = np.random.random()
-#                         #t1 = times[F1<r1][-1]
-#                         t1 = times[np.searchsorted(F1,r1)-1]
-#                         if t1 < t_lim:
-#                             properties.append({
-#                                 'ens_id': ensemble_id,
-#                                 'E': E,
-#                                 't': t1,
-#                                 'seq': list(seq),
-#                                 'epi': epi+1,
-#                                 'm' : 1
-#                             })
-
-
-#     return properties
-
-# Define the merged and unified version of generate_repertoire_Me
-
 def generate_repertoire_Me(Alphabet, motif, Q0s=None, Ess=None, dEs=None, time_array=None, ensemble_id=0, L0=1000, l=10, t_lim=5.0, E_lim=20.0, Es_ms=None, p=2, pmem=2, k_step=1.0, lamA=0.1, infection=1, chunk_size=100, memory_clones=None, N_epi=1, DDE=0.0, use_seqs=False):
 
     """
@@ -237,10 +84,10 @@ def generate_repertoire_Me(Alphabet, motif, Q0s=None, Ess=None, dEs=None, time_a
 
     for j in range(L0 // chunk_size):
         if use_seqs:
-            seqs_flat = np.random.randint(0, 20, size=(int(chunk_size) * l))
+            seqs_flat = np.random.randint(0, 20, size=(int(chunk_size) * l)) # This is the line where the repertoire is created
             R = np.tile(np.arange(20), (int(chunk_size)*l, 1)).T
         else:
-            seqs_flat = np.random.rand(chunk_size)
+            seqs_flat = np.random.rand(chunk_size) # This is the line where the repertoire is created
 
         for epi in range(N_epi):
             if use_seqs:

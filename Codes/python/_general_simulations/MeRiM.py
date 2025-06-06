@@ -41,7 +41,7 @@ def main():
 	parser.add_argument('--secondary', type=int, default = 0)
 	parser.add_argument('--secondary_all', type=int, default = 1)
 	parser.add_argument('--pro', type=str, default='epitope_complexity', help="project.")
-	parser.add_argument('--subpro', type=str, default='epistasis', help="subproject.")
+	parser.add_argument('--subpro', type=str, default='fluctuations', help="subproject.")
 	parser.add_argument('--exp', type=int, default=0, help="experiment.")
 	args = parser.parse_args()
 
