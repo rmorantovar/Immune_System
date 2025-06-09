@@ -207,7 +207,7 @@ def expansions(data, time_array, dT, **kwargs):
     # data_active = data_active.assign(N_t=clone_size_total_time)  # Optionally store time-resolved sizes
 
     data_active = data_active.loc[data_active['N'] >= lim_size]
-    print(data_active['E'].isin([min_energy]))
+    print(data_active.loc[data_active['E'].isin([min_energy])])
     return data_active
 
 #used to get clone size time trajectories
