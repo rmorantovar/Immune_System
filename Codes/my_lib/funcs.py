@@ -19,7 +19,7 @@ def generate_repertoire_Me(
 ):
 
     # Default values via kwargs (can be omitted in old code)
-    p = kwargs.get('p', 2)
+    p = kwargs.get('p', 4)
     pmem = kwargs.get('pmem', 2)
     k_step = kwargs.get('k_step', 1.0)
     lamA = kwargs.get('lamA', 0.1)
@@ -269,7 +269,6 @@ def response(
 
     # Expansion still receives p, lamB, C as individual args
     # (you can also use kwargs.get() here if needed)
-    p = kwargs.get('p', 2)
     df_props_expansion = expansions(df_props_activation, time_array, dT, **kwargs)
 
     return df_props_expansion

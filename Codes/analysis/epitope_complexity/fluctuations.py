@@ -85,7 +85,7 @@ def main():
 	subproject = args.subpro
 	experiment = args.exp
 
-	exps = [0]
+	exps = [0, 1]
 	for experiment in exps:
 
 		root_dir = f"/Users/robertomorantovar/Dropbox/Research/Immune_system/{project}/{subproject}/{experiment}"
