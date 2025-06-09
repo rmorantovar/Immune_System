@@ -74,7 +74,7 @@ def generate_repertoire_Me(
                             'epi': epi + 1,
                             'm': 0
                         })
-                        if Energies[i]==min_energy and epi==1:
+                        
             else:
                 cum_Omega = np.cumsum(Q0s[epi] * dEs[epi])[::]
                 Es_idx = np.searchsorted(cum_Omega, seqs_flat) - 1
