@@ -186,7 +186,11 @@ def expansions(data, time_array, dT, **kwargs):
     # data_active = data_active.loc[data_active['t'] <= t_cutoff]
     min_energy = np.min(data_active.loc[data_active['epi']==2]['E'])
     print(min_energy, '*')
+    print(data_active.loc[data_active['E']==min_energy]['t'], '*')
+
     first_times = sorted(data_active['t'].unique())[:200]
+    print('max_time=', np.max(first_times))
+    
     data_active = data_active.loc[data_active['t'].isin(first_times)]
 
     print(data_active.loc[data_active['E'].isin([min_energy])])
