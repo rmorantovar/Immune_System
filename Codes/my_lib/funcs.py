@@ -182,8 +182,14 @@ def expansions(data, time_array, dT, **kwargs):
     data_active = data.copy()
 
     # Filter based on expansion time window
-    t_cutoff = np.min(data['t']) + (1 / lamB) * np.log(C / 100)
-    data_active = data_active.loc[data_active['t'] <= t_cutoff]
+    # t_cutoff = np.min(data['t']) + (1 / lamB) * np.log(C / 100)
+    # data_active = data_active.loc[data_active['t'] <= t_cutoff]
+    min_energy = np.min(data_active['E'])
+    print(min_energy, '*')
+    first_times = sorted(data_active['t'].unique())[:200]
+    data_active = data_active.loc[data_active['t'].isin(first_times)]
+
+    print(data_active['E'].isin([min_energy]))
 
     activation_times = data_active['t'].values
 
@@ -195,9 +201,13 @@ def expansions(data, time_array, dT, **kwargs):
     # clone_size_total_time = [list(clone_sizes[i, ::100]) for i in range(len(data_active))]
 
     data_active = data_active.assign(N=clone_size_total)
+
+    print(data_active.loc[data_active['E']==min_energy]['t'])
+
     # data_active = data_active.assign(N_t=clone_size_total_time)  # Optionally store time-resolved sizes
 
     data_active = data_active.loc[data_active['N'] >= lim_size]
+    print(data_active['E'].isin([min_energy]))
     return data_active
 
 #used to get clone size time trajectories
