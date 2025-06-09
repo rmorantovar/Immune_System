@@ -85,7 +85,7 @@ def main():
 	subproject = args.subpro
 	experiment = args.exp
 
-	exps = [0, 1]
+	exps = [0]
 	for experiment in exps:
 
 		root_dir = f"/Users/robertomorantovar/Dropbox/Research/Immune_system/{project}/{subproject}/{experiment}"
@@ -122,14 +122,15 @@ def main():
 
 			for i in range(N_ens):
 				data_ens = data_activation.loc[data_activation['ens_id']==i]
-				for epi in [1, 2, 3]:
+				for epi in [2]:
 					data_epi = data_ens.loc[data_ens['epi']==epi]
+					print(data_epi['E'].min())
 					ax.scatter(epi, data_epi['E'].min())
 				
 				# min_values = data_activation.groupby(['ens_id', 'epi'])['E'].min()
 			
 			# print(min_values)
-			
+
 		my_plot_layout(ax = ax, xscale='linear', yscale= 'linear', ticks_labelsize= 24, x_fontsize=30, y_fontsize=30)
 		# ax.set_xticks([])
 		# ax.set_yticks([])
