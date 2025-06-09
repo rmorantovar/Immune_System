@@ -74,7 +74,7 @@ def generate_repertoire_Me(
                             'epi': epi + 1,
                             'm': 0
                         })
-                        if Energies[i]==min_energy:
+                        if Energies[i]==min_energy and epi==1:
                             print('!!!!')
             else:
                 cum_Omega = np.cumsum(Q0s[epi] * dEs[epi])[::]
