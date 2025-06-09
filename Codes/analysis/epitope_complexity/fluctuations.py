@@ -119,8 +119,8 @@ def main():
 			output_dir1 = root_dir + pars_dir_1 + pars_dir_2 + "/%d"%(kappa1+1)
 			input_file1 = os.path.join(output_dir1, 'activated_repertoire.csv')
 			data_activation = pd.read_csv(input_file1, converters={"seq": literal_eval})
-
-			min_values = data_activation.groupby('ens_id')['E'].min()
+			print(data_activation)
+			min_values = data_activation.groupby(['ens_id', 'epi'])['E'].min()
 			
 			print(min_values)
 

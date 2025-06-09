@@ -41,6 +41,7 @@ def generate_repertoire_Me(
 
     for j in range(L0 // chunk_size):
         if fixed_repertoire is not None:
+            print('!')
             seqs_flat = fixed_repertoire[j]
         else:
             if use_seqs:
