@@ -16,7 +16,7 @@ def main():
 	# Setting up command-line argument parser
 	parser = argparse.ArgumentParser(description="Generate random sequences and save properties to a CSV file.")
 	parser.add_argument('--N_ant', type=int, default=100, help="Number of antigens.")
-	parser.add_argument('--N_ens', type=int, default=1, help="Number of times to execute the process.")
+	parser.add_argument('--N_ens', type=int, default=100, help="Number of times to execute the process.")
 	parser.add_argument('--N_inf', type=int, default=1, help="Number of infections.")
 	parser.add_argument('--N_evo', type=int, default = -1)
 	parser.add_argument('--N_epi', type=int, default = 3)
@@ -37,7 +37,8 @@ def main():
 	parser.add_argument('--antigen', type=str, default='TACNSYPNTAKCRWYR')
 	parser.add_argument('--energy_model', type=str, default = 'TCRen')
 	parser.add_argument('--use_seqs', type=int, default = 1)
-	parser.add_argument('--one_WT', type=int, default = 0)
+	parser.add_argument('--reuse_repertoire', type=int, default = 1)
+	parser.add_argument('--one_WT', type=int, default = 1)
 	parser.add_argument('--secondary', type=int, default = 0)
 	parser.add_argument('--secondary_all', type=int, default = 1)
 	parser.add_argument('--pro', type=str, default='epitope_complexity', help="project.")
@@ -71,6 +72,7 @@ def main():
 	energy_model = args.energy_model
 	
 	use_seqs = args.use_seqs
+	reuse_repertoire = args.reuse_repertoire
 	one_WT = args.one_WT
 	secondary = args.secondary
 	secondary_all = args.secondary_all
@@ -95,6 +97,7 @@ def main():
 	# antigens_data = pd.read_csv(root_dir + pars_dir_1 + pars_dir_2 + "/antigens.csv")
 	# antigens = antigens_data['antigen']
 	# print("PANEL OF ANTIGENS:")
+
 
 	# ------------ ------------ ------------
 
@@ -125,11 +128,37 @@ def main():
 		
 		if not os.path.isfile(output_file1):
 			# Execute process
-			# df_response = ensemble_of_responses(Alphabet, motif, Q0s, Ess, dEs, time_array, dT, N_ens, L0, l, t_lim, E_lim, Es_ms, p, pmem, k_step, lamA, lamB, C, 1, chunk_size, input_file1, N_epi, 0, use_seqs = use_seqs)
-			df_response = ensemble_of_responses(Alphabet=Alphabet, motif=motif, Q0s=Q0s, Ess=Ess, dEs=dEs,
-				time_array=time_array,dT=dT, N_ens=N_ens, L0=L0, l=l, t_lim=t_lim, E_lim=E_lim, Es_ms=Es_ms,
-				p=p, pmem=pmem, k_step=k_step, lamA=lamA, lamB=lamB, C=C, infection=1, chunk_size=chunk_size,
-				input_memory_file=input_file1, N_epi=N_epi, DDE=0, use_seqs=use_seqs, n_jobs=-1)
+			sim_params = dict(
+				Alphabet=Alphabet,
+				motif=motif,
+				Q0s=Q0s,
+				Ess=Ess,
+				dEs=dEs,
+				time_array=time_array,
+				dT=dT,
+				N_ens=N_ens,
+				L0=L0,
+				l=l,
+				t_lim=t_lim,
+				E_lim=E_lim,
+				Es_ms=Es_ms,
+				p=p,
+				pmem=pmem,
+				k_step=k_step,
+				lamA=lamA,
+				lamB=lamB,
+				C=C,
+				infection=1,
+				chunk_size=chunk_size,
+				input_memory_file=input_file1,
+				N_epi=N_epi,
+				DDE=0,
+				use_seqs=use_seqs,
+				reuse_repertoire=reuse_repertoire,
+				n_jobs=n_jobs
+			)
+
+			df_response = ensemble_of_responses(**sim_params)
 			os.makedirs(output_dir1, exist_ok=True)
 			df_response = df_response.sort_values(by=['ens_id', 'epi', 't'], ascending=[True, True, True])
 			df_response.to_csv(output_file1, index=False)
@@ -149,7 +178,12 @@ def main():
 					if os.path.isfile(input_file2):
 						if not os.path.isfile(output_file2):
 							# Execute process
-							df_response = ensemble_of_responses(Alphabet, motif, Q0s, Ess, dEs, time_array, dT, N_ens, L0, l, t_lim, E_lim, E_ms, p, pmem, k_step, lamA, lamB, C, 2, chunk_size, input_file2, N_epi, DDE, use_seqs=use_seqs)
+							sim_params.update({
+								"input_memory_file": input_file2,
+								"infection": 2,
+								"DDE": DDE  # or `inf + 1` in other block
+							})
+							df_response = ensemble_of_responses(**sim_params)
 							os.makedirs(output_dir2, exist_ok=True)
 							df_response = df_response.sort_values(by=['ens_id', 'epi', 't'], ascending=[True, True, True])
 							df_response.to_csv(output_file2, index=False)

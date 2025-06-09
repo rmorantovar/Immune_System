@@ -5,74 +5,31 @@ from funcs_mini import*
 
 # Function to generate random sequences and compute properties
 
-def generate_repertoire_Me(Alphabet, motif, Q0s=None, Ess=None, dEs=None, time_array=None, ensemble_id=0, L0=1000, l=10, t_lim=5.0, E_lim=20.0, Es_ms=None, p=2, pmem=2, k_step=1.0, lamA=0.1, infection=1, chunk_size=100, memory_clones=None, N_epi=1, DDE=0.0, use_seqs=False):
+def generate_repertoire_Me(
+    Alphabet,
+    motif,
+    Q0s=None, Ess=None, dEs=None,
+    time_array=None,
+    ensemble_id=0, L0=1000, l=10,
+    t_lim=5.0, E_lim=20.0,
+    Es_ms=None,
+    use_seqs=False,
+    fixed_repertoire=None,
+    **kwargs
+):
 
-    """
-    Simulates the activation of immune cell repertoires under naive or memory conditions.
+    # Default values via kwargs (can be omitted in old code)
+    p = kwargs.get('p', 2)
+    pmem = kwargs.get('pmem', 2)
+    k_step = kwargs.get('k_step', 1.0)
+    lamA = kwargs.get('lamA', 0.1)
+    infection = kwargs.get('infection', 1)
+    chunk_size = kwargs.get('chunk_size', 100)
+    memory_clones = kwargs.get('memory_clones', None)
+    N_epi = kwargs.get('N_epi', 1)
+    DDE = kwargs.get('DDE', 0.0)
 
-    This function supports two modes:
-    - Energy-based: Directly samples energies from precomputed distributions (default).
-    - Sequence-based: Samples sequences and computes energies from a motif matrix.
-
-    Parameters
-    ----------
-    Alphabet : list
-        List of amino acids or sequence characters (used in sequence reconstruction).
-    motif : np.ndarray
-        Motif matrix representing binding preferences per epitope.
-    Q0s : list of np.ndarray, optional
-        Base distributions used for energy sampling (used if `use_seqs=False`).
-    Ess : list of np.ndarray, optional
-        Energy values corresponding to Q0s (used if `use_seqs=False`).
-    dEs : list of np.ndarray, optional
-        Energy bin widths used with Q0s (used if `use_seqs=False`).
-    time_array : np.ndarray
-        Time grid over which activation is evaluated.
-    ensemble_id : int, default=0
-        ID of the simulated repertoire ensemble.
-    L0 : int, default=1000
-        Total number of cells to simulate.
-    l : int, default=10
-        Length of each sequence.
-    t_lim : float, default=5.0
-        Time threshold for successful activation.
-    E_lim : float, default=20.0
-        Maximum allowed energy for activation.
-    Es_ms : list or np.ndarray
-        Energy offsets to apply for each epitope.
-    p : float, default=2
-        Hill coefficient for naive clone activation.
-    pmem : float, default=2
-        Hill coefficient for memory clone activation.
-    k_step : float, default=1.0
-        Step affinity constant (controls nonlinearity).
-    lamA : float, default=0.1
-        Activation rate constant.
-    infection : int, default=1
-        Whether to include memory clones (>1 means include).
-    chunk_size : int, default=100
-        Number of clones processed per simulation chunk.
-    memory_clones : pd.DataFrame, optional
-        Preloaded memory clone data (required if `use_seqs=False` and `infection > 1`).
-    N_epi : int, default=1
-        Number of epitopes in the simulation.
-    DDE : float, default=0.0
-        Energy correction to apply to memory clones.
-    use_seqs : bool, default=False
-        Whether to use sequence-based simulation (True) or energy-based (False).
-
-    Returns
-    -------
-    properties : list of dict
-        A list of dictionaries, each representing an activated clone with:
-        - 'ens_id': int, ensemble ID
-        - 'E': float, energy
-        - 't': float, activation time
-        - 'epi': int, epitope index
-        - 'm': int, memory flag (0 = naive, 1 = memory)
-        - Optionally 'seq' or 'id' depending on mode
-    """
-
+    # Constants
     k_on = 1e6 * 24 * 3600
     b0 = 1e5
     N_A = 6.022e23
@@ -83,11 +40,14 @@ def generate_repertoire_Me(Alphabet, motif, Q0s=None, Ess=None, dEs=None, time_a
     properties = []
 
     for j in range(L0 // chunk_size):
-        if use_seqs:
-            seqs_flat = np.random.randint(0, 20, size=(int(chunk_size) * l)) # This is the line where the repertoire is created
-            R = np.tile(np.arange(20), (int(chunk_size)*l, 1)).T
+        if fixed_repertoire is not None:
+            seqs_flat = fixed_repertoire[j]
         else:
-            seqs_flat = np.random.rand(chunk_size) # This is the line where the repertoire is created
+            if use_seqs:
+                seqs_flat = np.random.randint(0, 20, size=(int(chunk_size) * l)) # This is the line where the repertoire is created
+                R = np.tile(np.arange(20), (int(chunk_size)*l, 1)).T
+            else:
+                seqs_flat = np.random.rand(chunk_size) # This is the line where the repertoire is created
 
         for epi in range(N_epi):
             if use_seqs:
@@ -183,72 +143,55 @@ def generate_repertoire_Me(Alphabet, motif, Q0s=None, Ess=None, dEs=None, time_a
 
 # -------
 
-def expansions(data, time_array, p, lamB, C, dT):
-    data_active = data.copy
-    data_active = data.loc[data['t']<= np.min(data['t']) + 1/lamB*np.log(C/100)]
-    clone_size_total = []
-    clone_size_total_time = []
-    ids_C_total = []
+def expansions(data, time_array, dT, **kwargs):
+    """
+    Simulates B-cell clonal expansions following activation.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Activation data containing clone activation times (`t`).
+    time_array : np.ndarray
+        Time grid used in the simulation.
+    dT : float
+        Time resolution for clone size evolution.
+    kwargs : dict
+        Additional parameters:
+            - p : Hill coefficient (currently unused here)
+            - lamB : Growth rate of clones
+            - C : Carrying capacity
+
+    Returns
+    -------
+    data_active : pd.DataFrame
+        Activation data with estimated clone sizes (column 'N').
+    """
+
+    lamB = kwargs.get('lamB', 2)
+    C = kwargs.get('C', 2e4)
+    p = kwargs.get('p', 3)  # Currently unused but kept for compatibility/future use
+
     lim_size = 2
-    
-    t_act_data = np.min(data_active['t'])
+    data_active = data.copy()
+
+    # Filter based on expansion time window
+    t_cutoff = np.min(data['t']) + (1 / lamB) * np.log(C / 100)
+    data_active = data_active.loc[data_active['t'] <= t_cutoff]
+
     activation_times = data_active['t'].values
-    #---------------------------- B cell linages ----------------------
+
+    # Simulate clone growth
     clone_sizes = get_clones_sizes_C(len(activation_times), time_array, activation_times, lamB, C, dT)
     clone_sizes[clone_sizes == 1] = 0
-    clone_size_total.extend(map(int, clone_sizes[:,-1]))
-    clone_size_total_time.extend([list(clone_sizes[i, ::100]) for i in range(len(data_active))])
 
-    # print(sum(clone_size_total))
+    clone_size_total = list(map(int, clone_sizes[:, -1]))
+    # clone_size_total_time = [list(clone_sizes[i, ::100]) for i in range(len(data_active))]
+
     data_active = data_active.assign(N=clone_size_total)
-    # data_active = data_active.assign(N_t=clone_size_total_time)
-    data_active = data_active.loc[data_active['N']>=lim_size]
+    # data_active = data_active.assign(N_t=clone_size_total_time)  # Optionally store time-resolved sizes
+
+    data_active = data_active.loc[data_active['N'] >= lim_size]
     return data_active
-
-def expansionsN0(data, time_array, p, lamB, C, dT):
-    data_active = data.copy
-    data_active = data.loc[data['t']<= np.min(data['t']) + 1/lamB*np.log(C/10)]
-    clone_size_total = []
-    clone_size_total_time = []
-    ids_C_total = []
-    lim_size = 2
-    
-    t_act_data = np.min(data_active['t'])
-    activation_times = data_active['t'].values
-    N0s = data_active['N0'].values
-    #---------------------------- B cell linages ----------------------
-    clone_sizes = get_clones_sizes_C_new(len(activation_times), time_array, activation_times, N0s, lamB, C, dT)
-    clone_sizes[clone_sizes == 1] = 0
-    clone_size_total.extend(map(int, clone_sizes[:,-1]))
-    clone_size_total_time.extend([list(clone_sizes[i, ::100]) for i in range(len(data_active))])
-
-    # print(sum(clone_size_total))
-    data_active = data_active.assign(N=clone_size_total)
-    # data_active = data_active.assign(N_t=clone_size_total_time)
-    data_active = data_active.loc[data_active['N']>=lim_size]
-    return data_active
-
-def ensemble_of_expansions_feedback(data, time_array, N_ens, p, lamB, C, dT):
-    data = data.loc[data['t']<= np.min(data['t']) + 1/lamB*np.log(C/10)]
-    clone_size_total = []
-    clone_size_total_time = []
-    ids_C_total = []
-    lim_size = 2
-    for i_ens in np.arange(N_ens):
-        data_active = data.loc[data['ens_id']==i_ens]
-        t_act_data = np.min(data_active['t'])
-        activation_times = data_active['t'].values
-        #---------------------------- B cell linages ----------------------
-        clone_sizes = get_clones_sizes_C(len(activation_times), time_array, activation_times, lamB, C, dT)
-        clone_sizes[clone_sizes == 1] = 0
-        clone_size_total.extend(map(int, clone_sizes[:,-1]))
-        clone_size_total_time.extend([list(clone_sizes[i, ::100]) for i in range(len(data_active))])
-
-    print(sum(clone_size_total))
-    data['N'] = clone_size_total
-    data['N_t'] = clone_size_total_time
-    data = data.loc[data['N']>=lim_size]
-    return data
 
 #used to get clone size time trajectories
 def ensemble_of_expansions_time(data, N_ens, p, time_array, lambda_B, C, dT):
@@ -270,78 +213,138 @@ def ensemble_of_expansions_time(data, N_ens, p, time_array, lambda_B, C, dT):
     data_active.loc[:,'N_t'] = clone_sizes_in_time
     return data_active
 
-def group_by_clones(df_expansion):
-    df_grouped = pd.DataFrame([], columns = df_expansion.columns)
-    for ens_id in range(np.max(df_expansion['ens_id'])):
-        df_ens = df_expansion[df_expansion['ens_id']==ens_id]
-        for epi in range(np.max(df_ens['epi'])):
-            df_epi = df_ens[df_ens['ens_id']==epi]
-            for seq in set(df_epi['seq']):
-                df_seq = df_epi[df_epi['seq']==seq]
-                avg_time = np.mean(df_seq['t'])
-                clone_size = np.sum(df_seq['n'])
-                memory = int(np.mean(df_seq['m']))
-                E = np.mean(df_seq['E'])
-                line = [ens_id, E, avg_time, seq, epi, memory, clone_size]
-                line = pd.DataFrame(line, columns = df_expansion.columns)
-                df_grouped = np.concatenate([df_grouped, line])
-    return df_grouped
-
 # -------
 
-def response(Alphabet, motif, Q0s, Ess, dEs, time_array, dT, ensemble_id, L0, l, t_lim, E_lim, Es_ms, p, pmem, k_step, lamA, lamB, C, infection, chunk_size, memory_clones, N_epi, DDE, use_seqs=False):
-    # props_activation = generate_repertoire_Me(Alphabet, motif, Q0s, Ess, dEs, time_array, ensemble_id, L0, l, t_lim, E_lim, E_ms, p, pmem, k_step, lamA, infection, chunk_size, memory_clones, N_epi, seqs, DDE)
-    props_activation = generate_repertoire_Me(Alphabet, motif, Q0s=Q0s, Ess=Ess, dEs=dEs, time_array=time_array, ensemble_id=ensemble_id, L0=L0, l=l, t_lim=t_lim, E_lim=E_lim, Es_ms=Es_ms, p=p, pmem=pmem, k_step=k_step, lamA=lamA, infection=infection, chunk_size=chunk_size, memory_clones=memory_clones, N_epi=N_epi, DDE=DDE, use_seqs=use_seqs) 
+def response(
+    Alphabet,
+    motif,
+    Q0s,
+    Ess,
+    dEs,
+    time_array,
+    dT,
+    ensemble_id,
+    L0,
+    l,
+    t_lim,
+    E_lim,
+    Es_ms,
+    lamB,
+    C,
+    use_seqs=False,
+    fixed_repertoire=None,
+    **kwargs
+):
+    """
+    Wrapper function to simulate immune response.
+
+    Parameters
+    ----------
+    Alphabet, motif, Q0s, Ess, dEs, time_array, dT, etc.: core simulation inputs
+    kwargs : dict
+        Additional parameters passed to generate_repertoire_Me (e.g., p, pmem, k_step, lamA, infection, chunk_size, memory_clones, N_epi, DDE)
+    """
+    props_activation = generate_repertoire_Me(
+        Alphabet,
+        motif,
+        Q0s=Q0s,
+        Ess=Ess,
+        dEs=dEs,
+        time_array=time_array,
+        ensemble_id=ensemble_id,
+        L0=L0,
+        l=l,
+        t_lim=t_lim,
+        E_lim=E_lim,
+        Es_ms=Es_ms,
+        use_seqs=use_seqs,
+        fixed_repertoire=fixed_repertoire,
+        **kwargs
+    )
+
     df_props_activation = pd.DataFrame(props_activation)
-    df_props_expansion = expansions(df_props_activation, time_array, p, lamB, C, dT)
+
+    # Expansion still receives p, lamB, C as individual args
+    # (you can also use kwargs.get() here if needed)
+    p = kwargs.get('p', 2)
+    df_props_expansion = expansions(df_props_activation, time_array, dT, **kwargs)
+
     return df_props_expansion
 
-def responseN0(Alphabet, motif, Q0s, Ess, dEs, time_array, dT, ensemble_id, L0, l, t_lim, E_lim, E_ms, p, pmem, k_step, lamA, lamB, C, infection, chunk_size, memory_clones, N_epi, DDE):
-    props_activation = generate_repertoire_Me(Alphabet, motif, Q0s, Ess, dEs, time_array, ensemble_id, L0, l, t_lim, E_lim, E_ms, p, pmem, k_step, lamA, infection, chunk_size, memory_clones, N_epi, DDE)
-    df_props_activation = pd.DataFrame(props_activation)
-    df_props_expansion = expansionsN0(df_props_activation, time_array, p, lamB, C, dT)
-    return df_props_expansion
+def ensemble_of_responses(
+    Alphabet,
+    motif,
+    Q0s,
+    Ess,
+    dEs,
+    time_array,
+    dT,
+    N_ens,
+    L0,
+    l,
+    t_lim,
+    E_lim,
+    Es_ms,
+    lamB,
+    C,
+    input_memory_file,
+    use_seqs=False,
+    reuse_repertoire=False,
+    n_jobs=-1,
+    **kwargs
+):
+    """
+    Simulates multiple immune repertoires in parallel, using `response`.
 
-def ensemble_of_responses(Alphabet, motif, Q0s, Ess, dEs, time_array, dT, N_ens, L0, l, t_lim, E_lim, Es_ms, p, pmem, k_step, lamA, lamB, C, infection, chunk_size, input_memory_file, N_epi, DDE, use_seqs=False, n_jobs=-1):
+    Parameters
+    ----------
+    Alphabet, motif, Q0s, ... : core simulation inputs
+    input_memory_file : str
+        File containing memory clone data.
+    use_seqs : bool
+        Whether to run sequence-based simulation.
+    n_jobs : int
+        Number of parallel jobs.
+    kwargs : dict
+        Additional options passed down to `response` and `generate_repertoire_Me`.
 
+    Returns
+    -------
+    df : pd.DataFrame
+        Combined simulation results from all ensembles.
+    """
+
+    # Load memory clones
     if input_memory_file != '':
         if use_seqs:
             memory_clones = pd.read_csv(input_memory_file, converters={"seq": literal_eval})
         else:
             memory_clones = pd.read_csv(input_memory_file)
     else:
-        memory_clones = ''
+        memory_clones = None
 
+    # Create fixed reperotire
+
+    if kwargs.get('reuse_repertoire', False):
+        fixed_repertoire = []
+        for j in range(L0 // chunk_size):
+            if use_seqs:
+                fixed_repertoire.append(np.random.randint(0, 20, size=(chunk_size * l)))
+            else:
+                fixed_repertoire.append(np.random.rand(chunk_size))
+        kwargs['fixed_repertoire'] = fixed_repertoire
+
+    # Parallel execution of ensembles
     results = Parallel(n_jobs=n_jobs, backend='loky', verbose=0)(
-        delayed(response)(Alphabet, motif, Q0s, Ess, dEs, time_array, dT, i, L0, l, t_lim, E_lim, Es_ms, p, pmem, k_step, lamA, lamB, C, infection, chunk_size, memory_clones, N_epi, DDE, use_seqs=use_seqs) for i in range(N_ens)
+        delayed(response)(
+            Alphabet, motif, Q0s, Ess, dEs,
+            time_array, dT, i, L0, l, t_lim, E_lim, Es_ms,
+            lamB, C,
+            use_seqs=use_seqs,
+            memory_clones=memory_clones,
+            **kwargs
+        ) for i in range(N_ens)
     )
+
     df = pd.concat(results, ignore_index=True)
     return df
-
-def ensemble_of_responsesN0(Alphabet, motif, Q0s, Ess, dEs, time_array, dT, N_ens, L0, l, t_lim, E_lim, E_ms, p, pmem, k_step, lamA, lamB, C, infection, chunk_size, input_memory_file, N_epi, DDE, n_jobs=-1):
-
-    if input_memory_file != '':
-        memory_clones = pd.read_csv(input_memory_file)
-    else:
-        memory_clones = ''
-
-    results = Parallel(n_jobs=n_jobs, backend='loky', verbose=0)(
-        delayed(responseN0)(Alphabet, motif, Q0s, Ess, dEs, time_array, dT, i, L0, l, t_lim, E_lim, E_ms, p, pmem, k_step, lamA, lamB, C, infection, chunk_size, memory_clones, N_epi, DDE) for i in range(N_ens)
-    )
-    df = pd.concat(results, ignore_index=True)
-    return df
-
-def response_seqs(Alphabet, motif, cum_Omega_0, Es_avg, time_array, dT, ensemble_id, L0, l, t_lim, E_lim, E_ms, p, k_step, lamA, lamB, C, infection, chunk_size, input_memory_file, N_epi):
-    props_activation = generate_repertoire_Me_seqs(Alphabet, motif, cum_Omega_0, Es_avg, time_array, ensemble_id, L0, l, t_lim, E_lim, E_ms, p, k_step, lamA, infection, chunk_size, input_memory_file, N_epi)
-    df_props_activation = pd.DataFrame(props_activation)
-    df_props_expansion = expansions(df_props_activation, time_array, p, lamB, C, dT)
-    return df_props_expansion
-
-def ensemble_of_responses_seqs(Alphabet, motif, cum_Omega_0, Es_avg, time_array, dT, N_ens, L0, l, t_lim, E_lim, E_ms, p, k_step, lamA, lamB, C, infection, chunk_size, input_memory_file, N_epi, n_jobs=-1):
-
-    results = Parallel(n_jobs=n_jobs, backend='loky', verbose=0)(
-        delayed(response_seqs)(Alphabet, motif, cum_Omega_0, Es_avg, time_array, dT, i, L0, l, t_lim, E_lim, E_ms, p, k_step, lamA, lamB, C, infection, chunk_size, input_memory_file, N_epi) for i in range(N_ens)
-    )
-    df = pd.concat(results, ignore_index=True)
-    return df
-
