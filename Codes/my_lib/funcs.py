@@ -55,8 +55,6 @@ def generate_repertoire_Me(
                 motif_epi = motif[:, epi*l:(epi+1)*l]
                 Energies = calculate_Es(motif_epi, seqs_flat, R, l, 20, chunk_size, Es_ms[epi])
                 min_energy = np.min(Energies)
-                if epi == 1:
-                    print(ensemble_id, j, min_energy)
                 Es_idx = np.arange(int(chunk_size))[Energies < min_energy + 4]
                 Energies = Energies[Energies < min_energy + 4]
                 factors = b0_scaled / (1 + (np.exp(Energies) / K_step))**p
@@ -74,7 +72,7 @@ def generate_repertoire_Me(
                             'epi': epi + 1,
                             'm': 0
                         })
-                        
+
             else:
                 cum_Omega = np.cumsum(Q0s[epi] * dEs[epi])[::]
                 Es_idx = np.searchsorted(cum_Omega, seqs_flat) - 1
