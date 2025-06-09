@@ -75,7 +75,6 @@ def generate_repertoire_Me(
                             'm': 0
                         })
                         if Energies[i]==min_energy and epi==1:
-                            print('!!!!')
             else:
                 cum_Omega = np.cumsum(Q0s[epi] * dEs[epi])[::]
                 Es_idx = np.searchsorted(cum_Omega, seqs_flat) - 1
@@ -185,13 +184,13 @@ def expansions(data, time_array, dT, **kwargs):
     t_cutoff = np.min(data['t']) + (1 / lamB) * np.log(C / 100)
     data_active = data_active.loc[data_active['t'] <= t_cutoff]
     min_energy = np.min(data_active.loc[data_active['epi']==2]['E'])
-    print(min_energy, '*')
-    print(data_active.loc[data_active['E']==min_energy]['t'], '*')
+    # print(min_energy, '*')
+    # print(data_active.loc[data_active['E']==min_energy]['t'], '*')
     # first_times = sorted(data_active['t'].unique())[:200]
-    print('max_time=', t_cutoff)
+    # print('max_time=', t_cutoff)
     # data_active = data_active.loc[data_active['t'].isin(first_times)]
 
-    print(data_active.loc[data_active['E'].isin([min_energy])])
+    # print(data_active.loc[data_active['E'].isin([min_energy])])
 
     activation_times = data_active['t'].values
 
@@ -204,12 +203,12 @@ def expansions(data, time_array, dT, **kwargs):
 
     data_active = data_active.assign(N=clone_size_total)
 
-    print(data_active.loc[data_active['E']==min_energy]['t'])
+    # print(data_active.loc[data_active['E']==min_energy]['t'])
 
     # data_active = data_active.assign(N_t=clone_size_total_time)  # Optionally store time-resolved sizes
 
     data_active = data_active.loc[data_active['N'] >= lim_size]
-    print(data_active.loc[data_active['E'].isin([min_energy])])
+    # print(data_active.loc[data_active['E'].isin([min_energy])])
     return data_active
 
 #used to get clone size time trajectories
