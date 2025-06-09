@@ -39,10 +39,9 @@ def generate_repertoire_Me(
     exp_lamA_times = np.exp(lamA * times)
     properties = []
     R = np.tile(np.arange(20), (int(chunk_size)*l, 1)).T
-    
+
     for j in range(L0 // chunk_size):
         if fixed_repertoire is not None:
-            print('!')
             seqs_flat = fixed_repertoire[j]
         else:
             if use_seqs:
@@ -328,7 +327,6 @@ def ensemble_of_responses(
 
     print(kwargs.get('reuse_repertoire', False))
     if kwargs.get('reuse_repertoire', False):
-        print('!')
         chunk_size = kwargs.get('chunk_size', 100)
         fixed_repertoire = []
         for j in range(L0 // chunk_size):
