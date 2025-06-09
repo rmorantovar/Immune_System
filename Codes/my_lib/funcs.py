@@ -328,6 +328,7 @@ def ensemble_of_responses(
     print(kwargs.get('reuse_repertoire', False))
     if kwargs.get('reuse_repertoire', False):
         print('!')
+        chunk_size = kwargs.get('chunk_size', 100)
         fixed_repertoire = []
         for j in range(L0 // chunk_size):
             if use_seqs:
