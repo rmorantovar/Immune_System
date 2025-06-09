@@ -59,7 +59,7 @@ def generate_repertoire_Me(
                     print(ensemble_id, j, min_energy)
                 Es_idx = np.arange(int(chunk_size))[Energies < min_energy + 4]
                 Energies = Energies[Energies < min_energy + 4]
-                factors = b0_scaled / (1 + (K_step * np.exp(Energies))**p)
+                factors = b0_scaled / (1 + (np.exp(Energies) / K_step))**p
                 seqs = seqs_flat.reshape(int(chunk_size), l)[Es_idx]
                 for i, factor in enumerate(factors):
                     F1 = 1 - np.exp(-factor * (exp_lamA_times - 1))

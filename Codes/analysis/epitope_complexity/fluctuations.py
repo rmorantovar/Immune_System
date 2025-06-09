@@ -85,7 +85,7 @@ def main():
 	subproject = args.subpro
 	experiment = args.exp
 
-	exps = [0]
+	exps = [0, 1]
 	for experiment in exps:
 
 		root_dir = f"/Users/robertomorantovar/Dropbox/Research/Immune_system/{project}/{subproject}/{experiment}"
@@ -125,7 +125,7 @@ def main():
 				for epi in [2]:
 					data_epi = data_ens.loc[data_ens['epi']==epi]
 					print(data_epi['E'].min())
-					ax.scatter(epi, data_epi['E'].min())
+					ax.scatter(data_epi['t'], data_epi['E'])
 				
 				# min_values = data_activation.groupby(['ens_id', 'epi'])['E'].min()
 			

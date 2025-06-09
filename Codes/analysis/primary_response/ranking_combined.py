@@ -1,6 +1,6 @@
 import sys
 sys.path.append('../library/')
-sys.path.append('../../lib/')
+sys.path.append('../../my_lib/')
 from functions_2 import*
 plt.rcParams['text.usetex'] = True
 
@@ -69,7 +69,7 @@ print('L=%d'%(L))
 energy_model = 'TCRen'
 #energy_model = 'MJ2'
 #--------------------------Energy Motif--------------------------
-PWM_data, M, Alphabet = get_motif(antigen, energy_model, Text_files_path + "primary_immune_response/in/")
+PWM_data, M, Alphabet = get_motif(antigen, energy_model, Text_files_path + "primary_response/in/")
 print('min_e_PWM=%.2f'%(np.sum([np.min(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))])))
 print('mean_e_PWM=%.4f'%(np.sum([np.mean(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))])))
 #Change values by the minimum
@@ -107,7 +107,7 @@ for i_p, p in enumerate((ps)):
     #-----------------Loading data----------------------------
     #parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, L_0)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_step-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 3.0, k_step/24, p, N_c, linear, N_ens)+energy_model
     return_data_type = 0
-    data, return_data_type = get_data_b(folder_path = '../../out/primary_immune_response', data_type = 'ranking_combined_total_p-%.1f'%p)
+    data, return_data_type = get_data(folder_path = Text_files_path + 'primary_response/out/', data_type = 'ranking_combined_try_p-%.1f'%p)
     n_first_clones = 100
 
     if(return_data_type):
@@ -128,7 +128,7 @@ for i_p, p in enumerate((ps)):
         trajectories_rank_E = data[13]
 
     else:
-        data = pd.read_csv(Text_files_path + 'primary_immune_response/output_N_ens_%d_L0_%d_p_%.1f_k_step_%.1f_E_lim_%.1f_t_lim_%.1f_E_m_%.1f/filtered_sequence_properties.csv'%(N_ens, L_0, p, k_step, E_lim, t_lim, E_m))
+        data = pd.read_csv(Text_files_path + 'primary_response/simulations/output_N_ens_%d_L0_%d_p_%.1f_k_step_%.1f_E_lim_%.1f_t_lim_%.1f_E_m_%.1f/filtered_sequence_properties.csv'%(N_ens, L_0, p, k_step, E_lim, t_lim, E_m))
         final_Nb_size = np.zeros(n_first_clones)
         counts_final_Nb_size = np.zeros(n_first_clones)
         final_E_size = np.zeros(n_first_clones)
@@ -149,6 +149,8 @@ for i_p, p in enumerate((ps)):
         trajectories2_E = np.array([], dtype = object)
         trajectories_rank_E = np.array([])
 
+        fig, ax = plt.subplots(figsize=(5*1.62, 5), gridspec_kw={'left':0.12, 'right':.9, 'bottom':.1, 'top': 0.96})
+
         for i_ens in tqdm(np.arange(N_ens)):
             data_active = data.loc[data['ens_id']==i_ens]
             #data_active = data_i.loc[data_i['active']==1]
@@ -156,7 +158,8 @@ for i_p, p in enumerate((ps)):
             data_active = data_active.loc[data_active['time']<(t_act_data+1.2+0.3*(p-1))] # it was 1.0 + 0.1*...
             activation_times = np.array(data_active['time'])
             energies  = np.array(data_active['E'])
-
+            if i_ens%10==0:
+                ax.scatter(activation_times, energies)
             #---------------------------- B cell linages ----------------------
             clone_sizes = get_clones_sizes_C(len(activation_times), time, activation_times, lambda_B, C, dT)
 
@@ -218,7 +221,16 @@ for i_p, p in enumerate((ps)):
             #print(energies_C_sorted_E, clone_sizes_C_sorted_E[:, -1])
             #print(biggest_clone_i_E, best_clone_i_E)
 
-        f = open('../../out/primary_immune_response' + '/processed_data_ranking_combined_total_p-%.1f.pkl'%p, 'wb')
+        my_plot_layout(ax = ax, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+        #ax.legend(fontsize = 20, title_fontsize = 22, title = r'$p$')
+        #ax.set_xlim(left = np.exp(E_m+2), right = np.exp(E_m+29))
+        #ax.set_ylim(bottom = 2e-2)
+        #ax.set_yticks([1, 0.1, 0.01, 0.001])
+        #ax.set_yticklabels([1, 0.1, 0.01])
+        fig.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/1_Dynamics/CSV/hist_p-%.1f'%p+energy_model+'.pdf')
+
+
+        f = open(Text_files_path + 'primary_response/out' + '/processed_data_ranking_combined_try_p-%.1f.pkl'%p, 'wb')
         pickle.dump([final_Nb_size, final_E_size, final_E_log_size, counts_final_Nb_size, trajectories_size, trajectories2_size, trajectories_rank_size, final_Nb_E, final_E_E, final_E_log_E, counts_final_Nb_E, trajectories_E, trajectories2_E, trajectories_rank_E], f, pickle.HIGHEST_PROTOCOL) 
 
     counter = 0
@@ -299,14 +311,13 @@ for i_p, p in enumerate((ps)):
         ax_ranking_log.plot(final_E_log_E, final_Nb_E, color = colors_p[i_p], linewidth = 0, marker = '.', alpha = .8, ms = 12, label = r'$%.1f$'%(p))
 
 
-
 my_plot_layout(ax = ax_ranking, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 #ax_ranking.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
 #ax_ranking.set_xlim(left = np.exp(E_m+2), right = np.exp(E_m+29))
 #ax_ranking.set_ylim(bottom = 2e-2)
 #ax_ranking.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_ranking.set_yticklabels([1, 0.1, 0.01])
-fig_ranking.savefig('../../../Figures/primary_immune_response/1_Dynamics/CSV/Ranking_combined_'+energy_model+'.pdf')
+fig_ranking.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/1_Dynamics/CSV/Ranking_combined_'+energy_model+'.pdf')
 
 my_plot_layout(ax = ax_ranking_log, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 #ax_ranking_log.legend(fontsize = 20, title_fontsize = 22, title = r'$p$')
@@ -314,7 +325,8 @@ my_plot_layout(ax = ax_ranking_log, xscale='log', yscale= 'log', ticks_labelsize
 #ax_ranking_log.set_ylim(bottom = 2e-2)
 #ax_ranking_log.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_ranking_log.set_yticklabels([1, 0.1, 0.01])
-fig_ranking_log.savefig('../../../Figures/primary_immune_response/1_Dynamics/CSV/Ranking_combined_log_'+energy_model+'.pdf')
+fig_ranking_log.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/1_Dynamics/CSV/Ranking_combined_log_'+energy_model+'.pdf')
+
 
 
 print('----END-----')

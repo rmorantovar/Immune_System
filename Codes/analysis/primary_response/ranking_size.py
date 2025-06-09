@@ -69,7 +69,7 @@ print('L=%d'%(L))
 energy_model = 'TCRen'
 #energy_model = 'MJ2'
 #--------------------------Energy Motif--------------------------
-PWM_data, M, Alphabet = get_motif(antigen, energy_model, Text_files_path + "primary_immune_response/in/")
+PWM_data, M, Alphabet = get_motif(antigen, energy_model, Text_files_path + "primary_response/in/")
 print('min_e_PWM=%.2f'%(np.sum([np.min(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))])))
 print('mean_e_PWM=%.4f'%(np.sum([np.mean(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))])))
 #Change values by the minimum
@@ -109,7 +109,7 @@ for i_p, p in enumerate((ps)):
     #data = get_data_ensemble(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
     #data, return_data_type = get_data_b(folder_path = Text_files_path + 'Dynamics/Ensemble/L%d/'%L+parameters_path, data_type = 'ranking_size')
     return_data_type = 0
-    data, return_data_type = get_data(folder_path = '../../out/primary_immune_response', data_type = 'ranking_size_p-%.1f'%p)
+    data, return_data_type = get_data(folder_path = Text_files_path + 'primary_response/out/primary_response', data_type = 'ranking_size_p-%.1f'%p)
     n_first_clones = 100
 
     if(return_data_type):
@@ -119,7 +119,7 @@ for i_p, p in enumerate((ps)):
         trajectories_rank = data[3]
     else:
         #activation_times_total = np.array([])
-        data = pd.read_csv(Text_files_path + 'primary_immune_response/simulations/output_N_ens_%d_L0_%d_p_%.1f_k_step_%.1f_E_lim_%.1f_t_lim_%.1f_E_m_%.1f/filtered_sequence_properties.csv'%(N_ens, L_0, p, k_step, E_lim, t_lim, E_m))    
+        data = pd.read_csv(Text_files_path + 'primary_response/simulations/output_N_ens_%d_L0_%d_p_%.1f_k_step_%.1f_E_lim_%.1f_t_lim_%.1f_E_m_%.1f/filtered_sequence_properties.csv'%(N_ens, L_0, p, k_step, E_lim, t_lim, E_m))    
         print(f'Processing data ... ')
         final_Nb = np.zeros(n_first_clones)
         counts_final_Nb = np.zeros(n_first_clones)
@@ -168,7 +168,7 @@ for i_p, p in enumerate((ps)):
                     trajectories = np.append(trajectories, sorted_clones)
                     trajectories_rank = np.append(trajectories_rank, max_rank_i)
 
-        f = open('../../out/primary_immune_response' + '/processed_data_ranking_size_p-%.1f.pkl'%p, 'wb')
+        f = open(Text_files_path + 'primary_response/out/primary_immune_response' + '/processed_data_ranking_size_p-%.1f.pkl'%p, 'wb')
         pickle.dump([final_Nb, counts_final_Nb, trajectories, trajectories_rank], f, pickle.HIGHEST_PROTOCOL) 
     
     counter = 0
