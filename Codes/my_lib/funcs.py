@@ -290,7 +290,6 @@ def ensemble_of_responses(
     C,
     input_memory_file,
     use_seqs=False,
-    reuse_repertoire=False,
     n_jobs=-1,
     **kwargs
 ):
@@ -326,6 +325,7 @@ def ensemble_of_responses(
 
     # Create fixed reperotire
 
+    print(kwargs.get('reuse_repertoire', False))
     if kwargs.get('reuse_repertoire', False):
         print('!')
         fixed_repertoire = []
