@@ -112,25 +112,31 @@ def main():
 		output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/'+project+'/'+subproject
 		os.makedirs(output_plot, exist_ok=True)
 		
-		# fig, ax = plt.subplots(figsize=(5*1.62, 5), gridspec_kw={'left':0.10, 'right':.95, 'bottom':.1, 'top': 0.95})
+		fig, ax = plt.subplots(figsize=(5*1.62, 5), gridspec_kw={'left':0.10, 'right':.95, 'bottom':.1, 'top': 0.95})
 
 		for kappa1, antigen_kappa in enumerate((WTs)):
 
 			output_dir1 = root_dir + pars_dir_1 + pars_dir_2 + "/%d"%(kappa1+1)
 			input_file1 = os.path.join(output_dir1, 'activated_repertoire.csv')
 			data_activation = pd.read_csv(input_file1, converters={"seq": literal_eval})
-			print(data_activation)
-			min_values = data_activation.groupby(['ens_id', 'epi'])['E'].min()
-			
-			print(min_values)
 
-		# my_plot_layout(ax = ax, xscale='linear', yscale= 'linear', ticks_labelsize= 24, x_fontsize=30, y_fontsize=30)
-		# # ax.set_xticks([])
-		# # ax.set_yticks([])
+			for i in range(N_ens):
+				data_ens = data_activation.loc[data_activation['ens_id']==i]
+				for epi in [1, 2, 3]:
+					data_epi = data_ens.loc[data_ens['epi']==epi]
+					ax.scatter(epi, data_epi['E'].min())
+				
+				# min_values = data_activation.groupby(['ens_id', 'epi'])['E'].min()
+			
+			# print(min_values)
+			
+		my_plot_layout(ax = ax, xscale='linear', yscale= 'linear', ticks_labelsize= 24, x_fontsize=30, y_fontsize=30)
+		# ax.set_xticks([])
+		# ax.set_yticks([])
 		# ax.set_ylim(bottom = -0.3, top = 7.3)
-		# # ax.set_xlim(left = -0.3, right = 7.3)
-		# # ax.legend(fontsize = 16, loc = 0, title = r'$p_m$', title_fontsize = 18)
-		# fig.savefig(output_plot + '/DDG_distance' + str(experiment) + '.pdf')
+		# ax.set_xlim(left = -0.3, right = 7.3)
+		# ax.legend(fontsize = 16, loc = 0, title = r'$p_m$', title_fontsize = 18)
+		fig.savefig(output_plot + '/DDG_distance' + str(experiment) + '.pdf')
 
 		# Print Final execution time
 		end_time = time.time()

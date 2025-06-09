@@ -54,6 +54,8 @@ def generate_repertoire_Me(
             if use_seqs:
                 motif_epi = motif[:, epi*l:(epi+1)*l]
                 Energies = calculate_Es(motif_epi, seqs_flat, R, l, 20, chunk_size, Es_ms[epi])
+                if epi == 1:
+                    print(np.min(Energies))
                 Es_idx = np.arange(int(chunk_size))[Energies < np.min(Energies) + 4]
                 Energies = Energies[Energies < np.min(Energies) + 4]
                 factors = b0_scaled / (1 + (K_step * np.exp(Energies))**p)
@@ -325,7 +327,6 @@ def ensemble_of_responses(
 
     # Create fixed reperotire
 
-    print(kwargs.get('reuse_repertoire', False))
     if kwargs.get('reuse_repertoire', False):
         chunk_size = kwargs.get('chunk_size', 100)
         fixed_repertoire = []
