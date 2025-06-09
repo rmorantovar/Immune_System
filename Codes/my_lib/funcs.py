@@ -38,7 +38,8 @@ def generate_repertoire_Me(
     times = time_array
     exp_lamA_times = np.exp(lamA * times)
     properties = []
-
+    R = np.tile(np.arange(20), (int(chunk_size)*l, 1)).T
+    
     for j in range(L0 // chunk_size):
         if fixed_repertoire is not None:
             print('!')
@@ -46,7 +47,7 @@ def generate_repertoire_Me(
         else:
             if use_seqs:
                 seqs_flat = np.random.randint(0, 20, size=(int(chunk_size) * l)) # This is the line where the repertoire is created
-                R = np.tile(np.arange(20), (int(chunk_size)*l, 1)).T
+                
             else:
                 seqs_flat = np.random.rand(chunk_size) # This is the line where the repertoire is created
 
