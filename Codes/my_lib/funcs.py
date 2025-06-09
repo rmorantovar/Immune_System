@@ -189,7 +189,7 @@ def expansions(data, time_array, dT, **kwargs):
     first_times = sorted(data_active['t'].unique())[:200]
     data_active = data_active.loc[data_active['t'].isin(first_times)]
 
-    print(data_active['E'].isin([min_energy]))
+    print(data_active.loc[data_active['E'].isin([min_energy])])
 
     activation_times = data_active['t'].values
 
