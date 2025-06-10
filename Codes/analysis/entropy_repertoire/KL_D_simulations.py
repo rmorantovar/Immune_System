@@ -1,11 +1,11 @@
 import sys
 sys.path.append('../library/')
-sys.path.append('../../lib/')
+sys.path.append('../../my_lib/')
 from functions_2 import*
 plt.rcParams['text.usetex'] = True
 warnings.filterwarnings("ignore")
 
-Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Immune_system/repertoire_entropy/H/'
+Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Immune_system/repertoire_entropy/'
 
 #--------------- PARAMETERS ---------------------
 N_ens = 100
@@ -113,14 +113,14 @@ for i_p, p in enumerate(ps):
 	#-----------------Loading data----------------------------
 	parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, L0)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_step-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 3.0, k_step/24, p, N_c, linear, N_ens)+energy_model
 	return_data_type = 0
-	data, return_data_type = get_data(folder_path = '../../out/repertoire_entropy', data_type = 'cells_p-%.1f'%p)
+	data, return_data_type = get_data(folder_path = Text_files_path + 'out', data_type = 'cells_p-%.1f'%p)
 
 	if(return_data_type):
 		energies_lineages = data[0]
 		energies_cells = data[1]
 		L_act_p = data[2]
 	else:
-		data = pd.read_csv(Text_files_path + 'output_N_ens_%d_N_a_1_L0_%d_p_%.1f_k_step_%.1f_E_lim_%.1f_t_lim_%.1f_E_m_%.1f_seqs_0/activated_population_'%(N_ens, L0, p, k_step, E_lim, t_lim, E_m)+antigen+'.csv')
+		data = pd.read_csv(Text_files_path + 'H/output_N_ens_%d_N_a_1_L0_%d_p_%.1f_k_step_%.1f_E_lim_%.1f_t_lim_%.1f_E_m_%.1f_seqs_0/activated_population_'%(N_ens, L0, p, k_step, E_lim, t_lim, E_m)+antigen+'.csv')
 		energies_lineages =[]
 		energies_cells =[]
 		L_act_p = 0
@@ -151,7 +151,7 @@ for i_p, p in enumerate(ps):
 
 			L_act_p+=L_act_i
 
-		f = open('../../out/repertoire_entropy'+'/processed_data_cells_p-%.1f.pkl'%p, 'wb')
+		f = open(Text_files_path + 'out'+'/processed_data_cells_p-%.1f.pkl'%p, 'wb')
 		pickle.dump([energies_lineages, energies_cells, L_act_p/counter], f, pickle.HIGHEST_PROTOCOL)	
 
 	print('L_act:', L_act_p)
@@ -198,7 +198,7 @@ for i_p, p in enumerate(ps):
 	# ax_total.plot(np.exp(Es[:-2][P_l!=0][::80]), P_l[P_l!=0][::80], label = r'$%.1f$'%p, color = my_colors[i_p], alpha = .8, ls = '', marker = 'D')
 
 	ax.plot(np.exp(Es[::n_coarse][:-2][::1]), Q_R[::1], color = 'black', ls = '--', label = r'$\Omega_{\textrm{\cal{B}}}$', lw = 4)
-	ax_total.plot(np.exp(Es[::n_coarse][:-2][::1]), Q_R[::1], color = my_colors[i_p], ls = '--', lw = 4, label = r'$%.1f$'%p)
+	ax_total.plot(np.exp(Es[::n_coarse][:-2][::1]), Q_R[::1], color = my_colors[i_p], ls = '--', lw = 4, label = r'$%.1f$'%p) 
 	# ax.plot(np.exp(Es[:-1]), np.exp(beta_r * Es[:-1]) * (Q_R[Es[:-2]<(E_r)][-1]) / (np.exp(beta_r * (E_r))), color = my_blue, ls = '--')
 	# ax.plot(np.exp(Es[:-1]), np.exp((beta_r - (lambda_B*p)/(lambda_A*1)) * Es[:-1]) * (Q_R[Es[:-2]<(E_r+2)][-1]) / (np.exp((beta_r - (lambda_B*p)/(lambda_A*1)) * (E_r+2))), color = my_red, ls = ':')
 	# ax.plot(Es[:-1], np.exp((-4+beta_r) * Es[:-1]) * (Q0[Es[:-1]<(E_r+1.4)][-1]*1e8/len(energies_lineages)) / (np.exp((-4+beta_r) * (E_r+1.4))), color = my_blue, ls = '--')
@@ -221,7 +221,7 @@ for i_p, p in enumerate(ps):
 	ax.set_ylim(bottom = 2e-7, top = 1)
 	#ax.set_yticks([1, 0.1, 0.01, 0.001])
 	#ax.set_yticklabels([1, 0.1, 0.01])
-	fig.savefig('../../../Figures/entropy_repertoire/simulations/Pi_vs_Omega_act_'+energy_model+'_p-%.1f_log.pdf'%(p))
+	fig.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/entropy_repertoire/simulations/Pi_vs_Omega_act_'+energy_model+'_p-%.1f_log.pdf'%(p))
 
 	my_plot_layout(ax = ax, xscale='log', yscale= 'linear', ticks_labelsize= 28, x_fontsize=30, y_fontsize=30 )
 	ax.legend(fontsize = 18, title_fontsize = 24, loc = 2)
@@ -229,7 +229,7 @@ for i_p, p in enumerate(ps):
 	ax.set_ylim(bottom = 2e-7, top = np.max(Q_R)+.2)
 	#ax.set_yticks([1, 0.1, 0.01, 0.001])
 	#ax.set_yticklabels([1, 0.1, 0.01])
-	fig.savefig('../../../Figures/entropy_repertoire/simulations/Pi_vs_Omega_act_'+energy_model+'_p-%.1f.pdf'%(p))
+	fig.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/entropy_repertoire/simulations/Pi_vs_Omega_act_'+energy_model+'_p-%.1f.pdf'%(p))
 
 	my_plot_layout(ax = ax2, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 	ax2.legend(fontsize = 16, title_fontsize = 20, loc = 0)
@@ -237,7 +237,7 @@ for i_p, p in enumerate(ps):
 	#ax2.set_ylim(bottom = 2e-4, top = 1e0)
 	#ax2.set_yticks([1, 0.1, 0.01, 0.001])
 	#ax2.set_yticklabels([1, 0.1, 0.01])
-	fig2.savefig('../../../Figures/entropy_repertoire/simulations/Pi_vs_Omega_act_distance_'+energy_model+'_p-%.1f.pdf'%(p))
+	fig2.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/entropy_repertoire/simulations/Pi_vs_Omega_act_distance_'+energy_model+'_p-%.1f.pdf'%(p))
 
 ax_total.plot(np.exp(Es[::n_coarse][:-2][::1]), Q_0[::1], color = 'grey', ls = '--', label = r'$\Omega_{0}$', lw = 4, zorder = 0)
 
@@ -257,7 +257,7 @@ ax0.legend(fontsize = 34, title_fontsize = 32, loc = 4)
 #ax0.set_ylim(bottom = 2e-7, top = 3e-2)
 #ax0.set_yticks([1, 0.1, 0.01, 0.001])
 #ax0.set_yticklabels([1, 0.1, 0.01])
-fig0.savefig('../../../Figures/entropy_repertoire/simulations/D_'+energy_model+'.pdf')
+fig0.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/entropy_repertoire/simulations/D_'+energy_model+'.pdf')
 
 my_plot_layout(ax = ax_total, xscale='log', yscale= 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_total.set_xlim(left = 2e-10, right = 8e-1)
@@ -265,5 +265,5 @@ ax_total.set_ylim(bottom = 2e-5, top = 2)
 #ax_total.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_total.set_yticklabels([1, 0.1, 0.01])
 # ax_total.legend(fontsize = 24, title = r'$p$', title_fontsize = 26, loc = 0)
-fig_total.savefig('../../../Figures/entropy_repertoire/simulations/Omega_p_'+energy_model+'_log.pdf')
+fig_total.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/entropy_repertoire/simulations/Omega_p_'+energy_model+'_log.pdf')
 

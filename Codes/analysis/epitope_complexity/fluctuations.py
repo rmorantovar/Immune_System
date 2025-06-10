@@ -4,6 +4,13 @@ from funcs import*
 # from classes import*
 #from functions_2 import*
 from matplotlib.colors import LogNorm
+# import ternary
+
+def ternary_to_cartesian(a, b, c):
+    # Convert barycentric coordinates (a, b, c) to 2D Cartesian
+    x = 0.5 * (2*b + c) / (a + b + c)
+    y = (np.sqrt(3)/2) * c / (a + b + c)
+    return x, y
 
 def main():
 	# Set up command-line argument parser
@@ -88,7 +95,7 @@ def main():
 	markers_epi = ['o', '*', 'D']
 	colors_epi = [my_blue, my_red, my_green]
 
-	exps = [0]
+	exps = [0, 1]
 	for experiment in exps:
 
 		root_dir = f"/Users/robertomorantovar/Dropbox/Research/Immune_system/{project}/{subproject}/{experiment}"
@@ -116,23 +123,45 @@ def main():
 		os.makedirs(output_plot, exist_ok=True)
 		
 		fig, ax = plt.subplots(figsize=(5*1.62, 5), gridspec_kw={'left':0.10, 'right':.95, 'bottom':.1, 'top': 0.95})
+		figZ, axZ = plt.subplots(figsize=(5*1.62, 5), gridspec_kw={'left':0.10, 'right':.95, 'bottom':.1, 'top': 0.95})
 
 		for kappa1, antigen_kappa in enumerate((WTs)):
+			print('Processing antigen', kappa1, '...')
 
 			output_dir1 = root_dir + pars_dir_1 + pars_dir_2 + "/%d"%(kappa1+1)
-			input_file1 = os.path.join(output_dir1, 'activated_repertoire.csv')
-			data_activation = pd.read_csv(input_file1, converters={"seq": literal_eval})
-
-			for i in range(N_ens):
-				data_ens = data_activation.loc[data_activation['ens_id']==i]
-				for epi in [1, 2, 3]:
-					data_epi = data_ens.loc[data_ens['epi']==epi]
-					print(data_epi['E'].min())
-					ax.scatter(data_epi['t'], data_epi['E'], marker = markers_epi[epi-1], color = colors_epi[epi-1], alpha = .5)
-				
-				# min_values = data_activation.groupby(['ens_id', 'epi'])['E'].min()
+			input_file1 = os.path.join(output_dir1, 'potency_%d.csv'%(kappa1+1))
 			
-			# print(min_values)
+			if os.path.isfile(input_file1):
+
+				data_activation = pd.read_csv(input_file1, converters={"seq": literal_eval})
+				data_activation['ID'] = data_activation['Z']/data_activation.groupby('ens_id')['Z'].transform('sum')
+				pivot_df = data_activation.pivot(index='ens_id', columns='epi', values='ID')
+				pivot_df = pivot_df[[1, 2, 3]] 
+
+				# Convert each row to 2D Cartesian coordinates
+				coords = np.array([ternary_to_cartesian(a, b, c) for a, b, c in pivot_df.values])
+
+				# Draw triangle
+				triangle = np.array([
+				    [0, 0],        # Corner A (1,0,0)
+				    [1, 0],        # Corner B (0,1,0)
+				    [0.5, np.sqrt(3)/2],  # Corner C (0,0,1)
+				    [0, 0]         # Close the triangle
+				])
+				ax.plot(triangle[:,0], triangle[:,1], 'k-', alpha = .5, lw = 2)
+
+				# Plot data points
+				ax.scatter(coords[:,0], coords[:,1], s=30, alpha = .8, zorder = 20)
+
+			# Optional: Annotate corners
+			ax.text(-0.05, -0.05, 'A', fontsize=12)
+			ax.text(1.05, -0.05, 'B', fontsize=12)
+			ax.text(0.5, np.sqrt(3)/2 + 0.05, 'C', fontsize=12)
+
+			# Aesthetics
+			ax.set_aspect('equal')
+			ax.axis('off')
+
 
 		my_plot_layout(ax = ax, xscale='linear', yscale= 'linear', ticks_labelsize= 24, x_fontsize=30, y_fontsize=30)
 		# ax.set_xticks([])
