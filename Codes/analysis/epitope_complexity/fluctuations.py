@@ -9,7 +9,7 @@ from matplotlib.colors import LogNorm
 def ternary_to_cartesian(a, b, c):
     # Convert barycentric coordinates (a, b, c) to 2D Cartesian
     x = 0.5 * (2*b + c) / (a + b + c)
-    y = (np.sqrt(3)/2) * c / (a + b + c) + abc
+    y = (np.sqrt(3)/2) * c / (a + b + c)
     return x, y
 
 def main():
