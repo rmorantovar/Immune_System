@@ -11,11 +11,11 @@ def main():
 
 	# Define command-line arguments with explanations
 	parser.add_argument('--N_ant', type=int, default=100, help="Number of antigens.")
-	parser.add_argument('--N_ens', type=int, default=1, help="Number of times to execute the process.")
+	parser.add_argument('--N_ens', type=int, default=40, help="Number of times to execute the process.")
 	parser.add_argument('--N_inf', type=int, default=1, help="Number of infections.")
 	parser.add_argument('--N_evo', type=int, default=0, help="Evolution count.")
 	parser.add_argument('--N_epi', type=int, default=3, help="Number of epitopes.")
-	parser.add_argument('--L0', type=int, default=10**8, help="Number of random sequences.")
+	parser.add_argument('--L0', type=int, default=10**7, help="Number of random sequences.")
 	parser.add_argument('--l', type=int, default=16, help="Length of the sequences.")
 	parser.add_argument('--t_lim', type=float, default=8.0, help="Activation time threshold.")
 	parser.add_argument('--E_lim', type=float, default=-6.0, help="Threshold for the sum of entries.")
@@ -35,7 +35,7 @@ def main():
 	parser.add_argument('--secondary_all', type=int, default=0, help="Secondary all infections flag.")
 	parser.add_argument('--add_mutant', type=int, default=0, help="add mutant.")
 	parser.add_argument('--pro', type=str, default='epitope_complexity', help="Project name.")
-	parser.add_argument('--subpro', type=str, default='epistasis', help="Subproject name.")
+	parser.add_argument('--subpro', type=str, default='fluctuations', help="Subproject name.")
 	parser.add_argument('--exp', type=int, default=0, help="Experiment ID.")
     
 	args = parser.parse_args()

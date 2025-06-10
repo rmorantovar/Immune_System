@@ -11,7 +11,7 @@ def main():
 
 	# Define command-line arguments with explanations
 	parser.add_argument('--N_ant', type=int, default=100, help="Number of antigens.")
-	parser.add_argument('--N_ens', type=int, default=2, help="Number of times to execute the process.")
+	parser.add_argument('--N_ens', type=int, default=40, help="Number of times to execute the process.")
 	parser.add_argument('--N_inf', type=int, default=1, help="Number of infections.")
 	parser.add_argument('--N_evo', type=int, default=0, help="Evolution count.")
 	parser.add_argument('--N_epi', type=int, default=3, help="Number of epitopes.")
