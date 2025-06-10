@@ -107,7 +107,8 @@ def main():
 	if one_WT:
 		WTs = antigens.iloc[[0]]
 	else:
-		WTs = antigens.sample(n=5, replace = False)
+		# WTs = antigens.sample(n=5, replace = False)
+		WTs = antigens.iloc[[15, 37, 57, 66, 92]]
 
 	print(WTs)
 	for index, row in WTs.iterrows():
