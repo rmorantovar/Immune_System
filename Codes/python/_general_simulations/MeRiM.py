@@ -16,11 +16,11 @@ def main():
 	# Setting up command-line argument parser
 	parser = argparse.ArgumentParser(description="Generate random sequences and save properties to a CSV file.")
 	parser.add_argument('--N_ant', type=int, default=100, help="Number of antigens.")
-	parser.add_argument('--N_ens', type=int, default=100, help="Number of times to execute the process.")
+	parser.add_argument('--N_ens', type=int, default=40, help="Number of times to execute the process.")
 	parser.add_argument('--N_inf', type=int, default=1, help="Number of infections.")
 	parser.add_argument('--N_evo', type=int, default = -1)
 	parser.add_argument('--N_epi', type=int, default = 3)
-	parser.add_argument('--L0', type=int, default=10**7, help="Number of random sequences.")
+	parser.add_argument('--L0', type=int, default=10**6, help="Number of random sequences.")
 	parser.add_argument('--l', type=int, default=16, help="Length of the sequences.")
 	parser.add_argument('--t_lim', type=float, default=8., help="Threshold for activation time.") # Use 8 for L0>1e6
 	parser.add_argument('--E_lim', type=float, default=-7., help="Threshold for the sum of entries.") # Use -6 for L0>1e6
@@ -37,13 +37,14 @@ def main():
 	parser.add_argument('--antigen', type=str, default='TACNSYPNTAKCRWYR')
 	parser.add_argument('--energy_model', type=str, default = 'TCRen')
 	parser.add_argument('--use_seqs', type=int, default = 1)
+	parser.add_argument('--one_WT', type=int, default = 0)
+	parser.add_argument('--constant_K', type=int, default = 1)
 	parser.add_argument('--reuse_repertoire', type=int, default = 1)
-	parser.add_argument('--one_WT', type=int, default = 1)
 	parser.add_argument('--secondary', type=int, default = 0)
 	parser.add_argument('--secondary_all', type=int, default = 1)
 	parser.add_argument('--pro', type=str, default='epitope_complexity', help="project.")
 	parser.add_argument('--subpro', type=str, default='fluctuations', help="subproject.")
-	parser.add_argument('--exp', type=int, default=0, help="experiment.")
+	parser.add_argument('--exp', type=str, default='const_K_const_rep', help="experiment.")
 	args = parser.parse_args()
 
 	# ------------ PARAMETERS AND INPUTS ------------
@@ -76,7 +77,7 @@ def main():
 	one_WT = args.one_WT
 	secondary = args.secondary
 	secondary_all = args.secondary_all
-	constant_potency = 0
+	constant_K = args.constant_K
 
 	if N_evo == -1:
 		N_evo = 'R'
@@ -108,7 +109,7 @@ def main():
 		WTs = antigens.iloc[[0]]
 	else:
 		# WTs = antigens.sample(n=5, replace = False)
-		WTs = antigens.iloc[[15, 37, 57, 66, 92]]
+		WTs = antigens.iloc[[i*5 for i in range(20)]]
 
 	print(WTs)
 	for index, row in WTs.iterrows():
@@ -123,36 +124,23 @@ def main():
 		# Calculate motif
 		motif = get_motif(antigen_kappa1, energy_model, '../../')*1.2 # Change depending if antigens are strings or ints
 
-		Q0s, Ess, dEs, Es_r, Es_r0, Es_ms = get_Me_repertoire_properties(motif, N_epi, l, L0)
+		Q0s, Ess, dEs, Es_r, Es_r0, Es_ms, betas_r = get_Me_repertoire_properties(motif, N_epi, l, L0, constant_K)
 		
+		print(Es_r, Es_r0, Es_ms)
+
 		#  -> TODO: Include function to keep a constant potency (constant K^*) 
 		
 		if not os.path.isfile(output_file1):
 			# Execute process
 			sim_params = dict(
-				Alphabet=Alphabet,
-				motif=motif,
-				Q0s=Q0s,
-				Ess=Ess,
-				dEs=dEs,
-				time_array=time_array,
-				dT=dT,
-				N_ens=N_ens,
-				L0=L0,
-				l=l,
-				t_lim=t_lim,
-				E_lim=E_lim,
-				Es_ms=Es_ms,
-				p=p,
-				pmem=pmem,
-				k_step=k_step,
-				lamA=lamA,
-				lamB=lamB,
-				C=C,
+				Alphabet=Alphabet, motif=motif, Q0s=Q0s, Ess=Ess, dEs=dEs, Es_ms=Es_ms,
+				time_array=time_array, dT=dT,
+				N_ens=N_ens, N_epi=N_epi,
+				t_lim=t_lim, E_lim=E_lim,
+				L0=L0, l=l, p=p, pmem=pmem, k_step=k_step, lamA=lamA, lamB=lamB, C=C,
 				infection=1,
 				chunk_size=chunk_size,
 				input_memory_file=input_file1,
-				N_epi=N_epi,
 				DDE=0,
 				use_seqs=use_seqs,
 				reuse_repertoire=reuse_repertoire,

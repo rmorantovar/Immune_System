@@ -22,7 +22,7 @@ def main():
 	parser.add_argument('--N_inf', type=int, default=1, help="Number of infections.")
 	parser.add_argument('--N_evo', type=int, default=0, help="Evolution count.")
 	parser.add_argument('--N_epi', type=int, default=3, help="Number of epitopes.")
-	parser.add_argument('--L0', type=int, default=10**7, help="Number of random sequences.")
+	parser.add_argument('--L0', type=int, default=10**6, help="Number of random sequences.")
 	parser.add_argument('--l', type=int, default=16, help="Length of the sequences.")
 	parser.add_argument('--t_lim', type=float, default=8.0, help="Activation time threshold.")
 	parser.add_argument('--E_lim', type=float, default=-6.0, help="Threshold for the sum of entries.")
@@ -95,7 +95,7 @@ def main():
 	markers_epi = ['o', '*', 'D']
 	colors_epi = [my_blue, my_red, my_green]
 
-	exps = [0, 1]
+	exps = ['chg_rep', 'const_rep', 'const_K_const_rep', 'const_K_chg_rep']
 	for experiment in exps:
 
 		root_dir = f"/Users/robertomorantovar/Dropbox/Research/Immune_system/{project}/{subproject}/{experiment}"
@@ -125,8 +125,17 @@ def main():
 		fig, ax = plt.subplots(figsize=(5*1.62, 5), gridspec_kw={'left':0.10, 'right':.95, 'bottom':.1, 'top': 0.95})
 		figZ, axZ = plt.subplots(figsize=(5*1.62, 5), gridspec_kw={'left':0.10, 'right':.95, 'bottom':.1, 'top': 0.95})
 
+		# Draw triangle
+		triangle = np.array([
+		    [0, 0],        # Corner A (1,0,0)
+		    [1, 0],        # Corner B (0,1,0)
+		    [0.5, np.sqrt(3)/2],  # Corner C (0,0,1)
+		    [0, 0]         # Close the triangle
+		])
+		ax.plot(triangle[:,0], triangle[:,1], 'k', alpha = .3, lw = 1)
+
 		for kappa1, antigen_kappa in enumerate((WTs)):
-			print('Processing antigen', kappa1, '...')
+			print('Processing antigen', kappa1+1, '...')
 
 			output_dir1 = root_dir + pars_dir_1 + pars_dir_2 + "/%d"%(kappa1+1)
 			input_file1 = os.path.join(output_dir1, 'potency_%d.csv'%(kappa1+1))
@@ -141,22 +150,19 @@ def main():
 				# Convert each row to 2D Cartesian coordinates
 				coords = np.array([ternary_to_cartesian(a, b, c) for a, b, c in pivot_df.values])
 
-				# Draw triangle
-				triangle = np.array([
-				    [0, 0],        # Corner A (1,0,0)
-				    [1, 0],        # Corner B (0,1,0)
-				    [0.5, np.sqrt(3)/2],  # Corner C (0,0,1)
-				    [0, 0]         # Close the triangle
-				])
-				ax.plot(triangle[:,0], triangle[:,1], 'k-', alpha = .5, lw = 2)
-
-				# Plot data points
-				ax.scatter(coords[:,0], coords[:,1], s=30, alpha = .8, zorder = 20)
+				
+				if kappa1+1==101:
+					# Plot data points
+					ax.plot(coords[:,0], coords[:,1], ms=6, ls = '', alpha = .6, zorder = 20, marker = '^', markerfacecolor="None", markeredgewidth=1, markeredgecolor = 'black')
+				else:
+					# Plot data points
+					ax.plot(coords[:,0], coords[:,1], ms=6, ls = '', alpha = .6, zorder = 20, marker = 'o', markerfacecolor="None", markeredgewidth=1)
 
 			# Optional: Annotate corners
-			ax.text(-0.05, -0.05, 'A', fontsize=12)
-			ax.text(1.05, -0.05, 'B', fontsize=12)
-			ax.text(0.5, np.sqrt(3)/2 + 0.05, 'C', fontsize=12)
+			ax.text(-0.05, -0.05, r'$\mathrm{A}$', fontsize=12)
+			ax.text(1.05, -0.05, r'$\mathrm{B}$', fontsize=12)
+			ax.text(0.5, np.sqrt(3)/2 + 0.05, r'$\mathrm{C}$', fontsize=12)
+			ax.text(0.8, np.sqrt(3)/2 + 0.05, experiment, fontsize=12)
 
 			# Aesthetics
 			ax.set_aspect('equal')
@@ -169,7 +175,7 @@ def main():
 		# ax.set_ylim(bottom = -0.3, top = 7.3)
 		# ax.set_xlim(left = -0.3, right = 7.3)
 		# ax.legend(fontsize = 16, loc = 0, title = r'$p_m$', title_fontsize = 18)
-		fig.savefig(output_plot + '/DDG_distance' + str(experiment) + '.pdf')
+		fig.savefig(output_plot + '/ID_' + experiment + '.pdf')
 
 		# Print Final execution time
 		end_time = time.time()

@@ -245,13 +245,14 @@ def get_repertoire_properties(betas, Q0, Es, dE, N_r):
 
     return beta_r, E_r, Kd_r
 
-def get_Me_repertoire_properties(motif, N_epi, l, L0):
+def get_Me_repertoire_properties(motif, N_epi, l, L0, constant_K = 0, constant_K_ms = 0):
     Es_ms = []
     Q0s = []
     Ess = []
     dEs = []
     Es_r = []
     Es_r0 = []
+    betas_r = []
 
     for epi in range(N_epi):
         E_ms = -3
@@ -260,18 +261,29 @@ def get_Me_repertoire_properties(motif, N_epi, l, L0):
             E_ms+=np.min(motif[:, epi*l:(epi+1)*l][:, i], axis=0)
             motif[:, epi*l:(epi+1)*l][:, i] -= np.min(motif[:, epi*l:(epi+1)*l][:, i], axis=0)
         # Constant K_ms?
-        # E_ms = -23
-        Es_ms.append(E_ms)
+        
+        if constant_K_ms:
+            E_ms = -23
+
         # Calculate Q0, Es, dE, betas
         Es, dE, Q0, betas = calculate_Q0(0.01, 50, 400000, motif[:, epi*l:(epi+1)*l], E_ms, l)
         beta_r, E_r, K_r = get_repertoire_properties(betas, Q0, Es, dE, L0)
-        Es_r.append(E_r + E_ms)
-        Es_r0.append(E_r)
+        
+        Es_r0.append(E_r) # E* - Ems
+        
+        if constant_K:
+            Es = Es - E_r - 14
+            E_ms = E_ms - E_r - 14
+            beta_r, E_r, K_r = get_repertoire_properties(betas, Q0, Es, dE, L0)
+
+        Es_ms.append(E_ms)
+        Es_r.append(E_r)
         Q0s.append(Q0)
         Ess.append(Es)
         dEs.append(dE)
+        betas_r.append(beta_r)
 
-    return Q0s, Ess, dEs, Es_r, Es_r0, Es_ms
+    return Q0s, Ess, dEs, Es_r, Es_r0, Es_ms, betas_r
 
 def get_proofreading_properties(betas, Q0, Es, dE, k_pr, k_on):
     E_pr = Es[:-1][Es[:-1]<np.log(k_pr/k_on)][-1]

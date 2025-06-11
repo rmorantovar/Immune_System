@@ -8,11 +8,10 @@ from funcs_mini import*
 def generate_repertoire_Me(
     Alphabet,
     motif,
-    Q0s=None, Ess=None, dEs=None,
+    Q0s=None, Ess=None, dEs=None, Es_ms=None,
     time_array=None,
     ensemble_id=0, L0=1000, l=10,
     t_lim=5.0, E_lim=20.0,
-    Es_ms=None,
     use_seqs=False,
     fixed_repertoire=None,
     **kwargs
