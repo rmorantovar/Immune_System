@@ -145,15 +145,21 @@ def main():
 				data_activation = pd.read_csv(input_file1, converters={"seq": literal_eval})
 				data_activation['ID'] = data_activation['Z']/data_activation.groupby('ens_id')['Z'].transform('sum')
 				pivot_df = data_activation.pivot(index='ens_id', columns='epi', values='ID')
-				pivot_df = pivot_df[[1, 2, 3]] 
+				print(pivot_df)
+				# Ensure all desired columns are present, fill missing with 0
+				pivot_df = pivot_df.reindex(columns=[1, 2, 3], fill_value=0)
+				print(pivot_df)
 
 				# Convert each row to 2D Cartesian coordinates
 				coords = np.array([ternary_to_cartesian(a, b, c) for a, b, c in pivot_df.values])
 
 				
 				if kappa1+1==101:
-					# Plot data points
+					# Plot data points of all equal epitopes
 					ax.plot(coords[:,0], coords[:,1], ms=6, ls = '', alpha = .6, zorder = 20, marker = '^', markerfacecolor="None", markeredgewidth=1, markeredgecolor = 'black')
+				elif kappa1+1==102:
+					# Plot data points of all 3 muts away from equal epitopes
+					ax.plot(coords[:,0], coords[:,1], ms=6, ls = '', alpha = .6, zorder = 20, marker = '^', markerfacecolor="None", markeredgewidth=1, markeredgecolor = 'grey')
 				else:
 					# Plot data points
 					ax.plot(coords[:,0], coords[:,1], ms=6, ls = '', alpha = .6, zorder = 20, marker = 'o', markerfacecolor="None", markeredgewidth=1)

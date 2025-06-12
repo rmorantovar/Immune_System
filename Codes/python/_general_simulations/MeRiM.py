@@ -38,13 +38,13 @@ def main():
 	parser.add_argument('--energy_model', type=str, default = 'TCRen')
 	parser.add_argument('--use_seqs', type=int, default = 1)
 	parser.add_argument('--one_WT', type=int, default = 0)
-	parser.add_argument('--constant_K', type=int, default = 1)
+	parser.add_argument('--constant_K', type=int, default = 0)
 	parser.add_argument('--reuse_repertoire', type=int, default = 1)
 	parser.add_argument('--secondary', type=int, default = 0)
 	parser.add_argument('--secondary_all', type=int, default = 1)
 	parser.add_argument('--pro', type=str, default='epitope_complexity', help="project.")
 	parser.add_argument('--subpro', type=str, default='fluctuations', help="subproject.")
-	parser.add_argument('--exp', type=str, default='const_K_const_rep', help="experiment.")
+	parser.add_argument('--exp', type=str, default='const_rep', help="experiment.")
 	args = parser.parse_args()
 
 	# ------------ PARAMETERS AND INPUTS ------------
