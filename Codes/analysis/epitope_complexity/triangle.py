@@ -95,13 +95,10 @@ def main():
 	markers_epi = ['o', '*', 'D']
 	colors_epi = [my_blue, my_red, my_green]
 
-	exps = ['const_rep', 'const_K_const_rep']#, 'chg_rep'], 'const_K_chg_rep']
+	exps = ['chg_rep', 'const_rep', 'const_K_const_rep', 'const_K_chg_rep']
 
 	output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/'+project+'/'+subproject
 	os.makedirs(output_plot, exist_ok=True)
-	
-	fig, ax = plt.subplots(figsize=(5*1.62, 5), gridspec_kw={'left':0.10, 'right':.95, 'bottom':.1, 'top': 0.95})
-	# figZ, axZ = plt.subplots(figsize=(5*1.62, 5), gridspec_kw={'left':0.10, 'right':.95, 'bottom':.1, 'top': 0.95})
 
 	for experiment in exps:
 
@@ -125,57 +122,73 @@ def main():
 		colors = [my_blue, my_red, my_green, my_cyan]
 		lss = ['-', '--']
 		lws = [1, 2]
+		
+		fig, ax = plt.subplots(figsize=(5*1.62, 5), gridspec_kw={'left':0.10, 'right':.95, 'bottom':.1, 'top': 0.95})
+		figZ, axZ = plt.subplots(figsize=(5*1.62, 5), gridspec_kw={'left':0.10, 'right':.95, 'bottom':.1, 'top': 0.95})
 
-		distancesCM = []
+		# Draw triangle
+		triangle = np.array([
+		    [0, 0],        # Corner A (1,0,0)
+		    [1, 0],        # Corner B (0,1,0)
+		    [0.5, np.sqrt(3)/2],  # Corner C (0,0,1)
+		    [0, 0]         # Close the triangle
+		])
+		ax.plot(triangle[:,0], triangle[:,1], 'k', alpha = .3, lw = 1)
 
 		for kappa1, antigen_kappa in enumerate((WTs)):
-			if kappa1+1 != 103:
-				print('Processing antigen', kappa1+1, '...')
-				output_dir1 = root_dir + pars_dir_1 + pars_dir_2 + "/%d"%(kappa1+1)
-				input_file1 = os.path.join(output_dir1, 'potency_%d.csv'%(kappa1+1))
+			print('Processing antigen', kappa1+1, '...')
+
+			output_dir1 = root_dir + pars_dir_1 + pars_dir_2 + "/%d"%(kappa1+1)
+			input_file1 = os.path.join(output_dir1, 'potency_%d.csv'%(kappa1+1))
+			
+			if os.path.isfile(input_file1):
+
+				data_activation = pd.read_csv(input_file1, converters={"seq": literal_eval})
+				data_activation['ID'] = data_activation['Z']/data_activation.groupby('ens_id')['Z'].transform('sum')
+				pivot_df = data_activation.pivot(index='ens_id', columns='epi', values='ID')
+				# Ensure all desired columns are present, fill missing with 0
+				pivot_df = pivot_df.reindex(columns=[1, 2, 3], fill_value=0)
+
+				# Convert each row to 2D Cartesian coordinates
+				coords = np.array([ternary_to_cartesian(a, b, c) for a, b, c in pivot_df.values])
+				CM = np.sum(coords, axis = 0)
+				CM = CM/len(coords[:,0])
 				
-				if os.path.isfile(input_file1):
-
-					data_activation = pd.read_csv(input_file1, converters={"seq": literal_eval})
-					data_activation['ID'] = data_activation['Z']/data_activation.groupby('ens_id')['Z'].transform('sum')
-					pivot_df = data_activation.pivot(index='ens_id', columns='epi', values='ID')
-					# Ensure all desired columns are present, fill missing with 0
-					pivot_df = pivot_df.reindex(columns=[1, 2, 3], fill_value=0)
-					pivot_df.fillna(0, inplace=True)
-					# Convert each row to 2D Cartesian coordinates
-					coords = np.array([ternary_to_cartesian(a, b, c) for a, b, c in pivot_df.values])
-					CM = np.sum(coords, axis = 0)
-					CM = CM/len(coords[:,0])
-
-					distancesCM_exp = [np.sqrt((CM[0]-coords[i, 0])**2 + (CM[1]-coords[i, 1])**2) for i in range(len(coords[:,0]))]
-					distancesCM.extend(distancesCM_exp)
-
-				
-		# Plot data points
-		ax.hist(distancesCM, bins = np.linspace(0, .35, 35), alpha = .6, label = experiment, density = True)
+				if kappa1+1==101:
+					# Plot data points of all equal epitopes
+					ax.plot(coords[:,0], coords[:,1], ms=6, ls = '', alpha = .6, zorder = 20, marker = '^', markerfacecolor="None", markeredgewidth=1, markeredgecolor = 'black')
+					ax.plot(CM[0], CM[1], ms=10, ls = '', alpha = .8, zorder = 20, marker = '^', markerfacecolor='black', markeredgewidth=1, markeredgecolor = 'black')
+				elif kappa1+1==102:
+					# Plot data points of all 3 muts away from equal epitopes
+					ax.plot(coords[:,0], coords[:,1], ms=6, ls = '', alpha = .6, zorder = 20, marker = '^', markerfacecolor="None", markeredgewidth=1, markeredgecolor = 'grey')
+					ax.plot(CM[0], CM[1], ms=10, ls = '', alpha = .8, zorder = 20, marker = '^', markerfacecolor='grey', markeredgewidth=1, markeredgecolor = 'grey')
+				else:
+					# Plot data points
+					ax.plot(coords[:,0], coords[:,1], ms=6, ls = '', alpha = .6, zorder = 20, marker = 'o', markerfacecolor="None", markeredgewidth=1)
+					ax.plot(CM[0], CM[1], ms=12, ls = '', alpha = .8, zorder = 20, marker = 'o', markeredgewidth=1, markerfacecolor=ax.get_lines()[-1].get_color(), markeredgecolor = ax.get_lines()[-1].get_color())
 
 			# Optional: Annotate corners
-			# ax.text(-0.05, -0.05, r'$\mathrm{A}$', fontsize=12)
-			# ax.text(1.05, -0.05, r'$\mathrm{B}$', fontsize=12)
-			# ax.text(0.5, np.sqrt(3)/2 + 0.05, r'$\mathrm{C}$', fontsize=12)
-			# ax.text(0.8, np.sqrt(3)/2 + 0.05, experiment, fontsize=12)
+			ax.text(-0.05, -0.05, r'$\mathrm{A}$', fontsize=12)
+			ax.text(1.05, -0.05, r'$\mathrm{B}$', fontsize=12)
+			ax.text(0.5, np.sqrt(3)/2 + 0.05, r'$\mathrm{C}$', fontsize=12)
+			ax.text(0.8, np.sqrt(3)/2 + 0.05, experiment, fontsize=12)
 
-			# # Aesthetics
-			# ax.set_aspect('equal')
-			# ax.axis('off')
+			# Aesthetics
+			ax.set_aspect('equal')
+			ax.axis('off')
 
 
-	my_plot_layout(ax = ax, xscale='linear', yscale= 'linear', ticks_labelsize= 24, x_fontsize=30, y_fontsize=30)
-	# ax.set_xticks([])
-	# ax.set_yticks([])
-	# ax.set_ylim(bottom = -0.3, top = 7.3)
-	# ax.set_xlim(left = -0.3, right = 7.3)
-	ax.legend(fontsize = 16, loc = 0, title_fontsize = 18)
-	fig.savefig(output_plot + '/ID_fluctuations.pdf')
+		my_plot_layout(ax = ax, xscale='linear', yscale= 'linear', ticks_labelsize= 24, x_fontsize=30, y_fontsize=30)
+		# ax.set_xticks([])
+		# ax.set_yticks([])
+		# ax.set_ylim(bottom = -0.3, top = 7.3)
+		# ax.set_xlim(left = -0.3, right = 7.3)
+		# ax.legend(fontsize = 16, loc = 0, title = r'$p_m$', title_fontsize = 18)
+		fig.savefig(output_plot + '/ID_' + experiment + '.pdf')
 
-	# Print Final execution time
-	end_time = time.time()
-	print(f"Total execution time: {(end_time - start_time)/60:.2f} minutes")
+		# Print Final execution time
+		end_time = time.time()
+		print(f"Total execution time: {(end_time - start_time)/60:.2f} minutes")
 
 if __name__ == "__main__":
     main()
