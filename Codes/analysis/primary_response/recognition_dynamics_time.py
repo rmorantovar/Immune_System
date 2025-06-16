@@ -92,10 +92,10 @@ fig_antigen, ax_antigen = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0
 ax_antigen.plot(time_array, np.exp(lambda_A*time_array)/(1e0), linewidth = 5, color = antigen_color)
 
 my_plot_layout(ax=ax_antigen, yscale = 'log', xscale = 'linear', ticks_labelsize = 40, x_fontsize=30, y_fontsize=30 )
-ax_antigen.set_xlim(right = Tf-1, left = T0+1)
-ax_antigen.set_xticks([])
+ax_antigen.set_xlim(right = Tf-1, left = T0)
+# ax_antigen.set_xticks([])
 #ax_antigen.set_xlim(right = 1e-2, left = 1e-11) #use 1e-3 for other plots
-ax_antigen.set_ylim(bottom = 2e3, top = 2e12)
+ax_antigen.set_ylim(bottom = 1e0, top = 2e12)
 #ax_antigen.set_ylim(bottom = 1, top = 1e7)
 #ax_antigen.legend(title = r'$\p$', title_fontsize = 34, fontsize = 32)
 fig_antigen.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/_Summary/time/L%d/antigen.pdf'%(L))
