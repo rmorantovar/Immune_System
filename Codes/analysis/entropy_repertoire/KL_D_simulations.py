@@ -37,14 +37,14 @@ E_lims = [-5.0, -5.5, -6.0, -6.5, -7, -7.5, -8, -8.5, -9.0]
 t_lims = [4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8.0]
 ps = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5.0]
 
-# E_lims = [-5, -8]
-# t_lims = [4, 7]
-# ps = [1, 4]
+E_lims = [-5, -6.0, -7., -8, -9.]
+t_lims = [4, 5, 6, 7, 8]
+ps = [1, 2, 3, 4, 5]
 
 color_list = np.array([my_blue2, my_green, my_purple2, my_red, my_gold])
 
-color_vals = np.linspace(0, 1, 9)
-cmap = plt.get_cmap('Reds')
+color_vals = np.linspace(0, 1, 5)
+cmap = plt.get_cmap('coolwarm_r')
 my_colors = [cmap(val) for val in color_vals] 
 
 
@@ -198,7 +198,7 @@ for i_p, p in enumerate(ps):
 	# ax_total.plot(np.exp(Es[:-2][P_l!=0][::80]), P_l[P_l!=0][::80], label = r'$%.1f$'%p, color = my_colors[i_p], alpha = .8, ls = '', marker = 'D')
 
 	ax.plot(np.exp(Es[::n_coarse][:-2][::1]), Q_R[::1], color = 'black', ls = '--', label = r'$\Omega_{\textrm{\cal{B}}}$', lw = 4)
-	ax_total.plot(np.exp(Es[::n_coarse][:-2][::1]), Q_R[::1], color = my_colors[i_p], ls = '--', lw = 4, label = r'$%.1f$'%p) 
+	# ax_total.plot(np.exp(Es[::n_coarse][:-2][::1]), Q_R[::1], color = my_colors[i_p], ls = '--', lw = 4, label = r'$%.1f$'%p) 
 	# ax.plot(np.exp(Es[:-1]), np.exp(beta_r * Es[:-1]) * (Q_R[Es[:-2]<(E_r)][-1]) / (np.exp(beta_r * (E_r))), color = my_blue, ls = '--')
 	# ax.plot(np.exp(Es[:-1]), np.exp((beta_r - (lambda_B*p)/(lambda_A*1)) * Es[:-1]) * (Q_R[Es[:-2]<(E_r+2)][-1]) / (np.exp((beta_r - (lambda_B*p)/(lambda_A*1)) * (E_r+2))), color = my_red, ls = ':')
 	# ax.plot(Es[:-1], np.exp((-4+beta_r) * Es[:-1]) * (Q0[Es[:-1]<(E_r+1.4)][-1]*1e8/len(energies_lineages)) / (np.exp((-4+beta_r) * (E_r+1.4))), color = my_blue, ls = '--')
@@ -261,9 +261,17 @@ fig0.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Imm
 
 my_plot_layout(ax = ax_total, xscale='log', yscale= 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_total.set_xlim(left = 2e-10, right = 8e-1)
-ax_total.set_ylim(bottom = 2e-5, top = 2)
+ax_total.set_ylim(bottom = 2e-8, top = 2)
 #ax_total.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_total.set_yticklabels([1, 0.1, 0.01])
 # ax_total.legend(fontsize = 24, title = r'$p$', title_fontsize = 26, loc = 0)
 fig_total.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/entropy_repertoire/simulations/Omega_p_'+energy_model+'_log.pdf')
+
+my_plot_layout(ax = ax_total, xscale='log', yscale= 'linear', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
+ax_total.set_xlim(left = 2e-10, right = 8e-1)
+ax_total.set_ylim(bottom = 2e-7, top = 1.01)
+#ax_total.set_yticks([1, 0.1, 0.01, 0.001])
+#ax_total.set_yticklabels([1, 0.1, 0.01])
+# ax_total.legend(fontsize = 24, title = r'$p$', title_fontsize = 26, loc = 0)
+fig_total.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/entropy_repertoire/simulations/Omega_p_'+energy_model+'.pdf')
 

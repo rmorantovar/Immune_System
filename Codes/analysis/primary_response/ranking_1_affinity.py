@@ -1,6 +1,6 @@
 import sys
 sys.path.append('../library/')
-sys.path.append('../../lib/')
+sys.path.append('../../my_lib/')
 from functions_2 import*
 plt.rcParams['text.usetex'] = True
 
@@ -41,6 +41,7 @@ ps = [1.0, 4]
 E_lims = [-8.5, -12]
 t_lims = [4, 7.2]
 color_list = np.array([my_blue, my_red])#
+color_list = np.array([my_red, my_blue2])
 
 # ps = [1, 1.5, 2.0, 2.5, 3.0, 3.5, 4, 4.5, 5]
 # E_lims = [-8.5, -8.5, -12, -12, -12, -12, -12, -12, -12]
@@ -80,7 +81,7 @@ print('L=%d'%(L))
 energy_model = 'TCRen'
 #energy_model = 'MJ2'
 #--------------------------Energy Motif--------------------------
-PWM_data, M, Alphabet = get_motif(antigen, energy_model, Text_files_path + "primary_immune_response/in/")
+PWM_data, M, Alphabet = get_motif(antigen, energy_model, Text_files_path + "primary_response/in/")
 print('min_e_PWM=%.2f'%(np.sum([np.min(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))])))
 print('mean_e_PWM=%.4f'%(np.sum([np.mean(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))])))
 #Change values by the minimum
@@ -103,13 +104,13 @@ t_prime = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*N_c))
 print('--------')
 print('Loops...')
 #--------------------------Loops--------------------------
-fig_ranking, ax_ranking = plt.subplots(figsize=(5*1.62, 5), gridspec_kw={'left':0.12, 'right':.9, 'bottom':.1, 'top': 0.96})
-fig_ranking_log, ax_ranking_log = plt.subplots(figsize=(5*1.62, 5), gridspec_kw={'left':0.12, 'right':.9, 'bottom':.1, 'top': 0.96})
+fig_ranking, ax_ranking = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.15, 'top': 0.94})
+fig_ranking_log, ax_ranking_log = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.15, 'top': 0.94})
 
 for i_p, p in enumerate((ps)):
     E_lim = E_lims[i_p]
     t_lim = t_lims[i_p]
-    fig_ranking_i, ax_ranking_i = plt.subplots(figsize=(5*1.62, 5), gridspec_kw={'left':0.12, 'right':.9, 'bottom':.1, 'top': 0.96})
+    fig_ranking_i, ax_ranking_i = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.15, 'top': 0.94})
     print('--------')
     print('p = %.2f...'%p)
     beta_p, E_p, Kd_p = get_p_properties(betas, Q0, Es, dE, p)
@@ -120,7 +121,7 @@ for i_p, p in enumerate((ps)):
     #data = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/energies_ensemble.txt', sep = '\t', header=None)
     #data = get_data_ensemble(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
     return_data_type = 0
-    data, return_data_type = get_data_b(folder_path = '../../out/primary_immune_response', data_type = 'ranking_1_affinity_p-%.1f'%p)
+    data, return_data_type = get_data(folder_path = Text_files_path + 'primary_response/out/', data_type = 'ranking_1_affinity_p-%.1f'%p)
     n_first_clones = 100
 
     if(return_data_type):
@@ -130,7 +131,7 @@ for i_p, p in enumerate((ps)):
         trajectories = data[3]
         trajectories_rank = data[4]
     else:
-        data = pd.read_csv(Text_files_path + 'primary_immune_response/output_N_ens_%d_L0_%d_p_%.1f_k_step_%.1f_E_lim_%.1f_t_lim_%.1f_E_m_%.1f/filtered_sequence_properties.csv'%(N_ens, L_0, p, k_step, E_lim, t_lim, E_m))
+        data = pd.read_csv(Text_files_path + 'primary_response/output_N_ens_%d_L0_%d_p_%.1f_k_step_%.1f_E_lim_%.1f_t_lim_%.1f_E_m_%.1f/filtered_sequence_properties.csv'%(N_ens, L_0, p, k_step, E_lim, t_lim, E_m))
         final_E = np.zeros(n_first_clones)
         final_E_log = np.zeros(n_first_clones)
         counts_final_E = np.zeros(n_first_clones)
@@ -175,7 +176,7 @@ for i_p, p in enumerate((ps)):
                 trajectories = np.append(trajectories, sorted_clones)
                 trajectories_rank = np.append(trajectories_rank, max_rank_i)
 
-        f = open('../../out/primary_immune_response' + '/processed_data_ranking_1_affinity_p-%.1f.pkl'%p, 'wb')
+        f = open(Text_files_path + 'primary_response/out' + '/processed_data_ranking_1_affinity_p-%.1f.pkl'%p, 'wb')
         pickle.dump([final_E, final_E_log, counts_final_E, trajectories, trajectories_rank], f, pickle.HIGHEST_PROTOCOL)  
 
     final_E = (final_E/counts_final_E)
@@ -206,29 +207,29 @@ for i_p, p in enumerate((ps)):
     ax_ranking_i.plot(ranking, final_E[:n_first_clones], color = colors_p[i_p], linewidth = 0, marker = '.', alpha = 1, ms = 12)
     #ax_ranking_i.plot(ranking, fit, color = colors_p[i_p], linewidth = 5, label = r'$%.1f$'%(p), alpha = .8)
 
-    my_plot_layout(ax = ax_ranking_i, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+    my_plot_layout(ax = ax_ranking_i, xscale='log', yscale= 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
     ax_ranking_i.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
     #ax_ranking_i.set_xlim(left = np.exp(E_m+2), right = np.exp(E_m+29))
     ax_ranking_i.set_ylim(top = 1e9, bottom = 1e4)
     #ax_ranking_i.set_yticks([1, 0.1, 0.01, 0.001])
     #ax_ranking_i.set_yticklabels([1, 0.1, 0.01])
-    fig_ranking_i.savefig('../../../Figures/primary_immune_response/1_Dynamics/CSV/_Ranking_1_affinity_p-%.2f'%(p)+'_'+energy_model+'.pdf')
+    fig_ranking_i.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/1_Dynamics/CSV/_Ranking_1_affinity_p-%.2f'%(p)+'_'+energy_model+'.pdf')
 
-my_plot_layout(ax = ax_ranking_log, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+my_plot_layout(ax = ax_ranking_log, xscale='log', yscale= 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 #ax_ranking_log.legend(fontsize = 15, title_fontsize = 16, title = r'$p$')
 #ax_ranking_log.set_xlim(left = np.exp(E_m+2), right = np.exp(E_m+29))
 ax_ranking_log.set_ylim(bottom = 1e-2)
 #ax_ranking_log.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_ranking_log.set_yticklabels([1, 0.1, 0.01])
-fig_ranking_log.savefig('../../../Figures/primary_immune_response/1_Dynamics/CSV/_Ranking_1_affinity_log_'+energy_model+'.pdf')
+fig_ranking_log.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/1_Dynamics/CSV/_Ranking_1_affinity_log_'+energy_model+'.pdf')
 
-my_plot_layout(ax = ax_ranking, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+my_plot_layout(ax = ax_ranking, xscale='log', yscale= 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 #ax_ranking.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
 #ax_ranking.set_xlim(left = np.exp(E_m+2), right = np.exp(E_m+29))
 #ax_ranking.set_ylim(bottom = 1e-2)
 #ax_ranking.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_ranking.set_yticklabels([1, 0.1, 0.01])
-fig_ranking.savefig('../../../Figures/primary_immune_response/1_Dynamics/CSV/_Ranking_1_affinity_'+energy_model+'.pdf')
+fig_ranking.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/1_Dynamics/CSV/_Ranking_1_affinity_'+energy_model+'.pdf')
 
 print('----END-----')
 

@@ -1,6 +1,5 @@
 import sys
-sys.path.append('../lib/')
-sys.path.append('../../lib/')
+sys.path.append('../../my_lib/')
 # from functions_2 import*
 from funcs import*
 plt.rcParams['text.usetex'] = True
@@ -35,8 +34,8 @@ transparency_n = [1]
 
 color_list = np.array([my_blue, my_gold, my_green, my_red, my_purple2, my_brown, my_blue2, my_yellow, my_purple, my_green2])#
 #color_list = np.array([(228,75,41), (125,165,38), (76,109,166), (215,139,45)])
-color_list = np.array([my_blue2, my_green, my_brown, my_red, my_gold])
 color_list = np.array([my_blue2, my_red, my_green])
+color_list = np.array([my_red, my_blue2, my_brown, my_red, my_gold])
 
 #colors_p = np.flip(['tab:blue', 'tab:red', 'tab:blue'])
 #colors_p = np.flip(['tab:blue','tab:green','tab:red'])
@@ -99,7 +98,7 @@ ax_antigen.set_xticks([])
 ax_antigen.set_ylim(bottom = 2e3, top = 2e12)
 #ax_antigen.set_ylim(bottom = 1, top = 1e7)
 #ax_antigen.legend(title = r'$\p$', title_fontsize = 34, fontsize = 32)
-fig_antigen.savefig('../../../Figures/primary_response/_Summary/time/L%d/antigen.pdf'%(L))
+fig_antigen.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/_Summary/time/L%d/antigen.pdf'%(L))
 plt.close(fig_antigen)
 
 print('Loops...')
@@ -117,7 +116,7 @@ for L_0 in L_0s:
 
     for i_p, p in enumerate(ps):
 
-        fig_N_b_p, ax_N_b_p = plt.subplots(figsize=(8.0*1.62,8*0.5), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.2, 'top': 0.96})
+        fig_N_b_p, ax_N_b_p = plt.subplots(figsize=(8.0*1.62,8*0.6), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.2, 'top': 0.96})
         # ax_N_b_p.plot(time_array, np.exp(3*time_array)/(1e0), linewidth = 5, color = antigen_color)
         print('--------')
         print('p = %.2f...'%p)
@@ -218,30 +217,30 @@ for L_0 in L_0s:
         if p==1:
             ax_N_b_p.set_xticks([])
         ax_N_b_p.set_xlim(right = Tf-1, left = T0+1)
-        ax_N_b_p.set_ylim(bottom = 1e0, top = 2e2)
+        ax_N_b_p.set_ylim(bottom = 1e0, top = 5e2)
         #ax_N_b.set_ylim(bottom = 1e0, top = C*1.1)
-        fig_N_b_p.savefig('../../../Figures/primary_response/_Summary/time/L%d/Bcell_p-%.1f_Nr-%.0e_'%(L, p, L_0)+energy_model+'.pdf')
+        fig_N_b_p.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/_Summary/time/L%d/Bcell_p-%.1f_Nr-%.0e_'%(L, p, L_0)+energy_model+'.pdf')
         plt.close(fig_N_b_p)
 
     my_plot_layout(ax=ax_N_b, yscale = 'log', ticks_labelsize = 40, x_fontsize=30, y_fontsize=30 )
     ax_N_b.set_xlim(right = Tf-1, left = T0+1)
-    ax_N_b.set_ylim(bottom = 1e0, top = 5e2)
+    ax_N_b.set_ylim(bottom = 1e0, top = 8e2)
     #ax_N_b.set_ylim(bottom = 1e0, top = C*1.1)
-    fig_N_b.savefig('../../../Figures/primary_response/_Summary/time/L%d/Bcell_Nr-%.0e_'%(L, L_0)+energy_model+'.pdf')
+    fig_N_b.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/_Summary/time/L%d/Bcell_Nr-%.0e_'%(L, L_0)+energy_model+'.pdf')
     plt.close(fig_N_b)
 
     my_plot_layout(ax=ax_R, yscale = 'log', xscale = 'linear', ticks_labelsize = 40, x_fontsize=30, y_fontsize=30 )
     #ax_R.set_xticks([])
     ax_R.set_xlim(right = Tf-1, left = T0+1)
     ax_R.set_ylim(bottom = 1.5e-3, top = 1.5)
-    fig_R.savefig('../../../Figures/primary_response/_Summary/time/L%d/R_Nr-%.0e_'%(L, L_0)+energy_model+'.pdf')
+    fig_R.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/_Summary/time/L%d/R_Nr-%.0e_'%(L, L_0)+energy_model+'.pdf')
     plt.close(fig_R)
 
     my_plot_layout(ax=ax_K, yscale = 'log', xscale = 'linear', ticks_labelsize = 40, x_fontsize=30, y_fontsize=30 )
     # ax_K.set_xticks([])
     ax_K.set_xlim(right = Tf-1, left = T0+1)
     ax_K.set_ylim(bottom = 9e-10, top = 2e-4)
-    fig_K.savefig('../../../Figures/primary_response/_Summary/time/L%d/K_Nr-%.0e_'%(L, L_0)+energy_model+'.pdf')
+    fig_K.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/_Summary/time/L%d/K_Nr-%.0e_'%(L, L_0)+energy_model+'.pdf')
     plt.close(fig_K)
 
     my_plot_layout(ax=ax_L, yscale = 'log', xscale = 'linear', ticks_labelsize = 40, x_fontsize=30, y_fontsize=30 )
@@ -249,7 +248,7 @@ for L_0 in L_0s:
     ax_L.set_xlim(right = Tf-1, left = T0+1)
     ax_L.set_ylim(bottom = 9e-1, top = 9e3)
     ax_L.set_yticks([1e0, 1e2])
-    fig_L.savefig('../../../Figures/primary_response/_Summary/time/L%d/L_Nr-%.0e_'%(L, L_0)+energy_model+'.pdf')
+    fig_L.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/_Summary/time/L%d/L_Nr-%.0e_'%(L, L_0)+energy_model+'.pdf')
     plt.close(fig_L)
 
 

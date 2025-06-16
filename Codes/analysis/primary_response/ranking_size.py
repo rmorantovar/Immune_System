@@ -1,6 +1,6 @@
 import sys
 sys.path.append('../library/')
-sys.path.append('../../lib/')
+sys.path.append('../../my_lib/')
 from functions_2 import*
 plt.rcParams['text.usetex'] = True
 
@@ -41,7 +41,7 @@ transparency_n = [1]
 color_list = np.array([my_blue, my_red, my_green, my_red, my_purple2, my_brown, my_blue2, my_yellow, my_purple, my_green2])#
 #color_list = np.array([my_blue2, my_red])
 #color_list = np.array([my_blue2, my_blue2, my_green, my_green, my_red, my_red, my_gold])
-
+color_list = np.array([my_red, my_blue2])
 
 colors_p = []
 for i in range(len(color_list)):
@@ -92,12 +92,12 @@ t_prime = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*N_c))
 print('--------')
 print('Loops...')
 #--------------------------Loops--------------------------
-fig_ranking, ax_ranking = plt.subplots(figsize=(5*1.62, 5), gridspec_kw={'left':0.12, 'right':.9, 'bottom':.1, 'top': 0.96})
+fig_ranking, ax_ranking = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.15, 'top': 0.94})
 
 for i_p, p in enumerate((ps)):
     E_lim = E_lims[i_p]
     t_lim = t_lims[i_p]
-    fig_ranking_i, ax_ranking_i = plt.subplots(figsize=(5*1.62, 5), gridspec_kw={'left':0.12, 'right':.9, 'bottom':.1, 'top': 0.96})
+    fig_ranking_i, ax_ranking_i = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.15, 'top': 0.94})
     print('--------')
     print('p = %.2f...'%p)
     beta_p, E_p, Kd_p = get_p_properties(betas, Q0, Es, dE, p)
@@ -109,7 +109,7 @@ for i_p, p in enumerate((ps)):
     #data = get_data_ensemble(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
     #data, return_data_type = get_data_b(folder_path = Text_files_path + 'Dynamics/Ensemble/L%d/'%L+parameters_path, data_type = 'ranking_size')
     return_data_type = 0
-    data, return_data_type = get_data(folder_path = Text_files_path + 'primary_response/out/primary_response', data_type = 'ranking_size_p-%.1f'%p)
+    data, return_data_type = get_data(folder_path = Text_files_path + 'primary_response/out/', data_type = 'ranking_size_p-%.1f'%p)
     n_first_clones = 100
 
     if(return_data_type):
@@ -191,13 +191,13 @@ for i_p, p in enumerate((ps)):
     ax_ranking_i.plot(ranking, final_Nb, color = colors_p[i_p], linewidth = 0, marker = '*', alpha = 1, ms = 10)
     ax_ranking_i.plot(ranking, fit, color = colors_p[i_p], linewidth = 4, label = r'$%.d$'%(p), alpha = .8)
 
-    my_plot_layout(ax = ax_ranking_i, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+    my_plot_layout(ax = ax_ranking_i, xscale='log', yscale= 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
     ax_ranking_i.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
     #ax_ranking_i.set_xlim(left = np.exp(E_m+2), right = np.exp(E_m+29))
     ax_ranking_i.set_ylim(bottom = 2e-2)
     #ax_ranking_i.set_yticks([1, 0.1, 0.01, 0.001])
     #ax_ranking_i.set_yticklabels([1, 0.1, 0.01])
-    fig_ranking_i.savefig('../../../Figures/primary_immune_response/1_Dynamics/CSV/Ranking_size_p-%.2f'%(p)+'_'+energy_model+'.pdf')
+    fig_ranking_i.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/1_Dynamics/CSV/Ranking_size_p-%.2f'%(p)+'_'+energy_model+'.pdf')
 
 ps_theory = np.linspace(1, 4.1, 40)
 exponent = []
@@ -208,13 +208,13 @@ for p in ps_theory:
 
 
 
-my_plot_layout(ax = ax_ranking, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+my_plot_layout(ax = ax_ranking, xscale='log', yscale= 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 #ax_ranking.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
 #ax_ranking.set_xlim(left = np.exp(E_m+2), right = np.exp(E_m+29))
 ax_ranking.set_ylim(bottom = 1e-2)
 #ax_ranking.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_ranking.set_yticklabels([1, 0.1, 0.01])
-fig_ranking.savefig('../../../Figures/primary_immune_response/1_Dynamics/CSV/Ranking_size_'+energy_model+'.pdf')
+fig_ranking.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/1_Dynamics/CSV/Ranking_size_'+energy_model+'.pdf')
 
 
 print('----END-----')

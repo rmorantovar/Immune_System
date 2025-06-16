@@ -33,6 +33,7 @@ ps = [1.0, 4]
 E_lims = [-8.5, -12]
 t_lims = [4, 7.2]
 color_list = np.array([my_blue, my_red])
+color_list = np.array([my_red, my_blue2])
 
 # ps = [1, 1.5, 2.0, 2.5, 4.0]
 # E_lims = [-8.5, -8.5, -12, -12, -12]
@@ -92,13 +93,13 @@ t_prime = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*N_c))
 print('--------')
 print('Loops...')
 #--------------------------Loops--------------------------
-fig_ranking, ax_ranking = plt.subplots(figsize=(5*1.62, 5), gridspec_kw={'left':0.12, 'right':.9, 'bottom':.1, 'top': 0.96})
-fig_ranking_log, ax_ranking_log = plt.subplots(figsize=(5*1.62, 5), gridspec_kw={'left':0.12, 'right':.9, 'bottom':.1, 'top': 0.96})
+fig_ranking, ax_ranking = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.15, 'top': 0.94})
+fig_ranking_log, ax_ranking_log = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.15, 'top': 0.94})
 
 for i_p, p in enumerate((ps)):
     E_lim = E_lims[i_p]
     t_lim = t_lims[i_p]
-    fig_ranking_i, ax_ranking_i = plt.subplots(figsize=(10,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.1, 'top': 0.96})
+    fig_ranking_i, ax_ranking_i = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.15, 'top': 0.94})
     print('--------')
     print('p = %.2f...'%p)
     beta_p, E_p, Kd_p = get_p_properties(betas, Q0, Es, dE, p)
@@ -311,7 +312,7 @@ for i_p, p in enumerate((ps)):
         ax_ranking_log.plot(final_E_log_E, final_Nb_E, color = colors_p[i_p], linewidth = 0, marker = '.', alpha = .8, ms = 12, label = r'$%.1f$'%(p))
 
 
-my_plot_layout(ax = ax_ranking, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+my_plot_layout(ax = ax_ranking, xscale='log', yscale= 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 #ax_ranking.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
 #ax_ranking.set_xlim(left = np.exp(E_m+2), right = np.exp(E_m+29))
 #ax_ranking.set_ylim(bottom = 2e-2)
@@ -319,7 +320,7 @@ my_plot_layout(ax = ax_ranking, xscale='log', yscale= 'log', ticks_labelsize= 30
 #ax_ranking.set_yticklabels([1, 0.1, 0.01])
 fig_ranking.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/1_Dynamics/CSV/Ranking_combined_'+energy_model+'.pdf')
 
-my_plot_layout(ax = ax_ranking_log, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+my_plot_layout(ax = ax_ranking_log, xscale='log', yscale= 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 #ax_ranking_log.legend(fontsize = 20, title_fontsize = 22, title = r'$p$')
 #ax_ranking_log.set_xlim(left = np.exp(E_m+2), right = np.exp(E_m+29))
 #ax_ranking_log.set_ylim(bottom = 2e-2)

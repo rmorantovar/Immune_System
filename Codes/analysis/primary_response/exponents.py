@@ -1,6 +1,6 @@
 import sys
 sys.path.append('../library/')
-sys.path.append('../../lib/')
+sys.path.append('../../my_lib/')
 from functions_2 import*
 plt.rcParams['text.usetex'] = True
 
@@ -62,7 +62,7 @@ print('L=%d'%(L))
 energy_model = 'TCRen'
 #energy_model = 'MJ2'
 #--------------------------Energy Motif--------------------------
-PWM_data, M, Alphabet = get_motif(antigen, energy_model, Text_files_path + "primary_immune_response/in/")
+PWM_data, M, Alphabet = get_motif(antigen, energy_model, Text_files_path + "primary_response/in/")
 print('min_e_PWM=%.2f'%(np.sum([np.min(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))])))
 print('mean_e_PWM=%.4f'%(np.sum([np.mean(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))])))
 #Change values by the minimum
@@ -86,7 +86,7 @@ print('--------')
 print('Loops...')
 #--------------------------Loops--------------------------
 
-fig_exponents, ax_exponents = plt.subplots(figsize=(5*1.62, 5), gridspec_kw={'left':0.12, 'right':.9, 'bottom':.1, 'top': 0.96})
+fig_exponents, ax_exponents = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.15, 'top': 0.94})
 
 exponent_sim = []
 exponent_sim2 = []
@@ -104,7 +104,7 @@ for i_p, p in enumerate((ps)):
     #data = pd.read_csv(Text_files_path + 'Dynamics/Ensemble/'+parameters_path+'/energies_ensemble.txt', sep = '\t', header=None)
     #data = get_data_ensemble(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
     #data, return_data_type = get_data_b(folder_path = Text_files_path + 'Dynamics/Ensemble/L%d/'%L+parameters_path, data_type = 'ranking_size')
-    file = open('../../out/primary_immune_response'+'/processed_data_ranking_size_p-%.1f.pkl'%p, 'rb')
+    file = open(Text_files_path + 'primary_response/out/'+'processed_data_ranking_size_p-%.1f.pkl'%p, 'rb')
     data = pickle.load(file)
     return_data_type = 1
 
@@ -136,7 +136,7 @@ for i_p, p in enumerate((ps)):
     #data = get_data_ensemble(folder_path = Text_files_path + 'Dynamics/Ensemble/'+parameters_path)
     #data, return_data_type = get_data_b(folder_path = Text_files_path + 'Dynamics/Ensemble/L%d/'%L+parameters_path, data_type = 'ranking_1_affinity')
     
-    file = open('../../out/primary_immune_response'+'/processed_data_ranking_1_affinity_p-%.1f.pkl'%p, 'rb')
+    file = open(Text_files_path + 'primary_response/out/'+'/processed_data_ranking_1_affinity_p-%.1f.pkl'%p, 'rb')
     data = pickle.load(file)
     return_data_type = 1
 
@@ -183,9 +183,9 @@ exponent_theory_LS = np.array(exponent_theory_LS)
 exponent_theory_HS = np.array(exponent_theory_HS)
 exponent_sim = np.array(exponent_sim)
 
-ax_exponents.plot(ps_theory_LS, exponent_theory_LS, color = 'indigo', linestyle = '-', marker = '', linewidth = 3, ms = 14, alpha = 1, label = r'$\zeta$')#\textrm{ (size)}$')
-ax_exponents.plot(ps_theory_HS, exponent_theory_HS, color = 'indigo', linestyle = '-', marker = '', linewidth = 3, ms = 14, alpha = 1)
-ax_exponents.plot(ps, exponent_sim, color = 'indigo', linestyle = '', marker = 'D', linewidth = 3, ms = 14, alpha = 1)
+ax_exponents.plot(ps_theory_LS, exponent_theory_LS, color = 'darkcyan', linestyle = '-', marker = '', linewidth = 3, ms = 14, alpha = 1, label = r'$\zeta$')#\textrm{ (size)}$')
+ax_exponents.plot(ps_theory_HS, exponent_theory_HS, color = 'darkcyan', linestyle = '-', marker = '', linewidth = 3, ms = 14, alpha = 1)
+ax_exponents.plot(ps, exponent_sim, color = 'darkcyan', linestyle = '', marker = 'D', linewidth = 3, ms = 14, alpha = 1)
 #ax_exponents.errorbar(x=ps, y=exponent_sim*(lambda_A/lambda_B), yerr = std_exponent_sim, ls = 'none', color = 'indigo', alpha = .6)
 #ax_exponents.vlines(beta_r, .33, .65, lw = 1, ls = '--', color = 'black')
 
@@ -200,13 +200,13 @@ print(ps_theory_HS[np.array(exponent_theory_HS**(1))<data_mean][-1], ps_theory_H
 #ax_exponents.errorbar(x = ps_theory[np.array(exponent_theory)<0.57][-1], y = 0.57, yerr = 0.12, ls = 'none', color = 'indigo', alpha = .6)
 
 #ax_exponents_2 = ax_exponents.twinx()
-ax_exponents.plot(ps_theory_LS, np.array(exponent_theory2_LS), color = 'olive', linestyle = '-', marker = '', linewidth = 3, ms = 14, alpha = 1, label = r'$\beta^*$')#\textrm{ (geometric)}$')
+ax_exponents.plot(ps_theory_LS, np.array(exponent_theory2_LS), color = 'olive', linestyle = '-', marker = '', linewidth = 3, ms = 14, alpha = 1, label = r'$1/\beta^*$')#\textrm{ (geometric)}$')
 ax_exponents.plot(ps_theory_HS, np.array(exponent_theory2_HS), color = 'olive', linestyle = '-', marker = '', linewidth = 3, ms = 14, alpha = 1)
 ax_exponents.plot(ps, np.array(exponent_sim2), color = 'olive', linestyle = '', marker = 'D', linewidth = 3, ms = 14, alpha = 1)
 #ax_exponents.errorbar(x=ps, y=1/np.np.array(exponent_sim2), yerr = std_exponent_sim2, ls = 'none', color = 'olive', alpha = .6)
 
-my_plot_layout(ax = ax_exponents, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-ax_exponents.legend(fontsize = 24, title_fontsize = 30, loc = 0)
+my_plot_layout(ax = ax_exponents, xscale='linear', yscale= 'linear', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
+ax_exponents.legend(fontsize = 30, title_fontsize = 30, loc = 0)
 #ax_exponents.set_xlim(left = np.exp(E_m+2), right = np.exp(E_m+29))
 ax_exponents.set_ylim(bottom = 0.25)
 #ax_exponents.set_yticks([1, 0.1, 0.01, 0.001])
@@ -220,7 +220,7 @@ ax_exponents.set_ylim(bottom = 0.25)
 #ax_exponents.set_yticklabels([1, 0.1, 0.01])
 
 
-fig_exponents.savefig('../../../Figures/primary_immune_response/1_Dynamics/CSV/Exponent_'+energy_model+'.pdf')
+fig_exponents.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/1_Dynamics/CSV/Exponent_'+energy_model+'.pdf')
 
 print('----END-----')
 

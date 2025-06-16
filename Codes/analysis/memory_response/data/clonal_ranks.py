@@ -1,5 +1,5 @@
 import sys
-sys.path.append('../../../lib/')
+sys.path.append('../../../my_lib/')
 from funcs import*
 plt.rcParams['text.usetex'] = True
 
@@ -7,7 +7,7 @@ project = 'memory_response'
 subproject = 'data'
 experiment = 0
 root_dir = f"/Users/robertomorantovar/Dropbox/Research/Immune_system/{project}/{subproject}/mesin2020"
-output_plot = '../../../../Figures/'+project+'/'+subproject+'/'+str(experiment) + '/mesin2020'
+output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/'+project+'/'+subproject+'/'+str(experiment) + '/mesin2020'
 os.makedirs(output_plot, exist_ok=True)
 
 # Parameters
@@ -17,10 +17,10 @@ mu = 1.0  # Poisson rate
 T = 15  # Total simulation time
 theta = 1.5  # Values of theta to compare
 gamma = 0.4
-my_colors = [my_red, my_blue2, my_blue2, my_blue2, my_cyan]
-my_colors2 = [my_blue2, my_blue2, my_blue2, my_cyan, my_blue2, my_red]
-my_colors3 = [my_red, my_blue2, my_blue2, my_red, my_red, my_blue2, my_blue2, my_red, my_red, my_red]
-my_colors4 = [my_red, my_blue2, my_blue2, my_red, my_red, my_blue2, my_blue2, my_red, my_red, my_red]
+my_colors = [my_blue2, my_purple, my_purple, my_purple, my_cyan]
+my_colors2 = [my_purple, my_purple, my_purple, my_cyan, my_purple, my_blue2]
+my_colors3 = [my_blue2, my_purple, my_purple, my_blue2, my_blue2, my_purple, my_purple, my_blue2, my_blue2, my_blue2]
+my_colors4 = [my_blue2, my_purple, my_purple, my_blue2, my_blue2, my_purple, my_purple, my_blue2, my_blue2, my_blue2]
 alpha = 1e-10
 depth = 6
 anti_mut_epi = 5/4

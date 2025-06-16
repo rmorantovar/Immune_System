@@ -1,9 +1,9 @@
 import sys
-sys.path.append('../library/')
-from functions import*
+sys.path.append('../../my_lib/')
+from functions_2 import*
 plt.rcParams['text.usetex'] = True
 
-Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/'
+Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Immune_System/primary_response/in/'
 #For simulation in C++
 # ./EF_response_v2.x -a 6 -b 0.5 -k 1 -t 0 -T 6.5 -E MJ -C 10000 -B 100000000 -s TACNSEYPNTTKCGRWYC -q 2.0
 # ./EF_response_v3.x -a 6 -b 0.5 -k 1 -t 0 -T 7.5 -E TCRen -C 10000 -B 100000000 -s EYTACNSEYPNTTKCGRWYCGRYPN -q 2.0 --ensemble -N 10
@@ -108,18 +108,19 @@ ps = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5.0]
 project = 'memory_response'
 subproject = 'Z_dynamics'
 
-output_plot = '../../../Figures/'+project+'/'+subproject
+output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/'+project+'/'+subproject
 os.makedirs(output_plot, exist_ok=True)
 
 fig, ax = plt.subplots(figsize = (5*1.62, 1), linewidth = 6, gridspec_kw={'left':0.1, 'right':.9, 'bottom':.1, 'top': .3})
-col_map = 'Reds'
+col_map = 'coolwarm'
 #mpl.colorbar.ColorbarBase(ax, cmap=col_map, orientation = 'vertical')
 # and create another colorbar with:
 colorbar = mpl.colorbar.ColorbarBase(ax, cmap=plt.get_cmap(col_map + '_r'), orientation = 'horizontal')
-colorbar.set_ticks([np.linspace(0, 1, 9)], ps)
+# colorbar.set_ticks([np.linspace(0, 1, 9)])
 #ax.set_xticks(np.linspace(0, 1, 5))
 #ax.set_xticklabels([r'$%.0f \cdot 10^{%d}$'%(10**(np.log10(np.exp(min_E + i*(max_E - min_E)/4))%1), int(np.log10(np.exp(min_E + i*(max_E - min_E)/4)))) for i in np.arange(0, 5, 1)], fontsize = 30)
-ax.set_xticklabels([r'$10^{%d}$'%(int(np.log10(np.exp(min_E + i*(max_E - min_E)/5)))) for i in np.arange(0, 6, 1)], fontsize = 30)
+# ax.set_xticklabels([r'$10^{%d}$'%(int(np.log10(np.exp(min_E + i*(max_E - min_E)/5)))) for i in np.arange(0, 6, 1)], fontsize = 30)
+ax.set_xticks([i for i in np.linspace(0, 1, 9)], [r'$%.1f$'%i for i in ps], fontsize = 26)
 ax.xaxis.tick_top()
 fig.savefig(output_plot + "/colorbar_p.pdf")
 
