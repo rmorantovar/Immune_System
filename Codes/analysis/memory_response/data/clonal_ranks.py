@@ -19,8 +19,8 @@ theta = 1.5  # Values of theta to compare
 gamma = 0.4
 my_colors = [my_blue2, my_purple, my_purple, my_purple, my_cyan]
 my_colors2 = [my_purple, my_purple, my_purple, my_cyan, my_purple, my_blue2]
-my_colors3 = [my_blue2, my_purple, my_purple, my_blue2, my_blue2, my_purple, my_purple, my_blue2, my_blue2, my_blue2]
-my_colors4 = [my_blue2, my_purple, my_purple, my_blue2, my_blue2, my_purple, my_purple, my_blue2, my_blue2, my_blue2]
+my_colors3 = [my_blue2, my_purple, my_purple, my_blue, my_blue2, my_purple, my_purple, my_blue2, my_blue2, my_blue2]
+my_colors4 = [my_blue2, my_purple, my_purple, my_blue, my_blue2, my_purple, my_purple, my_blue2, my_blue2, my_blue2]
 alpha = 1e-10
 depth = 6
 anti_mut_epi = 5/4
@@ -29,6 +29,12 @@ def model(x, m):
     return m * x 
 
 fig_r, ax_r = plt.subplots(figsize=(10*1.62,8), gridspec_kw={'left':0.12, 'right':.8, 'bottom':.15, 'top': 0.94})
+
+my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
+ax_r.set_ylim(bottom = 2e-2, top = 1.1)
+ax_r.set_xlim(right = 4e1)
+ax_r.legend(title = r'$\zeta$', fontsize = 30, title_fontsize = 30, loc = (1, 0))
+fig_r.savefig(output_plot + '/ranking_B_cells_0.pdf', transparent=.5)
 
 #------------ Experiment 1 (Figure 1D) ------------
 
@@ -78,8 +84,14 @@ slope = params[0]
 
 zeta = 3*3.5/(4.5*2.1)
 print(-slope)
-ax_r.plot(np.arange(1, 30), np.exp(0)*np.arange(1, 30)**(slope), color = my_colors[0], alpha = 1)
-ax_r.plot(range(1, max_rank+1), x_avg, color = my_colors[0], alpha = .8, ls = '', marker = '^', label = r'$%.2f$'%(-slope) + ' ; ' + 'GC')
+ax_r.plot(np.arange(1, 30), np.exp(0)*np.arange(1, 30)**(slope), color = my_colors[0], alpha = .8, lw = 3)
+ax_r.plot(range(1, max_rank+1), x_avg, color = my_colors[0], markerfacecolor="None", ms = 18, alpha = 1, ls = '', marker = '*', label = r'$%.2f$'%(-slope))
+
+my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
+ax_r.set_ylim(bottom = 2e-2, top = 1.1)
+ax_r.set_xlim(right = 4e1)
+ax_r.legend(title = r'$\zeta$', fontsize = 30, title_fontsize = 30, loc = (1, 0))
+fig_r.savefig(output_plot + '/ranking_B_cells_1.pdf', transparent=.5)
 
 #------------ Experiment 2 (Figure 4A) ------------
 
@@ -111,7 +123,7 @@ for mouse in mice:
 			x = x[:max_rank]
 		else:
 			x = np.pad(x, (0, max_rank - len(x)), mode='constant')
-		ax_r.step(range(1, max_rank+1), x/largest, color = my_colors2[0], alpha = .5, lw = 0.5)
+		ax_r.step(range(1, max_rank+1), x/largest, color = my_colors2[0], alpha = .5, lw = 0.5) 
 		for k in range(max_rank):
 			if(x[k]>0):
 				counts_per_ranking[k]+=1
@@ -129,8 +141,14 @@ slope = params[0]
 
 zeta = 3*3.5/(4.5*2.1)
 print(-slope)
-ax_r.plot(np.arange(1, 30), np.exp(intercept)*np.arange(1, 30)**(slope), color = my_colors2[0], alpha = 1)
-ax_r.plot(range(1, max_rank+1), x_avg, color = my_colors2[0], alpha = .8, ls = '', marker = '*', label = r'$%.2f$'%(-slope) + ' ; ' + 'GC + m')
+ax_r.plot(np.arange(1, 30), np.exp(intercept)*np.arange(1, 30)**(slope), color = my_colors2[0], alpha = .8, lw = 3)
+ax_r.plot(range(1, max_rank+1), x_avg, color = my_colors2[0], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = 'o', label = r'$%.2f$'%(-slope))
+
+my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
+ax_r.set_ylim(bottom = 2e-2, top = 1.1)
+ax_r.set_xlim(right = 4e1)
+ax_r.legend(title = r'$\zeta$', fontsize = 30, title_fontsize = 30, loc = (1, 0))
+fig_r.savefig(output_plot + '/ranking_B_cells_2.pdf', transparent=.5)
 
 #------------ Experiment 3 (Figure 4C) ------------
 
@@ -141,6 +159,7 @@ data_recall_grouped = data_recall.groupby(['Mouse', 'Phenotype', 'CDR3:']).size(
 # print(data_recall_grouped)
 mice = data_recall_grouped['Mouse'].unique()
 phenotypes = data_recall_grouped['Phenotype'].unique()
+print(phenotypes)
 
 max_ranks = [20, 20]
 for i_ph, ph in enumerate(phenotypes):
@@ -177,13 +196,19 @@ for i_ph, ph in enumerate(phenotypes):
 	slope, intercept = coeffs
 
 	params, pcov = curve_fit(model, np.log(range(1, max_rank+1))[:-5], np.log(x_avg)[:-5])
-	print(np.sqrt(pcov))
+	# print(np.sqrt(pcov))
 	slope = params[0]
 
 	zeta = 3*3.5/(4.5*2.1)
-	print(-slope)
-	ax_r.plot(np.arange(1, 30), np.exp(0)*np.arange(1, 30)**(slope), color = my_colors2[i_ph], alpha = 1)
-	ax_r.plot(range(1, max_rank+1), x_avg, color = my_colors2[i_ph], alpha = .8, ls = '', marker = 'D', label = r'$%.2f$'%(-slope) + ' ; ' + ph)
+	# print(-slope)
+	ax_r.plot(np.arange(1, 30), np.exp(0)*np.arange(1, 30)**(slope), color = my_colors2[i_ph], alpha = .8, lw = 3)
+	ax_r.plot(range(1, max_rank+1), x_avg, color = my_colors2[i_ph], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = '^', label = r'$%.2f$'%(-slope))
+
+my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
+ax_r.set_ylim(bottom = 2e-2, top = 1.1)
+ax_r.set_xlim(right = 4e1)
+ax_r.legend(title = r'$\zeta$', fontsize = 30, title_fontsize = 30, loc = (1, 0))
+fig_r.savefig(output_plot + '/ranking_B_cells_3.pdf', transparent=.5)
 
 #------------ Experiment 4 (Figure 5) ------------
 
@@ -234,8 +259,14 @@ for i_ph, ph in enumerate(phenotypes):
 
 	zeta = 3*3.5/(4.5*2.1)
 	print(-slope)
-	ax_r.plot(np.arange(1, 30), np.exp(0)*np.arange(1, 30)**(slope), color = my_colors3[i_ph], alpha = 1)
-	ax_r.plot(range(1, max_rank+1), x_avg, color = my_colors3[i_ph], alpha = .8, ls = '', marker = 'o', label = r'$%.2f$'%(-slope) + ' ; ' + ph)
+	ax_r.plot(np.arange(1, 30), np.exp(0)*np.arange(1, 30)**(slope), color = my_colors3[i_ph], alpha = .8, lw = 3)
+	ax_r.plot(range(1, max_rank+1), x_avg, color = my_colors3[i_ph], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = 'D', label = r'$%.2f$'%(-slope))
+
+my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
+ax_r.set_ylim(bottom = 2e-2, top = 1.1)
+ax_r.set_xlim(right = 4e1)
+ax_r.legend(title = r'$\zeta$', fontsize = 30, title_fontsize = 30, loc = (1, 0))
+fig_r.savefig(output_plot + '/ranking_B_cells_4.pdf', transparent=.5)
 
 # #------------ Experiment 4 (day 9) ------------
 
@@ -289,13 +320,9 @@ for i_ph, ph in enumerate(phenotypes):
 # 	ax_r.plot(np.arange(1, 30), np.exp(0)*np.arange(1, 30)**(slope), color = my_colors4[i_ph], alpha = 1)
 # 	ax_r.plot(range(1, max_rank+1), x_avg, color = my_colors4[i_ph], alpha = .8, ls = '', marker = '.', label = r'$%.2f\pm %.3f$'%(-slope, np.sqrt(pcov[0][0])) + ' ; ' + ph)
 
-my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
-ax_r.set_ylim(bottom = 1e-2, top = 1.1)
-ax_r.legend(title = r'$\zeta$', fontsize = 24, title_fontsize = 26, loc = (1, 0))
-fig_r.savefig(output_plot + '/ranking_B_cells.pdf', transparent=.2)
 
 my_plot_layout(ax =ax_r, yscale = 'linear', xscale = 'linear', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r.set_ylim(bottom = 1e-2, top = 1.1)
 ax_r.legend(title = r'$\zeta$', fontsize = 11, title_fontsize = 13)
-fig_r.savefig(output_plot + '/ranking_B_cells_2.pdf', transparent=.2)
+fig_r.savefig(output_plot + '/ranking_B_cells_linear.pdf', transparent=.2)
 
