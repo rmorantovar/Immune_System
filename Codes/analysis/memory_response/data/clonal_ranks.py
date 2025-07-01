@@ -24,6 +24,7 @@ my_colors4 = [my_blue2, my_purple, my_purple, my_blue, my_blue2, my_purple, my_p
 alpha = 1e-10
 depth = 6
 anti_mut_epi = 5/4
+n_ensemble = 10000
 
 def model(x, m):
     return m * x 
@@ -33,240 +34,367 @@ fig_r, ax_r = plt.subplots(figsize=(10*1.62,8), gridspec_kw={'left':0.12, 'right
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
 ax_r.set_xlim(right = 4e1)
-ax_r.legend(title = r'$\zeta$', fontsize = 30, title_fontsize = 30, loc = (1, 0))
+# ax_r.legend(title = r'$\zeta$', fontsize = 30, title_fontsize = 30, loc = (1, 0))
 fig_r.savefig(output_plot + '/ranking_B_cells_0.pdf', transparent=.5)
 
 #------------ Experiment 1 (Figure 1D) ------------
-
+fig_zeta, ax_zeta = plt.subplots(figsize=(10*1.62,8), gridspec_kw={'left':0.12, 'right':.8, 'bottom':.15, 'top': 0.94})
 data_primary = pd.read_excel(root_dir + "/1-s2.0-S0092867419313170-mmc1.xlsx", sheet_name = 'Photoactivation CGG', header = 1)
 data_primary = data_primary[(data_primary['Figure']==1)]
-# data_primary_grouped = data_primary.groupby(['Mouse', 'V', 'J', 'D']).size().reset_index(name='count')
-data_primary_grouped = data_primary.groupby(['Mouse', 'CDR3:']).size().reset_index(name='count')
+data_primary_grouped = data_primary.groupby(['Mouse', 'V', 'J', 'D']).size().reset_index(name='count')
+# data_primary_grouped = data_primary.groupby(['Mouse', 'CDR3:']).size().reset_index(name='count')
 mice = data_primary_grouped['Mouse'].unique()
 # phenotypes = data_primary_grouped['Phenotype'].unique()
 
 # for i_ph, ph in enumerate(phenotypes):
 # 	max_rank = max_ranks[i_ph]
-max_rank = 30
-x_avg = np.zeros(max_rank)
-counts_per_ranking = np.zeros(max_rank)
-for mouse in mice:
-	data_mouse = data_primary_grouped[data_primary_grouped['Mouse']==mouse]
-	# CDR3, counts = np.unique(np.array((list(data_mouse['CDR3:']))), return_counts = True)
-	counts = data_mouse['count'].to_numpy()
-	# print(counts)
-	N = np.sum(counts)
-	S_i = -np.sum((counts/N)*np.log((counts/N)))
+max_rank = 100
+zetas = []
+for rep in tqdm(range(n_ensemble)):
+	if rep == n_ensemble - 1:
+		mice_rep = mice
+		# print(mice_rep)
+	else:
+		mice_rep = np.random.choice(mice, len(mice), replace = True)
+	
+	x_avg = np.zeros(max_rank)
+	counts_per_ranking = np.zeros(max_rank)
+	min_max_rank_mouse = max_rank
+	max_max_rank_mouse = 0
+	for mouse in mice_rep:
+		data_mouse = data_primary_grouped[data_primary_grouped['Mouse']==mouse]
+		# CDR3, counts = np.unique(np.array((list(data_mouse['CDR3:']))), return_counts = True)
+		counts = data_mouse['count'].to_numpy()
+		# print(counts)
+		N = np.sum(counts)
+		S_i = -np.sum((counts/N)*np.log((counts/N)))
 
-	if(N>0):
 		sort_index = counts.argsort()
 		largest = np.max(counts)
 		x = np.flip(counts[sort_index])
+		max_rank_mouse = len(x)
+		if rep == n_ensemble - 1:
+			ax_r.step(range(1, max_rank_mouse+1), x/largest, color = my_colors[0], alpha = .5, lw = 0.5)
+		
 		if len(x)>max_rank:
 			x = x[:max_rank]
 		else:
 			x = np.pad(x, (0, max_rank - len(x)), mode='constant')
-		ax_r.step(range(1, max_rank+1), x/largest, color = my_colors[0], alpha = .5, lw = 0.5)
+
+		if max_rank_mouse < min_max_rank_mouse:
+			min_max_rank_mouse = max_rank_mouse
+		if max_rank_mouse > max_max_rank_mouse:
+			max_max_rank_mouse = max_rank_mouse
+		
 		for k in range(max_rank):
 			if(x[k]>0):
 				counts_per_ranking[k]+=1
 				x_avg[k]+=x[k]/largest
 
-x_avg/=counts_per_ranking
+	max_rank_eff = len(counts_per_ranking[counts_per_ranking>2])
 
-# Linear fit
-coeffs = np.polyfit(np.log(range(1, max_rank+1)), np.log(x_avg), 1)  # 1 = degree of the polynomial (linear)
-slope, intercept = coeffs
+	x_avg = x_avg[:max_rank_eff]/counts_per_ranking[:max_rank_eff]
 
-params, pcov = curve_fit(model, np.log(range(1, max_rank+1)), np.log(x_avg))
-print(np.sqrt(pcov))
-slope = params[0]
+	# Linear fit
+	# coeffs = np.polyfit(np.log(range(1, max_rank+1)), np.log(x_avg), 1)  # 1 = degree of the polynomial (linear)
+	# slope, intercept = coeffs
 
-zeta = 3*3.5/(4.5*2.1)
-print(-slope)
-ax_r.plot(np.arange(1, 30), np.exp(0)*np.arange(1, 30)**(slope), color = my_colors[0], alpha = .8, lw = 3)
-ax_r.plot(range(1, max_rank+1), x_avg, color = my_colors[0], markerfacecolor="None", ms = 18, alpha = 1, ls = '', marker = '*', label = r'$%.2f$'%(-slope))
+	params, pcov = curve_fit(model, np.log(range(1, max_rank_eff+1)), np.log(x_avg))
+	# print(np.sqrt(pcov))
+	slope = params[0]
+
+	zeta = 3*3.5/(4.5*2.1)
+	zetas.append(-slope)
+	# print(-slope)
+
+	if rep == n_ensemble - 1:
+		ax_r.plot(range(1, max_rank_eff+1), x_avg, color = my_colors[0], markerfacecolor="None", ms = 18, alpha = 1, ls = '', marker = '*', label = r'$%.2f$'%(np.mean(zetas)))
+
+ax_r.plot(np.arange(1, max_rank_eff), np.exp(0)*np.arange(1, max_rank_eff)**(-np.mean(zetas)), color = my_colors[0], alpha = .8, lw = 3)
+ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 30), alpha = .8, label = r'$\mathrm{GC}$', color = my_colors[0], density = True, histtype = 'stepfilled')
+
 
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
-ax_r.set_xlim(right = 4e1)
+ax_r.set_xlim(right = 5e1)
 ax_r.legend(title = r'$\zeta$', fontsize = 30, title_fontsize = 30, loc = (1, 0))
 fig_r.savefig(output_plot + '/ranking_B_cells_1.pdf', transparent=.5)
+
+
+my_plot_layout(ax =ax_zeta, yscale = 'linear', xscale = 'linear', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
+# ax_zeta.set_ylim(bottom = 2e-2, top = 1.1)
+ax_zeta.set_xlim(left = 0.2, right = 1.6)
+ax_zeta.legend(title = r'$\mathrm{sub-pop}$', fontsize = 30, title_fontsize = 30, loc = (1, 0))
+fig_zeta.savefig(output_plot + '/zetas_1.pdf', transparent=.5)
 
 #------------ Experiment 2 (Figure 4A) ------------
 
 data_recall = pd.read_excel(root_dir + "/1-s2.0-S0092867419313170-mmc1.xlsx", sheet_name = 'Fate-mapping CGG', header = 1)
 data_recall = data_recall[(data_recall['Figure']=='4A')]
-# data_recall_grouped = data_recall.groupby(['Mouse', 'V', 'J', 'D']).size().reset_index(name='count')
-data_recall_grouped = data_recall.groupby(['Mouse', 'CDR3:']).size().reset_index(name='count')
+data_recall_grouped = data_recall.groupby(['Mouse', 'V', 'J', 'D']).size().reset_index(name='count')
+# data_recall_grouped = data_recall.groupby(['Mouse', 'CDR3:']).size().reset_index(name='count')
 mice = data_recall_grouped['Mouse'].unique()
 # phenotypes = data_recall_grouped['Phenotype'].unique()
 
 # for i_ph, ph in enumerate(phenotypes):
-max_rank = 18
-x_avg = np.zeros(max_rank)
-counts_per_ranking = np.zeros(max_rank)
-# data_ph = data_recall_grouped[(data_recall_grouped['Phenotype']==ph)]
-for mouse in mice:
-	data_mouse = data_recall_grouped[data_recall_grouped['Mouse']==mouse]
-	# CDR3, counts = np.unique(np.array((list(data_mouse['CDR3:']))), return_counts = True)
-	counts = data_mouse['count'].to_numpy()
-	# print(counts)
-	N = np.sum(counts)
-	S_i = -np.sum((counts/N)*np.log((counts/N)))
+max_rank = 100
+zetas = []
+for rep in tqdm(range(n_ensemble)):
 
-	if(N>0):
+	if rep == n_ensemble - 1:
+		mice_rep = mice
+		# print(mice_rep)
+	else:
+		mice_rep = np.random.choice(mice, len(mice), replace = True)
+	x_avg = np.zeros(max_rank)
+	counts_per_ranking = np.zeros(max_rank)
+	# data_ph = data_recall_grouped[(data_recall_grouped['Phenotype']==ph)]
+	min_max_rank_mouse = max_rank
+	max_max_rank_mouse = 0
+	for mouse in mice_rep:
+		data_mouse = data_recall_grouped[data_recall_grouped['Mouse']==mouse]
+		# CDR3, counts = np.unique(np.array((list(data_mouse['CDR3:']))), return_counts = True)
+		counts = data_mouse['count'].to_numpy()
+		# print(counts)
+		N = np.sum(counts)
+		S_i = -np.sum((counts/N)*np.log((counts/N)))
+
 		sort_index = counts.argsort()
 		largest = np.max(counts)
 		x = np.flip(counts[sort_index])
-		if len(x)>max_rank:
+		max_rank_mouse = len(x)
+		if rep == n_ensemble - 1:
+			ax_r.step(range(1, max_rank_mouse+1), x/largest, color = my_colors2[0], alpha = .5, lw = 0.5)
+		
+		if max_rank_mouse>max_rank:
 			x = x[:max_rank]
 		else:
-			x = np.pad(x, (0, max_rank - len(x)), mode='constant')
-		ax_r.step(range(1, max_rank+1), x/largest, color = my_colors2[0], alpha = .5, lw = 0.5) 
+			x = np.pad(x, (0, max_rank - max_rank_mouse), mode='constant')
+		 
+		if max_rank_mouse < min_max_rank_mouse:
+			min_max_rank_mouse = max_rank_mouse
+		if max_rank_mouse > max_max_rank_mouse:
+			max_max_rank_mouse = max_rank_mouse
+
 		for k in range(max_rank):
 			if(x[k]>0):
 				counts_per_ranking[k]+=1
 				x_avg[k]+=x[k]/largest
 
-x_avg/=counts_per_ranking
+	max_rank_eff = len(counts_per_ranking[counts_per_ranking>2])
 
-# Linear fit
-coeffs = np.polyfit(np.log(range(1, max_rank+1)), np.log(x_avg), 1)  # 1 = degree of the polynomial (linear)
-slope, intercept = coeffs
+	x_avg = x_avg[:max_rank_eff]/counts_per_ranking[:max_rank_eff]
 
-params, pcov = curve_fit(model, np.log(range(1, max_rank+1)), np.log(x_avg))
-print(np.sqrt(pcov))
-slope = params[0]
+	# Linear fit
+	# coeffs = np.polyfit(np.log(range(1, max_rank+1)), np.log(x_avg), 1)  # 1 = degree of the polynomial (linear)
+	# slope, intercept = coeffs
 
-zeta = 3*3.5/(4.5*2.1)
-print(-slope)
-ax_r.plot(np.arange(1, 30), np.exp(intercept)*np.arange(1, 30)**(slope), color = my_colors2[0], alpha = .8, lw = 3)
-ax_r.plot(range(1, max_rank+1), x_avg, color = my_colors2[0], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = 'o', label = r'$%.2f$'%(-slope))
+	params, pcov = curve_fit(model, np.log(range(1, max_rank_eff+1)), np.log(x_avg))
+	# print(np.sqrt(pcov))
+	slope = params[0]
+	zetas.append(-slope)
+	zeta = 3*3.5/(4.5*2.1)
+	if rep == n_ensemble - 1:
+		ax_r.plot(range(1, max_rank_eff+1), x_avg, color = my_colors2[0], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = 'o', label = r'$%.2f$'%(np.mean(zetas)))
+
+ax_r.plot(np.arange(1, max_rank_eff), np.arange(1, max_rank_eff)**(-np.mean(zetas)), color = my_colors2[0], alpha = .8, lw = 3)
+ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 30), alpha = .8, label = r'$\mathrm{GC+m}$', color = my_colors2[0], density = True, histtype = 'stepfilled')
 
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
-ax_r.set_xlim(right = 4e1)
+ax_r.set_xlim(right = 5e1)
 ax_r.legend(title = r'$\zeta$', fontsize = 30, title_fontsize = 30, loc = (1, 0))
 fig_r.savefig(output_plot + '/ranking_B_cells_2.pdf', transparent=.5)
+
+my_plot_layout(ax =ax_zeta, yscale = 'linear', xscale = 'linear', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
+# ax_zeta.set_ylim(bottom = 2e-2, top = 1.1)
+ax_zeta.set_xlim(left = 0.2, right = 1.6)
+ax_zeta.legend(title = r'$\mathrm{sub-pop}$', fontsize = 30, title_fontsize = 30, loc = (1, 0))
+fig_zeta.savefig(output_plot + '/zetas_2.pdf', transparent=.5)
 
 #------------ Experiment 3 (Figure 4C) ------------
 
 data_recall = pd.read_excel(root_dir + "/1-s2.0-S0092867419313170-mmc1.xlsx", sheet_name = 'Fate-mapping CGG', header = 1)
 data_recall = data_recall[(data_recall['Figure']=='4C-H')]
-# data_recall_grouped = data_recall.groupby(['Mouse', 'Phenotype', 'V', 'J', 'D']).size().reset_index(name='count')
-data_recall_grouped = data_recall.groupby(['Mouse', 'Phenotype', 'CDR3:']).size().reset_index(name='count')
+data_recall_grouped = data_recall.groupby(['Mouse', 'Phenotype', 'V', 'J', 'D']).size().reset_index(name='count')
+# data_recall_grouped = data_recall.groupby(['Mouse', 'Phenotype', 'CDR3:']).size().reset_index(name='count')
 # print(data_recall_grouped)
 mice = data_recall_grouped['Mouse'].unique()
 phenotypes = data_recall_grouped['Phenotype'].unique()
 print(phenotypes)
 
-max_ranks = [20, 20]
+max_ranks = [100, 100]
 for i_ph, ph in enumerate(phenotypes):
 	max_rank = max_ranks[i_ph]
-	x_avg = np.zeros(max_rank)
-	counts_per_ranking = np.zeros(max_rank)
-	data_ph = data_recall_grouped[(data_recall_grouped['Phenotype']==ph)]
-	for mouse in mice:
-		data_mouse = data_ph[data_ph['Mouse']==mouse]
-		# CDR3, counts = np.unique(np.array((list(data_mouse['CDR3:']))), return_counts = True)
-		counts = data_mouse['count'].to_numpy()
-		# print(counts)
-		N = np.sum(counts)
-		S_i = -np.sum((counts/N)*np.log((counts/N)))
+	zetas = []
+	for rep in tqdm(range(n_ensemble)):
 
-		if(N>0):
+		if rep == n_ensemble - 1:
+			mice_rep = mice
+			# print(mice_rep)
+		else:
+			mice_rep = np.random.choice(mice, len(mice), replace = True)
+
+		x_avg = np.zeros(max_rank)
+		counts_per_ranking = np.zeros(max_rank)
+		data_ph = data_recall_grouped[(data_recall_grouped['Phenotype']==ph)]
+		min_max_rank_mouse = max_rank
+		max_max_rank_mouse
+		for mouse in mice_rep:
+			data_mouse = data_ph[data_ph['Mouse']==mouse]
+			# CDR3, counts = np.unique(np.array((list(data_mouse['CDR3:']))), return_counts = True)
+			counts = data_mouse['count'].to_numpy()
+			# print(counts)
+			N = np.sum(counts)
+			S_i = -np.sum((counts/N)*np.log((counts/N)))
+
 			sort_index = counts.argsort()
 			largest = np.max(counts)
 			x = np.flip(counts[sort_index])
+			max_rank_mouse = len(x)
+			if rep == n_ensemble - 1:
+				ax_r.step(range(1, max_rank_mouse+1), x/largest, color = my_colors2[i_ph], alpha = .5, lw = 0.5)
+			
 			if len(x)>max_rank:
 				x = x[:max_rank]
 			else:
 				x = np.pad(x, (0, max_rank - len(x)), mode='constant')
-			ax_r.step(range(1, max_rank+1), x/largest, color = my_colors2[i_ph], alpha = .5, lw = 0.5)
+			
+			if max_rank_mouse < min_max_rank_mouse:
+				min_max_rank_mouse = max_rank_mouse
+			if max_rank_mouse > max_max_rank_mouse:
+				max_max_rank_mouse = max_rank_mouse
+
 			for k in range(max_rank):
 				if(x[k]>0):
 					counts_per_ranking[k]+=1
 					x_avg[k]+=x[k]/largest
 
-	x_avg/=counts_per_ranking
+		max_rank_eff = len(counts_per_ranking[counts_per_ranking>2])
 
-	# Linear fit
-	coeffs = np.polyfit(np.log(range(1, max_rank+1)), np.log(x_avg), 1)  # 1 = degree of the polynomial (linear)
-	slope, intercept = coeffs
+		x_avg = x_avg[:max_rank_eff]/counts_per_ranking[:max_rank_eff]
 
-	params, pcov = curve_fit(model, np.log(range(1, max_rank+1))[:-5], np.log(x_avg)[:-5])
-	# print(np.sqrt(pcov))
-	slope = params[0]
+		# Linear fit
+		# coeffs = np.polyfit(np.log(range(1, max_rank+1)), np.log(x_avg), 1)  # 1 = degree of the polynomial (linear)
+		# slope, intercept = coeffs
 
-	zeta = 3*3.5/(4.5*2.1)
-	# print(-slope)
-	ax_r.plot(np.arange(1, 30), np.exp(0)*np.arange(1, 30)**(slope), color = my_colors2[i_ph], alpha = .8, lw = 3)
-	ax_r.plot(range(1, max_rank+1), x_avg, color = my_colors2[i_ph], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = '^', label = r'$%.2f$'%(-slope))
+		params, pcov = curve_fit(model, np.log(range(1, max_rank_eff+1)), np.log(x_avg))
+		# print(np.sqrt(pcov))
+		slope = params[0]
+		zetas.append(-slope)
+		zeta = 3*3.5/(4.5*2.1)
+		# print(-slope)
+		
+		if rep == n_ensemble - 1:
+			ax_r.plot(range(1, max_rank_eff+1), x_avg, color = my_colors2[i_ph], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = '^', label = r'$%.2f$'%(np.mean(zetas)))
+
+	ax_r.plot(np.arange(1, max_rank_eff), np.exp(0)*np.arange(1, max_rank_eff)**(-np.mean(zetas)), color = my_colors2[i_ph], alpha = .8, lw = 3)
+	ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 30), alpha = .8, label = ph, color = my_colors2[i_ph], density = True, histtype = 'stepfilled')
 
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
-ax_r.set_xlim(right = 4e1)
+ax_r.set_xlim(right = 5e1)
 ax_r.legend(title = r'$\zeta$', fontsize = 30, title_fontsize = 30, loc = (1, 0))
 fig_r.savefig(output_plot + '/ranking_B_cells_3.pdf', transparent=.5)
+
+my_plot_layout(ax =ax_zeta, yscale = 'linear', xscale = 'linear', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
+# ax_zeta.set_ylim(bottom = 2e-2, top = 1.1)
+ax_zeta.set_xlim(left = 0.2, right = 1.6)
+ax_zeta.legend(title = r'$\mathrm{sub-pop}$', fontsize = 30, title_fontsize = 30, loc = (1, 0))
+fig_zeta.savefig(output_plot + '/zetas_3.pdf', transparent=.5)
 
 #------------ Experiment 4 (Figure 5) ------------
 
 data_infection = pd.read_excel(root_dir + "/1-s2.0-S0092867419313170-mmc1.xlsx", sheet_name = 'Influenza', header = 2)
-# data_recall_grouped = data_infection.groupby(['Experiment / Mouse', 'Sort2', 'V', 'J', 'D']).size().reset_index(name='count')
-data_recall_grouped = data_infection.groupby(['Experiment / Mouse', 'Sort2', 'CDR3:']).size().reset_index(name='count')
+data_recall_grouped = data_infection.groupby(['Experiment / Mouse', 'Sort2', 'V', 'J', 'D']).size().reset_index(name='count')
+# data_recall_grouped = data_infection.groupby(['Experiment / Mouse', 'Sort2', 'CDR3:']).size().reset_index(name='count')
 
 mice = data_recall_grouped['Experiment / Mouse'].unique()
 phenotypes = data_recall_grouped['Sort2'].unique()
 print(phenotypes)
 
-max_ranks = [30, 22, 25, 25, 25]
+max_ranks = [100, 100, 100, 100, 100]
+# max_ranks = [10, 10, 10, 10, 10]
 for i_ph, ph in enumerate(phenotypes):
 	max_rank = max_ranks[i_ph]
-	x_avg = np.zeros(max_rank)
-	counts_per_ranking = np.zeros(max_rank)
-	data_ph = data_recall_grouped[(data_recall_grouped['Sort2']==ph)]
-	for mouse in mice:
-		data_mouse = data_ph[data_ph['Experiment / Mouse']==mouse]
-		# CDR3, counts = np.unique(np.array((list(data_mouse['CDR3:']))), return_counts = True)
-		counts = data_mouse['count'].to_numpy()
-		# print(counts)
-		N = np.sum(counts)
-		S_i = -np.sum((counts/N)*np.log((counts/N)))
+	zetas = []
 
-		if(N>0):
+	for rep in tqdm(range(n_ensemble)):
+
+		if rep == n_ensemble - 1:
+			mice_rep = mice
+			# print(mice_rep)
+		else:
+			mice_rep = np.random.choice(mice, len(mice), replace = True)
+
+		x_avg = np.zeros(max_rank)
+		counts_per_ranking = np.zeros(max_rank)
+		data_ph = data_recall_grouped[(data_recall_grouped['Sort2']==ph)]
+		min_max_rank_mouse = max_rank
+		max_max_rank_mouse = 0
+		for mouse in mice_rep:
+			data_mouse = data_ph[data_ph['Experiment / Mouse']==mouse]
+			# CDR3, counts = np.unique(np.array((list(data_mouse['CDR3:']))), return_counts = True)
+			counts = data_mouse['count'].to_numpy()
+			# print(counts)
+			N = np.sum(counts)
+			S_i = -np.sum((counts/N)*np.log((counts/N)))
+
 			sort_index = counts.argsort()
 			largest = np.max(counts)
 			x = np.flip(counts[sort_index])
+			max_rank_mouse = len(x)
+			if rep == n_ensemble - 1:
+				ax_r.step(range(1, max_rank_mouse+1), x/largest, color = my_colors3[i_ph], alpha = .5, lw = 0.5)
+			
 			if len(x)>max_rank:
 				x = x[:max_rank]
 			else:
 				x = np.pad(x, (0, max_rank - len(x)), mode='constant')
-			ax_r.step(range(1, max_rank+1), x/largest, color = my_colors3[i_ph], alpha = .5, lw = 0.5)
+			
+			if max_rank_mouse < min_max_rank_mouse:
+				min_max_rank_mouse = max_rank_mouse
+			if max_rank_mouse > max_max_rank_mouse:
+				max_max_rank_mouse = max_rank_mouse
+
 			for k in range(max_rank):
 				if(x[k]>0):
 					counts_per_ranking[k]+=1
 					x_avg[k]+=x[k]/largest
 
-	x_avg/=counts_per_ranking
+		max_rank_eff = len(counts_per_ranking[counts_per_ranking>2])
 
-	# Linear fit
-	coeffs = np.polyfit(np.log(range(1, max_rank+1)), np.log(x_avg), 1)  # 1 = degree of the polynomial (linear)
-	slope, intercept = coeffs
-	params, pcov = curve_fit(model, np.log(range(1, max_rank+1))[:-10], np.log(x_avg)[:-10])
-	print(np.sqrt(pcov))
-	slope = params[0]
+		x_avg = x_avg[:max_rank_eff]/counts_per_ranking[:max_rank_eff]
 
-	zeta = 3*3.5/(4.5*2.1)
-	print(-slope)
-	ax_r.plot(np.arange(1, 30), np.exp(0)*np.arange(1, 30)**(slope), color = my_colors3[i_ph], alpha = .8, lw = 3)
-	ax_r.plot(range(1, max_rank+1), x_avg, color = my_colors3[i_ph], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = 'D', label = r'$%.2f$'%(-slope))
+		# Linear fit
+		# coeffs = np.polyfit(np.log(range(1, max_rank+1)), np.log(x_avg), 1)  # 1 = degree of the polynomial (linear)
+		# slope, intercept = coeffs
+
+		params, pcov = curve_fit(model, np.log(range(1, max_rank_eff+1)), np.log(x_avg))
+		slope = params[0]
+
+		zetas.append(-slope)
+
+		zeta = 3*3.5/(4.5*2.1)
+		
+		if rep == n_ensemble - 1:
+			ax_r.plot(range(1, max_rank_eff+1), x_avg, color = my_colors3[i_ph], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = 'D', label = r'$%.2f$'%(np.mean(zetas)))
+
+	ax_r.plot(np.arange(1, max_rank_eff), np.exp(0)*np.arange(1, max_rank_eff)**(-np.mean(zetas)), color = my_colors3[i_ph], alpha = .8, lw = 3)
+	ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 30), alpha = .8, label = ph, color = my_colors3[i_ph], density = True, histtype = 'stepfilled')
 
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
-ax_r.set_xlim(right = 4e1)
+ax_r.set_xlim(right = 5e1)
 ax_r.legend(title = r'$\zeta$', fontsize = 30, title_fontsize = 30, loc = (1, 0))
 fig_r.savefig(output_plot + '/ranking_B_cells_4.pdf', transparent=.5)
+
+my_plot_layout(ax =ax_zeta, yscale = 'linear', xscale = 'linear', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
+# ax_zeta.set_ylim(bottom = 2e-2, top = 1.1)
+ax_zeta.set_xlim(left = 0.2, right = 1.6)
+ax_zeta.legend(title = r'$\mathrm{sub-pop}$', fontsize = 30, title_fontsize = 30, loc = (1, 0))
+fig_zeta.savefig(output_plot + '/zetas_4.pdf', transparent=.5)
+
 
 # #------------ Experiment 4 (day 9) ------------
 
