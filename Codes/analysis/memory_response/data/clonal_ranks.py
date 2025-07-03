@@ -24,7 +24,7 @@ my_colors4 = [my_blue2, my_purple, my_purple, my_blue, my_blue2, my_purple, my_p
 alpha = 1e-10
 depth = 6
 anti_mut_epi = 5/4
-n_ensemble = 10000
+n_ensemble = 1000
 
 color_vals = np.linspace(0, 2, 200)
 cmap = plt.get_cmap('managua_r')
@@ -375,7 +375,7 @@ for i_ph, ph in enumerate(phenotypes):
 					counts_per_ranking[k]+=1
 					x_avg[k]+=x[k]/largest
 
-		max_rank_eff = len(counts_per_ranking[counts_per_ranking>3])
+		max_rank_eff = len(counts_per_ranking[counts_per_ranking>2])
 
 		x_avg = x_avg[:max_rank_eff]/counts_per_ranking[:max_rank_eff]
 
