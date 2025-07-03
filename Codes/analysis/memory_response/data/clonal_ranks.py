@@ -24,7 +24,7 @@ my_colors4 = [my_blue2, my_purple, my_purple, my_blue, my_blue2, my_purple, my_p
 alpha = 1e-10
 depth = 6
 anti_mut_epi = 5/4
-n_ensemble = 1000
+n_ensemble = 10000
 
 color_vals = np.linspace(0, 2, 200)
 cmap = plt.get_cmap('managua_r')
@@ -117,8 +117,8 @@ for j in range(len(mice)):
 
 ax_r.plot(range(1, max_rank_eff+1), x_avg, color = my_colors_alpha[int(np.mean(zetas)*100)], markerfacecolor="None", ms = 18, alpha = 1, ls = '', marker = '*', label = r'$%.2f$'%(np.mean(zetas)))
 
-ax_r.plot(np.arange(1, max_rank_eff), np.exp(0)*np.arange(1, max_rank_eff)**(-np.mean(zetas)), color = my_colors_alpha[int(np.mean(zetas)*100)], alpha = .8, lw = 3)
-ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 30), alpha = .7, label = r'$\mathrm{GC}$', color = my_colors_alpha[int(np.mean(zetas)*100)], density = True, histtype = 'stepfilled', edgecolor = 'k')
+ax_r.plot(np.arange(1, max_rank_eff + 1), np.exp(0)*np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = my_colors_alpha[int(np.mean(zetas)*100)], alpha = .8, lw = 3)
+ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r'$\mathrm{GC}$', color = my_colors_alpha[int(np.mean(zetas)*100)], density = True, histtype = 'stepfilled', edgecolor = 'k')
 
 
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
@@ -207,8 +207,8 @@ for rep in tqdm(range(n_ensemble)):
 for j in range(len(mice)):
 	ax_r.lines[-(j+1)].set_color(my_colors_alpha[int(np.mean(zetas)*100)])
 
-ax_r.plot(np.arange(1, max_rank_eff), np.arange(1, max_rank_eff)**(-np.mean(zetas)), color = my_colors_alpha[int(np.mean(zetas)*100)], alpha = .8, lw = 3)
-ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 30), alpha = .7, label = r'$\mathrm{GC+m}$', color = my_colors_alpha[int(np.mean(zetas)*100)], density = True, histtype = 'stepfilled', edgecolor = 'k')
+ax_r.plot(np.arange(1, max_rank_eff + 1), np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = my_colors_alpha[int(np.mean(zetas)*100)], alpha = .8, lw = 3)
+ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r'$\mathrm{GC+m}$', color = my_colors_alpha[int(np.mean(zetas)*100)], density = True, histtype = 'stepfilled', edgecolor = 'k')
 
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
@@ -301,8 +301,8 @@ for i_ph, ph in enumerate(phenotypes):
 	for j in range(len(mice)):
 		ax_r.lines[-(j+1)].set_color(my_colors_alpha[int(np.mean(zetas)*100)])
 
-	ax_r.plot(np.arange(1, max_rank_eff), np.exp(0)*np.arange(1, max_rank_eff)**(-np.mean(zetas)), color = my_colors_alpha[int(np.mean(zetas)*100)], alpha = .8, lw = 3)
-	ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 30), alpha = .7, label = ph, color = my_colors_alpha[int(np.mean(zetas)*100)], density = True, histtype = 'stepfilled', edgecolor = 'k')
+	ax_r.plot(np.arange(1, max_rank_eff + 1), np.exp(0)*np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = my_colors_alpha[int(np.mean(zetas)*100)], alpha = .8, lw = 3)
+	ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r"$\mathrm{" + ph + "}$", color = my_colors_alpha[int(np.mean(zetas)*100)], density = True, histtype = 'stepfilled', edgecolor = 'k')
 
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
@@ -396,8 +396,8 @@ for i_ph, ph in enumerate(phenotypes):
 	for j in range(len(mice)):
 		ax_r.lines[-(j+1)].set_color(my_colors_alpha[int(np.mean(zetas)*100)])
 
-	ax_r.plot(np.arange(1, max_rank_eff), np.exp(0)*np.arange(1, max_rank_eff)**(-np.mean(zetas)), color = my_colors_alpha[int(np.mean(zetas)*100)], alpha = .8, lw = 3)
-	ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 30), alpha = .7, label = ph, color = my_colors_alpha[int(np.mean(zetas)*100)], density = True, histtype = 'stepfilled', edgecolor = 'k')
+	ax_r.plot(np.arange(1, max_rank_eff + 1), np.exp(0)*np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = my_colors_alpha[int(np.mean(zetas)*100)], alpha = .8, lw = 3)
+	ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r"$\mathrm{" + ph + "}$", color = my_colors_alpha[int(np.mean(zetas)*100)], density = True, histtype = 'stepfilled', edgecolor = 'k')
 
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
