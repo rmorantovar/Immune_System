@@ -35,8 +35,7 @@ def model(x, m):
 
 # fig_r, ax_r = plt.subplots(figsize=(10*1.62,8), gridspec_kw={'left':0.12, 'right':.8, 'bottom':.15, 'top': 0.94})
 fig_r, ax_r = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'right':.95, 'bottom':.15, 'top': 0.94})
-
-fig_r2, ax_r2 = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'right':.95, 'bottom':.15, 'top': 0.94})
+fig_r2, ax_r2 = plt.subplots(figsize=(8,8), gridspec_kw={'left':0.15, 'right':.98, 'bottom':.15, 'top': 0.98})
 
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
@@ -569,13 +568,13 @@ ax_zeta2.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r'$\m
 my_plot_layout(ax =ax_r2, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r2.set_ylim(bottom = 2e-2, top = 1.1)
 ax_r2.set_xlim(right = 5e1)
-ax_r2.legend(title = r'$\zeta$', fontsize = 30, title_fontsize = 30, loc = 3)#, loc = (1, 0))
+ax_r2.legend(title = r'$\zeta$', fontsize = 24, title_fontsize = 30, loc = 3)#, loc = (1, 0))
 fig_r2.savefig(output_plot + '/ranking_B_cells_proposal.pdf', transparent=.5)
 
 my_plot_layout(ax =ax_zeta2, yscale = 'linear', xscale = 'linear', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 # ax_zeta2.set_ylim(bottom = 2e-2, top = 1.1)
 ax_zeta2.set_xlim(left = 0.2, right = 1.6)
-ax_zeta2.legend(title = r'$\mathrm{sub-pop}$', fontsize = 30, title_fontsize = 30, loc = (1, 0))
+ax_zeta2.legend(title = r'$\mathrm{sub-pop}$', fontsize = 22, title_fontsize = 30, loc = (1, 0))
 fig_zeta2.savefig(output_plot + '/zetas_proposal.pdf', transparent=.5)
 
 
