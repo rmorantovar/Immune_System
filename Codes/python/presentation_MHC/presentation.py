@@ -1,5 +1,5 @@
 import sys
-sys.path.append('../../lib/')
+sys.path.append('../../my_lib/')
 from funcs import*
 import random
 
@@ -106,7 +106,7 @@ if __name__ == "__main__":
     kin = 10
     kout = 0.1
     kon_rhoM = 10
-    ksteps = np.logspace(-2, 0, 3)
+    ksteps = np.logspace(-1, 2, 3)
     koffs = np.logspace(-4, 5, 20)
     ptotal = kin/kout
 
@@ -124,10 +124,7 @@ if __name__ == "__main__":
             # Run Gillespie simulation
             times, states = gillespie_algorithm(initial_state, [reaction1, reaction2, reaction3, reaction4, reaction5, reaction6],
              [propensity1, propensity2, propensity3, propensity4, propensity5, propensity6], parameters, max_time=400)
-            
-            # # Print results
-            # for t, s in zip(times, states):
-            #     print(f"Time: {t:.4f}, State: {s}")
+
 
             pfree_t = [states[i][0] for i in range(len(times))]
             pMHC_t = [states[i][1] for i in range(len(times))]
@@ -136,13 +133,6 @@ if __name__ == "__main__":
             pfrees.append(np.mean(pfree_t[int(len(times)/2):])/1)
             pMHCs.append(np.mean(pMHC_t[int(len(times)/2):])/1)
             pMHCps.append(np.mean(pMHCp_t[int(len(times)/2):])/1)
-
-            # lastplot = ax.plot(times, pMHC, alpha = .8, label = r'$%.4f$'%koff)
-            # ax.plot(times, pfree, ls = '--', color = lastplot[-1].get_color(), alpha = .8)
-            # ax.hlines(1*kin/(kout+rhoM*kon-((rhoM*kon*koff)/(koff+kstep))), 0, times[-1], color = lastplot[-1].get_color())
-            # ax.hlines(1*kin/(kout*(koff+kstep)/(rhoM*kon) + kstep), 0, times[-1], color = lastplot[-1].get_color())
-            # ax.hlines(np.mean(pfree), 0, times[-1], color = lastplot[-1].get_color())
-            # ax.hlines(np.mean(pMHC[int(len(times)/2):]), 0, times[-1], ls = ':', color = lastplot[-1].get_color())
 
         ax.plot(koffs, pfrees, color = my_blue, ls = '', marker = 'o', alpha = .8, label = r'$p$')
         ax.plot(koffs, pMHCs, color = my_green, ls = '', marker = 'o', alpha = .8, label = r'$pMHC$')
@@ -154,4 +144,4 @@ if __name__ == "__main__":
         
         my_plot_layout(ax = ax, xscale='log', yscale= 'log', ticks_labelsize= 24, x_fontsize=30, y_fontsize=30, bottom = 0.1, top = 8e3)
         ax.legend(fontsize = 20, loc = 1)
-        fig.savefig('../../../Figures/presentation_MHC/SS_kstep-%.2f.pdf'%kstep)
+        fig.savefig('/Users/robertomorantovar/Library/CloudStorage/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/presentation_MHC/SS_kstep-%.2f.pdf'%kstep)
