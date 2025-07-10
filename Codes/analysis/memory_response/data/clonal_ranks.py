@@ -568,7 +568,7 @@ ax_zeta2.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r'$\m
 my_plot_layout(ax =ax_r2, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r2.set_ylim(bottom = 2e-2, top = 1.1)
 ax_r2.set_xlim(right = 5e1)
-ax_r2.legend(title = r'$\zeta$', fontsize = 24, title_fontsize = 30, loc = 3)#, loc = (1, 0))
+# ax_r2.legend(title = r'$\zeta$', fontsize = 24, title_fontsize = 30, loc = 3)#, loc = (1, 0))
 fig_r2.savefig(output_plot + '/ranking_B_cells_proposal.pdf', transparent=.5)
 
 my_plot_layout(ax =ax_zeta2, yscale = 'linear', xscale = 'linear', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
