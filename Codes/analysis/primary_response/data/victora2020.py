@@ -61,7 +61,6 @@ for i_a, antigen in enumerate(tqdm(antigens)):
 	for n in range(N_ensemble):
 		counts_per_ranking = np.zeros(max_rank)
 		x_p_avg = np.zeros(max_rank)
-		#x_g_avg = np.zeros(max_rank)
 		for i, ln in enumerate(lns):
 			#print(str(ln))
 			data_ln = data_antigen.loc[data_antigen['Mouse']==ln]
@@ -72,23 +71,12 @@ for i_a, antigen in enumerate(tqdm(antigens)):
 				largest = np.max(counts)
 				counts_p = np.random.poisson(lam = counts)
 				sort_index = counts_p.argsort()
-				#cs =  np.flip(counts[sort_index])[:max_rank]
-				#cs_p = np.random.poisson(lam = cs)
 				cs_p = np.flip(counts_p[sort_index])[:max_rank]
-				#x_g = x + np.random.normal(0, np.sqrt(x))
 				for k in range(max_rank):
-					#if(cs_p[k]>0):
-					#counts_per_ranking[k]+=1
 					x_p_avg[k]+=np.max([cs_p[k], 1])/cs_p[0]
-					# x_p_avg[k]+=np.max([cs_p[k], 1])/np.max(cs_p)
-				#x_g_avg[k]+=x_g[k]/np.max(x_g)
-			    #Y.append(np.log(x) + dy)
-			    #X.append(np.log(max_rank+1))
 		x_p_avg/=n_ln
 		popt_p, pcov = curve_fit(my_linear_func, np.log(range(1,max_rank+1)), np.log(x_p_avg))
-		#popt_g, pcov = curve_fit(my_linear_func, np.log(range(1,max_rank+1)), np.log(x_g_avg))
 		slopes_p.append(popt_p[1])
-		#slopes_g.append(popt_g[1])
 
 	ax_r.plot(range(1,max_rank+1), x_avg, lw = 2, marker = '*', ls = '', color = 'darkred', ms = 12)
 	ax_r.plot(np.linspace(1,max_rank+1, 100), np.linspace(1,max_rank+1, 100)**(np.mean(slopes_p)), lw = 5, marker = '',

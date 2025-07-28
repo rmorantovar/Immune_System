@@ -3,10 +3,13 @@ from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
+root_dir = f"/Users/robertomorantovar/Dropbox/Research/Immune_system/primary_response/data/victora_2020"
+
 my_list = ['CGG', 'OVA', 'NP-OVA', 'HA']
+my_list = ['all', 'larger', 'larger2']
 for my_string in my_list:
     # Load Excel file (modify 'sequences.xlsx' and sheet name if needed)
-    file_path = "/Users/robertomorantovar/Dropbox/Research/Immune_system/primary_response/data/victora_2016/data_cluster_"+my_string+".csv"  # Change this to your actual file
+    file_path = root_dir + "/data_cluster_"+my_string+".csv"  # Change this to your actual file
     df = pd.read_csv(file_path, header = 0)  # Adjust sheet name if necessary
 
     print(df)
@@ -29,7 +32,7 @@ for my_string in my_list:
         records.append(SeqRecord(Seq(sequence), id=seq_id, description=""))
 
     # Save to FASTA file
-    fasta_file = "CDR3_"+my_string+".fasta"
+    fasta_file = root_dir + "/CDR3_"+my_string+".fasta"
     with open(fasta_file, "w") as output_handle:
         SeqIO.write(records, output_handle, "fasta")
 

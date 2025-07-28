@@ -49,8 +49,9 @@ fig_zeta2, ax_zeta2 = plt.subplots(figsize=(10*1.62,8), gridspec_kw={'left':0.12
 #------------ Experiment 1 (Figure 1D) ------------
 data_primary = pd.read_excel(root_dir + "/1-s2.0-S0092867419313170-mmc1.xlsx", sheet_name = 'Photoactivation CGG', header = 1)
 data_primary = data_primary[(data_primary['Figure']==1)]
-data_primary_grouped = data_primary.groupby(['Mouse', 'V', 'J', 'D']).size().reset_index(name='count')
+# data_primary_grouped = data_primary.groupby(['Mouse', 'V', 'J', 'D']).size().reset_index(name='count')
 # data_primary_grouped = data_primary.groupby(['Mouse', 'CDR3:']).size().reset_index(name='count')
+data_primary_grouped = data_primary.groupby(['Mouse', 'Sequence']).size().reset_index(name='count')
 mice = data_primary_grouped['Mouse'].unique()
 # phenotypes = data_primary_grouped['Phenotype'].unique()
 
@@ -104,7 +105,7 @@ for rep in tqdm(range(n_ensemble)):
 
 	x_avg = x_avg[:max_rank_eff]/counts_per_ranking[:max_rank_eff]
 
-	params, pcov = curve_fit(model, np.log(range(1, max_rank_eff+1)), np.log(x_avg))
+	params, pcov = curve_fit(model, np.log(range(1, max_rank_eff+1))[:10], np.log(x_avg)[:10])
 	# print(np.sqrt(pcov))
 	slope = params[0]
 
@@ -146,8 +147,9 @@ fig_zeta.savefig(output_plot + '/zetas_1.pdf', transparent=.5)
 
 data_recall = pd.read_excel(root_dir + "/1-s2.0-S0092867419313170-mmc1.xlsx", sheet_name = 'Fate-mapping CGG', header = 1)
 data_recall = data_recall[(data_recall['Figure']=='4A')]
-data_recall_grouped = data_recall.groupby(['Mouse', 'V', 'J', 'D']).size().reset_index(name='count')
+# data_recall_grouped = data_recall.groupby(['Mouse', 'V', 'J', 'D']).size().reset_index(name='count')
 # data_recall_grouped = data_recall.groupby(['Mouse', 'CDR3:']).size().reset_index(name='count')
+data_recall_grouped = data_recall.groupby(['Mouse', 'Sequence']).size().reset_index(name='count')
 mice = data_recall_grouped['Mouse'].unique()
 # phenotypes = data_recall_grouped['Phenotype'].unique()
 
@@ -201,7 +203,7 @@ for rep in tqdm(range(n_ensemble)):
 
 	x_avg = x_avg[:max_rank_eff]/counts_per_ranking[:max_rank_eff]
 
-	params, pcov = curve_fit(model, np.log(range(1, max_rank_eff+1)), np.log(x_avg))
+	params, pcov = curve_fit(model, np.log(range(1, max_rank_eff+1))[:10], np.log(x_avg)[:10])
 	# print(np.sqrt(pcov))
 	slope = params[0]
 	zetas.append(-slope)
@@ -233,8 +235,9 @@ fig_zeta.savefig(output_plot + '/zetas_2.pdf', transparent=.5)
 
 data_recall = pd.read_excel(root_dir + "/1-s2.0-S0092867419313170-mmc1.xlsx", sheet_name = 'Fate-mapping CGG', header = 1)
 data_recall = data_recall[(data_recall['Figure']=='4C-H')]
-data_recall_grouped = data_recall.groupby(['Mouse', 'Phenotype', 'V', 'J', 'D']).size().reset_index(name='count')
+# data_recall_grouped = data_recall.groupby(['Mouse', 'Phenotype', 'V', 'J', 'D']).size().reset_index(name='count')
 # data_recall_grouped = data_recall.groupby(['Mouse', 'Phenotype', 'CDR3:']).size().reset_index(name='count')
+data_recall_grouped = data_recall.groupby(['Mouse', 'Phenotype', 'Sequence']).size().reset_index(name='count')
 # print(data_recall_grouped)
 mice = data_recall_grouped['Mouse'].unique()
 phenotypes = data_recall_grouped['Phenotype'].unique()
@@ -325,8 +328,9 @@ fig_r_Flu, ax_r_Flu = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12,
 fig_zeta_Flu, ax_zeta_Flu = plt.subplots(figsize=(10*1.62,8), gridspec_kw={'left':0.12, 'right':.8, 'bottom':.15, 'top': 0.94})
 
 data_infection = pd.read_excel(root_dir + "/1-s2.0-S0092867419313170-mmc1.xlsx", sheet_name = 'Influenza', header = 2)
-data_recall_grouped = data_infection.groupby(['Experiment / Mouse', 'Sort2', 'V', 'J', 'D']).size().reset_index(name='count')
+# data_recall_grouped = data_infection.groupby(['Experiment / Mouse', 'Sort2', 'V', 'J', 'D']).size().reset_index(name='count')
 # data_recall_grouped = data_infection.groupby(['Experiment / Mouse', 'Sort2', 'CDR3:']).size().reset_index(name='count')
+data_recall_grouped = data_infection.groupby(['Experiment / Mouse', 'Sort2', 'Sequence']).size().reset_index(name='count')
 
 mice = data_recall_grouped['Experiment / Mouse'].unique()
 phenotypes = data_recall_grouped['Sort2'].unique()
@@ -382,25 +386,25 @@ for i_ph, ph in enumerate(phenotypes):
 					counts_per_ranking[k]+=1
 					x_avg[k]+=x[k]/largest
 
-		max_rank_eff = len(counts_per_ranking[counts_per_ranking>2])
-
+		max_rank_eff = len(counts_per_ranking[counts_per_ranking>1])
 		x_avg = x_avg[:max_rank_eff]/counts_per_ranking[:max_rank_eff]
 
-		params, pcov = curve_fit(model, np.log(range(1, max_rank_eff+1)), np.log(x_avg))
+		params, pcov = curve_fit(model, np.log(range(1, 10+1)), np.log(x_avg[:10]))
 		slope = params[0]
 
 		zetas.append(-slope)
 
 		zeta = 3*3.5/(4.5*2.1)
 		
-		if rep == n_ensemble - 1:
-			ax_r.plot(range(1, max_rank_eff+1), x_avg, color = my_colors_alpha[int(np.mean(zetas)*100)], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = 'D', label = r'$%.2f$'%(np.mean(zetas)))
-			ax_r_Flu.plot(range(1, max_rank_eff+1), x_avg, color = my_colors_alpha[int(np.mean(zetas)*100)], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = 'D', label = r'$%.2f$'%(np.mean(zetas)))
 
-	print(len(mice))
 	for j in range(len(mice)):
 		ax_r.lines[-(j+1)].set_color(my_colors_alpha[int(np.mean(zetas)*100)])
 		ax_r_Flu.lines[-(j+1)].set_color(my_colors_alpha[int(np.mean(zetas)*100)])
+		
+	ax_r.plot(range(1, max_rank_eff+1), x_avg, color = my_colors_alpha[int(np.mean(zetas)*100)], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = 'D', label = r'$%.2f$'%(np.mean(zetas)))
+	ax_r_Flu.plot(range(1, max_rank_eff+1), x_avg, color = my_colors_alpha[int(np.mean(zetas)*100)], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = 'D', label = r'$%.2f$'%(np.mean(zetas)))
+
+	print(len(mice))
 
 	ax_r.plot(np.arange(1, max_rank_eff + 1), np.exp(0)*np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = my_colors_alpha[int(np.mean(zetas)*100)], alpha = .8, lw = 3)
 	ax_r_Flu.plot(np.arange(1, max_rank_eff + 1), np.exp(0)*np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = my_colors_alpha[int(np.mean(zetas)*100)], alpha = .8, lw = 3)
@@ -411,7 +415,7 @@ for i_ph, ph in enumerate(phenotypes):
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
 ax_r.set_xlim(right = 5e1)
-ax_r.legend(title = r'$\zeta$', fontsize = 30, title_fontsize = 30, loc = 3)#, loc = (1, 0))
+ax_r.legend(title = r'$\zeta$', fontsize = 24, title_fontsize = 28, loc = 3)#, loc = (1, 0))
 fig_r.savefig(output_plot + '/ranking_B_cells_4.pdf', transparent=.5)
 
 my_plot_layout(ax =ax_r_Flu, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
@@ -502,8 +506,9 @@ for rep in tqdm(range(n_ensemble)):
 
 	for i_fig, fig in enumerate(figures):
 		data_recall_fig = data_recall[(data_recall['Figure']==fig)]
-		data_recall_grouped = data_recall_fig.groupby(['Mouse', 'V', 'J', 'D']).size().reset_index(name='count')
+		# data_recall_grouped = data_recall_fig.groupby(['Mouse', 'V', 'J', 'D']).size().reset_index(name='count')
 		# data_recall_grouped = data_recall.groupby(['Mouse', 'CDR3:']).size().reset_index(name='count')
+		data_recall_grouped = data_recall.groupby(['Mouse', 'Sequence']).size().reset_index(name='count')
 		mice = data_recall_grouped['Mouse'].unique()
 
 		if rep == n_ensemble - 1:
@@ -544,11 +549,11 @@ for rep in tqdm(range(n_ensemble)):
 					x_avg[k]+=x[k]/largest
 
 
-	max_rank_eff = len(counts_per_ranking[counts_per_ranking>2])
+	max_rank_eff = len(counts_per_ranking[counts_per_ranking>1])
 
 	x_avg = x_avg[:max_rank_eff]/counts_per_ranking[:max_rank_eff]
 
-	params, pcov = curve_fit(model, np.log(range(1, max_rank_eff+1)), np.log(x_avg))
+	params, pcov = curve_fit(model, np.log(range(1, max_rank_eff+1))[:20], np.log(x_avg)[:20])
 	# print(np.sqrt(pcov))
 	slope = params[0]
 	zetas.append(-slope)
@@ -568,7 +573,7 @@ ax_zeta2.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r'$\m
 my_plot_layout(ax =ax_r2, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r2.set_ylim(bottom = 2e-2, top = 1.1)
 ax_r2.set_xlim(right = 5e1)
-# ax_r2.legend(title = r'$\zeta$', fontsize = 24, title_fontsize = 30, loc = 3)#, loc = (1, 0))
+ax_r2.legend(title = r'$\zeta$', fontsize = 24, title_fontsize = 30, loc = 3)#, loc = (1, 0))
 fig_r2.savefig(output_plot + '/ranking_B_cells_proposal.pdf', transparent=.5)
 
 my_plot_layout(ax =ax_zeta2, yscale = 'linear', xscale = 'linear', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )

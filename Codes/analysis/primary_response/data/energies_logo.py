@@ -2,10 +2,13 @@ import numpy as np
 import pandas as pd
 from Bio import AlignIO
 
+root_dir = f"/Users/robertomorantovar/Dropbox/Research/Immune_system/primary_response/data/victora_2020"
+
 my_list = ['CGG', 'OVA', 'NP-OVA', 'HA']
+my_list = ['all', 'larger', 'larger2']
 for my_string in my_list:
 	# Load the MSA
-	alignment_file = "CDR3_aligned_"+my_string+".fasta"  # Change to your file
+	alignment_file = root_dir + "/CDR3_aligned_"+my_string+".fasta"  # Change to your file
 	alignment = AlignIO.read(alignment_file, "fasta")
 
 	# Convert alignment to a list of sequences
@@ -67,8 +70,7 @@ for my_string in my_list:
 	df_scores = pd.DataFrame(sequence_scores)
 
 	# Save to CSV file
-	file_path = "/Users/robertomorantovar/Dropbox/Research/Immune_system/primary_response/data/victora_2016/"  # Change this to your actual file
-	output_csv = file_path + "CDR3_aligned_"+my_string+"_motif_scores.csv"
+	output_csv = root_dir + "/CDR3_aligned_"+my_string+"_motif_scores.csv"
 	df_scores.to_csv(output_csv, index=False)
 
 	print(f"✅ Scores saved to {output_csv}")

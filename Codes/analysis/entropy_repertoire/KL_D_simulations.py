@@ -198,7 +198,7 @@ for i_p, p in enumerate(ps):
 	# ax_total.plot(np.exp(Es[:-2][P_l!=0][::80]), P_l[P_l!=0][::80], label = r'$%.1f$'%p, color = my_colors[i_p], alpha = .8, ls = '', marker = 'D')
 
 	ax.plot(np.exp(Es[::n_coarse][:-2][::1]), Q_R[::1], color = 'black', ls = '--', label = r'$\Omega_{\textrm{\cal{B}}}$', lw = 4)
-	# ax_total.plot(np.exp(Es[::n_coarse][:-2][::1]), Q_R[::1], color = my_colors[i_p], ls = '--', lw = 4, label = r'$%.1f$'%p) 
+	ax_total.plot(np.exp(Es[::n_coarse][:-2][::1]), Q_R[::1], color = my_colors[i_p], ls = '--', lw = 4, label = r'$%.1f$'%p) 
 	# ax.plot(np.exp(Es[:-1]), np.exp(beta_r * Es[:-1]) * (Q_R[Es[:-2]<(E_r)][-1]) / (np.exp(beta_r * (E_r))), color = my_blue, ls = '--')
 	# ax.plot(np.exp(Es[:-1]), np.exp((beta_r - (lambda_B*p)/(lambda_A*1)) * Es[:-1]) * (Q_R[Es[:-2]<(E_r+2)][-1]) / (np.exp((beta_r - (lambda_B*p)/(lambda_A*1)) * (E_r+2))), color = my_red, ls = ':')
 	# ax.plot(Es[:-1], np.exp((-4+beta_r) * Es[:-1]) * (Q0[Es[:-1]<(E_r+1.4)][-1]*1e8/len(energies_lineages)) / (np.exp((-4+beta_r) * (E_r+1.4))), color = my_blue, ls = '--')
@@ -241,7 +241,6 @@ for i_p, p in enumerate(ps):
 
 ax_total.plot(np.exp(Es[::n_coarse][:-2][::1]), Q_0[::1], color = 'grey', ls = '--', label = r'$\Omega_{0}$', lw = 4, zorder = 0)
 
-# print(D_approx)
 print(D0_lineages_p.values())
 
 ax0.plot(ps, [np.exp(i) for i in D0_lineages_p.values()], marker = 'D', color = my_blue, label = r'$\textrm{Simulation}$', lw = 3, ms = 15, alpha = .8)

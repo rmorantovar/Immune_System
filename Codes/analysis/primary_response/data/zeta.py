@@ -113,7 +113,7 @@ for lambda_A in lambda_As:
             trajectories = data[2]
             trajectories_rank = data[3]
         else:        
-            print('Please run "simulation_ensemble_ranking_size.py" script first ...')
+            print('Run "simulation_ensemble_ranking_size.py" script first ...')
         
         final_Nb = final_Nb/counts_final_Nb
         ranking = np.arange(1, n_first_clones+1)
