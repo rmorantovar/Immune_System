@@ -50,8 +50,8 @@ fig_zeta2, ax_zeta2 = plt.subplots(figsize=(10*1.62,8), gridspec_kw={'left':0.12
 data_primary = pd.read_excel(root_dir + "/1-s2.0-S0092867419313170-mmc1.xlsx", sheet_name = 'Photoactivation CGG', header = 1)
 data_primary = data_primary[(data_primary['Figure']==1)]
 # data_primary_grouped = data_primary.groupby(['Mouse', 'V', 'J', 'D']).size().reset_index(name='count')
-# data_primary_grouped = data_primary.groupby(['Mouse', 'CDR3:']).size().reset_index(name='count')
-data_primary_grouped = data_primary.groupby(['Mouse', 'Sequence']).size().reset_index(name='count')
+data_primary_grouped = data_primary.groupby(['Mouse', 'CDR3:']).size().reset_index(name='count')
+# data_primary_grouped = data_primary.groupby(['Mouse', 'Sequence']).size().reset_index(name='count')
 mice = data_primary_grouped['Mouse'].unique()
 # phenotypes = data_primary_grouped['Phenotype'].unique()
 
@@ -119,8 +119,8 @@ for j in range(len(mice)):
 	ax_r.lines[-(j+1)].set_color(my_colors_alpha[int(np.mean(zetas)*100)])
 	ax_r2.lines[-(j+1)].set_color(my_colors_alpha[int(np.mean(zetas)*100)])
 
-ax_r.plot(range(1, max_rank_eff+1), x_avg, color = my_colors_alpha[int(np.mean(zetas)*100)], markerfacecolor="None", ms = 18, alpha = 1, ls = '', marker = '*', label = r'$%.2f$'%(np.mean(zetas)))
-ax_r2.plot(range(1, max_rank_eff+1), x_avg, color = my_colors_alpha[int(np.mean(zetas)*100)], markerfacecolor="None", ms = 18, alpha = 1, ls = '', marker = '*', label = r'$%.2f$'%(np.mean(zetas)))
+ax_r.plot(range(1, max_rank_eff+1), x_avg, color = my_colors_alpha[int(np.mean(zetas)*100)], markerfacecolor="None", ms = 18, alpha = 1, ls = '', marker = '*', label = r'$%.2f$'%(np.mean(zetas)) + ' ; ' + 'GC')
+ax_r2.plot(range(1, max_rank_eff+1), x_avg, color = my_colors_alpha[int(np.mean(zetas)*100)], markerfacecolor="None", ms = 18, alpha = 1, ls = '', marker = '*', label = r'$%.2f$'%(np.mean(zetas)) + ' ; ' + 'GC')
 
 ax_r.plot(np.arange(1, max_rank_eff + 1), np.exp(0)*np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = my_colors_alpha[int(np.mean(zetas)*100)], alpha = .8, lw = 3)
 ax_r2.plot(np.arange(1, max_rank_eff + 1), np.exp(0)*np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = my_colors_alpha[int(np.mean(zetas)*100)], alpha = .8, lw = 3)
@@ -148,8 +148,8 @@ fig_zeta.savefig(output_plot + '/zetas_1.pdf', transparent=.5)
 data_recall = pd.read_excel(root_dir + "/1-s2.0-S0092867419313170-mmc1.xlsx", sheet_name = 'Fate-mapping CGG', header = 1)
 data_recall = data_recall[(data_recall['Figure']=='4A')]
 # data_recall_grouped = data_recall.groupby(['Mouse', 'V', 'J', 'D']).size().reset_index(name='count')
-# data_recall_grouped = data_recall.groupby(['Mouse', 'CDR3:']).size().reset_index(name='count')
-data_recall_grouped = data_recall.groupby(['Mouse', 'Sequence']).size().reset_index(name='count')
+data_recall_grouped = data_recall.groupby(['Mouse', 'CDR3:']).size().reset_index(name='count')
+# data_recall_grouped = data_recall.groupby(['Mouse', 'Sequence']).size().reset_index(name='count')
 mice = data_recall_grouped['Mouse'].unique()
 # phenotypes = data_recall_grouped['Phenotype'].unique()
 
@@ -214,7 +214,7 @@ print(len(mice))
 for j in range(len(mice)):
 	ax_r.lines[-(j+1)].set_color(my_colors_alpha[int(np.mean(zetas)*100)])
 
-ax_r.plot(range(1, max_rank_eff+1), x_avg, color = my_colors_alpha[int(np.mean(zetas)*100)], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = 'o', label = r'$%.2f$'%(np.mean(zetas)))
+ax_r.plot(range(1, max_rank_eff+1), x_avg, color = my_colors_alpha[int(np.mean(zetas)*100)], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = 'o', label = r'$%.2f$'%(np.mean(zetas)) + ' ; ' + 'GC + fm')
 
 ax_r.plot(np.arange(1, max_rank_eff + 1), np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = my_colors_alpha[int(np.mean(zetas)*100)], alpha = .8, lw = 3)
 ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r'$\mathrm{GC+m}$', color = my_colors_alpha[int(np.mean(zetas)*100)], density = True, histtype = 'stepfilled', edgecolor = 'k')
@@ -236,8 +236,8 @@ fig_zeta.savefig(output_plot + '/zetas_2.pdf', transparent=.5)
 data_recall = pd.read_excel(root_dir + "/1-s2.0-S0092867419313170-mmc1.xlsx", sheet_name = 'Fate-mapping CGG', header = 1)
 data_recall = data_recall[(data_recall['Figure']=='4C-H')]
 # data_recall_grouped = data_recall.groupby(['Mouse', 'Phenotype', 'V', 'J', 'D']).size().reset_index(name='count')
-# data_recall_grouped = data_recall.groupby(['Mouse', 'Phenotype', 'CDR3:']).size().reset_index(name='count')
-data_recall_grouped = data_recall.groupby(['Mouse', 'Phenotype', 'Sequence']).size().reset_index(name='count')
+data_recall_grouped = data_recall.groupby(['Mouse', 'Phenotype', 'CDR3:']).size().reset_index(name='count')
+# data_recall_grouped = data_recall.groupby(['Mouse', 'Phenotype', 'Sequence']).size().reset_index(name='count')
 # print(data_recall_grouped)
 mice = data_recall_grouped['Mouse'].unique()
 phenotypes = data_recall_grouped['Phenotype'].unique()
@@ -305,7 +305,7 @@ for i_ph, ph in enumerate(phenotypes):
 	for j in range(len(mice)):
 		ax_r.lines[-(j+1)].set_color(my_colors_alpha[int(np.mean(zetas)*100)])
 
-	ax_r.plot(range(1, max_rank_eff+1), x_avg, color = my_colors_alpha[int(np.mean(zetas)*100)], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = '^', label = r'$%.2f$'%(np.mean(zetas)))
+	ax_r.plot(range(1, max_rank_eff+1), x_avg, color = my_colors_alpha[int(np.mean(zetas)*100)], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = '^', label = r'$%.2f$'%(np.mean(zetas))+ ' ; ' + ph)
 
 	ax_r.plot(np.arange(1, max_rank_eff + 1), np.exp(0)*np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = my_colors_alpha[int(np.mean(zetas)*100)], alpha = .8, lw = 3)
 	ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r"$\mathrm{" + ph + "}$", color = my_colors_alpha[int(np.mean(zetas)*100)], density = True, histtype = 'stepfilled', edgecolor = 'k')
@@ -318,6 +318,7 @@ fig_r.savefig(output_plot + '/ranking_B_cells_3.pdf', transparent=.5)
 
 my_plot_layout(ax =ax_zeta, yscale = 'linear', xscale = 'linear', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 # ax_zeta.set_ylim(bottom = 2e-2, top = 1.1)
+ax_zeta.set_title('CGG', fontsize = 30)
 ax_zeta.set_xlim(left = 0.2, right = 1.6)
 ax_zeta.legend(title = r'$\mathrm{sub-pop}$', fontsize = 30, title_fontsize = 30, loc = (1, 0))
 fig_zeta.savefig(output_plot + '/zetas_3.pdf', transparent=.5)
@@ -329,8 +330,8 @@ fig_zeta_Flu, ax_zeta_Flu = plt.subplots(figsize=(10*1.62,8), gridspec_kw={'left
 
 data_infection = pd.read_excel(root_dir + "/1-s2.0-S0092867419313170-mmc1.xlsx", sheet_name = 'Influenza', header = 2)
 # data_recall_grouped = data_infection.groupby(['Experiment / Mouse', 'Sort2', 'V', 'J', 'D']).size().reset_index(name='count')
-# data_recall_grouped = data_infection.groupby(['Experiment / Mouse', 'Sort2', 'CDR3:']).size().reset_index(name='count')
-data_recall_grouped = data_infection.groupby(['Experiment / Mouse', 'Sort2', 'Sequence']).size().reset_index(name='count')
+data_recall_grouped = data_infection.groupby(['Experiment / Mouse', 'Sort2', 'CDR3:']).size().reset_index(name='count')
+# data_recall_grouped = data_infection.groupby(['Experiment / Mouse', 'Sort2', 'Sequence']).size().reset_index(name='count')
 
 mice = data_recall_grouped['Experiment / Mouse'].unique()
 phenotypes = data_recall_grouped['Sort2'].unique()
@@ -338,7 +339,7 @@ print(phenotypes)
 
 max_ranks = [100, 100, 100, 100, 100]
 # max_ranks = [10, 10, 10, 10, 10]
-for i_ph, ph in enumerate(phenotypes):
+for i_ph, ph in enumerate(phenotypes[:-1]):
 	max_rank = max_ranks[i_ph]
 	zetas = []
 
@@ -400,9 +401,9 @@ for i_ph, ph in enumerate(phenotypes):
 	for j in range(len(mice)):
 		ax_r.lines[-(j+1)].set_color(my_colors_alpha[int(np.mean(zetas)*100)])
 		ax_r_Flu.lines[-(j+1)].set_color(my_colors_alpha[int(np.mean(zetas)*100)])
-		
-	ax_r.plot(range(1, max_rank_eff+1), x_avg, color = my_colors_alpha[int(np.mean(zetas)*100)], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = 'D', label = r'$%.2f$'%(np.mean(zetas)))
-	ax_r_Flu.plot(range(1, max_rank_eff+1), x_avg, color = my_colors_alpha[int(np.mean(zetas)*100)], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = 'D', label = r'$%.2f$'%(np.mean(zetas)))
+
+	ax_r.plot(range(1, max_rank_eff+1), x_avg, color = my_colors_alpha[int(np.mean(zetas)*100)], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = 'D', label = r'$%.2f$'%(np.mean(zetas)) + ' ; ' + ph)
+	ax_r_Flu.plot(range(1, max_rank_eff+1), x_avg, color = my_colors_alpha[int(np.mean(zetas)*100)], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = 'D', label = r'$%.2f$'%(np.mean(zetas)) + ' ; ' + ph)
 
 	print(len(mice))
 
@@ -432,6 +433,7 @@ fig_zeta.savefig(output_plot + '/zetas_4.pdf', transparent=.5)
 
 my_plot_layout(ax =ax_zeta_Flu, yscale = 'linear', xscale = 'linear', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 # ax_zeta_Flu.set_ylim(bottom = 2e-2, top = 1.1)
+ax_zeta_Flu.set_title('Influenza', fontsize = 30)
 ax_zeta_Flu.set_xlim(left = 0.2, right = 1.6)
 ax_zeta_Flu.legend(title = r'$\mathrm{sub-pop}$', fontsize = 30, title_fontsize = 30, loc = (1, 0))
 fig_zeta_Flu.savefig(output_plot + '/zetas_Flu.pdf', transparent=.5)
@@ -488,7 +490,7 @@ fig_zeta_Flu.savefig(output_plot + '/zetas_Flu.pdf', transparent=.5)
 #------------ Experiment 2 and 3 (Figure 4A and 4C) ------------
 
 data_recall = pd.read_excel(root_dir + "/1-s2.0-S0092867419313170-mmc1.xlsx", sheet_name = 'Fate-mapping CGG', header = 1)
-data_recall = data_recall[(data_recall['Phenotype']=='GC + m')]
+data_recall = data_recall[(data_recall['Phenotype']=='GC + fm')]
 
 figures = ['4A', '4C-H']
 
@@ -507,8 +509,8 @@ for rep in tqdm(range(n_ensemble)):
 	for i_fig, fig in enumerate(figures):
 		data_recall_fig = data_recall[(data_recall['Figure']==fig)]
 		# data_recall_grouped = data_recall_fig.groupby(['Mouse', 'V', 'J', 'D']).size().reset_index(name='count')
-		# data_recall_grouped = data_recall.groupby(['Mouse', 'CDR3:']).size().reset_index(name='count')
-		data_recall_grouped = data_recall.groupby(['Mouse', 'Sequence']).size().reset_index(name='count')
+		data_recall_grouped = data_recall.groupby(['Mouse', 'CDR3:']).size().reset_index(name='count')
+		# data_recall_grouped = data_recall.groupby(['Mouse', 'Sequence']).size().reset_index(name='count')
 		mice = data_recall_grouped['Mouse'].unique()
 
 		if rep == n_ensemble - 1:
