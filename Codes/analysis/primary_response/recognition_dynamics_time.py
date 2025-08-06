@@ -102,6 +102,21 @@ ax_antigen.set_ylim(bottom = 1e0, top = 2e12)
 fig_antigen.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/_Summary/time/L%d/antigen.pdf'%(L))
 plt.close(fig_antigen)
 
+fig_antigen, ax_antigen = plt.subplots(figsize=(8.0*1.62,8*0.6), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.15, 'top': 0.94})
+# fig_antigen, ax_antigen = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.15, 'top': 0.94})
+ax_antigen.vlines(4, 1, np.exp(lambda_A*4)/(1e0), linewidth = 5, color = antigen_color)
+ax_antigen.plot(time_array[time_array>4], np.ones_like(time_array[time_array>4])*np.exp(lambda_A*4)/(1e0), linewidth = 5, color = antigen_color)
+
+my_plot_layout(ax=ax_antigen, yscale = 'log', xscale = 'linear', ticks_labelsize = 40, x_fontsize=30, y_fontsize=30 )
+ax_antigen.set_xlim(right = Tf, left = T0)
+ax_antigen.set_xticks([])
+#ax_antigen.set_xlim(right = 1e-2, left = 1e-11) #use 1e-3 for other plots
+ax_antigen.set_ylim(bottom = 1e0, top = 2e12)
+#ax_antigen.set_ylim(bottom = 1, top = 1e7)
+#ax_antigen.legend(title = r'$\p$', title_fontsize = 34, fontsize = 32)
+fig_antigen.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/_Summary/time/L%d/antigen2.pdf'%(L))
+plt.close(fig_antigen)
+
 print('Loops...')
 for L_0 in L_0s:
     print('________')
@@ -226,7 +241,7 @@ for L_0 in L_0s:
         plt.close(fig_N_b_p)
 
         my_plot_layout(ax=ax_N_b_p2, yscale = 'log', ticks_labelsize = 40, x_fontsize=30, y_fontsize=30 )
-        ax_N_b_p2.set_xticks([])
+        # ax_N_b_p2.set_xticks([])
         ax_N_b_p2.set_xlim(right = Tf-1, left = T0+1)
         ax_N_b_p2.set_ylim(bottom = 1e0, top = 5e2)
         #ax_N_b.set_ylim(bottom = 1e0, top = C*1.1)
