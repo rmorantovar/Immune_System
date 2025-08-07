@@ -45,7 +45,6 @@ def generate_repertoire_Me(
         else:
             if use_seqs:
                 seqs_flat = np.random.randint(0, 20, size=(int(chunk_size) * l)) # This is the line where the repertoire is created
-                
             else:
                 seqs_flat = np.random.rand(chunk_size) # This is the line where the repertoire is created
 
@@ -102,7 +101,7 @@ def generate_repertoire_Me(
                 pre_memory_idx = []
                 for index, row in memory_clones.iterrows():
                     pre_memory_idx += [index] * int(row['N'])
-                memory_idx = np.random.choice(pre_memory_idx, 1000, replace=False)
+                memory_idx = np.random.choice(pre_memory_idx, 100, replace=False)
                 memory = np.array(memory_clones['seq'].iloc[memory_idx])
 
                 for seq in memory:
@@ -117,30 +116,42 @@ def generate_repertoire_Me(
                                 properties.append({
                                     'ens_id': ensemble_id,
                                     'E': E,
-                                    't': t1,
                                     'seq': list(seq),
+                                    't': t1,
                                     'epi': epi + 1,
                                     'm': 1
                                 })
             else:
-                for index, row in memory_clones.iterrows():
+                weights = memory_clones['N'].values / memory_clones['N'].sum()
+                chosen_indices = np.random.choice(memory_clones.index, size=100, replace=True, p=weights)
+                selected_clones = memory_clones.loc[chosen_indices]
+                for _, row in selected_clones.iterrows():
                     E = row['E'] + DDE
-                    N0 = row['N']
+                    # N0 = row['N']
                     epi = row['epi']
-                    id_clone = row['id']
+                    seq = row['seq']
                     if E < E_lim:
                         F1 = 1 - np.exp(-b0_scaled / (1 + (np.exp(E) / K_step))**pmem * (np.exp(lamA * times) - 1))
-                        r1 = np.random.random(int(N0))
+                        r1 = np.random.random()
                         t1 = times[np.searchsorted(F1, r1) - 1]
-                        mask = t1 < t_lim
-                        properties.extend([{
+                        # mask = t1 < t_lim
+                        if t1 < t_lim:
+                            properties.append({
                             'ens_id': ensemble_id,
                             'E': E,
-                            'id': id_clone,
-                            't': t1_i,
+                            'seq': seq,
+                            't': t1,
                             'epi': epi,
                             'm': 1
-                        } for t1_i in t1[mask]])
+                        })
+                        # properties.extend([{
+                        #     'ens_id': ensemble_id,
+                        #     'E': E,
+                        #     'seq': seq,
+                        #     't': t1_i,
+                        #     'epi': epi,
+                        #     'm': 1
+                        # } for t1_i in t1[mask]])
 
     return properties
 

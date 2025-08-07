@@ -25,6 +25,7 @@ from scipy.optimize import curve_fit
 from matplotlib import style
 from matplotlib.collections import LineCollection
 from matplotlib.colors import LogNorm
+import itertools
 from itertools import product
 from collections import deque
 from collections import defaultdict
@@ -62,6 +63,15 @@ my_green_b = np.array((79, 173, 91))/256.
 my_green_c = np.array((94, 129, 63))/256.
 
 # ------- functions mini -------
+
+def make_json_serializable(d):
+    for k, v in d.items():
+        if isinstance(v, np.ndarray):
+            print(v)
+            d[k] = v.tolist()
+        # Add more conversions if needed
+    return d
+
 def hamming_distance(chaine1, chaine2):
 
     return sum(c1 != c2 for c1, c2 in zip(chaine1, chaine2))

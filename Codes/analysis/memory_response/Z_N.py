@@ -22,7 +22,7 @@ def main():
 	parser.add_argument('--N_epi', type=int, default = 1)
 	parser.add_argument('--L0', type=int, default=10**7, help="Number of random sequences.")
 	parser.add_argument('--l', type=int, default=16, help="Length of the sequences.")
-	parser.add_argument('--p', type=float, default=2.0, help="# steps.")
+	parser.add_argument('--p', type=float, default=3.0, help="# steps.")
 	parser.add_argument('--new', type=int, default=0, help="run Z values again.")
 	parser.add_argument('--exp', type=int, default=1, help="experiment.")
 	args = parser.parse_args()
@@ -72,7 +72,7 @@ def main():
 	subproject = 'multi-epitope'
 	subproject = 'Z_dynamics'
 
-	for exp in [1, 7]:
+	for exp in [1, 5]:
 		experiment = exp
 		root_dir = f"/Users/robertomorantovar/Dropbox/Research/Immune_system/{project}/{subproject}/{experiment}"
 		pars_dir_1 = f"/L0-{int(L0/10**int(np.log10(L0)))}e{int(np.log10(L0))}_p-{p}_k_step-{int(k_step)}_lamA-{lamA}_lamB-{lamB}"
