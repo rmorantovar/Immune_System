@@ -110,8 +110,9 @@ def main():
 	if one_WT:
 		WTs = antigens.iloc[[0]]
 	else:
-		# WTs = antigens.sample(n=5, replace = False)
-		WTs = antigens.iloc[[i*5 for i in range(20)]]
+		WTs = antigens
+	# 	# WTs = antigens.sample(n=5, replace = False)
+	# 	WTs = antigens.iloc[[i*5 for i in range(20)]]
 
 	print(WTs)
 	for index, row in WTs.iterrows():
@@ -184,11 +185,9 @@ def main():
 					if not os.path.isfile(output_file2):
 						# Execute process
 						df_response = ensemble_of_responses(**sim_params)
-						print('OK UNTIL HERE')
 						os.makedirs(output_dir2, exist_ok=True)
 						df_response = df_response.sort_values(by=['ens_id', 'epi', 't'], ascending=[True, True, True])
 						df_response.to_csv(output_file2, index=False)
-						print('OK UNTIL HERE')
 						# Save parameters for reproducibility
 						simple_params = {k: v for k, v in sim_params.items() if not isinstance(v, (np.ndarray, list, tuple))}
 						with open(os.path.join(output_dir2, "params.json"), "w") as f:

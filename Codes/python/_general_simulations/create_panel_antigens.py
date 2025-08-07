@@ -1,21 +1,22 @@
 import sys
-sys.path.append('../../lib/')
+sys.path.append('../../my_lib/')
 from funcs import*
+import random
 
 
 parser = argparse.ArgumentParser(description="Generate random antigens and save properties to a CSV file.")
-parser.add_argument('--N_ant', type=int, default=80, help="Number of antigens.")
-parser.add_argument('--N_ens', type=int, default=1, help="Number of times to execute the process.")
+parser.add_argument('--N_ant', type=int, default=10, help="Number of antigens.")
+parser.add_argument('--N_ens', type=int, default=80, help="Number of times to execute the process.")
 parser.add_argument('--N_inf', type=int, default=1, help="Number of infections.")
 parser.add_argument('--N_evo', type=int, default = 1)
-parser.add_argument('--N_epi', type=int, default = 3)
-parser.add_argument('--L0', type=int, default=10**8, help="Number of random antigens.")
+parser.add_argument('--N_epi', type=int, default = 1)
+parser.add_argument('--L0', type=int, default=10**6, help="Number of random antigens.")
 parser.add_argument('--l', type=int, default=16, help="Length of the antigens.")
 parser.add_argument('--t_lim', type=float, default=8., help="Threshold for activation time.")
 parser.add_argument('--E_lim', type=float, default=-11., help="Threshold for the sum of entries.")
 parser.add_argument('--E_m', type=float, default=-24, help="Threshold for the sum of entries.")
 parser.add_argument('--chunk_size', type=int, default=1000000, help="Size of each chunk.")
-parser.add_argument('--p', type=float, default=4.0, help="# steps.")
+parser.add_argument('--p', type=float, default=3.0, help="# steps.")
 parser.add_argument('--k_step', type=float, default=720, help="Step rate.")
 parser.add_argument('--lamA', type=float, default=6., help="Antigen growth rate.")
 parser.add_argument('--lamB', type=float, default=2., help="Antigen growth rate.")
@@ -65,7 +66,7 @@ Alphabet = np.loadtxt('../../in/Alphabet_'+energy_model+'.txt', dtype=bytes, del
 project = 'epitope_complexity'
 subproject = 'epistasis'
 experiment = args.exp
-root_dir = f"/Users/robertomorantovar/Dropbox/Research/Immune_system/{project}/{subproject}/{experiment}"
+root_dir = f"/Users/robertomorantovar/Dropbox/Research/Immune_system/{project}/{subproject}"
 pars_dir_1 = f"/L0-{int(L0/10**int(np.log10(L0)))}e{int(np.log10(L0))}_p-{p}_k_step-{k_step}_lamA-{lamA}_lamB-{lamB}"
 pars_dir_2 = f"/N_ant-{N_ant}_N_ens-{N_ens}_N_epi-{N_epi}"#_N_evo-{N_evo}"
 
@@ -80,23 +81,23 @@ def mutate_sequence(seq, num_mutations):
     mutable_positions = [i for i in range(len(seq))]
     for i in range(N_epi):
         mutable_positions.remove(i*l)
-    positions = random.sample(mutable_positions, num_mutations)
+    positions = np.random.sample(mutable_positions, size = num_mutations)
     for pos in positions:
         # print('epitope:', pos//l)
         original = seq[pos]
-        new_aa = random.choice([aa for aa in Alphabet if aa != original])
+        new_aa = np.random.choice([aa for aa in Alphabet if aa != original])
         seq[pos] = new_aa
     return ''.join(seq)
 
 # Step 1: Create the root (ancestral) sequence
-root_seq = ''.join(random.choices(Alphabet, k=N_epi*l))
+root_seq = ''.join(np.random.choice(Alphabet, size=N_epi*l))
 
 # Step 2: Create a hierarchy of related antigens
 antigens = [root_seq]
 while len(antigens) < N_ant:
     # Pick a random existing sequence to mutate
-    parent = random.choice(antigens)
-    num_muts = random.randint(*mutations_per_generation)
+    parent = np.random.choice(antigens)
+    num_muts = np.random.randint(*mutations_per_generation)
     # print(num_muts)
     child = mutate_sequence(parent, num_muts)
     antigens.append(child)
