@@ -4,6 +4,13 @@ from funcs import*
 from matplotlib.colors import LogNorm
 from scipy.integrate import solve_ivp
 from scipy.interpolate import interp1d
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s:%(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
 
 def main():
 	parser = argparse.ArgumentParser(description="Generate random sequences and save properties to a CSV file.")
@@ -61,14 +68,10 @@ def main():
 
 	#----------------------------------------------------------------
 	energy_model = 'TCRen'
-	#energy_model = 'MJ2'
-	# antigen = args.antigen
-	# epitopes = antigen.split('-')
-	# l=len(epitopes[0])
-	
 	project = 'memory_response'
 	subproject = 'multi-epitope'
 	subproject = 'Z_dynamics'
+
 	for exp in [1, 7]:
 		experiment = exp
 		root_dir = f"/Users/robertomorantovar/Dropbox/Research/Immune_system/{project}/{subproject}/{experiment}"
@@ -109,16 +112,24 @@ def main():
 				NNaive = np.zeros_like(time_array)
 				ZMemory = np.zeros_like(time_array)
 				NMemory = np.zeros_like(time_array)
+				N_ANaive = np.zeros_like(time_array)
+				N_AMemory = np.zeros_like(time_array)
 
 				# N_ens = 2
-
 				for i in tqdm(range(N_ens)):
 					#----------NAIVE----------
 					dataNaive_i = dataNaive[dataNaive['ens_id']==i].reset_index()
 					E_ms.append(np.min(dataNaive_i['E']))
 					dataNaive_i_t = ensemble_of_expansions_time(dataNaive_i, N_ens, p, time_array, lamB, C, dT)
-					ZNaive_i = dataNaive_i_t.apply(lambda row: np.array(row['N_t']) / np.exp(row['E']), axis=1).sum()
-					NNaive_i = dataNaive_i_t.apply(lambda row: np.array(row['N_t']), axis=1).sum()
+					N_t_array = np.vstack(dataNaive_i_t['N_t'].values)  # shape: (num_rows, list_length)
+					E_array = np.array(dataNaive_i_t['E'].values)       # shape: (num_rows,)
+
+					# ZNaive_i = dataNaive_i_t.apply(lambda row: np.array(row['N_t']) / np.exp(row['E']), axis=1).sum()
+					# NNaive_i = dataNaive_i_t.apply(lambda row: np.array(row['N_t']), axis=1).sum()
+
+					ZNaive_i = (N_t_array / np.exp(E_array[:, None])).sum(axis=0)
+					NNaive_i = N_t_array.sum(axis=0)
+
 					with np.errstate(divide='ignore', invalid='ignore'):
 						pbNaive = (1+(1/(1e-9 *ZNaive_i)))**(-1)
 
@@ -141,15 +152,17 @@ def main():
 					if i%20==0:
 						axZ.plot(NNaive_i.astype(float), ZNaive_i, color = my_blue, lw = .2, alpha = .2, ls = '-', marker = '.', ms = 0.5)
 						axN_A.plot(time_array, N_ANaive_i, color = my_blue, lw = 2, alpha = .5, ls = '-')
-						if i == 0:
-							axN_A.plot(time_array, N_ANaive_i, color = my_blue, lw = 2, alpha = .5, ls = '-', label = r'$\textrm{Naive}$')
 
 					#----------MEMORY----------
 					dataMemory_i = dataMemory[dataMemory['ens_id']==i].reset_index()
 					# E_ms.append(np.min(dataMemory_i['E']))
 					dataMemory_i_t = ensemble_of_expansions_time(dataMemory_i, N_ens, p, time_array, lamB, C, dT)
-					ZMemory_i = dataMemory_i_t.apply(lambda row: np.array(row['N_t']) / np.exp(row['E']), axis=1).sum()
-					NMemory_i = dataMemory_i_t.apply(lambda row: np.array(row['N_t']), axis=1).sum()
+					N_t_array = np.vstack(dataMemory_i_t['N_t'].values)  # shape: (num_rows, list_length)
+					E_array = np.array(dataMemory_i_t['E'].values)       # shape: (num_rows,)
+
+					ZMemory_i = (N_t_array / np.exp(E_array[:, None])).sum(axis=0)
+					NMemory_i = N_t_array.sum(axis=0)
+
 					with np.errstate(divide='ignore', invalid='ignore'):
 						pbMemory = (1+(1/(1e-9 *ZMemory_i)))**(-1)
 
@@ -158,7 +171,7 @@ def main():
 
 					# Define the ODE: dN/dt = lambda * (1 - f(t)) * N
 					def dNdtMemory(t, N):
-						return (lamA * (1 - pbMemory_interp(t)) - 1.2) * N
+						return (lamA * (1 - pbMemory_interp(t)) - 1.5) * N
 
 					# Initial condition
 					N0 = 1.0
@@ -172,27 +185,30 @@ def main():
 					if i%20==0:
 						axZ.plot(NMemory_i.astype(float), ZMemory_i, color = my_purple, lw = .2, alpha = .2, ls = '-', marker = '.', ms = 0.5)
 						axN_A.plot(time_array, N_AMemory_i, color = my_purple, lw = 2, alpha = .5, ls = '-')
-						if i == 0:
-							axN_A.plot(time_array, N_AMemory_i, color = my_purple, lw = 2, alpha = .5, ls = '-', label = r'$\textrm{Memory}$')
 									
-
 					with np.errstate(divide='ignore', invalid='ignore'):
 						NNaive+=np.log(NNaive_i)
 						NMemory+=np.log(NMemory_i)
 						ZNaive+=np.log(ZNaive_i)
 						ZMemory+=np.log(ZMemory_i)
+						N_ANaive+=np.log(N_ANaive_i)
+						N_AMemory+=np.log(N_AMemory_i)
 
-				
-				ZNaive = np.exp(ZNaive/N_ens)
-				ZMemory = np.exp(ZMemory/N_ens)
 				NNaive = np.exp(NNaive/N_ens)
 				NMemory = np.exp(NMemory/N_ens)
+				ZNaive = np.exp(ZNaive/N_ens)
+				ZMemory = np.exp(ZMemory/N_ens)
+				N_ANaive = np.exp(N_ANaive/N_ens)
+				N_AMemory = np.exp(N_AMemory/N_ens)
+
+				axN_A.plot(time_array, N_ANaive, color = my_blue, lw = 4, alpha = .8, ls = '-', label = r'$\textrm{Naive}$')
+				axN_A.plot(time_array, N_AMemory, color = my_purple, lw = 4, alpha = .8, ls = '-', label = r'$\textrm{Memory}$')
 
 				axZ.plot(NNaive, ZNaive, color = my_blue, lw = 3, alpha = .9, ls = '-', label = r'$\textrm{Naive}$')
 				axZ.plot(NMemory, ZMemory, color = my_purple, lw = 3, alpha = .9, ls = '-', label = r'$\textrm{Memory}$')
 
 				lamZ = np.max([lamB, lamA/p*(beta_r-1)])
-				print(lamZ)
+				logging.info(f'lamZ: {lamZ}')
 
 				Z_mf = Kstep**(1/v)/(Kd_r)**(1+1/v)*np.exp(lamZ*(time_array - t0))
 				# axZ.plot(time_array[(time_array<8) & (time_array>t0)], Z_mf[(time_array<8) & (time_array>t0)], alpha = .5, color = my_blue, lw = 2, ls = '--')#, label = r'$\textrm{Mean-field}\, \textrm{approx}$')
