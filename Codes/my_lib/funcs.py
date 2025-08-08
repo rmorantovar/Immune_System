@@ -123,7 +123,7 @@ def generate_repertoire_Me(
                                 })
             else:
                 weights = memory_clones['N'].values / memory_clones['N'].sum()
-                chosen_indices = np.random.choice(memory_clones.index, size=100, replace=True, p=weights)
+                chosen_indices = np.random.choice(memory_clones.index, size=200, replace=True, p=weights)
                 selected_clones = memory_clones.loc[chosen_indices]
                 for _, row in selected_clones.iterrows():
                     E = row['E'] + DDE
@@ -134,7 +134,6 @@ def generate_repertoire_Me(
                         F1 = 1 - np.exp(-b0_scaled / (1 + (np.exp(E) / K_step))**pmem * (np.exp(lamA * times) - 1))
                         r1 = np.random.random()
                         t1 = times[np.searchsorted(F1, r1) - 1]
-                        # mask = t1 < t_lim
                         if t1 < t_lim:
                             properties.append({
                             'ens_id': ensemble_id,
@@ -144,14 +143,6 @@ def generate_repertoire_Me(
                             'epi': epi,
                             'm': 1
                         })
-                        # properties.extend([{
-                        #     'ens_id': ensemble_id,
-                        #     'E': E,
-                        #     'seq': seq,
-                        #     't': t1_i,
-                        #     'epi': epi,
-                        #     'm': 1
-                        # } for t1_i in t1[mask]])
 
     return properties
 
