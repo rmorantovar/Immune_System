@@ -24,6 +24,7 @@ def main():
 	parser.add_argument('--l', type=int, default=16, help="Length of the sequences.")
 	parser.add_argument('--p', type=float, default=3.0, help="# steps.")
 	parser.add_argument('--pmem', type=float, default=1.0, help="# steps for memory.")
+	parser.add_argument('--DDE', type=float, default=0.0, help="DDE value.")
 	parser.add_argument('--new', type=int, default=0, help="run Z values again.")
 	parser.add_argument('--exp', type=int, default=1, help="experiment.")
 	parser.add_argument('--one_WT', type=int, default = 1)
@@ -40,6 +41,7 @@ def main():
 	l = args.l
 	p = args.p
 	pmem = args.pmem
+	DDE = args.DDE
 	new = args.new
 
 	if N_evo == -1:
@@ -113,7 +115,7 @@ def main():
 		beta_r, E_r, Kd_r = get_repertoire_properties(betas, Q0, Es, dE, L0)
 
 		dataNaive = pd.read_csv(root_dir + pars_dir_1 + pars_dir_2 + '/%d'%(a1+1) + '/activated_repertoire.csv')#, converters={"N_t": literal_eval})
-		dataMemory = pd.read_csv(root_dir + pars_dir_1 + pars_dir_2 + '/%d'%(a1+1) + '/DDE_0.0_pmem_%.1f'%(pmem) + '/activated_repertoire.csv')#, converters={"N_t": literal_eval})
+		dataMemory = pd.read_csv(root_dir + pars_dir_1 + pars_dir_2 + '/%d'%(a1+1) + '/DDE_%.1f_pmem_%.1f'%(DDE, pmem) + '/activated_repertoire.csv')#, converters={"N_t": literal_eval})
 		E_ms = []
 
 		ZNaive = np.zeros_like(time_array)
@@ -237,7 +239,7 @@ def main():
 		axZ.set_ylim(bottom = 2e5, top = 1e11)
 		# axZ.set_xlim(left = 1, right = 8)
 		axZ.legend(fontsize = 30, loc = 2)
-		figZ.savefig(output_plot + '/Z_%d_t.pdf'%(a1+1))
+		figZ.savefig(output_plot + '/Z_t_p-%.1f_pmem_%.1f_DDE_%.1f.pdf'%(p, pmem, DDE))
 
 		my_plot_layout(ax = axN_A, xscale='linear', yscale= 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30)
 		# axN_A.set_xticks([])
@@ -245,7 +247,7 @@ def main():
 		axN_A.set_ylim(bottom = 1e4, top = 2e13)
 		axN_A.set_xlim(left = 1, right = 8)
 		axN_A.legend(fontsize = 30, loc = 2)
-		figN_A.savefig(output_plot + '/N_A_t_p-%.1f_pmem-%.1f.pdf'%(p, pmem))
+		figN_A.savefig(output_plot + '/N_A_t_p-%.1f_pmem_%.1f_DDE_%.1f.pdf'%(p, pmem, DDE))
 
 
 if __name__ == "__main__":

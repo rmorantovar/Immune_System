@@ -25,6 +25,7 @@ from scipy.optimize import curve_fit
 from matplotlib import style
 from matplotlib.collections import LineCollection
 from matplotlib.colors import LogNorm
+import matplotlib.cm as cm
 import itertools
 from itertools import product
 from collections import deque
@@ -374,7 +375,8 @@ def apply_filter_C(clone_sizes, activation_times, energies, lim_size):
     return clone_sizes_C, activation_times_C, energies_C, filter_C, n_C
 
 def my_plot_layout(ax, yscale = 'linear', xscale = 'linear', ticks_labelsize = 24, xlabel = '', ylabel = '', title = '', x_fontsize=24, y_fontsize = 24, t_fontsize = 24, bottom = None, top = None, left = None, right = None):
-    ax.tick_params(labelsize = ticks_labelsize)
+    ax.tick_params(labelsize = ticks_labelsize, width=2)
+    ax.tick_params(axis='both', which='minor', width=2)
     ax.set_xscale(xscale)
     ax.set_yscale(yscale)
     ax.set_xlim(left = left, right = right)
@@ -382,6 +384,10 @@ def my_plot_layout(ax, yscale = 'linear', xscale = 'linear', ticks_labelsize = 2
     ax.set_xlabel(xlabel, fontsize = x_fontsize)
     ax.set_ylabel(ylabel, fontsize = y_fontsize)
     ax.set_title(title, fontsize = t_fontsize)
+    ax.spines['bottom'].set_linewidth(2)
+    ax.spines['left'].set_linewidth(2)
+    ax.spines['top'].set_linewidth(2)
+    ax.spines['right'].set_linewidth(2)
 
 
 
