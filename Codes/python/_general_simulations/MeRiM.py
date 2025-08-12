@@ -161,7 +161,7 @@ def main():
 		# Modify to work properly with antigens as a df !!!!!!
 		if secondary: # Do I want secondary infections? 
 			iterate_dict = {
-				"DDE": [0.0, 1.0],
+				"DDE": [0.0, 1.0, 2.0],
 				"pmem": np.arange(1.0, 4.5, 0.5)
 			}
 			param_names = list(iterate_dict.keys())
@@ -170,7 +170,6 @@ def main():
 				print('	secondary infection...')
 				DDE, pmem = values  # Unpack explicitly
 				folder_suffix = f"DDE_{DDE}_pmem_{pmem}"
-				print(DDE, pmem)
 				print(folder_suffix)
 				input_file2 = os.path.join(output_dir1, 'activated_repertoire.csv')
 				output_dir2 = os.path.join(output_dir1, folder_suffix)

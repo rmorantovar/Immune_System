@@ -84,7 +84,7 @@ def main():
 	pars_dir_2 = f"/N_ant-{N_ant}_N_ens-{N_ens}_N_epi-{N_epi}"#_N_evo-{N_evo}"
 	antigens_data = pd.read_csv(root_dir + pars_dir_1 + pars_dir_2 + "/antigens.csv", converters={"antigen": literal_eval})
 	if one_WT:
-		WTs = antigens_data.iloc[[3]]
+		WTs = antigens_data.iloc[[0]]
 	else:
 		WTs = antigens_data
 	output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/'+project+'/'+subproject
@@ -160,7 +160,7 @@ def main():
 			N_ANaive_i = solNaive.y[0]  # solution N(t) evaluated at t_vals
 
 			if i%20==0:
-				axZ.plot(NNaive_i.astype(float), ZNaive_i, color = my_blue, lw = .2, alpha = .2, ls = '-', marker = '.', ms = 0.5)
+				axZ.plot(ZNaive_i, N_ANaive_i, color = my_blue, lw = .2, alpha = .2, ls = '', marker = 'o', ms = 2)
 				axN_A.plot(time_array, N_ANaive_i, color = my_blue, lw = 2, alpha = .5, ls = '-')
 
 			#----------MEMORY----------
@@ -193,7 +193,7 @@ def main():
 			N_AMemory_i = solMemory.y[0]  # solution N(t) evaluated at t_vals
 
 			if i%20==0:
-				axZ.plot(NMemory_i.astype(float), ZMemory_i, color = my_purple, lw = .2, alpha = .2, ls = '-', marker = '.', ms = 0.5)
+				axZ.plot(ZMemory_i, N_AMemory_i, color = my_purple, lw = .2, alpha = .2, ls = '', marker = 'o', ms = 2)
 				axN_A.plot(time_array, N_AMemory_i, color = my_purple, lw = 2, alpha = .5, ls = '-')
 							
 			with np.errstate(divide='ignore', invalid='ignore'):
@@ -214,8 +214,8 @@ def main():
 		axN_A.plot(time_array, N_ANaive, color = my_blue, lw = 4, alpha = .8, ls = '-', label = r'$\textrm{Naive}$')
 		axN_A.plot(time_array, N_AMemory, color = my_purple, lw = 4, alpha = .8, ls = '-', label = r'$\textrm{Memory}$')
 
-		axZ.plot(NNaive, ZNaive, color = my_blue, lw = 3, alpha = .9, ls = '-', label = r'$\textrm{Naive}$')
-		axZ.plot(NMemory, ZMemory, color = my_purple, lw = 3, alpha = .9, ls = '-', label = r'$\textrm{Memory}$')
+		axZ.plot(ZNaive, N_ANaive, color = my_blue, lw = 4, alpha = .8, ls = '-', marker = '', ms = 5, label = r'$\textrm{Naive}$')
+		axZ.plot(ZMemory, N_AMemory, color = my_purple, lw = 4, alpha = .8, ls = '-', marker = '', ms = 5, label = r'$\textrm{Memory}$')
 
 		lamZ = np.max([lamB, lamA/p*(beta_r-1)])
 		logging.info(f'lamZ: {lamZ}')
@@ -225,7 +225,7 @@ def main():
 		Z_mf = Kstep**(1/v)/(Kd_r)**(1+1/v)*np.exp(lamB*(time_array - t0))
 		# axZ.plot(time_array[(time_array<8) & (time_array>t0)], Z_mf[(time_array<8) & (time_array>t0)], alpha = .5, color = my_blue, lw = 2, ls = ':')#, label = r'$\textrm{Mean-field}\, \textrm{approx}$')
 
-		axZ.plot(np.logspace(0, 4.1, 100), (1/(Kd_r))*np.logspace(0, 4.1, 100), alpha = 1, color = 'k', lw = 2, ls = ':')#, label = r'$\textrm{Mean-field}\, \textrm{approx}$')
+		# axZ.plot(np.logspace(0, 4.1, 100), (1/(Kd_r))*np.logspace(0, 4.1, 100), alpha = 1, color = 'k', lw = 2, ls = ':')#, label = r'$\textrm{Mean-field}\, \textrm{approx}$')
 		
 		if pmem == 4.0:
 			Z_mf = 0.1*C*Kstep**(1/v)/(Kd_r)**(1+1/v)*np.exp(lamB*(time_array - t0))
@@ -236,7 +236,7 @@ def main():
 		my_plot_layout(ax = axZ, xscale='log', yscale= 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30)
 		# axZ.set_xticks([])
 		# axZ.set_yticks([])
-		axZ.set_ylim(bottom = 2e5, top = 1e11)
+		axZ.set_ylim(bottom = 1e4, top = 2e13)
 		# axZ.set_xlim(left = 1, right = 8)
 		axZ.legend(fontsize = 30, loc = 2)
 		figZ.savefig(output_plot + '/Z_t_p-%.1f_pmem_%.1f_DDE_%.1f.pdf'%(p, pmem, DDE))
@@ -245,7 +245,7 @@ def main():
 		# axN_A.set_xticks([])
 		# axN_A.set_yticks([])
 		axN_A.set_ylim(bottom = 1e4, top = 2e13)
-		axN_A.set_xlim(left = 1, right = 8)
+		axN_A.set_xlim(left = 1, right = 10)
 		axN_A.legend(fontsize = 30, loc = 2)
 		figN_A.savefig(output_plot + '/N_A_t_p-%.1f_pmem_%.1f_DDE_%.1f.pdf'%(p, pmem, DDE))
 
