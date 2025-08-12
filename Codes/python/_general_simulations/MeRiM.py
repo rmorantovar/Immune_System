@@ -161,8 +161,8 @@ def main():
 		# Modify to work properly with antigens as a df !!!!!!
 		if secondary: # Do I want secondary infections? 
 			iterate_dict = {
-				"DDE": [0.0, 1.0, 2.0],
-				"pmem": np.arange(1.0, 4.5, 0.5)
+				"DDE": [0.0, 1.0, 2.0, 3.0],
+				"pmem": [1.0, 4.0]
 			}
 			param_names = list(iterate_dict.keys())
 			param_values = list(iterate_dict.values())
