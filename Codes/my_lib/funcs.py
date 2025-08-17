@@ -58,9 +58,10 @@ def generate_repertoire_Me(
                 factors = b0_scaled / (1 + (np.exp(Energies) / K_step))**p
                 seqs = seqs_flat.reshape(int(chunk_size), l)[Es_idx]
                 for i, factor in enumerate(factors):
-                    F1 = 1 - np.exp(-factor * (exp_lamA_times - 1))
                     r1 = np.random.random()
-                    t1 = times[np.searchsorted(F1, r1) - 1]
+                    # F1 = 1 - np.exp(-factor * (exp_lamA_times - 1))
+                    # t1 = times[np.searchsorted(F1, r1) - 1]
+                    t1 = (1/lamA) * np.log(1 + (-np.log(1 - r1)) / factor)
                     if t1 < t_lim:
                         properties.append({
                             'ens_id': ensemble_id,
@@ -78,10 +79,11 @@ def generate_repertoire_Me(
                 min_energy = np.min(Energies)
                 Energies = Energies[Energies < min_energy + 4]
                 factors = b0_scaled / (1 + (np.exp(Energies) / K_step))**p
-                for i, factor in enumerate(factors):
-                    F1 = 1 - np.exp(-factor * (exp_lamA_times - 1))
+                for i, factor in enumerate(factors):                    
                     r1 = np.random.random()
-                    t1 = times[np.searchsorted(F1, r1) - 1]
+                    # F1 = 1 - np.exp(-factor * (exp_lamA_times - 1))
+                    # t1 = times[np.searchsorted(F1, r1) - 1]
+                    t1 = (1/lamA) * np.log(1 + (-np.log(1 - r1)) / factor)
                     if t1 < t_lim:
                         properties.append({
                             'ens_id': ensemble_id,
@@ -109,9 +111,11 @@ def generate_repertoire_Me(
                     for epi in range(N_epi):
                         E = calculate_energy(motif[:, epi*l:(epi+1)*l], proto_E) + Es_ms[epi]
                         if E < E_lim:
-                            F1 = 1 - np.exp(-(b0 * 10 * k_on) / (lamA * N_A * (1 + (k_on * np.exp(E)) / k_step)**p) * (np.exp(lamA * times) - 1))
+                            factor = b0_scaled / (1 + (np.exp(E) / K_step))**pmem
                             r1 = np.random.random()
-                            t1 = times[np.searchsorted(F1, r1) - 1]
+                            # F1 = 1 - np.exp(-factor * (np.exp(lamA * times) - 1))
+                            # t1 = times[np.searchsorted(F1, r1) - 1]
+                            t1 = (1/lamA) * np.log(1 + (-np.log(1 - r1)) / factor)
                             if t1 < t_lim:
                                 properties.append({
                                     'ens_id': ensemble_id,
@@ -131,9 +135,11 @@ def generate_repertoire_Me(
                     epi = row['epi']
                     seq = row['seq']
                     if E < E_lim:
-                        F1 = 1 - np.exp(-b0_scaled / (1 + (np.exp(E) / K_step))**pmem * (np.exp(lamA * times) - 1))
+                        factor = b0_scaled / (1 + (np.exp(E) / K_step))**pmem
                         r1 = np.random.random()
-                        t1 = times[np.searchsorted(F1, r1) - 1]
+                        # F1 = 1 - np.exp(-factor * (np.exp(lamA * times) - 1))
+                        # t1 = times[np.searchsorted(F1, r1) - 1]
+                        t1 = (1/lamA) * np.log(1 + (-np.log(1 - r1)) / factor)
                         if t1 < t_lim:
                             properties.append({
                             'ens_id': ensemble_id,
