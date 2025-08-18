@@ -1,8 +1,11 @@
-import numpy as np
+
+import sys
+sys.path.append('../../my_lib/')
+from funcs import*
 from dataclasses import dataclass
 from typing import Callable, Tuple
-from scipy.integrate import solve_ivp
-import matplotlib.pyplot as plt
+# from scipy.integrate import solve_ivp
+
 
 # ---------- 1) Binning over log k with a user-supplied log-density Ω0(k) ----------
 def make_log_bins(omega0_logdens: Callable[[np.ndarray], np.ndarray],
@@ -114,7 +117,7 @@ def simulate_cohorts(omega0_logdens: Callable[[np.ndarray], np.ndarray],
                      kmin: float, kmax: float, B: int, N_total: int,
                      params: ModelParams,
                      t_span=(0.0, 200.0), t_eval=None,
-                     init_mode: str = "all_in_ER",
+                     init_mode: str = "external_source",
                      A0_source_scale: float = 0.0,
                      log_base: float = np.e):
     """
@@ -125,6 +128,7 @@ def simulate_cohorts(omega0_logdens: Callable[[np.ndarray], np.ndarray],
     A0_source_scale has units of 1/time (fraction of the bin's cohort injected per unit time).
     """
     k_bins, w_bins, N_per_bin = make_log_bins(omega0_logdens, kmin, kmax, B, log_base, N_total)
+    plt.plot(k_bins, N_per_bin, ls = ':', label="N_per_bin (initial counts)")
     B = len(k_bins)
     alpha = params.alpha
 
@@ -153,7 +157,7 @@ def simulate_cohorts(omega0_logdens: Callable[[np.ndarray], np.ndarray],
     return sol, k_bins, N_per_bin
 
 # ---------- 5) Example Ω0 (log-normal log-density) ----------
-def omega0_lognormal_lndensity(k, mu=np.log(0.1), sigma=1.0):
+def omega0_lognormal_lndensity(k, mu=np.log(10), sigma=2.0):
     """
     Returns log-density Ω0(k) = density per d(ln k) for a log-normal LN(mu, sigma).
     For LN, pdf over k is: f(k)= (1/(k sigma sqrt(2π))) exp(-(ln k - mu)^2/(2 sigma^2))
@@ -165,15 +169,24 @@ def omega0_lognormal_lndensity(k, mu=np.log(0.1), sigma=1.0):
 
 # ---------- 6) Quick demo run ----------
 if __name__ == "__main__":
+
+    #----------------------------------------------------------------
+    energy_model = 'TCRen'
+    project = 'presentation_MHC'
+    subproject = 'ODE_repertoire'
+
+    output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/'+project+'/'+subproject
+    os.makedirs(output_plot, exist_ok=True)
+
     params = ModelParams(
         alpha=2,         # matches your earlier derivation (power 2)
         k_step=0.2,
         k_m_plus=1e-4,
-        k_er_plus=0.0,   # closed system by default
-        k_er_minus=0.0,
+        k_er_plus=1.0,   # closed system by default
+        k_er_minus=1.0,
         k0_minus=0.01,
-        M_tot=2_000,     # try also smaller values to see depletion
-        include_A_as_bound=True
+        M_tot=100,     # try also smaller values to see depletion
+        include_A_as_bound=True,
     )
 
     sol, k_bins, N_per_bin = simulate_cohorts(
@@ -181,7 +194,8 @@ if __name__ == "__main__":
         kmin=1e-4, kmax=10.0, B=150, N_total=10_000,
         params=params,
         t_span=(0.0, 500.0),
-        init_mode="all_in_ER"  # or "external_source" with k_er_plus>0 and A0_source_scale>0
+        init_mode="external_source",  # or "external_source" with k_er_plus>0 and A0_source_scale>0,
+        A0_source_scale= 1,  # inflow rate of A0_source (fraction of cohort per time)
     )
 
     # Derived outputs
@@ -193,14 +207,19 @@ if __name__ == "__main__":
         return ER, m, A
 
     ER, m, A = unpack(sol.y[:, -1])  # steady state snapshot
-    print(m)
-    plt.plot(k_bins, omega0_lognormal_lndensity(k_bins), ls = '--')
-    plt.plot(k_bins, m.T)
-    plt.plot(k_bins, ER.T)
-    plt.plot(k_bins,A.T)
-    plt.yscale("log")
-    plt.xscale("log")
-    plt.show()
+    fig, ax = plt.subplots(figsize=(8*1.62, 8), gridspec_kw={'left':0.12, 'right':.9, 'bottom':.1, 'top': 0.96})
+    k_bins, w_bins, N_per_bin = make_log_bins(omega0_lognormal_lndensity, kmin=1e-4, kmax=10.0, B=150, N_total=10_000)
+    plt.plot(k_bins, N_per_bin, color = 'k', alpha = .8, lw = 3, ls = ':', label="N_per_bin (initial counts)")
+    ax.plot(k_bins, m.T, alpha = .8, lw = 2, label=[f"m{i+1}" for i in range(alpha)])
+    ax.plot(k_bins, ER.T, alpha = .8, lw = 3, label="ER")
+    ax.plot(k_bins, A.T, alpha = 1, lw = 3, label="A" if params.include_A_as_bound else "A (not bound)")
+    ax.plot(k_bins[k_bins>1e-1], 10*k_bins[k_bins>1e-1]**-(alpha+1), ls = '--', color='gray', label=r"$k^{-(\alpha+1)}$"+"(expected)")
+    my_plot_layout(ax = ax, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30)
+    ax.set_ylim(bottom = 1e-1)
+    ax.set_xlim(left = 1e-3, right = 2e1)
+    ax.legend(fontsize=22, loc=0)
+    fig.savefig(output_plot + '/ODE_repertoire_results_M_small.pdf', dpi=150)
+    
     bound = m.sum(axis=0).sum() + (A.sum() if params.include_A_as_bound else 0.0)
     P_free_ss = (params.M_tot - bound) / params.M_tot
     print(f"Steady-state P_free ≈ {P_free_ss:.4f}  (M_free={params.M_tot - bound:.1f} of M_tot={params.M_tot})")

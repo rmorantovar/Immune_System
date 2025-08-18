@@ -264,7 +264,5 @@ def main(argv=None):
     ax.legend(fontsize=24, loc=0, ncol=1, title=r'$k_{\mathrm{er}^-}/k_{\mathrm{er}^+}$', title_fontsize=24, frameon=False)
     fig.savefig(output_plot + '/P_free.pdf', dpi=150)
 
-
-
 if __name__ == '__main__':
     main()
