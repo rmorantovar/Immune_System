@@ -162,7 +162,7 @@ def main():
 		if secondary: # Do I want secondary infections? 
 			iterate_dict = {
 				"DDE": [0.0, 1.0, 2.0, 3.0],
-				"pmem": [1.0, 4.0]
+				"pmem": [1.0, 3.0]
 			}
 			param_names = list(iterate_dict.keys())
 			param_values = list(iterate_dict.values())

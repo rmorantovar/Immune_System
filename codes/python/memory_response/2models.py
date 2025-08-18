@@ -73,7 +73,7 @@ plt.show()
 # ----------------- 2) Pooled over a repertoire Ω0(k) -----------------
 kmin, kmax = 1e-3, 10.0     # 1/h
 beta = 2.0
-n_clones = 40000
+n_clones = 400000
 umin, umax = np.log(kmin), np.log(kmax)
 r = rng.random(n_clones)
 u = np.log(r*(np.exp(beta*umax)-np.exp(beta*umin)) + np.exp(beta*umin))/beta
