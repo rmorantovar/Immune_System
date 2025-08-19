@@ -10,7 +10,7 @@ from typing import Callable, Tuple
 # ---------- 1) Binning over log k with a user-supplied log-density Ω0(k) ----------
 def make_log_bins(omega0_logdens: Callable[[np.ndarray], np.ndarray],
                   kmin: float, kmax: float, B: int, log_base: float = np.e,
-                  N_total: int = 10_000) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+                  N_total: int = 10000) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Build B bins over log(k) in [kmin, kmax], return:
       k_b (centers), w_b (weights summing to 1 over bins), N_b (integer counts summing to N_total)
@@ -167,7 +167,7 @@ def omega0_lognormal_lndensity(k, mu=np.log(10), sigma=2.0):
     z = (np.log(k) - mu) / sigma
     return np.exp(-0.5 * z * z) / (sigma * np.sqrt(2 * np.pi))
 
-# ---------- 6) Quick demo run ----------
+# ---------- 6) Simulation run ----------
 if __name__ == "__main__":
 
     #----------------------------------------------------------------
@@ -185,7 +185,7 @@ if __name__ == "__main__":
         k_er_plus=1.0,   # closed system by default
         k_er_minus=1.0,
         k0_minus=0.01,
-        M_tot=100,     # try also smaller values to see depletion
+        M_tot=1e5,     # try also smaller values to see depletion
         include_A_as_bound=True,
     )
 
@@ -205,21 +205,23 @@ if __name__ == "__main__":
         m = np.vstack([y[B*(1+i):B*(2+i)] for i in range(alpha)])
         A = y[B*(1+alpha):B*(2+alpha)]
         return ER, m, A
+    ER, m, A = unpack(sol.y[:, -1])  # unpack steady-state snapshot
 
-    ER, m, A = unpack(sol.y[:, -1])  # steady state snapshot
+    # Plotting
     fig, ax = plt.subplots(figsize=(8*1.62, 8), gridspec_kw={'left':0.12, 'right':.9, 'bottom':.1, 'top': 0.96})
     k_bins, w_bins, N_per_bin = make_log_bins(omega0_lognormal_lndensity, kmin=1e-4, kmax=10.0, B=150, N_total=10_000)
     plt.plot(k_bins, N_per_bin, color = 'k', alpha = .8, lw = 3, ls = ':', label="N_per_bin (initial counts)")
     ax.plot(k_bins, m.T, alpha = .8, lw = 2, label=[f"m{i+1}" for i in range(alpha)])
     ax.plot(k_bins, ER.T, alpha = .8, lw = 3, label="ER")
     ax.plot(k_bins, A.T, alpha = 1, lw = 3, label="A" if params.include_A_as_bound else "A (not bound)")
-    ax.plot(k_bins[k_bins>1e-1], 10*k_bins[k_bins>1e-1]**-(alpha+1), ls = '--', color='gray', label=r"$k^{-(\alpha+1)}$"+"(expected)")
+    ax.plot(k_bins[k_bins>1e-1], 10**(np.log10(params.M_tot)-3)*k_bins[k_bins>1e-1]**-(alpha+1), ls = '--', color='gray', label=r"$k^{-(\alpha+1)}$"+"(expected)")
     my_plot_layout(ax = ax, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30)
     ax.set_ylim(bottom = 1e-1)
     ax.set_xlim(left = 1e-3, right = 2e1)
     ax.legend(fontsize=22, loc=0)
-    fig.savefig(output_plot + '/ODE_repertoire_results_M_small.pdf', dpi=150)
-    
+    fig.savefig(output_plot + '/ODE_repertoire_results_M_%.1e.pdf'%params.M_tot, dpi=150)
+
+    # Print steady-state values
     bound = m.sum(axis=0).sum() + (A.sum() if params.include_A_as_bound else 0.0)
     P_free_ss = (params.M_tot - bound) / params.M_tot
     print(f"Steady-state P_free ≈ {P_free_ss:.4f}  (M_free={params.M_tot - bound:.1f} of M_tot={params.M_tot})")
