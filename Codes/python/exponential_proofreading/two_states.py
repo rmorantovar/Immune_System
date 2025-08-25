@@ -12,7 +12,6 @@ os.makedirs(output_plot, exist_ok=True)
 
 lambdaA = 2.
 lambdaB = 1.
-K = 1e-9
 
 
 def step_sample_from_breaks(A, B, n_points=10000):
@@ -35,8 +34,9 @@ def step_sample_from_breaks(A, B, n_points=10000):
     values[mask] = B[left[mask]]
     return t, values
 
-for delta in [1e-2, 1, 1e2]:
+for delta in [1e-1, 1, 1e1]:
 
+    K = 1e-9
     fig, ax = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'right':.95, 'bottom':.15, 'top': 0.94})
     fig2, ax2 = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'right':.95, 'bottom':.15, 'top': 0.94})
 
@@ -54,6 +54,7 @@ for delta in [1e-2, 1, 1e2]:
         t = np.log(1. / r) / tot_rates
         times.append(times[-1] + t)
         state.append(1.-state[-1])
+        
     times = np.asarray(times)
     state = np.asarray(state)
 
