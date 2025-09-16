@@ -130,6 +130,12 @@ ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r'$\ma
 ax_zeta2.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r'$\mathrm{GC}$', color = my_colors_alpha_proposal[0], density = True, histtype = 'stepfilled', edgecolor = 'k')
 
 
+my_plot_layout(ax =ax_r2, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
+ax_r2.set_ylim(bottom = 2e-2, top = 1.1)
+ax_r2.set_xlim(right = 5e1)
+ax_r2.legend(title = r'$\mathrm{exponent }\,\zeta$', fontsize = 24, title_fontsize = 30, loc = 3)#, loc = (1, 0))
+fig_r2.savefig(output_plot + '/ranking_B_cells_proposal1.pdf', transparent=.5)
+
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
 ax_r.set_xlim(right = 5e1)
@@ -662,17 +668,12 @@ ax_r2.plot(np.arange(1, max_rank_eff + 1), np.arange(1, max_rank_eff + 1)**(-np.
 
 ax_zeta2.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r'$\mathrm{GC+m}$', color = my_colors_alpha_proposal[1], density = True, histtype = 'stepfilled', edgecolor = 'k')
 
-my_plot_layout(ax =ax_r2, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
-ax_r2.set_ylim(bottom = 2e-2, top = 1.1)
-ax_r2.set_xlim(right = 5e1)
-ax_r2.legend(title = r'$\mathrm{exponent }\,\zeta$', fontsize = 24, title_fontsize = 30, loc = 3)#, loc = (1, 0))
-fig_r2.savefig(output_plot + '/ranking_B_cells_proposal.pdf', transparent=.5)
 
 my_plot_layout(ax =ax_r2, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r2.set_ylim(bottom = 2e-2, top = 1.1)
 ax_r2.set_xlim(right = 5e1)
 ax_r2.legend(title = r'$\mathrm{exponent }\,\zeta$', fontsize = 24, title_fontsize = 30, loc = 3)#, loc = (1, 0))
-fig_r2.savefig(output_plot + '/ranking_B_cells_proposal.png', transparent=.5)
+fig_r2.savefig(output_plot + '/ranking_B_cells_proposal2.pdf', transparent=.5)
 
 my_plot_layout(ax =ax_zeta2, yscale = 'linear', xscale = 'linear', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 # ax_zeta2.set_ylim(bottom = 2e-2, top = 1.1)
