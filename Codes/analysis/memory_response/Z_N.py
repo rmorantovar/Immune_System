@@ -20,7 +20,7 @@ def main():
 	parser.add_argument('--N_inf', type=int, default=1, help="Number of infections.")
 	parser.add_argument('--N_evo', type=int, default = -1)
 	parser.add_argument('--N_epi', type=int, default = 1)
-	parser.add_argument('--L0', type=int, default=10**8, help="Number of random sequences.")
+	parser.add_argument('--L0', type=int, default=10**7, help="Number of random sequences.")
 	parser.add_argument('--l', type=int, default=16, help="Length of the sequences.")
 	parser.add_argument('--p', type=float, default=3.0, help="# steps.")
 	parser.add_argument('--pmem', type=float, default=1.0, help="# steps for memory.")
@@ -192,7 +192,7 @@ def main():
 			# Result
 			N_AMemory_i = solMemory.y[0]  # solution N(t) evaluated at t_vals
 
-			if i%20==0:
+			if i%2==0:
 				axZ.plot(ZMemory_i, N_AMemory_i, color = my_purple, lw = .2, alpha = .2, ls = '', marker = 'o', ms = 2)
 				axN_A.plot(time_array, N_AMemory_i, color = my_purple, lw = 2, alpha = .5, ls = '-')
 							
@@ -239,7 +239,7 @@ def main():
 		axZ.set_ylim(bottom = 1e4, top = 2e13)
 		# axZ.set_xlim(left = 1, right = 8)
 		axZ.legend(fontsize = 30, loc = 2)
-		figZ.savefig(output_plot + '/Z_t_p-%.1f_pmem_%.1f_DDE_%.1f.pdf'%(p, pmem, DDE))
+		# figZ.savefig(output_plot + '/Z_t_p-%.1f_pmem_%.1f_DDE_%.1f.pdf'%(p, pmem, DDE))
 
 		my_plot_layout(ax = axN_A, xscale='linear', yscale= 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30)
 		# axN_A.set_xticks([])
@@ -247,7 +247,7 @@ def main():
 		axN_A.set_ylim(bottom = 1e4, top = 2e13)
 		axN_A.set_xlim(left = 1, right = 10)
 		axN_A.legend(fontsize = 30, loc = 2)
-		figN_A.savefig(output_plot + '/N_A_t_p-%.1f_pmem_%.1f_DDE_%.1f.pdf'%(p, pmem, DDE))
+		figN_A.savefig(output_plot + '/N_A_t_L0-%de%d_p-%.1f_pmem_%.1f_DDE_%.1f.pdf'%(int(L0/10**int(np.log10(L0))), int(np.log10(L0)), p, pmem, DDE))
 
 
 if __name__ == "__main__":
