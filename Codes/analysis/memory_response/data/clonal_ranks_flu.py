@@ -36,11 +36,11 @@ def model(x, m):
 #------------ Experiment 4 (Figure 5) ------------
 
 fig_r_Flu, ax_r_Flu = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'right':.95, 'bottom':.15, 'top': 0.94})
-fig_zeta_Flu, ax_zeta_Flu = plt.subplots(figsize=(10*1.62,8), gridspec_kw={'left':0.12, 'right':.8, 'bottom':.15, 'top': 0.94})
+fig_zeta_Flu, ax_zeta_Flu = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'right':.95, 'bottom':.15, 'top': 0.94})
 
 data_infection = pd.read_excel(root_dir + "/1-s2.0-S0092867419313170-mmc1.xlsx", sheet_name = 'Influenza', header = 2)
-# data_recall_grouped = data_infection.groupby(['Experiment / Mouse', 'Sort2', 'V', 'J', 'D']).size().reset_index(name='count')
-data_recall_grouped = data_infection.groupby(['Experiment / Mouse', 'Sort2', 'CDR3:']).size().reset_index(name='count')
+data_recall_grouped = data_infection.groupby(['Experiment / Mouse', 'Sort2', 'V', 'J', 'D']).size().reset_index(name='count')
+# data_recall_grouped = data_infection.groupby(['Experiment / Mouse', 'Sort2', 'CDR3:']).size().reset_index(name='count')
 # data_recall_grouped = data_infection.groupby(['Experiment / Mouse', 'Sort2', 'Sequence']).size().reset_index(name='count')
 
 mice = data_recall_grouped['Experiment / Mouse'].unique()
@@ -49,7 +49,7 @@ print(phenotypes)
 
 max_ranks = [100, 100, 100, 100, 100]
 # max_ranks = [10, 10, 10, 10, 10]
-for i_ph, ph in enumerate(phenotypes[[0, 1, 3]]):
+for i_ph, ph in enumerate(phenotypes[[0, 3]]):
 	max_rank = max_ranks[i_ph]
 	zetas = []
 
@@ -99,7 +99,7 @@ for i_ph, ph in enumerate(phenotypes[[0, 1, 3]]):
 		max_rank_eff = len(counts_per_ranking[counts_per_ranking>1])
 		x_avg = x_avg[:max_rank_eff]/counts_per_ranking[:max_rank_eff]
 
-		params, pcov = curve_fit(model, np.log(range(1, 10+1)), np.log(x_avg[:10]))
+		params, pcov = curve_fit(model, np.log(range(1, max_rank_eff+1))[:40], np.log(x_avg)[:40])
 		slope = params[0]
 
 		zetas.append(-slope)
@@ -111,20 +111,19 @@ for i_ph, ph in enumerate(phenotypes[[0, 1, 3]]):
 	ax_r_Flu.plot(range(1, max_rank_eff+1), x_avg, color = my_colors_alpha[int((np.mean(zetas)-zeta_min)*100)], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = 'D', label = r'$%.2f$'%(np.mean(zetas)) + ' ; ' + ph)
 	ax_r_Flu.plot(np.arange(1, max_rank_eff + 1), np.exp(0)*np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = my_colors_alpha[int((np.mean(zetas)-zeta_min)*100)], alpha = .8, lw = 3)
 	
-	ax_zeta_Flu.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r"$\mathrm{" + ph + "}$", color = my_colors_alpha[int((np.mean(zetas)-zeta_min)*100)], density = True, histtype = 'stepfilled', edgecolor = 'k')
-	ax_zeta_Flu.vlines(np.mean(zetas), ymin = 0, ymax = ax_zeta_Flu.get_ylim()[1], color = my_colors_alpha[0], lw = 3, ls = '--')
+	ax_zeta_Flu.hist(zetas, bins = np.linspace(0.2, 1.6, 30), alpha = .7, label = r"$\mathrm{" + ph + "}$", color = my_colors_alpha[int((np.mean(zetas)-zeta_min)*100)], density = True, histtype = 'stepfilled', edgecolor = 'k')
 
 my_plot_layout(ax =ax_r_Flu, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r_Flu.set_ylim(bottom = 2e-2, top = 1.1)
 ax_r_Flu.set_xlim(right = 5e1)
-ax_r_Flu.legend(title = r'$\zeta$', fontsize = 30, title_fontsize = 30, loc = 3)#, loc = (1, 0))
+ax_r_Flu.legend(title = r'$\mathrm{exponent }\,\zeta$', fontsize = 24, title_fontsize = 30, loc = 3)#, loc = (1, 0))
 fig_r_Flu.savefig(output_plot + '/ranking_B_cells_Flu.pdf', transparent=.5)
 
 my_plot_layout(ax =ax_zeta_Flu, yscale = 'linear', xscale = 'linear', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 # ax_zeta_Flu.set_ylim(bottom = 2e-2, top = 1.1)
-ax_zeta_Flu.set_title('Influenza', fontsize = 30)
-ax_zeta_Flu.set_xlim(left = 0.2, right = 1.6)
-ax_zeta_Flu.legend(title = r'$\mathrm{sub-pop}$', fontsize = 30, title_fontsize = 30, loc = (1, 0))
+# ax_zeta_Flu.set_title('Influenza', fontsize = 30)
+ax_zeta_Flu.set_xlim(left = 0.15, right = 1.6)
+# ax_zeta_Flu.legend(title = r'$\mathrm{sub-pop}$', fontsize = 30, title_fontsize = 30, loc = (1, 0))
 fig_zeta_Flu.savefig(output_plot + '/zetas_Flu.pdf', transparent=.5)
 
 
