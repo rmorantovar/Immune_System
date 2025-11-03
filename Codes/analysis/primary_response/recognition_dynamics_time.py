@@ -20,8 +20,8 @@ k_step = k_step*3600 # hour^-1
 k_step = k_step*24 #days^-1
 lambda_B = 3 * np.log(2) #(days)^-1
 k_on = 1e6*24*3600; #(M*days)^-1
-N_c = 1e5*10
-#N_c = 1e5
+b0 = 1e5*10
+#b0 = 1e5
 #E_ms = -27.63
 E_ms = -24
 C = 1e4
@@ -84,7 +84,7 @@ beta_1, E_1, Kd_1 = get_p_properties(betas, Q0, Es, dE, 1)
 beta_step, E_step, K_step = get_proofreading_properties(betas, Q0, Es, dE, k_step, k_on)
 print('beta_a = %.2f'%beta_step, 'K_a = %.2e'%K_step)
 
-t_prime = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*N_c))
+t0 = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*b0))
 print('--------')
 #--------------------------Loops--------------------------
 
@@ -125,13 +125,13 @@ for L_0 in L_0s:
     beta_r, E_r, Kd_r = get_repertoire_properties(betas, Q0, Es, dE, L_0)
     print('beta_r = %.1f'%beta_r, 'K_d_r = %.2e'%Kd_r)
 
-    fig_R, ax_R = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.15, 'top': 0.94})
+    fig_R, ax_R =plt.subplots(figsize=(8.0*1.62,8*0.6), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.2, 'top': 0.96})
     fig_K, ax_K = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.15, 'top': 0.94})
     fig_L, ax_L = plt.subplots(figsize=(8*1.62,5), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.15, 'top': 0.94})
     fig_N_b, ax_N_b = plt.subplots(figsize=(8.0*1.62,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.15, 'top': 0.94})
 
     for i_p, p in enumerate(ps):
-
+        fig_R_p, ax_R_p =plt.subplots(figsize=(8.0*1.62,8*0.6), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.2, 'top': 0.96})
         fig_N_b_p, ax_N_b_p = plt.subplots(figsize=(8.0*1.62,8*0.6), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.2, 'top': 0.96})
         fig_N_b_p2, ax_N_b_p2 = plt.subplots(figsize=(8.0*1.62,8*0.6), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.2, 'top': 0.96})
         # ax_N_b_p.plot(time_array, np.exp(3*time_array)/(1e0), linewidth = 5, color = antigen_color)
@@ -141,18 +141,18 @@ for L_0 in L_0s:
         print('beta_p = %.2f...'%p, 'K_p = %.2e...'%Kd_p)
         
         #-----------------Loading data----------------------------
-        parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, L_0)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_step-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 3.0, k_step/24, p, N_c, linear, N_ens)+model
+        parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, L_0)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_step-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 3.0, k_step/24, p, b0, linear, N_ens)+model
         # #data = pd.read_csv(Text_files_path + 'Dynamics/Trajectories/'+parameters_path+'/energies%d.txt'%rep, sep = '\t', header=None)
         #data = get_data(folder_path = Text_files_path + 'Dynamics/Trajectories/L%d/'%L+parameters_path, rep = 0)
         # #-----------------Filtering data----------------------------
         # min_e_data = np.min(data[0])
         # max_e_data = np.max(data[0])
         #--------------------------m_bar(t)---------------------------
-        u_on, p_a, R, QR = calculate_QR(Q0, k_on, k_step, np.exp(lambda_A*time_array[0])/N_A, Es, p, lambda_A, N_c, dE)
-        M_r = L_0*N_c*np.sum(Q0*p_a*dE)
+        u_on, p_a, R, QR = calculate_QR(Q0, k_on, k_step, np.exp(lambda_A*time_array[0])/N_A, Es, p, lambda_A, b0, dE)
+        M_r = L_0*b0*np.sum(Q0*p_a*dE)
         
-        #m_bar = np.array([L_0*(1-np.sum(np.exp(-((p_a*(np.exp(lambda_A*t)/N_A*k_on*N_c))/lambda_A))*Q0*dE)) for t in time_array])# Review this
-        m_bar = np.array([np.sum(L_0*calculate_QR(Q0, k_on, k_step, np.exp(lambda_A*(t))/N_A, Es, p, lambda_A, N_c, dE)[3]*dE) for t in time_array]) 
+        #m_bar = np.array([L_0*(1-np.sum(np.exp(-((p_a*(np.exp(lambda_A*t)/N_A*k_on*b0))/lambda_A))*Q0*dE)) for t in time_array])# Review this
+        m_bar = np.array([np.sum(L_0*calculate_QR(Q0, k_on, k_step, np.exp(lambda_A*(t))/N_A, Es, p, lambda_A, b0, dE)[3]*dE) for t in time_array]) 
         m_bar_approx = ((k_on*M_r)/(N_A*lambda_A))*(np.exp(lambda_A*time_array))
         t_act = time_array[m_bar<1][-1]
         print('t_act:', t_act)
@@ -160,7 +160,7 @@ for L_0 in L_0s:
         ax_L.plot(time_array, m_bar, linewidth = 5, linestyle = '-', color = colors_p[i_p])
         #ax_L.plot(time_array, m_bar_approx, linewidth = 1, linestyle = '--', color = 'black')
         #ax_L.hlines(1, T0, Tf, color = 'grey', linestyle = ':')
-        #ax_L.vlines([t_prime + p/lambda_A*(E_p - E_step)], 1e-5, 1e6, color = 'grey', linestyle = ':')
+        #ax_L.vlines([t0 + p/lambda_A*(E_p - E_step)], 1e-5, 1e6, color = 'grey', linestyle = ':')
 
         #---------------------------- B cell linages ----------------------
         t_f = Tf
@@ -177,7 +177,7 @@ for L_0 in L_0s:
         print('final L_act =', np.size(activation_times_C))
 
         delta_t_n = (E_p-E_step)*p/lambda_A
-        t_n = t_prime + delta_t_n
+        t_n = t0 + delta_t_n
         time1 = np.linspace(0, t_n, 100)
         time2 = np.linspace(t_n, Tf, 100)
 
@@ -193,6 +193,8 @@ for L_0 in L_0s:
         #     ax_N_b.plot(time_array, clone_sizes_C_sorted[-k, :], linewidth = 1.5, color = colors_p[i_p], linestyle= '-', alpha = .8)
         my_colors = [my_green_a, my_green_b, my_green_c]
         for i_k, k in enumerate([0, 1, 10]):
+            K_act =  (k_step/k_on)*np.exp(lambda_A*(activation_times_C[k*10]-t0)/p)
+            ax_R_p.plot(time_array, 1-np.exp(-(1/lambda_A)*np.exp(lambda_A*(time_array))*b0*k_on/N_A*((k_step/k_on)/((k_step/k_on)+K_act))**p), linewidth = 3, color = my_colors[i_k], linestyle= '-', alpha = .8)
             ax_N_b.plot(time_array, clone_sizes_C[k*10, :]-np.heaviside(activation_times_C[k*10] - time_array , 1), linewidth = 1.5, color = colors_p[i_p], linestyle= '-', alpha = .8)
             ax_N_b_p.plot(time_array, clone_sizes_C[k*10, :]-np.heaviside(activation_times_C[k*10] - time_array , 1), linewidth = 3, color = my_colors[i_k], linestyle= '-', alpha = .8)
             ax_N_b_p2.plot(time_array, np.exp(lambda_B*3/activation_times_C[9*k*10]*(time_array - activation_times_C[1*10])), linewidth = 3, color = my_colors[i_k], linestyle= '-', alpha = .8)
@@ -206,16 +208,16 @@ for L_0 in L_0s:
         #ax_N_b.vlines([t_act], 0, C, linestyle = '--', linewidth = 1, color = 'grey')
         #ax_N_b.plot(time_array, np.sum(clone_sizes_C_sorted[:, :], axis = 0) - len(clone_sizes_C_sorted[:, -1]) + 1, linewidth = 5, color = colors_p[i_p], ls = ':')
 
-        u_on, p_a, R, QR = calculate_QR(Q0, k_on, k_step, np.exp(lambda_A*(t_act+1.3))/N_A, Es, p, lambda_A, N_c, dE)
+        u_on, p_a, R, QR = calculate_QR(Q0, k_on, k_step, np.exp(lambda_A*(t_act+1.3))/N_A, Es, p, lambda_A, b0, dE)
         m_f_expected = np.sum(L_0*QR*dE)
         print('Activated clones expected:%.d'%m_f_expected)
 
         
-        K_front = (k_step/k_on)*np.exp(lambda_A*(time_array[time_array>t_prime] - t_prime)/p)
-        t_p = time_array[time_array>t_prime][K_front>Kd_p][0]
+        K_front = (k_step/k_on)*np.exp(lambda_A*(time_array[time_array>t0] - t0)/p)
+        t_p = time_array[time_array>t0][K_front>Kd_p][0]
         print('t_p:', t_p)
-        # ax_K.hlines(K_step, T0, t_prime, color = colors_p[i_p], linewidth = 5, linestyle = '--', alpha = .5)
-        ax_K.plot(time_array[time_array>t_prime], K_front, alpha = .5, color = colors_p[i_p], linewidth = 5, linestyle = '--')
+        # ax_K.hlines(K_step, T0, t0, color = colors_p[i_p], linewidth = 5, linestyle = '--', alpha = .5)
+        ax_K.plot(time_array[time_array>t0], K_front, alpha = .5, color = colors_p[i_p], linewidth = 5, linestyle = '--')
         ax_K.plot(time_array[time_array>1.15][0], Kd_r, markerfacecolor = 'grey', marker = '*', ms = 22, markeredgecolor='black', alpha = 0.8, zorder = 20)
         ax_K.plot(time_array[time_array>1.15][0], Kd_p, markerfacecolor = colors_p[i_p], marker = 'o', ms = 18, markeredgecolor='black', alpha = alpha_p[i_p], zorder = 20)
 
@@ -225,11 +227,11 @@ for L_0 in L_0s:
         else:
             ax_K.hlines(Kd_p, t_act+0.15, t_p, color = colors_p[i_p], linewidth = 5, linestyle = '-', alpha = 1)
             ax_K.plot(time_array[time_array>=t_p], (Kd_p)*np.exp(lambda_A*(time_array[time_array>=t_p] - t_p)/p), alpha = 1, color = colors_p[i_p], linewidth = 5, linestyle = '-')
-        print('t`:', t_prime, 't_act:', t_act)
+        print('t`:', t0, 't_act:', t_act)
         #ax_K.hlines(Kd_r, T0, Tf, color = 'grey', linestyle = '--')
         #ax_K.hlines(Kd_p, T0, Tf, color = 'grey', linestyle = ':')
-        #ax_K.vlines(t_prime, 1e-14, k_step/k_on, color = 'grey', linestyle = ':')
-        #ax_K.vlines(t_prime + p/lambda_A*(E_p - E_step), 1e-14, Kd_p, color = 'grey', linestyle = ':')
+        #ax_K.vlines(t0, 1e-14, k_step/k_on, color = 'grey', linestyle = ':')
+        #ax_K.vlines(t0 + p/lambda_A*(E_p - E_step), 1e-14, Kd_p, color = 'grey', linestyle = ':')
 
         my_plot_layout(ax=ax_N_b_p, yscale = 'log', ticks_labelsize = 40, x_fontsize=30, y_fontsize=30 )
         if p==1:
@@ -248,34 +250,34 @@ for L_0 in L_0s:
         fig_N_b_p2.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/_Summary/time/L%d/Bcell2_p-%.1f_Nr-%.0e_'%(L, p, L_0)+energy_model+'.pdf')
         plt.close(fig_N_b_p2)
 
-    my_plot_layout(ax=ax_N_b, yscale = 'log', ticks_labelsize = 40, x_fontsize=30, y_fontsize=30 )
-    ax_N_b.set_xlim(right = Tf-1, left = T0+1)
-    ax_N_b.set_ylim(bottom = 1e0, top = 8e2)
-    #ax_N_b.set_ylim(bottom = 1e0, top = C*1.1)
-    fig_N_b.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/_Summary/time/L%d/Bcell_Nr-%.0e_'%(L, L_0)+energy_model+'.pdf')
-    plt.close(fig_N_b)
+        my_plot_layout(ax=ax_R_p, yscale = 'log', ticks_labelsize = 40, x_fontsize=30, y_fontsize=30 )
+        ax_R_p.set_xticks([])
+        ax_R_p.set_xlim(right = Tf-1, left = T0+1)
+        ax_R_p.set_ylim(bottom = 1.5e-3, top = 1.5)
+        fig_R_p.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/_Summary/time/L%d/R_p-%.1f_Nr-%.0e_'%(L, p, L_0)+energy_model+'.pdf')
+        plt.close(fig_R_p)
 
-    my_plot_layout(ax=ax_R, yscale = 'log', xscale = 'linear', ticks_labelsize = 40, x_fontsize=30, y_fontsize=30 )
-    #ax_R.set_xticks([])
-    ax_R.set_xlim(right = Tf-1, left = T0+1)
-    ax_R.set_ylim(bottom = 1.5e-3, top = 1.5)
-    fig_R.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/_Summary/time/L%d/R_Nr-%.0e_'%(L, L_0)+energy_model+'.pdf')
-    plt.close(fig_R)
+    # my_plot_layout(ax=ax_N_b, yscale = 'log', ticks_labelsize = 40, x_fontsize=30, y_fontsize=30 )
+    # ax_N_b.set_xlim(right = Tf-1, left = T0+1)
+    # ax_N_b.set_ylim(bottom = 1e0, top = 8e2)
+    # #ax_N_b.set_ylim(bottom = 1e0, top = C*1.1)
+    # fig_N_b.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/_Summary/time/L%d/Bcell_Nr-%.0e_'%(L, L_0)+energy_model+'.pdf')
+    # plt.close(fig_N_b)
 
-    my_plot_layout(ax=ax_K, yscale = 'log', xscale = 'linear', ticks_labelsize = 40, x_fontsize=30, y_fontsize=30 )
-    # ax_K.set_xticks([])
-    ax_K.set_xlim(right = Tf-1, left = T0+1)
-    ax_K.set_ylim(bottom = 9e-10, top = 2e-4)
-    fig_K.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/_Summary/time/L%d/K_Nr-%.0e_'%(L, L_0)+energy_model+'.pdf')
-    plt.close(fig_K)
+    # my_plot_layout(ax=ax_K, yscale = 'log', xscale = 'linear', ticks_labelsize = 40, x_fontsize=30, y_fontsize=30 )
+    # # ax_K.set_xticks([])
+    # ax_K.set_xlim(right = Tf-1, left = T0+1)
+    # ax_K.set_ylim(bottom = 9e-10, top = 2e-4)
+    # fig_K.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/_Summary/time/L%d/K_Nr-%.0e_'%(L, L_0)+energy_model+'.pdf')
+    # plt.close(fig_K)
 
-    my_plot_layout(ax=ax_L, yscale = 'log', xscale = 'linear', ticks_labelsize = 40, x_fontsize=30, y_fontsize=30 )
-    ax_L.set_xticks([])
-    ax_L.set_xlim(right = Tf-1, left = T0+1)
-    ax_L.set_ylim(bottom = 9e-1, top = 9e3)
-    ax_L.set_yticks([1e0, 1e2])
-    fig_L.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/_Summary/time/L%d/L_Nr-%.0e_'%(L, L_0)+energy_model+'.pdf')
-    plt.close(fig_L)
+    # my_plot_layout(ax=ax_L, yscale = 'log', xscale = 'linear', ticks_labelsize = 40, x_fontsize=30, y_fontsize=30 )
+    # ax_L.set_xticks([])
+    # ax_L.set_xlim(right = Tf-1, left = T0+1)
+    # ax_L.set_ylim(bottom = 9e-1, top = 9e3)
+    # ax_L.set_yticks([1e0, 1e2])
+    # fig_L.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/_Summary/time/L%d/L_Nr-%.0e_'%(L, L_0)+energy_model+'.pdf')
+    # plt.close(fig_L)
 
 
 
