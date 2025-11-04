@@ -48,6 +48,8 @@ mice = data_primary_grouped['Mouse'].unique()
 # for i_ph, ph in enumerate(phenotypes):
 # 	max_rank = max_ranks[i_ph]
 max_rank = 100
+max_rank_fit = 20
+
 zetas = []
 for rep in tqdm(range(n_ensemble)):
 	if rep == n_ensemble - 1:
@@ -79,11 +81,6 @@ for rep in tqdm(range(n_ensemble)):
 			x = x[:max_rank]
 		else:
 			x = np.pad(x, (0, max_rank - len(x)), mode='constant')
-
-		if max_rank_mouse < min_max_rank_mouse:
-			min_max_rank_mouse = max_rank_mouse
-		if max_rank_mouse > max_max_rank_mouse:
-			max_max_rank_mouse = max_rank_mouse
 		
 		for k in range(max_rank):
 			if(x[k]>0):
@@ -94,11 +91,9 @@ for rep in tqdm(range(n_ensemble)):
 
 	x_avg = x_avg[:max_rank_eff]/counts_per_ranking[:max_rank_eff]
 
-	params, pcov = curve_fit(model, np.log(range(1, max_rank_eff+1))[:10], np.log(x_avg)[:10])
+	params, pcov = curve_fit(model, np.log(range(1, max_rank_eff+1))[:max_rank_fit], np.log(x_avg)[:max_rank_fit])
 	# print(np.sqrt(pcov))
 	slope = params[0]
-
-	zeta = 3*3.5/(4.5*2.1)
 	zetas.append(-slope)
 	# print(-slope)
 
@@ -130,6 +125,7 @@ figures = ['4A', '4C-H']
 
 max_rank = 100
 zetas = []
+
 for rep in tqdm(range(n_ensemble)):
 	x_avg = np.zeros(max_rank)
 	counts_per_ranking = np.zeros(max_rank)
@@ -172,11 +168,6 @@ for rep in tqdm(range(n_ensemble)):
 				x = x[:max_rank]
 			else:
 				x = np.pad(x, (0, max_rank - max_rank_mouse), mode='constant')
-			 
-			if max_rank_mouse < min_max_rank_mouse:
-				min_max_rank_mouse = max_rank_mouse
-			if max_rank_mouse > max_max_rank_mouse:
-				max_max_rank_mouse = max_rank_mouse
 
 			for k in range(max_rank):
 				if(x[k]>0):
@@ -188,7 +179,7 @@ for rep in tqdm(range(n_ensemble)):
 
 	x_avg = x_avg[:max_rank_eff]/counts_per_ranking[:max_rank_eff]
 
-	params, pcov = curve_fit(model, np.log(range(1, max_rank_eff+1))[:40], np.log(x_avg)[:40])
+	params, pcov = curve_fit(model, np.log(range(1, max_rank_eff+1))[:max_rank_fit], np.log(x_avg)[:max_rank_fit])
 	# print(np.sqrt(pcov))
 	slope = params[0]
 	zetas.append(-slope)

@@ -46,10 +46,12 @@ data_recall_grouped = data_infection.groupby(['Experiment / Mouse', 'Sort2', 'V'
 mice = data_recall_grouped['Experiment / Mouse'].unique()
 phenotypes = data_recall_grouped['Sort2'].unique()
 print(phenotypes)
+max_rank_fit = 20
 
 max_ranks = [100, 100, 100, 100, 100]
 # max_ranks = [10, 10, 10, 10, 10]
-for i_ph, ph in enumerate(phenotypes[[0, 3]]):
+# for i_ph, ph in enumerate(phenotypes[[0, 3]]):
+for i_ph, ph in enumerate(phenotypes):
 	max_rank = max_ranks[i_ph]
 	zetas = []
 
@@ -96,10 +98,10 @@ for i_ph, ph in enumerate(phenotypes[[0, 3]]):
 					counts_per_ranking[k]+=1
 					x_avg[k]+=x[k]/largest
 
-		max_rank_eff = len(counts_per_ranking[counts_per_ranking>1])
+		max_rank_eff = len(counts_per_ranking[counts_per_ranking>2])
 		x_avg = x_avg[:max_rank_eff]/counts_per_ranking[:max_rank_eff]
 
-		params, pcov = curve_fit(model, np.log(range(1, max_rank_eff+1))[:40], np.log(x_avg)[:40])
+		params, pcov = curve_fit(model, np.log(range(1, max_rank_eff+1))[:max_rank_fit], np.log(x_avg)[:max_rank_fit])
 		slope = params[0]
 
 		zetas.append(-slope)
