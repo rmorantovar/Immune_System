@@ -160,8 +160,8 @@ def main():
 			N_ANaive_i = solNaive.y[0]  # solution N(t) evaluated at t_vals
 
 			if i%20==0:
-				axZ.plot(ZNaive_i, N_ANaive_i, color = my_blue, lw = .2, alpha = .2, ls = '', marker = 'o', ms = 2)
-				axN_A.plot(time_array, N_ANaive_i, color = my_blue, lw = 2, alpha = .5, ls = '-')
+				axZ.plot(time_array, ZNaive_i, color = my_blue, lw = .5, alpha = .2, ls = '-')
+				axN_A.plot(time_array, N_ANaive_i, color = my_blue, lw = 2, alpha = .2, ls = '-')
 
 			#----------MEMORY----------
 			dataMemory_i = dataMemory[dataMemory['ens_id']==i].reset_index()
@@ -193,7 +193,7 @@ def main():
 			N_AMemory_i = solMemory.y[0]  # solution N(t) evaluated at t_vals
 
 			if i%2==0:
-				axZ.plot(ZMemory_i, N_AMemory_i, color = my_purple, lw = .2, alpha = .2, ls = '', marker = 'o', ms = 2)
+				axZ.plot(time_array, ZMemory_i, color = my_purple, lw = .5, alpha = .2, ls = '-')
 				axN_A.plot(time_array, N_AMemory_i, color = my_purple, lw = 2, alpha = .5, ls = '-')
 							
 			with np.errstate(divide='ignore', invalid='ignore'):
@@ -214,8 +214,8 @@ def main():
 		axN_A.plot(time_array, N_ANaive, color = my_blue, lw = 4, alpha = .8, ls = '-', label = r'$\textrm{Naive}$')
 		axN_A.plot(time_array, N_AMemory, color = my_purple, lw = 4, alpha = .8, ls = '-', label = r'$\textrm{Memory}$')
 
-		axZ.plot(ZNaive, N_ANaive, color = my_blue, lw = 4, alpha = .8, ls = '-', marker = '', ms = 5, label = r'$\textrm{Naive}$')
-		axZ.plot(ZMemory, N_AMemory, color = my_purple, lw = 4, alpha = .8, ls = '-', marker = '', ms = 5, label = r'$\textrm{Memory}$')
+		axZ.plot(time_array, ZNaive, color = my_blue, lw = 4, alpha = .8, ls = '-', marker = '', ms = 5, label = r'$\textrm{Naive}$')
+		axZ.plot(time_array, ZMemory, color = my_purple, lw = 4, alpha = .8, ls = '-', marker = '', ms = 5, label = r'$\textrm{Memory}$')
 
 		lamZ = np.max([lamB, lamA/p*(beta_r-1)])
 		logging.info(f'lamZ: {lamZ}')
@@ -233,18 +233,18 @@ def main():
 		
 		# axZ.hlines(1/Kd_r, 0, T, color = 'k', ls = '--')
 
-		my_plot_layout(ax = axZ, xscale='log', yscale= 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30)
+		my_plot_layout(ax = axZ, xscale='linear', yscale= 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30)
 		# axZ.set_xticks([])
 		# axZ.set_yticks([])
-		axZ.set_ylim(bottom = 1e4, top = 2e13)
-		# axZ.set_xlim(left = 1, right = 8)
+		axZ.set_ylim(bottom = 1e7, top = 5e11)
+		axZ.set_xlim(left = 1, right = 10)
 		axZ.legend(fontsize = 30, loc = 2)
-		# figZ.savefig(output_plot + '/Z_t_p-%.1f_pmem_%.1f_DDE_%.1f.pdf'%(p, pmem, DDE))
+		figZ.savefig(output_plot + '/Z_t_L0-%de%d_p-%.1f_pmem_%.1f_DDE_%.1f.pdf'%(int(L0/10**int(np.log10(L0))), int(np.log10(L0)), p, pmem, DDE))
 
 		my_plot_layout(ax = axN_A, xscale='linear', yscale= 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30)
 		# axN_A.set_xticks([])
 		# axN_A.set_yticks([])
-		axN_A.set_ylim(bottom = 1e4, top = 2e13)
+		axN_A.set_ylim(bottom = 1e4, top = 2e14)
 		axN_A.set_xlim(left = 1, right = 10)
 		axN_A.legend(fontsize = 30, loc = 2)
 		figN_A.savefig(output_plot + '/N_A_t_L0-%de%d_p-%.1f_pmem_%.1f_DDE_%.1f.pdf'%(int(L0/10**int(np.log10(L0))), int(np.log10(L0)), p, pmem, DDE))
