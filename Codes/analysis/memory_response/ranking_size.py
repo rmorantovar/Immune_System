@@ -10,7 +10,7 @@ Text_files_path = '/Users/robertomorantovar/Library/CloudStorage/Dropbox/Researc
 N_ens = 400
 L_0 = 1e9
 T0 = 0
-Tf = 12
+Tf = 8
 Tf_sim = 7
 #Tf = 10
 dT = 0.05
@@ -54,7 +54,7 @@ colors_R = []
 for i in range(len(ps)):
     colors_R.append([colors_p[i], colors_p[i], colors_p[i], colors_p[i]])
 
-time = np.linspace(T0, Tf, int((Tf-T0)/dT))
+times = np.linspace(T0, Tf, int((Tf-T0)/dT))
 energy_models = ['MJ']
 energy_model = 'MJ'
 models_name = ['exponential']#, 'linear',]
@@ -161,7 +161,7 @@ for i_p, p in enumerate((ps)):
             energies  = np.array(data_active['E'])
 
             #---------------------------- B cell linages ----------------------
-            clone_sizes = get_clones_sizes_C(len(activation_times), time, activation_times, lambda_B, C, dT)
+            clone_sizes = get_clones_sizes_C(len(activation_times), times, activation_times, lambda_B, C, dT)
             #--------------------------t_C filter-------------------------
             lim_size = np.max([int(np.max(clone_sizes[:, -1])*0.01), 2])
             clone_sizes_C, activation_times_C, energies_C, filter_C, n_C = apply_filter_C(clone_sizes, activation_times, energies, lim_size)
@@ -184,7 +184,7 @@ for i_p, p in enumerate((ps)):
 
             #---------------------------- B cell linages cst----------------------
             growth_rates_cst = lambda_B*(1+(np.exp(energies_C)/(np.exp(lambda_A*(t_prime+t_cst))/N_A)))**(-1)
-            clone_sizes_cst = get_clones_sizes_C(len(activation_times_C), time, np.ones(len(activation_times_C)), growth_rates_cst, C, dT)
+            clone_sizes_cst = get_clones_sizes_C(len(activation_times_C), times, np.ones(len(activation_times_C)), growth_rates_cst, C, dT)
             #--------------------------t_C filter cst-------------------------
             lim_size = np.max([int(np.max(clone_sizes_cst[:, -1])*0.01), 2])
             clone_sizes_C_cst, activation_times_C_cst, energies_C_cst, filter_C_cst, n_C_cst = apply_filter_C(clone_sizes_cst, activation_times_C, energies_C, lim_size)
