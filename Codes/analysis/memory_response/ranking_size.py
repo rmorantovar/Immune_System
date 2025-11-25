@@ -109,6 +109,7 @@ for i_p, p in enumerate((ps)):
     t_lim = t_lims[i_p]
     fig_ranking_i, ax_ranking_i = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.15, 'top': 0.94})
     fig_CSD_i, ax_CSD_i = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.15, 'top': 0.94})
+    fig_CSD_2_i, ax_CSD_2_i = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.15, 'top': 0.94})
 
     print('--------')
     print('p = %.2f...'%p)
@@ -116,10 +117,10 @@ for i_p, p in enumerate((ps)):
     beta_act = np.min([beta_r, beta_p])
 
     #-----------------Loading data----------------------------
-    t_cst = 4.2
+    t_cst = 4.4
     return_data_type = 0
     data, return_data_type = get_data(folder_path = Text_files_path + 'memory_response/out/', data_type = 'ranking_size_p-%.1f_t_cst-%.1f'%(p, t_cst))
-    # return_data_type = 0
+    return_data_type = 0
     n_first_clones = 100
     
     if(return_data_type):
@@ -148,6 +149,7 @@ for i_p, p in enumerate((ps)):
         trajectories_cst = np.array([], dtype = object)
         trajectories_rank_cst = np.array([])
         clone_size_total_cst = np.array([])
+        growth_rates_total_cst = np.array([])
 
         max_rank = 100
 
@@ -182,11 +184,12 @@ for i_p, p in enumerate((ps)):
 
             #---------------------------- B cell linages cst----------------------
             growth_rates_cst = lambda_B*(1+(np.exp(energies_C)/(np.exp(lambda_A*(t_prime+t_cst))/N_A)))**(-1)
-            clone_sizes_cst = get_clones_sizes_C(len(activation_times_C), time, (t_prime+t_cst)*np.ones(len(activation_times_C)), growth_rates_cst, C, dT)
+            clone_sizes_cst = get_clones_sizes_C(len(activation_times_C), time, np.ones(len(activation_times_C)), growth_rates_cst, C, dT)
             #--------------------------t_C filter cst-------------------------
-            lim_size = np.max([int(np.max(clone_sizes[:, -1])*0.01), 2])
-            clone_sizes_C_cst, activation_times_C_cst, energies_C_cst, filter_C_cst, n_C_cst = apply_filter_C(clone_sizes_cst, activation_times_C, energies_C, 2)
+            lim_size = np.max([int(np.max(clone_sizes_cst[:, -1])*0.01), 2])
+            clone_sizes_C_cst, activation_times_C_cst, energies_C_cst, filter_C_cst, n_C_cst = apply_filter_C(clone_sizes_cst, activation_times_C, energies_C, lim_size)
             clone_size_total_cst = np.concatenate((clone_size_total_cst, clone_sizes_C_cst[:,-1]/np.max(clone_sizes_C_cst[:,-1])))
+            growth_rates_total_cst = np.concatenate((growth_rates_total_cst, growth_rates_cst[filter_C_cst]))
 
             sort_inds_cst = clone_sizes_C_cst[:, -1].argsort()
             clone_sizes_C_sorted_cst = clone_sizes_C_cst[sort_inds_cst, :][-int(n_first_clones*(4-3)):, :]
@@ -288,6 +291,18 @@ for i_p, p in enumerate((ps)):
     #ax_CSD_i.set_yticks([1, 0.1, 0.01, 0.001])
     #ax_CSD_i.set_yticklabels([1, 0.1, 0.01])
     fig_CSD_i.savefig(output_plot + '/CSD_p-%.2f_lamAB-%.2f_t_cst-%.1f.pdf'%(p, lambda_A/lambda_B, t_cst))
+
+    bins = np.logspace(np.log10(5e-2*0.5),np.log10(lambda_B*2), 40)
+
+    ax_CSD_2_i.hist(growth_rates_total_cst, bins = bins, density = True, alpha = 0.7, color = colors_p[i_p+1], label = r'$\textrm{CST}$')
+
+    my_plot_layout(ax = ax_CSD_2_i, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+    # ax_CSD_2_i.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
+    ax_CSD_2_i.set_xlim(right = lambda_B*1.2, left = 0.05)
+    ax_CSD_2_i.set_ylim(bottom = 1e-1, top = 2e2)
+    #ax_CSD_2_i.set_yticks([1, 0.1, 0.01, 0.001])
+    #ax_CSD_2_i.set_yticklabels([1, 0.1, 0.01])
+    fig_CSD_2_i.savefig(output_plot + '/GR_p-%.2f_lamAB-%.2f_t_cst-%.1f.pdf'%(p, lambda_A/lambda_B, t_cst))
    
 my_plot_layout(ax = ax_ranking, xscale='log', yscale= 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 #ax_ranking.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
