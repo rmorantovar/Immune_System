@@ -46,11 +46,11 @@ data_sera = pd.read_excel(root_dir + "/Fig_2.xlsx", sheet_name = 'Fig 2c-d', hea
 data_sera = data_sera.drop(data_sera.columns[0], axis=1)
 data_sera = data_sera.set_index(data_sera.columns[0])
 data_sera = data_sera[['Anti-TNP FLAG titer', 'Anti-TNP Strep titer']]
-print(data_sera.columns)
+
 for (top, sub) in data_sera.columns:
     ax.plot(
         data_sera.index.to_numpy()[1:],    # x-axis = time
-        (data_sera[(top, sub)].to_numpy()[1:]-data_sera[(top, sub)].to_numpy()[:-1])/data_sera[(top, sub)].to_numpy()[2],    # y-axis = the column
+        (data_sera[(top, sub)].to_numpy()[1:]/data_sera[(top, sub)].to_numpy()[:-1]),    # y-axis = the column
         label=f"{sub} ({top})",
         color=color_map[top], ls = '', marker='o', markersize=8
     )
@@ -59,3 +59,14 @@ ax.hlines(1, xmin=0, xmax=np.max(data_sera.index.to_numpy()[:]), colors='grey', 
 ax.set_yscale('log')
 plt.show()
 
+fig, ax = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'right':.95, 'bottom':.15, 'top': 0.94})
+ax.plot(
+        data_sera.index.to_numpy()[1:],    # x-axis = time
+        (data_sera['Anti-TNP Strep titer'].to_numpy()[1:,:]/data_sera['Anti-TNP Strep titer'].to_numpy()[:-1,:])/(data_sera['Anti-TNP FLAG titer'].to_numpy()[1:,:]/data_sera['Anti-TNP FLAG titer'].to_numpy()[:-1,:]), 
+        label=f"{sub} ({top})",
+        color=my_green, ls = '', marker='o', markersize=8
+    )
+ax.vlines(boosts, ymin=1e-1, ymax=1e3, colors='grey', linestyles='dashed', label='Boosts')
+ax.hlines(1, xmin=0, xmax=np.max(data_sera.index.to_numpy()[:]), colors='grey', linestyles='dashed', label='Baseline')
+ax.set_yscale('log')
+plt.show()
