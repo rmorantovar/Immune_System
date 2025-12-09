@@ -53,7 +53,7 @@ alpha_p = [.6, 1]
 
 project = 'memory_response'
 subproject = 'multi-epitope'
-subproject = 'Model_dynamics_time'
+subproject = 'model_dynamics_time'
 
 output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/'+project+'/'+subproject
 os.makedirs(output_plot, exist_ok=True)
