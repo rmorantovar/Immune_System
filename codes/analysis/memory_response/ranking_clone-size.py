@@ -1,5 +1,4 @@
 import sys
-sys.path.append('../library/')
 sys.path.append('../../my_lib/')
 from functions_2 import*
 plt.rcParams['text.usetex'] = True
