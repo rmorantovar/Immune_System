@@ -97,9 +97,12 @@ for dlambda in tqdm(dlambda_list):
     ax_cells.legend(fontsize=14)
     fig_cells.savefig(output_plot + '/cells_tauB-%.2f_lamA-%.1f.pdf'%(tau_B, lambda_A))
 
-    ax_antigen.set_yscale('linear')
+    if lambda_A == 0:
+        ax_antigen.set_yscale('linear')
+    else:
+        ax_antigen.set_yscale('log')
+        ax_antigen.set_ylim(1, 1e4)
     ax_antigen.set_xlabel(r'Time/$\tau_B$', fontsize=16)
     ax_antigen.set_ylabel('Presented antigen', fontsize=16)
-    # ax_antigen.set_ylim(1, 1e4)
     ax_antigen.legend(fontsize=14)
     fig_antigen.savefig(output_plot + '/antigen_tauB-%.2f_lamA-%.1f.pdf'%(tau_B, lambda_A))
