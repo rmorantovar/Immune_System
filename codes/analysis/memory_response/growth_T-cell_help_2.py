@@ -16,25 +16,25 @@ model = 'TCRen'
 
 # --- parameters ---
 U_c     = 1.0    # activation threshold
-lambda_A = 0.1     # exponential antigen growth rate
+lambda_A = 1.0     # exponential antigen growth rate
 dt       = 2e-4    # time step
 
 k0_list  = [0.1, 1.0]  # slow vs fast antigen accumulation per cell
-dlambda_list = np.linspace(1, 1.4, 3)  # ratio of cell division rate to antigen growth rate
+dlambda_list = np.linspace(1, 1.6, 4)  # ratio of cell division rate to antigen growth rate
 print(dlambda_list)
 def simulate(k0, tau_B = 1, seed=0):
     p_div = dt / tau_B  # division probability for activated cells
     if lambda_A == 0:
         T_max = tau_B * 20  # total simulation time
     else:
-        # T_max = tau_B * 10  # total simulation time
-        T_max = 20
+        T_max = tau_B * 10  # total simulation time
+        # T_max = 10
     np.random.seed(int(seed))
     # each cell: [U, activated_flag]
-    cells = [[10000.0, False]]
+    cells = [[0, False]]
     times, sizes, antigens = [], [], []
     t = 0.0
-    while t < T_max:
+    for t in np.linspace(0, T_max, int(T_max/dt)):
         u_act = k0 * np.exp(lambda_A * t)  # per-cell accumulation rate at time t        
         new_cells = []
         for U, act in cells:
@@ -61,9 +61,10 @@ def simulate(k0, tau_B = 1, seed=0):
         cells = new_cells
         times.append(t)
         sizes.append(len(cells))
-        antigens.append(np.mean([U for U, act in cells][0]))
+        antigens.append(np.mean([U for U, act in cells]))
+        # antigens.append([U for U, act in cells][:2])
         t += dt
-
+    # print((np.array(antigens).T))
     return np.array(times), np.array(sizes), np.array(antigens)
 
 # --- run for two regimes and plot ---
@@ -76,12 +77,12 @@ for dlambda in tqdm(dlambda_list):
         tau_B = np.log(2)/lambda_B     # mean division time once above threshold
     else:
         lambda_B = dlambda*lambda_A   # cell division rate
-        tau_B = np.log(2)/lambda_B     # mean division time once above threshold
+        tau_B = 1/lambda_B     # mean division time once above threshold
     
     for k0 in k0_list:
         t, B, A = simulate(k0, tau_B=tau_B, seed=datetime.now().timestamp())
-        ax_cells.plot(t/tau_B, B, label=f"k0={k0}")
-        ax_antigen.plot(t/tau_B, A, label=f"k0={k0}")
+        ax_cells.plot(t/tau_B, B, color = my_blue, alpha = 1 + 0.2*np.log10(k0), label=f"k0={k0}")
+        ax_antigen.plot(t/tau_B, A, color = my_red, alpha = 1 + 0.2*np.log10(k0), label=f"k0={k0}")
 
     ax_cells.plot(t/tau_B, np.exp((lambda_B)*(np.array(t)-1.7/tau_B)), '--', color = 'k', label=r'$\lambda_B$')
     ax_cells.plot(t/tau_B, np.exp((lambda_A)*(np.array(t)-1.7/tau_B)), '-', color = 'k', label=r'$\lambda_A$')
