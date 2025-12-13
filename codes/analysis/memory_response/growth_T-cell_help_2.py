@@ -16,11 +16,11 @@ model = 'TCRen'
 
 # --- parameters ---
 U_c     = 1.0    # activation threshold
-lambda_A = 1.     # exponential antigen growth rate
+lambda_A = 0.1     # exponential antigen growth rate
 dt       = 2e-4    # time step
 
 k0_list  = [0.1, 1.0]  # slow vs fast antigen accumulation per cell
-dlambda_list = np.linspace(1, 2.0, 5)  # ratio of cell division rate to antigen growth rate
+dlambda_list = np.linspace(1, 1.4, 3)  # ratio of cell division rate to antigen growth rate
 print(dlambda_list)
 def simulate(k0, tau_B = 1, seed=0):
     p_div = dt / tau_B  # division probability for activated cells
@@ -28,14 +28,14 @@ def simulate(k0, tau_B = 1, seed=0):
         T_max = tau_B * 20  # total simulation time
     else:
         # T_max = tau_B * 10  # total simulation time
-        T_max = 6
+        T_max = 20
     np.random.seed(int(seed))
     # each cell: [U, activated_flag]
     cells = [[10000.0, False]]
     times, sizes, antigens = [], [], []
     t = 0.0
     while t < T_max:
-        u_act = k0 * np.exp(lambda_A * t) * 0  # per-cell accumulation rate at time t        
+        u_act = k0 * np.exp(lambda_A * t)  # per-cell accumulation rate at time t        
         new_cells = []
         for U, act in cells:
             # 1) antigen accumulation
@@ -61,7 +61,7 @@ def simulate(k0, tau_B = 1, seed=0):
         cells = new_cells
         times.append(t)
         sizes.append(len(cells))
-        antigens.append(np.mean([U for U, act in cells]))
+        antigens.append(np.mean([U for U, act in cells][0]))
         t += dt
 
     return np.array(times), np.array(sizes), np.array(antigens)
