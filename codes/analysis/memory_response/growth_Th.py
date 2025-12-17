@@ -197,7 +197,7 @@ def draw_help_time_by_thinning(
     """
     lam_max = kh * T_const
     if lam_max <= 0.0:
-        return math.inf
+        return np.inf
 
     t = t0
     while True:
@@ -205,7 +205,7 @@ def draw_help_time_by_thinning(
         t += rng.exponential(1.0 / lam_max)
 
         if t > t_max:
-            return math.inf
+            return np.inf
 
         # compute presented antigen at time t
         p_t = p_evolve(t0, p0, t, clone_phi, kp, deltapi, rhoA0, lamA)
@@ -291,7 +291,7 @@ def simulate_clonal_expansion(
             n_help=n_help,
             t_max=t_end,  # don't bother drawing beyond horizon
         )
-        if not math.isfinite(t_help):
+        if not np.isfinite(t_help):
             return None
 
         # Determine pi at division completion time (depending on uptake during division)
