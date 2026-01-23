@@ -140,7 +140,7 @@ for L_0 in L_0s:
     N_threshold = U_threshold**(0.5*lambda_B/lambda_A)
 
     for i_p, p in enumerate(ps):
-        fig_U_p, ax_U_p =plt.subplots(figsize=(8.0*1.62,8*0.6), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.2, 'top': 0.96})
+        fig_Pi, ax_Pi =plt.subplots(figsize=(8.0*1.62,8*0.6), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.2, 'top': 0.96})
         fig_N_b_p, ax_N_b_p = plt.subplots(figsize=(8.0*1.62,8*0.6), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.2, 'top': 0.96})
         fig_N_b_p2, ax_N_b_p2 = plt.subplots(figsize=(8.0*1.62,8*0.6), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.2, 'top': 0.96})
         print('--------')
@@ -182,7 +182,7 @@ for L_0 in L_0s:
             t_Th = activation_times_C[k*10]
             print(t_1, t_Th)
             K_act =  K_step*np.exp((lambda_A/p)*(activation_times_C[k*10] - np.log(U_threshold)/(lambda_A) - t0))
-            ax_U_p.plot(time_array, np.cumsum(N_A_real*dT)*b0*k_on/N_A*(K_step/(K_step+K_act))**p, linewidth = 3, color = my_colors[i_k], linestyle= '-', alpha = .8)
+            ax_Pi.plot(time_array, np.cumsum(N_A_real*dT)*b0*k_on/N_A*(K_step/(K_step+K_act))**p, linewidth = 3, color = my_colors[i_k], linestyle= '-', alpha = .8)
            
             # ax_N_b.plot(time_array, clone_sizes_C[k*10, :]-np.heaviside(activation_times_C[k*10] - time_array , 1), linewidth = 1.5, color = colors_p[i_p], linestyle= '-', alpha = .8)
             
@@ -210,7 +210,7 @@ for L_0 in L_0s:
             ax_K.hlines(Kd_p, t_act+0.15, t_p, color = colors_p[i_p], linewidth = 5, linestyle = '-', alpha = 1)
             ax_K.plot(time_array[time_array>=t_p], (Kd_p)*np.exp(lambda_A*(time_array[time_array>=t_p] - t_p)/p), alpha = 1, color = colors_p[i_p], linewidth = 5, linestyle = '-')
 
-        ax_U_p.hlines([1, U_threshold], T0, Tf, color = 'grey', linestyle = [':', '--'], linewidth = 2)
+        ax_Pi.hlines([1, U_threshold], T0, Tf, color = 'grey', linestyle = [':', '--'], linewidth = 2)
         ax_N_b_p.hlines([(1, N_threshold)], T0, Tf, color = 'grey', linestyle = [':', '--'], linewidth = 2)
 
 
@@ -231,12 +231,12 @@ for L_0 in L_0s:
         fig_N_b_p2.savefig(output_plot + '/Bcell2_p-%.1f_L0-%.0e_'%(p, L_0)+energy_model+'.pdf')
         plt.close(fig_N_b_p2)
 
-        my_plot_layout(ax=ax_U_p, yscale = 'log', ticks_labelsize = 40, x_fontsize=30, y_fontsize=30 )
-        ax_U_p.set_xticks([])
-        ax_U_p.set_xlim(right = Tf, left = T0+1)
-        ax_U_p.set_ylim(bottom = 1e-3, top = 2e5)
-        fig_U_p.savefig(output_plot + '/U_p-%.1f_L0-%.0e_'%(p, L_0)+energy_model+'.pdf')
-        plt.close(fig_U_p)
+        my_plot_layout(ax=ax_Pi, yscale = 'log', ticks_labelsize = 40, x_fontsize=30, y_fontsize=30 )
+        ax_Pi.set_xticks([])
+        ax_Pi.set_xlim(right = Tf, left = T0+1)
+        ax_Pi.set_ylim(bottom = 1e-3, top = 2e5)
+        fig_Pi.savefig(output_plot + '/Pi-%.1f_L0-%.0e_'%(p, L_0)+energy_model+'.pdf')
+        plt.close(fig_Pi)
 
     # my_plot_layout(ax=ax_N_b, yscale = 'log', ticks_labelsize = 40, x_fontsize=30, y_fontsize=30 )
     # ax_N_b.set_xlim(right = Tf-1, left = T0+1)
