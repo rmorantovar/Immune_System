@@ -1,5 +1,5 @@
 import sys
-sys.path.append('../../../my_lib/')
+sys.path.append('../../../library/')
 from funcs import*
 plt.rcParams['text.usetex'] = True
 
@@ -100,13 +100,14 @@ for rep in tqdm(range(n_ensemble)):
 print(np.mean(zetas), int((np.mean(zetas)-zeta_min)*100))
 
 for j in range(len(mice)):
-	ax_r2.lines[-(j+1)].set_color(my_colors_alpha[int((np.mean(zetas)-zeta_min)*100)])
+	# ax_r2.lines[-(j+1)].set_color(my_colors_alpha[int((np.mean(zetas)-zeta_min)*100)])
+	ax_r2.lines[-(j+1)].set_color(my_red)
 
-ax_r2.plot(range(1, max_rank_eff+1), x_avg, color = my_colors_alpha[int((np.mean(zetas)-zeta_min)*100)], markerfacecolor="None", ms = 18, alpha = 1, ls = '', marker = '*', label = r'$%.2f$'%(np.mean(zetas)) + ' ; ' + 'GC')
+ax_r2.plot(range(1, max_rank_eff+1), x_avg, color = my_red, markerfacecolor="None", ms = 18, alpha = 1, ls = '', marker = '*', label = r'$%.2f$'%(np.mean(zetas)) + ' ; ' + 'GC')
 
-ax_r2.plot(np.arange(1, max_rank_eff + 1), np.exp(0)*np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = my_colors_alpha[int((np.mean(zetas)-zeta_min)*100)], alpha = .8, lw = 3)
+ax_r2.plot(np.arange(1, max_rank_eff + 1), np.exp(0)*np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = my_red, alpha = .8, lw = 3)
 
-ax_zeta2.hist(zetas, bins = np.linspace(0.2, 1.6, 30), alpha = .7, label = r'$\mathrm{GC}$', color = my_colors_alpha[int((np.mean(zetas)-zeta_min)*100)], density = True, histtype = 'stepfilled', edgecolor = 'k')
+ax_zeta2.hist(zetas, bins = np.linspace(0.2, 1.6, 30), alpha = .7, label = r'$\mathrm{GC}$', color = my_red, density = True, histtype = 'stepfilled', edgecolor = 'k')
 
 
 my_plot_layout(ax =ax_r2, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
@@ -188,12 +189,13 @@ for rep in tqdm(range(n_ensemble)):
 
 print(np.mean(zetas), int((np.mean(zetas)-zeta_min)*100))
 for j in range(len_mice):
-	ax_r2.lines[-(j+1)].set_color(my_colors_alpha[int((np.mean(zetas)-zeta_min)*100)])
+	# ax_r2.lines[-(j+1)].set_color(my_colors_alpha[int((np.mean(zetas)-zeta_min)*100)])
+	ax_r2.lines[-(j+1)].set_color(my_blue)
 
-ax_r2.plot(range(1, max_rank_eff+1), x_avg, color = my_colors_alpha[int((np.mean(zetas)-zeta_min)*100)], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = 'o', label = r'$%.2f$'%(np.mean(zetas)) + ' ; ' + 'fm')
-ax_r2.plot(np.arange(1, max_rank_eff + 1), np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = my_colors_alpha[int((np.mean(zetas)-zeta_min)*100)], alpha = .8, lw = 3)
+ax_r2.plot(range(1, max_rank_eff+1), x_avg, color = my_blue, markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = 'o', label = r'$%.2f$'%(np.mean(zetas)) + ' ; ' + 'fm')
+ax_r2.plot(np.arange(1, max_rank_eff + 1), np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = my_blue, alpha = .8, lw = 3)
 
-ax_zeta2.hist(zetas, bins = np.linspace(0.2, 1.6, 30), alpha = .7, label = r'$\mathrm{GC+m}$', color = my_colors_alpha[int((np.mean(zetas)-zeta_min)*100)], density = True, histtype = 'stepfilled', edgecolor = 'k')
+ax_zeta2.hist(zetas, bins = np.linspace(0.2, 1.6, 30), alpha = .7, label = r'$\mathrm{GC+m}$', color = my_blue, density = True, histtype = 'stepfilled', edgecolor = 'k')
 
 my_plot_layout(ax =ax_r2, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r2.set_ylim(bottom = 2e-2, top = 1.1)
@@ -206,3 +208,4 @@ my_plot_layout(ax =ax_zeta2, yscale = 'linear', xscale = 'linear', ticks_labelsi
 ax_zeta2.set_xlim(left = 0.15, right = 1.6)
 # ax_zeta2.legend(title = r'$\mathrm{sub-pop}$', fontsize = 22, title_fontsize = 30, loc = (1, 0))
 fig_zeta2.savefig(output_plot + '/zetas.pdf', transparent=.5)
+
