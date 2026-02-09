@@ -74,11 +74,10 @@ def simulate(
         pi = y[:n]
         B  = y[n:]
 
-        # π dynamics with constant lambda_B
-        dpi = u_on(t, p) * gK - p.lambda_B * pi
-
-        # division gating by π threshold
+        # division and π dynamics with constant lambda_B gating by π threshold
         dividing = pi > p.pi_threshold
+
+        dpi = np.where(dividing, u_on(t, p) * gK - p.lambda_B * pi, u_on(t, p) * gK)
         dB = np.where(dividing, p.lambda_B * B, 0.0)
 
         return np.concatenate([dpi, dB])
@@ -103,17 +102,13 @@ def simulate(
 
     NA_t = np.array([NA(t, p.lambda_A) for t in p.t_eval])  # vectorized NA(t)
 
-    dividing_tK = pi_tK > p.pi_threshold
-
     return {
         "t": t,
         "NA": NA_t,
         "Ks": Ks,
         "pi": pi_tK,
-        "B": B_tK,
-        "dividing": dividing_tK,
+        "B": B_tK
     }
-
 
 # -----------------------
 # Example usage + plotting
@@ -126,18 +121,18 @@ if __name__ == "__main__":
     
     def g_power(K: float) -> float:
         sigma = 4
-        K_s = 1/((60*2)*3600*24)  # relevant scale for K 
+        K_s = 1/((60*5)*3600*24)  # relevant scale for K 
         return (K_s/(K_s+K)) ** (sigma)
 
-    Ks = [1.0e-8, 1.0e-7, 1.0e-6]  # example affinities
+    Ks = [1.0e-9, 1.0e-7, 1.0e-6]  # example affinities
 
     t0, tf = 0.0, 15.0
     t_eval = np.linspace(t0, tf, 1001)
 
     p = Params(
         lambda_A=5.,
-        alpha_on=1e6*1e6*24*3600/N_Avg,
-        lambda_B=2.,
+        alpha_on=1e6*1e8*24*3600/N_Avg,
+        lambda_B=3.,
         pi_threshold=100.0,
         t_span=(t0, tf),
         t_eval=t_eval,
@@ -190,7 +185,7 @@ if __name__ == "__main__":
     # ax_N_b.set_xlabel("t")
     # ax_N_b.set_ylabel(r"$B(t,K)$")
     # ax_N_b.set_title("B cell population (divides while pi > threshold)")
-    ax_N_b.set_ylim(top=1e5)  # set a reasonable lower limit for log scale
+    ax_N_b.set_ylim(top=2e5)  # set a reasonable lower limit for log scale
     ax_N_b.set_yscale("log")
     # ax_N_b.legend()
     fig_N_b.savefig(output_plot + '/B.pdf')
