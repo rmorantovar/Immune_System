@@ -25,6 +25,7 @@ class Params:
     lambda_A: float                 # antigen exponential growth rate
     alpha_on: float                 # u_on(t) = alpha_on * NA(t)
     lambda_B: float                 # constant decay/dilution rate for pi
+    delta: float                    # decay rate for pi even when not dividing
     pi_threshold: float             # division condition: pi > threshold
     t_span: Tuple[float, float]     # (t0, tf)
     t_eval: np.ndarray              # time points for output
@@ -77,7 +78,7 @@ def simulate(
         # division and π dynamics with constant lambda_B gating by π threshold
         dividing = pi > p.pi_threshold
 
-        dpi = np.where(dividing, u_on(t, p) * gK - p.lambda_B * pi, u_on(t, p) * gK)
+        dpi = np.where(dividing, u_on(t, p) * gK - p.lambda_B * pi- p.delta * pi, u_on(t, p) * gK- p.delta * pi)
         dB = np.where(dividing, p.lambda_B * B, 0.0)
 
         return np.concatenate([dpi, dB])
@@ -133,6 +134,7 @@ if __name__ == "__main__":
         lambda_A=5.,
         alpha_on=1e6*1e8*24*3600/N_Avg,
         lambda_B=3.,
+        delta=0.2,
         pi_threshold=100.0,
         t_span=(t0, tf),
         t_eval=t_eval,
