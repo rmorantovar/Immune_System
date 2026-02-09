@@ -1,5 +1,5 @@
 import sys
-sys.path.append('../../my_lib/')
+sys.path.append('../../library/')
 from funcs import*
 plt.rcParams['text.usetex'] = True
 
@@ -182,7 +182,7 @@ for L_0 in L_0s:
             t_Th = activation_times_C[k*10]
             print(t_1, t_Th)
             K_act =  K_step*np.exp((lambda_A/p)*(activation_times_C[k*10] - np.log(U_threshold)/(lambda_A) - t0))
-            ax_Pi.plot(time_array, np.cumsum(N_A_real*dT)*b0*k_on/N_A*(K_step/(K_step+K_act))**p, linewidth = 3, color = my_colors[i_k], linestyle= '-', alpha = .8)
+            ax_Pi.plot(time_array, np.cumsum(b0*k_on/N_A*(K_step/(K_step+K_act))**p*N_A_real*dT), linewidth = 3, color = my_colors[i_k], linestyle= '-', alpha = .8)
            
             # ax_N_b.plot(time_array, clone_sizes_C[k*10, :]-np.heaviside(activation_times_C[k*10] - time_array , 1), linewidth = 1.5, color = colors_p[i_p], linestyle= '-', alpha = .8)
             

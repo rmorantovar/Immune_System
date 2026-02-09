@@ -41,7 +41,7 @@ else:
 plt.rcParams['text.usetex'] = True
 
 # ----- CONSTANTS ------
-N_A = 6.02214076e23
+N_Avg = 6.02214076e23
 k_BT = 1.380649e-23*293
 
 my_red = np.array((228,75,41))/256.
