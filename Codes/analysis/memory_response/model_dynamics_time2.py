@@ -31,7 +31,7 @@ class Params:
     t_eval: np.ndarray              # time points for output
 
 def dNAdtNaive(t, N, lambda_A, lambda_B):
-    pb = (1+(1e-9/(1e5*60*60*24*np.exp(lambda_B*(t))/N_Avg)))**(-1)
+    pb = (1+(1e-9/(1e5*60*60*24*np.exp(2.0*(t))/N_Avg)))**(-1)
     return (lambda_A * (1 - pb) - 2*pb) * N
 
 def NA(t: float, lambda_A: float) -> float:
@@ -78,7 +78,7 @@ def simulate(
         # division and π dynamics with constant lambda_B gating by π threshold
         dividing = pi > p.pi_threshold
 
-        dpi = np.where(dividing, u_on(t, p) * gK - p.lambda_B * pi- p.delta * pi, u_on(t, p) * gK- p.delta * pi)
+        dpi = np.where(dividing, u_on(t, p) * gK - p.delta * pi - np.log(2)*p.lambda_B * pi, u_on(t, p) * gK - p.delta * pi)
         dB = np.where(dividing, p.lambda_B * B, 0.0)
 
         return np.concatenate([dpi, dB])
@@ -91,8 +91,8 @@ def simulate(
         y0=y0,
         t_eval=p.t_eval,
         method="RK45",
-        rtol=1e-6,
-        atol=1e-9,
+        # rtol=1e-6,
+        # atol=1e-9,
     )
     if not sol.success:
         raise RuntimeError(sol.message)
@@ -121,21 +121,22 @@ if __name__ == "__main__":
     # Example g(K): power law g(K)=K^{-sigma}
     
     def g_power(K: float) -> float:
-        sigma = 4
+        sigma = 3
         K_s = 1/((60*5)*3600*24)  # relevant scale for K 
+        # K_s = 8e-8
         return (K_s/(K_s+K)) ** (sigma)
 
-    Ks = [1.0e-9, 1.0e-7, 1.0e-6]  # example affinities
+    Ks = [1.0e-8, 1.0e-7, 1.0e-6]  # example affinities
 
-    t0, tf = 0.0, 15.0
+    t0, tf = 0.0, 12.0
     t_eval = np.linspace(t0, tf, 1001)
 
     p = Params(
         lambda_A=5.,
         alpha_on=1e6*1e8*24*3600/N_Avg,
-        lambda_B=3.,
-        delta=0.2,
-        pi_threshold=100.0,
+        lambda_B=1.,
+        delta=0.5,
+        pi_threshold=1000.0,
         t_span=(t0, tf),
         t_eval=t_eval,
     )
@@ -173,7 +174,7 @@ if __name__ == "__main__":
     # ax_Pi.set_ylabel(r"$\pi(t,K)$")
     # ax_Pi.set_title("Internalized antigen per cell")
     ax_Pi.set_yscale("log")
-    ax_Pi.set_ylim(bottom=2e-1)  # set a reasonable lower limit for log scale
+    ax_Pi.set_ylim(bottom=5e-1)  # set a reasonable lower limit for log scale
     # ax_Pi.legend()
     ax_Pi.set_xticks([])
     fig_Pi.savefig(output_plot + '/pi.pdf')
