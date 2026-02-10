@@ -31,7 +31,7 @@ class Params:
     t_eval: np.ndarray              # time points for output
 
 def dNAdtNaive(t, N, lambda_A, lambda_B):
-    pb = (1+(1e-9/(1e5*60*60*24*np.exp(2.0*(t))/N_Avg)))**(-1)
+    pb = (1+(1e-9/(1e6*60*60*24*np.exp(2.0*(t))/N_Avg)))**(-1)
     return (lambda_A * (1 - pb) - 2*pb) * N
 
 def NA(t: float, lambda_A: float) -> float:
@@ -132,7 +132,7 @@ if __name__ == "__main__":
     t_eval = np.linspace(t0, tf, 1001)
 
     p = Params(
-        lambda_A=5.,
+        lambda_A=6.,
         alpha_on=1e6*1e8*24*3600/N_Avg,
         lambda_B=1.,
         delta=0.5,
