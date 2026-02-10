@@ -115,7 +115,7 @@ def simulate(
 # Example usage + plotting
 # -----------------------
 if __name__ == "__main__":
-    output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/memory_response/model_dynamics_time'
+    output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/exponential_proofreading/model_dynamics_time'
     os.makedirs(output_plot, exist_ok=True),
 
     # Example g(K): power law g(K)=K^{-sigma}
