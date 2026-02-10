@@ -3,7 +3,7 @@ sys.path.append('../../../library/')
 from funcs import*
 plt.rcParams['text.usetex'] = True
 
-project = 'memory_response'
+project = 'exponential_proofreading'
 subproject = 'data'
 experiment = 0
 root_dir = f"/Users/robertomorantovar/Dropbox/Research/Immune_system/{project}/{subproject}/mesin2020"
