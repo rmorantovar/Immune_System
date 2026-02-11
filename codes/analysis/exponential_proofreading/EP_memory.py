@@ -77,7 +77,7 @@ def simulate(
         B  = y[1+n:1+2*n]
         nonlocal started
         started = started | (pi > p.pi_threshold)   # latch ON when pi crosses threshold
-        B_tot = np.sum(B) - 11*B0  # subtract initial B cells to get net growth-driven population increase
+        B_tot = np.sum(B) - 71*B0  # subtract initial B cells to get net growth-driven population increase
         cap = max(0.0, 1.0 - B_tot / p.C_B)
         # compute pb from NA (same formula you use in dNAdtNaive)
         pb = (1 + (1e-10/(1e8*60*60*24*B_tot/N_Avg)))**(-1)  # or whatever dependence you intend
@@ -93,7 +93,7 @@ def simulate(
 
     # y0 = np.concatenate([np.full(n, pi0, dtype=float), np.full(n, B0, dtype=float)])
     NA0 = 1.0
-    y0 = np.concatenate([[NA0], np.full(n, pi0), np.array([B0*10, B0])])
+    y0 = np.concatenate([[NA0], np.full(n, pi0), np.array([B0*60, B0*10, B0])])
 
     sol = solve_ivp(
         rhs,
@@ -137,7 +137,7 @@ if __name__ == "__main__":
         # K_s = 1e-8
         return (K_s/(K_s+K)) ** (sigma)
 
-    Ks = [1.0e-8, 1.0e-7]  # example affinities
+    Ks = [1.0e-8, 1.0e-7, 1.0e-6]  # example affinities
 
     t0, tf = 0.0, 10.5
     t_eval = np.linspace(t0, tf, 101)
@@ -145,10 +145,10 @@ if __name__ == "__main__":
     p = Params(
         lambda_A=6.,
         alpha_on=1e6*1e8*24*3600/N_Avg,
-        lambda_B=3.,
+        lambda_B=2.,
         delta=0.2,
         pi_threshold=1.0,
-        C_B = 1e5,
+        C_B = 1e6,
         t_span=(t0, tf),
         t_eval=t_eval,
     )
@@ -200,7 +200,7 @@ if __name__ == "__main__":
     # ax_N_b.set_xlabel("t")
     # ax_N_b.set_ylabel(r"$B(t,K)$")
     # ax_N_b.set_title("B cell population (divides while pi > threshold)")
-    ax_N_b.set_ylim(top=2e5)  # set a reasonable lower limit for log scale
+    ax_N_b.set_ylim(top=2e6)  # set a reasonable lower limit for log scale
     ax_N_b.set_yscale("log")
     # ax_N_b.legend()
     fig_N_b.savefig(output_plot + '/B_memory.pdf')

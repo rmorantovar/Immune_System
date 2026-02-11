@@ -128,7 +128,7 @@ if __name__ == "__main__":
     # Example g(K): power law g(K)=K^{-sigma}
     
     def g_power(K: float) -> float:
-        sigma = 3
+        sigma = 1
         K_s = 1/((60*7)*3600*24)  # relevant scale for K 
         # K_s = 1e-8
         return (K_s/(K_s+K)) ** (sigma)
@@ -195,7 +195,7 @@ if __name__ == "__main__":
     # ax_N_b.set_xlabel("t")
     # ax_N_b.set_ylabel(r"$B(t,K)$")
     # ax_N_b.set_title("B cell population (divides while pi > threshold)")
-    ax_N_b.set_ylim(top=2e5)  # set a reasonable lower limit for log scale
+    ax_N_b.set_ylim(top=2e6)  # set a reasonable lower limit for log scale
     ax_N_b.set_yscale("log")
     # ax_N_b.legend()
     fig_N_b.savefig(output_plot + '/B_primary.pdf')
