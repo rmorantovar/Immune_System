@@ -27,30 +27,30 @@ class Params:
     lambda_B: float                 # constant decay/dilution rate for pi
     delta: float                    # decay rate for pi even when not dividing
     pi_threshold: float             # division condition: pi > threshold
+    C_B: float   # carrying capacity for total B cells
     t_span: Tuple[float, float]     # (t0, tf)
     t_eval: np.ndarray              # time points for output
 
-def dNAdtNaive(t, N, lambda_A, lambda_B):
-    pb = (1+(1e-9/(1e6*60*60*24*np.exp(2.0*(t))/N_Avg)))**(-1)
-    return (lambda_A * (1 - pb) - 2*pb) * N
+# def dNAdtNaive(t, N, lambda_A, lambda_B):
+#     pb = (1+(1e-9/(1e6*60*60*24*np.exp(2.0*(t))/N_Avg)))**(-1)
+#     return (lambda_A * (1 - pb) - 2*pb) * N
 
-def NA(t: float, lambda_A: float) -> float:
+# def NA(t: float, lambda_A: float) -> float:
 
-    # Initial condition
-    NA0 = 1.0
-    # Solve the ODE over the time span of your data
-    solNaive = solve_ivp(dNAdtNaive, t_span=p.t_span, y0=[NA0], t_eval=p.t_eval, args=(lambda_A, p.lambda_B), method="RK45", rtol=1e-6, atol=1e-9)
-    # Result
-    NA_real = solNaive.y[0]  # solution N(t) evaluated at t_vals
-    # Interpolate to get value at time t
-    return float(np.interp(t, p.t_eval, NA_real))
+#     # Initial condition
+#     NA0 = 1.0
+#     # Solve the ODE over the time span of your data
+#     solNaive = solve_ivp(dNAdtNaive, t_span=p.t_span, y0=[NA0], t_eval=p.t_eval, args=(lambda_A, p.lambda_B), method="RK45", rtol=1e-6, atol=1e-9)
+#     # Result
+#     NA_real = solNaive.y[0]  # solution N(t) evaluated at t_vals
+#     # Interpolate to get value at time t
+#     return float(np.interp(t, p.t_eval, NA_real))
 
-def u_on(t: float, p: Params) -> float:
-    return p.alpha_on * NA(t, p.lambda_A)
+# def u_on(t: float, p: Params) -> float:
+#     return p.alpha_on * NA(t, p.lambda_A)
 
 
 def simulate(
-        
     Ks: Sequence[float],
     g: Callable[[float], float],
     p: Params,
@@ -69,28 +69,38 @@ def simulate(
     Ks = np.asarray(Ks, dtype=float)
     n = Ks.size
     gK = np.array([g(K) for K in Ks], dtype=float)
-
+    started = np.zeros(n, dtype=bool)   # latched: once True, stays True
 
     def rhs(t, y):
-        pi = y[:n]
-        B  = y[n:]
+        NA = y[0]
+        pi = y[1:1+n]
+        B  = y[1+n:1+2*n]
+        nonlocal started
+        started = started | (pi > p.pi_threshold)   # latch ON when pi crosses threshold
+        B_tot = np.sum(B) - 11*B0  # subtract initial B cells to get net growth-driven population increase
+        cap = max(0.0, 1.0 - B_tot / p.C_B)
+        # compute pb from NA (same formula you use in dNAdtNaive)
+        pb = (1 + (1e-10/(1e8*60*60*24*B_tot/N_Avg)))**(-1)  # or whatever dependence you intend
+        dNA = (p.lambda_A * (1 - pb) - 2*pb) * NA
 
-        # division and π dynamics with constant lambda_B gating by π threshold
-        dividing = pi > p.pi_threshold
+        u_on = p.alpha_on * NA
+        dividing = started
+        dpi = np.where(dividing, u_on * gK - p.delta * pi - np.log(2)*p.lambda_B*pi, u_on * gK - p.delta * pi)
+        # dB  = dB = np.where(dividing, p.lambda_B * cap * B, 0.0)
+        dB  = dB = np.where(dividing, p.lambda_B * cap * B, 0.0)
 
-        dpi = np.where(dividing, u_on(t, p) * gK - p.delta * pi - np.log(2)*p.lambda_B * pi, u_on(t, p) * gK - p.delta * pi)
-        dB = np.where(dividing, p.lambda_B * B, 0.0)
+        return np.concatenate([[dNA], dpi, dB])
 
-        return np.concatenate([dpi, dB])
-
-    y0 = np.concatenate([np.full(n, pi0, dtype=float), np.full(n, B0, dtype=float)])
+    # y0 = np.concatenate([np.full(n, pi0, dtype=float), np.full(n, B0, dtype=float)])
+    NA0 = 1.0
+    y0 = np.concatenate([[NA0], np.full(n, pi0), np.array([B0*10, B0])])
 
     sol = solve_ivp(
         rhs,
         t_span=p.t_span,
         y0=y0,
         t_eval=p.t_eval,
-        method="RK45",
+        # method="RK45",
         # rtol=1e-6,
         # atol=1e-9,
     )
@@ -98,10 +108,11 @@ def simulate(
         raise RuntimeError(sol.message)
 
     t = sol.t
-    pi_tK = sol.y[:n, :].T  # (T, nK)
-    B_tK  = sol.y[n:, :].T  # (T, nK)
+    NA_t = sol.y[0, :]          # instead of recomputing via NA(t, ...)
+    pi_tK = sol.y[1:1+n, :].T # (T, nK)
+    B_tK  = sol.y[1+n:1+2*n, :].T  # (T, nK)
 
-    NA_t = np.array([NA(t, p.lambda_A) for t in p.t_eval])  # vectorized NA(t)
+    # NA_t = np.array([NA(t, p.lambda_A) for t in p.t_eval])  # vectorized NA(t)
 
     return {
         "t": t,
@@ -121,22 +132,23 @@ if __name__ == "__main__":
     # Example g(K): power law g(K)=K^{-sigma}
     
     def g_power(K: float) -> float:
-        sigma = 3
-        K_s = 1/((60*5)*3600*24)  # relevant scale for K 
-        # K_s = 8e-8
+        sigma = 1
+        K_s = 1/((60*7)*3600*24)  # relevant scale for K 
+        # K_s = 1e-8
         return (K_s/(K_s+K)) ** (sigma)
 
-    Ks = [1.0e-8, 1.0e-7, 1.0e-6]  # example affinities
+    Ks = [1.0e-8, 1.0e-7]  # example affinities
 
-    t0, tf = 0.0, 12.0
-    t_eval = np.linspace(t0, tf, 1001)
+    t0, tf = 0.0, 10.5
+    t_eval = np.linspace(t0, tf, 101)
 
     p = Params(
         lambda_A=6.,
         alpha_on=1e6*1e8*24*3600/N_Avg,
-        lambda_B=1.,
-        delta=0.5,
-        pi_threshold=1000.0,
+        lambda_B=3.,
+        delta=0.2,
+        pi_threshold=1.0,
+        C_B = 1e5,
         t_span=(t0, tf),
         t_eval=t_eval,
     )
@@ -157,15 +169,15 @@ if __name__ == "__main__":
     # ax_antigen.set_xlabel(r"$t$")
     # ax_antigen.set_ylabel(r"$N_A(t)$")
     # ax_antigen.set_title("Antigen")
+    ax_antigen.set_ylim(top = 1e11, bottom = 8e-1)
     ax_antigen.set_yscale("log")
     ax_antigen.set_xticks([])
-    fig_antigen.savefig(output_plot + '/antigen.pdf')
+    fig_antigen.savefig(output_plot + '/antigen_memory.pdf')
     plt.close(fig_antigen)
 
     # Plot pi trajectories
     my_colors = [my_green_a, my_green_b, my_green_c]
     fig_Pi, ax_Pi =plt.subplots(figsize=(8.0*1.62,8*0.6), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.2, 'top': 0.96})
-    print(out["Ks"], pi)
     for i, K in enumerate(out["Ks"]):
         ax_Pi.plot(t, pi[:, i], label=f"K={K}", linewidth = 5, color = my_colors[i])
     ax_Pi.axhline(p.pi_threshold, linestyle="--", label="threshold", color = "k")
@@ -174,10 +186,10 @@ if __name__ == "__main__":
     # ax_Pi.set_ylabel(r"$\pi(t,K)$")
     # ax_Pi.set_title("Internalized antigen per cell")
     ax_Pi.set_yscale("log")
-    ax_Pi.set_ylim(bottom=5e-1)  # set a reasonable lower limit for log scale
+    ax_Pi.set_ylim(bottom=5e-1, top = 5e5)  # set a reasonable lower limit for log scale
     # ax_Pi.legend()
     ax_Pi.set_xticks([])
-    fig_Pi.savefig(output_plot + '/pi.pdf')
+    fig_Pi.savefig(output_plot + '/pi_memory.pdf')
     plt.close(fig_Pi)
 
     # Plot B trajectories
@@ -191,5 +203,5 @@ if __name__ == "__main__":
     ax_N_b.set_ylim(top=2e5)  # set a reasonable lower limit for log scale
     ax_N_b.set_yscale("log")
     # ax_N_b.legend()
-    fig_N_b.savefig(output_plot + '/B.pdf')
+    fig_N_b.savefig(output_plot + '/B_memory.pdf')
     plt.close(fig_N_b)
