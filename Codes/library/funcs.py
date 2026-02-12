@@ -35,7 +35,7 @@ def generate_repertoire_Me(
     b0_scaled = (b0 * 10 * k_on) / (lamA * N_A)
     K_step = k_step / k_on 
     times = time_array
-    exp_lamA_times = np.exp(lamA * times)
+    # exp_lamA_times = np.exp(lamA * times)
     properties = []
     R = np.tile(np.arange(20), (int(chunk_size)*l, 1)).T
 
