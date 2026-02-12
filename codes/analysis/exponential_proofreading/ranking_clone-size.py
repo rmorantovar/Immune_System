@@ -1,5 +1,5 @@
 import sys
-sys.path.append('../../my_lib/')
+sys.path.append('../../library/')
 from functions_2 import*
 plt.rcParams['text.usetex'] = True
 
@@ -61,7 +61,7 @@ growth_models = [0]
 linear = 0
 
 
-project = 'memory_response'
+project = 'exponential_proofreading'
 subproject = 'clonal_structure'
 output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/'+project+'/'+subproject
 os.makedirs(output_plot, exist_ok=True)
@@ -109,7 +109,7 @@ for i_p, p in enumerate((ps)):
         fig_CSD_2_i, ax_CSD_2_i = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.15, 'top': 0.94})
 
         return_data_type = 0
-        data, return_data_type = get_data(folder_path = Text_files_path + 'memory_response/out/', data_type = 'ranking_size_p-%.1f_t_cst-%.1f'%(p, t_cst))
+        data, return_data_type = get_data(folder_path = Text_files_path + 'exponential_proofreading/out/', data_type = 'ranking_size_p-%.1f_t_cst-%.1f'%(p, t_cst))
         # return_data_type = 0
         n_first_clones = 100
         
@@ -197,7 +197,7 @@ for i_p, p in enumerate((ps)):
                         trajectories_cst = np.append(trajectories_cst, sorted_clones_cst)
                         trajectories_rank_cst = np.append(trajectories_rank_cst, max_rank_i_cst)
 
-            f = open(Text_files_path + 'memory_response/out/processed_data_ranking_size_p-%.1f_t_cst-%.1f.pkl'%(p, t_cst), 'wb')
+            f = open(Text_files_path + 'exponential_proofreading/out/processed_data_ranking_size_p-%.1f_t_cst-%.1f.pkl'%(p, t_cst), 'wb')
             pickle.dump([final_Nb, counts_final_Nb, trajectories, trajectories_rank, clone_size_total, final_Nb_cst, counts_final_Nb_cst, trajectories_cst, trajectories_rank_cst, clone_size_total_cst, growth_rates_total_cst], f, pickle.HIGHEST_PROTOCOL) 
         
         counter = 0
