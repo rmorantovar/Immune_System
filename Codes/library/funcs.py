@@ -30,9 +30,8 @@ def generate_repertoire_Me(
 
     # Constants
     k_on = 1e6 * 24 * 3600
-    b0 = 1e5
-    N_A = 6.022e23
-    b0_scaled = (b0 * 10 * k_on) / (lamA * N_A)
+    bM = 1e5
+    bM_scaled = (bM * 10 * k_on) / (lamA * N_Avg)
     K_step = k_step / k_on 
     times = time_array
     # exp_lamA_times = np.exp(lamA * times)
@@ -55,7 +54,7 @@ def generate_repertoire_Me(
                 min_energy = np.min(Energies)
                 Es_idx = np.arange(int(chunk_size))[Energies < min_energy + 4]
                 Energies = Energies[Energies < min_energy + 4]
-                factors = b0_scaled / (1 + (np.exp(Energies) / K_step))**p
+                factors = bM_scaled / (1 + (np.exp(Energies) / K_step))**p
                 seqs = seqs_flat.reshape(int(chunk_size), l)[Es_idx]
                 for i, factor in enumerate(factors):
                     r1 = np.random.random()
@@ -78,7 +77,7 @@ def generate_repertoire_Me(
                 Energies = Ess[epi][Es_idx]
                 min_energy = np.min(Energies)
                 Energies = Energies[Energies < min_energy + 4]
-                factors = b0_scaled / (1 + (np.exp(Energies) / K_step))**p
+                factors = bM_scaled / (1 + (np.exp(Energies) / K_step))**p
                 for i, factor in enumerate(factors):                    
                     r1 = np.random.random()
                     # F1 = 1 - np.exp(-factor * (exp_lamA_times - 1))
@@ -111,7 +110,7 @@ def generate_repertoire_Me(
                     for epi in range(N_epi):
                         E = calculate_energy(motif[:, epi*l:(epi+1)*l], proto_E) + Es_ms[epi]
                         if E < E_lim:
-                            factor = b0_scaled / (1 + (np.exp(E) / K_step))**pmem
+                            factor = bM_scaled / (1 + (np.exp(E) / K_step))**pmem
                             r1 = np.random.random()
                             # F1 = 1 - np.exp(-factor * (np.exp(lamA * times) - 1))
                             # t1 = times[np.searchsorted(F1, r1) - 1]
@@ -135,7 +134,7 @@ def generate_repertoire_Me(
                     epi = row['epi']
                     seq = row['seq']
                     if E < E_lim:
-                        factor = b0_scaled / (1 + (np.exp(E) / K_step))**pmem
+                        factor = bM_scaled / (1 + (np.exp(E) / K_step))**pmem
                         r1 = np.random.random()
                         # F1 = 1 - np.exp(-factor * (np.exp(lamA * times) - 1))
                         # t1 = times[np.searchsorted(F1, r1) - 1]
