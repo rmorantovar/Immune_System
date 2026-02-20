@@ -89,7 +89,7 @@ ax_antigen.plot(time_array, np.exp(lambda_A*time_array)/(1e0), linewidth = 5, co
 
 # Define the ODE: dN/dt = lambda * (1 - f(t)) * N
 def dNdtNaive(t, N):
-    pb = (1+(1e-9/(1e5*60*60*24*np.exp(lambda_B*(t))/N_A)))**(-1)
+    pb = (1+(1e-9/(1e5*60*60*24*np.exp(lambda_B*(t))/N_Avg)))**(-1)
     return (lambda_A * (1 - pb) - 2*pb) * N
 # Initial condition
 N0 = 1.0
@@ -152,11 +152,11 @@ for L_0 in L_0s:
         parameters_path = 'L-%d_Nbc-%d_Antigen-'%(L, L_0)+antigen+'_lambda_A-%.6f_lambda_B-%.6f_k_step-%.6f_theta-%.6f_Nc-%.6f_linear-%d_N_ens-%d_'%(lambda_A, 3.0, k_step/24, p, b0, linear, N_ens)+model
 
         #--------------------------m_bar(t)---------------------------
-        u_on, p_a, R, QR = calculate_QR(Q0, k_on, k_step, np.exp(lambda_A*time_array[0])/N_A, Es, p, lambda_A, b0, dE)
+        u_on, p_a, R, QR = calculate_QR(Q0, k_on, k_step, np.exp(lambda_A*time_array[0])/N_Avg, Es, p, lambda_A, b0, dE)
         M_r = L_0*b0*np.sum(Q0*p_a*dE)
         
-        m_bar = np.array([np.sum(L_0*calculate_QR(Q0, k_on, k_step, np.exp(lambda_A*(t))/N_A, Es, p, lambda_A, b0, dE)[3]*dE) for t in time_array]) 
-        m_bar_approx = ((k_on*M_r)/(N_A*lambda_A))*(np.exp(lambda_A*time_array))
+        m_bar = np.array([np.sum(L_0*calculate_QR(Q0, k_on, k_step, np.exp(lambda_A*(t))/N_Avg, Es, p, lambda_A, b0, dE)[3]*dE) for t in time_array]) 
+        m_bar_approx = ((k_on*M_r)/(N_Avg*lambda_A))*(np.exp(lambda_A*time_array))
         t_act = time_array[m_bar<1][-1]
         print('t_act:', t_act)
 
@@ -182,7 +182,7 @@ for L_0 in L_0s:
             t_Th = activation_times_C[k*10]
             print(t_1, t_Th)
             K_act =  K_step*np.exp((lambda_A/p)*(activation_times_C[k*10] - np.log(U_threshold)/(lambda_A) - t0))
-            ax_Pi.plot(time_array, np.cumsum(b0*k_on/N_A*(K_step/(K_step+K_act))**p*N_A_real*dT), linewidth = 3, color = my_colors[i_k], linestyle= '-', alpha = .8)
+            ax_Pi.plot(time_array, np.cumsum(b0*k_on/N_Avg*(K_step/(K_step+K_act))**p*N_A_real*dT), linewidth = 3, color = my_colors[i_k], linestyle= '-', alpha = .8)
            
             # ax_N_b.plot(time_array, clone_sizes_C[k*10, :]-np.heaviside(activation_times_C[k*10] - time_array , 1), linewidth = 1.5, color = colors_p[i_p], linestyle= '-', alpha = .8)
             
