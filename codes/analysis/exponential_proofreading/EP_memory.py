@@ -80,7 +80,7 @@ def simulate(
         B_tot = np.sum(B) - 71*B0  # subtract initial B cells to get net growth-driven population increase
         cap = max(0.0, 1.0 - B_tot / p.C_B)
         # compute pb from NA (same formula you use in dNAdtNaive)
-        pb = (1 + (1e-10/(1e8*60*60*24*B_tot/N_Avg)))**(-1)  # or whatever dependence you intend
+        pb = (1 + (1e-9/(1e8*60*60*24*B_tot/N_Avg)))**(-1)  # 
         dNA = (p.lambda_A * (1 - pb) - 2*pb) * NA
 
         u_on = p.alpha_on * NA
@@ -144,7 +144,7 @@ if __name__ == "__main__":
 
     p = Params(
         lambda_A=6.,
-        alpha_on=1e6*1e8*24*3600/N_Avg,
+        alpha_on=1e6*1e6*24*3600/N_Avg,
         lambda_B=2.,
         delta=0.2,
         pi_threshold=1.0,
@@ -186,7 +186,7 @@ if __name__ == "__main__":
     # ax_Pi.set_ylabel(r"$\pi(t,K)$")
     # ax_Pi.set_title("Internalized antigen per cell")
     ax_Pi.set_yscale("log")
-    ax_Pi.set_ylim(bottom=5e-1, top = 5e5)  # set a reasonable lower limit for log scale
+    ax_Pi.set_ylim(bottom=5e-1, top = 1e4)  # set a reasonable lower limit for log scale
     # ax_Pi.legend()
     ax_Pi.set_xticks([])
     fig_Pi.savefig(output_plot + '/pi_memory.pdf')

@@ -140,10 +140,10 @@ if __name__ == "__main__":
 
     p = Params(
         lambda_A=6.,
-        alpha_on=1e6*1e8*24*3600/N_Avg,
+        alpha_on=1e6*1e6*24*3600/N_Avg,
         lambda_B=2.,
         delta=0.2,
-        pi_threshold=1000.0,
+        pi_threshold=10.0,
         t_span=(t0, tf),
         t_eval=t_eval,
     )
@@ -181,7 +181,7 @@ if __name__ == "__main__":
     # ax_Pi.set_ylabel(r"$\pi(t,K)$")
     # ax_Pi.set_title("Internalized antigen per cell")
     ax_Pi.set_yscale("log")
-    ax_Pi.set_ylim(bottom=5e-1, top = 5e5)  # set a reasonable lower limit for log scale
+    ax_Pi.set_ylim(bottom=5e-1, top = 1e4)  # set a reasonable lower limit for log scale
     # ax_Pi.legend()
     ax_Pi.set_xticks([])
     fig_Pi.savefig(output_plot + '/pi_primary.pdf')
