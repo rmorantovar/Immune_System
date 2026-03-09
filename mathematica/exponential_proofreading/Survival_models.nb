@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       154,          7]
-NotebookDataLength[    363078,       7405]
-NotebookOptionsPosition[    360240,       7345]
-NotebookOutlinePosition[    360667,       7362]
-CellTagsIndexPosition[    360624,       7359]
+NotebookDataLength[    363053,       7404]
+NotebookOptionsPosition[    360215,       7344]
+NotebookOutlinePosition[    360642,       7361]
+CellTagsIndexPosition[    360599,       7358]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -6549,9 +6549,8 @@ QFT+iMC5aTHAiNyOtyISG0DDejTSIwAywKH/j5mKoRtAFlW1u7FrMsC4V+vR
           "Meta" -> <|
            "DefaultHighlight" -> {"Dynamic", None}, "Index" -> {}, "Function" -> 
             Plot, "GroupHighlight" -> False|>|>], 
-        ImageSizeCache -> {{4.503599627370496*^15, -4.503599627370496*^15}, {
-         4.503599627370496*^15, -4.503599627370496*^15}}], Selectable -> 
-       False]}, 
+        ImageSizeCache -> {{586.1953824714717, 737.6067476500992}, {
+         95.4627827679987, 152.57940143847583`}}], Selectable -> False]}, 
      Annotation[{{{{}, {}, 
          Annotation[{
            Directive[
@@ -7403,7 +7402,7 @@ Cell[CellGroupData[{
 Cell[285376, 5810, 101, 0, 99, "Section",ExpressionUUID->"8b09660e-621a-4c2f-8e2f-16e82599aca1"],
 Cell[CellGroupData[{
 Cell[285502, 5814, 3206, 84, 244, "Input",ExpressionUUID->"b57b3acd-9caf-4826-be09-65006eca3057"],
-Cell[288711, 5900, 71489, 1440, 522, "Output",ExpressionUUID->"099d3bcd-7b3a-43d6-a37a-08823854e4db"]
+Cell[288711, 5900, 71464, 1439, 522, "Output",ExpressionUUID->"099d3bcd-7b3a-43d6-a37a-08823854e4db"]
 }, Open  ]]
 }, Open  ]]
 }, Open  ]]
