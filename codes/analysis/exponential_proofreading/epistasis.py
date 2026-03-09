@@ -1,5 +1,5 @@
 import sys
-sys.path.append('../../lib/')
+sys.path.append('../../library/')
 from funcs import*
 plt.rcParams['text.usetex'] = True
 
@@ -38,10 +38,10 @@ def simulate_poisson_gaussian(g, mu, N_mut, T, DGs0):
     return event_times, DDGs, my_pos
 
 
-project = 'memory_response'
-subproject = 'multi-epitope'
+project = 'exponential_proofreading'
+subproject = 'epistasis'
 experiment = 0
-output_plot = '../../../Figures/'+project+'/'+subproject+'/'+str(experiment)
+output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/'+project+'/'+subproject
 os.makedirs(output_plot, exist_ok=True)
 
 # Parameters

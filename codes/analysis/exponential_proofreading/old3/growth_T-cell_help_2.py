@@ -1,5 +1,5 @@
 import sys
-sys.path.append('../../my_lib/')
+sys.path.append('../../library/')
 from funcs import*
 plt.rcParams['text.usetex'] = True
 
@@ -35,7 +35,7 @@ def simulate(k0, tau_B = 1, seed=0):
 
     # Define the ODE: dN/dt = lambda * (1 - f(t)) * N
     def dNdtNaive(x, N):
-        pb = (1+(1e-12/(1e5*60*60*24*np.exp((0.5)*(x))/N_A)))**(-1)
+        pb = (1+(1e-12/(1e5*60*60*24*np.exp((0.5)*(x))/N_Avg)))**(-1)
         return (lambda_A * (1 - pb) - 2*pb) * N
     # Initial condition
     N0 = 1.0

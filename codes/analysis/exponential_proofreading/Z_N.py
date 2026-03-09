@@ -1,5 +1,5 @@
 import sys
-sys.path.append('../../my_lib/')
+sys.path.append('../../library/')
 from funcs import*
 from matplotlib.colors import LogNorm
 from scipy.integrate import solve_ivp
@@ -65,7 +65,7 @@ def main():
 	C = 2e4
 	v = lamA/p
 	b0 = 1e5
-	t0 = np.log(lamA/(b0*k_on/N_A))/lamA
+	t0 = np.log(lamA/(b0*k_on/N_Avg))/lamA
 	Kstep = k_step/k_on
 	time_array = np.linspace(0, T, int((T-0)/dT))#[::100]
 	colors_inf = plt.cm.jet(np.linspace(0,1,N_inf))
@@ -73,8 +73,7 @@ def main():
 
 	#----------------------------------------------------------------
 	energy_model = 'TCRen'
-	project = 'memory_response'
-	subproject = 'multi-epitope'
+	project = 'exponential_proofreading'
 	subproject = 'Z_NA_dynamics'
 	one_WT = args.one_WT
 
