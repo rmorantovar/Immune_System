@@ -7,11 +7,11 @@ project = 'exponential_proofreading'
 subproject = 'data'
 experiment = 0
 root_dir = f"/Users/robertomorantovar/Dropbox/Research/Immune_system/{project}/{subproject}/mesin2020"
-output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/'+project+'/'+ subproject + '/mesin2020/comparison'
+output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/'+project+'/'+ subproject + '/mesin2020/clone-size/comparison'
 os.makedirs(output_plot, exist_ok=True)
 
 # Parameters
-n_ens = 10000
+n_ens = 1000
 gs = [2]  # Number of Poisson processes
 mu = 1.0  # Poisson rate
 T = 15  # Total simulation time
@@ -20,7 +20,7 @@ gamma = 0.4
 alpha = 1e-10
 depth = 6
 anti_mut_epi = 5/4
-n_ensemble = 1000
+n_ensemble = 100
 
 zeta_min = 0.3
 zeta_max = 1.4
@@ -37,6 +37,7 @@ fig_r2, ax_r2 = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'righ
 fig_zeta2, ax_zeta2 = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'right':.95, 'bottom':.15, 'top': 0.94})
 
 #------------ Experiment 1 (Figure 1D) ------------
+print('Experiment 1 (Figure 1D)')
 data_primary = pd.read_excel(root_dir + "/1-s2.0-S0092867419313170-mmc1.xlsx", sheet_name = 'Photoactivation CGG', header = 1)
 data_primary = data_primary[(data_primary['Figure']==1)]
 data_primary_grouped = data_primary.groupby(['Mouse', 'V', 'J', 'D']).size().reset_index(name='count')
@@ -60,8 +61,6 @@ for rep in tqdm(range(n_ensemble)):
 	
 	x_avg = np.zeros(max_rank)
 	counts_per_ranking = np.zeros(max_rank)
-	min_max_rank_mouse = max_rank
-	max_max_rank_mouse = 0
 	for mouse in mice_rep:
 		data_mouse = data_primary_grouped[data_primary_grouped['Mouse']==mouse]
 		# CDR3, counts = np.unique(np.array((list(data_mouse['CDR3:']))), return_counts = True)
@@ -118,7 +117,7 @@ fig_r2.savefig(output_plot + '/ranking_B_cells1.pdf', transparent=.5)
 
 
 #------------ Experiment 2 and 3 (Figure 4A and 4C) ------------
-
+print('Experiment 2 and 3 (Figure 4A and 4C)')
 data_recall = pd.read_excel(root_dir + "/1-s2.0-S0092867419313170-mmc1.xlsx", sheet_name = 'Fate-mapping CGG', header = 1)
 # data_recall = data_recall[(data_recall['Phenotype']=='GC + fm')]
 
@@ -131,12 +130,11 @@ for rep in tqdm(range(n_ensemble)):
 	x_avg = np.zeros(max_rank)
 	counts_per_ranking = np.zeros(max_rank)
 	# data_ph = data_recall_grouped[(data_recall_grouped['Phenotype']==ph)]
-	min_max_rank_mouse = max_rank
-	max_max_rank_mouse = 0
-
 	len_mice = 0
 
 	for i_fig, fig in enumerate(figures):
+		x_avg_fig = np.zeros(max_rank)
+		counts_per_ranking_fig = np.zeros(max_rank)
 		data_recall_fig = data_recall[(data_recall['Figure']==fig)]
 		data_recall_grouped = data_recall_fig.groupby(['Mouse', 'V', 'J', 'D']).size().reset_index(name='count')
 		# data_recall_grouped = data_recall_fig.groupby(['Mouse', 'CDR3:']).size().reset_index(name='count')
@@ -145,18 +143,16 @@ for rep in tqdm(range(n_ensemble)):
 
 		if rep == n_ensemble - 1:
 			mice_rep = mice
-			# print(mice_rep)
+			print(len(mice))
 		else:
 			mice_rep = np.random.choice(mice, len(mice), replace = True)
 
 		len_mice+=len(mice)
 		for mouse in mice_rep:
 			data_mouse = data_recall_grouped[data_recall_grouped['Mouse']==mouse]
-			# CDR3, counts = np.unique(np.array((list(data_mouse['CDR3:']))), return_counts = True)
 			counts = data_mouse['count'].to_numpy()
 			# print(counts)
 			N = np.sum(counts)
-			S_i = -np.sum((counts/N)*np.log((counts/N)))
 
 			sort_index = counts.argsort()
 			largest = np.max(counts)
@@ -174,15 +170,19 @@ for rep in tqdm(range(n_ensemble)):
 				if(x[k]>0):
 					counts_per_ranking[k]+=1
 					x_avg[k]+=x[k]/largest
+					counts_per_ranking_fig[k]+=1
+					x_avg_fig[k]+=x[k]/largest
 
 
 	max_rank_eff = len(counts_per_ranking[counts_per_ranking>2])
 
 	x_avg = x_avg[:max_rank_eff]/counts_per_ranking[:max_rank_eff]
+	x_avg_fig = x_avg_fig[:max_rank_eff]/counts_per_ranking_fig[:max_rank_eff]
 
 	params, pcov = curve_fit(model, np.log(range(1, max_rank_eff+1))[:max_rank_fit], np.log(x_avg)[:max_rank_fit])
-	# print(np.sqrt(pcov))
+	params_fig, pcov_fig = curve_fit(model, np.log(range(1, max_rank_eff+1))[:max_rank_fit], np.log(x_avg_fig)[:max_rank_fit])
 	slope = params[0]
+	print(params_fig[0])
 	zetas.append(-slope)
 	zeta = 3*3.5/(4.5*2.1)
 	
