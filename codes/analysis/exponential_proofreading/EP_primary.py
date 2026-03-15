@@ -78,7 +78,7 @@ def simulate(
 
         # compute pb from NA (same formula you use in dNAdtNaive)
         pb = (1 + (1e-10/(1e6*60*60*24*np.exp(2.0*t)/N_Avg)))**(-1)  # or whatever dependence you intend
-        dNA = (p.lambda_A * (1 - pb) - 2*pb) * NA
+        dNA = (p.lambda_A * (1 - pb) - 3*pb) * NA
 
         u_on = p.k_on_eff * NA
         dividing = pi > p.pi_threshold
@@ -133,7 +133,7 @@ if __name__ == "__main__":
         # K_s = 1e-8
         return (K_s/(K_s+K)) ** (sigma)
 
-    Ks = [8.0e-8, 8.0e-7, 8.0e-6]  # example affinities
+    Ks = [8.0e-8, 5.0e-7, 3.0e-6]  # example affinities
 
     t0, tf = 0.0, 10.5
     t_eval = np.linspace(t0, tf, 101)
@@ -142,7 +142,7 @@ if __name__ == "__main__":
         lambda_A=8.5,
         k_on_eff=1e6*1e6*24*3600/N_Avg,
         lambda_B=8.5*0.4,
-        delta=1,
+        delta=.5,
         pi_threshold=10.0,
         t_span=(t0, tf),
         t_eval=t_eval,
