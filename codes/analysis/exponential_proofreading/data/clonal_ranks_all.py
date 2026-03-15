@@ -23,7 +23,7 @@ my_colors4 = [my_blue2, my_purple, my_purple, my_blue, my_blue2, my_purple, my_p
 alpha = 1e-10
 depth = 6
 anti_mut_epi = 5/4
-n_ensemble = 100
+n_ensemble = 1000
 
 color_vals = np.linspace(0, 2, 200)
 cmap = plt.get_cmap('autumn_r')
@@ -79,7 +79,7 @@ for rep in tqdm(range(n_ensemble)):
 		x = np.flip(counts[sort_index])
 		max_rank_mouse = len(x)
 		if rep == n_ensemble - 1:
-			ax_r.step(range(1, max_rank_mouse+1), x/largest, color = my_colors[0], alpha = .5, lw = 0.5)
+			ax_r.step(range(1, max_rank_mouse+1), x/largest, color = my_red, alpha = .5, lw = 0.5)
 		
 		if len(x)>max_rank:
 			x = x[:max_rank]
@@ -107,13 +107,13 @@ for rep in tqdm(range(n_ensemble)):
 	zetas.append(-slope)
 
 for j in range(len(mice)):
-	ax_r.lines[-(j+1)].set_color(my_colors_alpha[int(np.mean(zetas)*100)])
+	ax_r.lines[-(j+1)].set_color(my_red)
 
-ax_r.plot(range(1, max_rank_eff+1), x_avg, color = my_colors_alpha[int(np.mean(zetas)*100)], markerfacecolor="None", ms = 18, alpha = 1, ls = '', marker = '*', label = r'$%.2f$'%(np.mean(zetas)) + ' ; ' + 'GC')
+ax_r.plot(range(1, max_rank_eff+1), x_avg, color = my_red, markerfacecolor="None", ms = 18, alpha = 1, ls = '', marker = '*', label = r'$%.2f$'%(np.mean(zetas)) + ' ; ' + 'GC')
 
-ax_r.plot(np.arange(1, max_rank_eff + 1), np.exp(0)*np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = my_colors_alpha[int(np.mean(zetas)*100)], alpha = .8, lw = 3)
+ax_r.plot(np.arange(1, max_rank_eff + 1), np.exp(0)*np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = my_red, alpha = .8, lw = 3)
 
-ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r'$\mathrm{GC}$', color = my_colors_alpha[int(np.mean(zetas)*100)], density = True, histtype = 'stepfilled', edgecolor = 'k')
+ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r'$\mathrm{GC}$', color = my_red, density = True, histtype = 'stepfilled', edgecolor = 'k')
 
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
@@ -162,7 +162,7 @@ for rep in tqdm(range(n_ensemble)):
 		x = np.flip(counts[sort_index])
 		max_rank_mouse = len(x)
 		if rep == n_ensemble - 1:
-			ax_r.step(range(1, max_rank_mouse+1), x/largest, color = my_colors2[0], alpha = .5, lw = 0.5)
+			ax_r.step(range(1, max_rank_mouse+1), x/largest, color = my_blue, alpha = .5, lw = 0.5)
 		
 		if max_rank_mouse>max_rank:
 			x = x[:max_rank]
@@ -191,12 +191,12 @@ for rep in tqdm(range(n_ensemble)):
 
 print(len(mice))
 for j in range(len(mice)):
-	ax_r.lines[-(j+1)].set_color(my_colors_alpha[int(np.mean(zetas)*100)])
+	ax_r.lines[-(j+1)].set_color(my_blue)
 
-ax_r.plot(range(1, max_rank_eff+1), x_avg, color = my_colors_alpha[int(np.mean(zetas)*100)], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = 'o', label = r'$%.2f$'%(np.mean(zetas)) + ' ; ' + 'GC + fm')
+ax_r.plot(range(1, max_rank_eff+1), x_avg, color = my_blue, markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = 'o', label = r'$%.2f$'%(np.mean(zetas)) + ' ; ' + 'GC + fm')
 
-ax_r.plot(np.arange(1, max_rank_eff + 1), np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = my_colors_alpha[int(np.mean(zetas)*100)], alpha = .8, lw = 3)
-ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r'$\mathrm{GC+m}$', color = my_colors_alpha[int(np.mean(zetas)*100)], density = True, histtype = 'stepfilled', edgecolor = 'k')
+ax_r.plot(np.arange(1, max_rank_eff + 1), np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = my_blue, alpha = .8, lw = 3)
+ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r'$\mathrm{GC+m}$', color = my_blue, density = True, histtype = 'stepfilled', edgecolor = 'k')
 
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
@@ -245,7 +245,7 @@ for i_ph, ph in enumerate(phenotypes):
 			x = np.flip(counts[sort_index])
 			max_rank_mouse = len(x)
 			if rep == n_ensemble - 1:
-				ax_r.step(range(1, max_rank_mouse+1), x/largest, color = my_colors2[i_ph], alpha = .5, lw = 0.5)
+				ax_r.step(range(1, max_rank_mouse+1), x/largest, color = my_blue, alpha = .5, lw = 0.5)
 			
 			if max_rank_mouse>max_rank:
 				x = x[:max_rank]
@@ -267,12 +267,13 @@ for i_ph, ph in enumerate(phenotypes):
 		zeta = 3*3.5/(4.5*2.1)
 					
 	for j in range(len(mice)):
-		ax_r.lines[-(j+1)].set_color(my_colors_alpha[int(np.mean(zetas)*100)])
+		ax_r.lines[-(j+1)].set_color(my_blue)
 
-	ax_r.plot(range(1, max_rank_eff+1), x_avg, color = my_colors_alpha[int(np.mean(zetas)*100)], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = '^', label = r'$%.2f$'%(np.mean(zetas))+ ' ; ' + ph)
+	ax_r.plot(range(1, max_rank_eff+1), x_avg, color = my_blue, markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = '^', label = r'$%.2f$'%(np.mean(zetas))+ ' ; ' + ph)
 
-	ax_r.plot(np.arange(1, max_rank_eff + 1), np.exp(0)*np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = my_colors_alpha[int(np.mean(zetas)*100)], alpha = .8, lw = 3)
-	ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r"$\mathrm{" + ph + "}$", color = my_colors_alpha[int(np.mean(zetas)*100)], density = True, histtype = 'stepfilled', edgecolor = 'k')
+	ax_r.plot(np.arange(1, max_rank_eff + 1), np.exp(0)*np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = my_blue, alpha = .8, lw = 3)
+	ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r"$\mathrm{" + ph + "}$", color = my_blue, density = True, histtype = 'stepfilled', edgecolor = 'k')
+	print(-np.mean(zetas))
 
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
@@ -291,11 +292,10 @@ fig_zeta.savefig(output_plot + '/zetas_3.pdf', transparent=.5)
 print('Experiment 3 (Figure 4C) - 2')
 data_recall = pd.read_excel(root_dir + "/1-s2.0-S0092867419313170-mmc1.xlsx", sheet_name = 'Fate-mapping CGG', header = 1)
 data_recall = data_recall[(data_recall['Figure']=='4C-H')]
-data_recall_grouped = data_recall.groupby(['Mouse', 'Phenotype', 'V', 'J', 'D']).size().reset_index(name='count')
+data_recall_grouped = data_recall.groupby(['Mouse', 'V', 'J', 'D']).size().reset_index(name='count')
 # data_recall_grouped = data_recall.groupby(['Mouse', 'CDR3:']).size().reset_index(name='count')
 # data_recall_grouped = data_recall.groupby(['Mouse', 'Phenotype', 'Sequence']).size().reset_index(name='count')
 mice = data_recall_grouped['Mouse'].unique()
-print(len(mice))
 
 max_rank = 100
 zetas = []
@@ -329,7 +329,6 @@ for rep in tqdm(range(n_ensemble)):
 				counts_per_ranking[k]+=1
 				x_avg[k]+=x[k]/largest
 
-	
 	max_rank_eff = len(counts_per_ranking[counts_per_ranking>2])
 
 	x_avg = x_avg[:max_rank_eff]/counts_per_ranking[:max_rank_eff]
@@ -342,10 +341,11 @@ for rep in tqdm(range(n_ensemble)):
 for j in range(len(mice)):
 	ax_r.lines[-(j+1)].set_color(my_colors_alpha[int(np.mean(zetas)*100)])
 
-ax_r.plot(range(1, max_rank_eff+1), x_avg, color = my_colors_alpha[int(np.mean(zetas)*100)], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = '.', label = r'$%.2f$'%(np.mean(zetas))+ ' ; ' + 'combined')
+print(-np.mean(zetas))
+# ax_r.plot(range(1, max_rank_eff+1), x_avg, color = my_colors_alpha[int(np.mean(zetas)*100)], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = '.', label = r'$%.2f$'%(np.mean(zetas))+ ' ; ' + 'combined')
 
-ax_r.plot(np.arange(1, max_rank_eff + 1), np.exp(0)*np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = my_colors_alpha[int(np.mean(zetas)*100)], alpha = .8, lw = 3)
-ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r"$\mathrm{" + ph + "}$", color = my_colors_alpha[int(np.mean(zetas)*100)], density = True, histtype = 'stepfilled', edgecolor = 'k')
+# ax_r.plot(np.arange(1, max_rank_eff + 1), np.exp(0)*np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = my_colors_alpha[int(np.mean(zetas)*100)], alpha = .8, lw = 3)
+ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r"$\mathrm{combined}$", color = my_colors_alpha[int(np.mean(zetas)*100)], density = True, histtype = 'stepfilled', edgecolor = 'k')
 
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
@@ -361,17 +361,18 @@ ax_zeta.legend(title = r'$\mathrm{sub-pop}$', fontsize = 30, title_fontsize = 30
 fig_zeta.savefig(output_plot + '/zetas_3b.pdf', transparent=.5)
 
 #------------ Experiment 4 (Figure 5) ------------
+colors_ph = [my_red, my_red, my_red, my_blue, my_blue]
 print('Experiment 4 (Figure 5)')
 fig_r_Flu, ax_r_Flu = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'right':.95, 'bottom':.15, 'top': 0.94})
 fig_zeta_Flu, ax_zeta_Flu = plt.subplots(figsize=(10*1.62,8), gridspec_kw={'left':0.12, 'right':.8, 'bottom':.15, 'top': 0.94})
 
 data_infection = pd.read_excel(root_dir + "/1-s2.0-S0092867419313170-mmc1.xlsx", sheet_name = 'Influenza', header = 2)
-data_recall_grouped = data_infection.groupby(['Experiment / Mouse', 'Sort2', 'V', 'J', 'D']).size().reset_index(name='count')
+data_recall_grouped = data_infection.groupby(['Experiment / Mouse', 'Sort', 'V', 'J', 'D']).size().reset_index(name='count')
 # data_recall_grouped = data_infection.groupby(['Experiment / Mouse', 'Sort2', 'CDR3:']).size().reset_index(name='count')
 # data_recall_grouped = data_infection.groupby(['Experiment / Mouse', 'Sort2', 'Sequence']).size().reset_index(name='count')
 
 mice = data_recall_grouped['Experiment / Mouse'].unique()
-phenotypes = data_recall_grouped['Sort2'].unique()
+phenotypes = data_recall_grouped['Sort'].unique()
 print(phenotypes)
 
 max_ranks = [100, 100, 100, 100, 100]
@@ -403,8 +404,8 @@ for i_ph, ph in enumerate(phenotypes[:]):
 			x = np.flip(counts[sort_index])
 			max_rank_mouse = len(x)
 			if rep == n_ensemble - 1:
-				ax_r.step(range(1, max_rank_mouse+1), x/largest, color = my_colors3[i_ph], alpha = .5, lw = 0.5)
-				ax_r_Flu.step(range(1, max_rank_mouse+1), x/largest, color = my_colors3[i_ph], alpha = .5, lw = 0.5)
+				ax_r.step(range(1, max_rank_mouse+1), x/largest, color = colors_ph[i_ph], alpha = .5, lw = 0.5)
+				ax_r_Flu.step(range(1, max_rank_mouse+1), x/largest, color = colors_ph[i_ph], alpha = .5, lw = 0.5)
 			
 			if len(x)>max_rank:
 				x = x[:max_rank]
@@ -433,19 +434,19 @@ for i_ph, ph in enumerate(phenotypes[:]):
 		
 
 	for j in range(len(mice)):
-		ax_r.lines[-(j+1)].set_color(my_colors_alpha[int(np.mean(zetas)*100)])
-		ax_r_Flu.lines[-(j+1)].set_color(my_colors_alpha[int(np.mean(zetas)*100)])
+		ax_r.lines[-(j+1)].set_color(colors_ph[i_ph])
+		ax_r_Flu.lines[-(j+1)].set_color(colors_ph[i_ph])
 
-	ax_r.plot(range(1, max_rank_eff+1), x_avg, color = my_colors_alpha[int(np.mean(zetas)*100)], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = 'D', label = r'$%.2f$'%(np.mean(zetas)) + ' ; ' + ph)
-	ax_r_Flu.plot(range(1, max_rank_eff+1), x_avg, color = my_colors_alpha[int(np.mean(zetas)*100)], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = 'D', label = r'$%.2f$'%(np.mean(zetas)) + ' ; ' + ph)
+	ax_r.plot(range(1, max_rank_eff+1), x_avg, color = colors_ph[i_ph], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = 'D', label = r'$%.2f$'%(np.mean(zetas)) + ' ; ' + ph)
+	ax_r_Flu.plot(range(1, max_rank_eff+1), x_avg, color = colors_ph[i_ph], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = 'D', label = r'$%.2f$'%(np.mean(zetas)) + ' ; ' + ph)
 
 	print(ph, len(mice))
 
-	ax_r.plot(np.arange(1, max_rank_eff + 1), np.exp(0)*np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = my_colors_alpha[int(np.mean(zetas)*100)], alpha = .8, lw = 3)
-	ax_r_Flu.plot(np.arange(1, max_rank_eff + 1), np.exp(0)*np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = my_colors_alpha[int(np.mean(zetas)*100)], alpha = .8, lw = 3)
+	ax_r.plot(np.arange(1, max_rank_eff + 1), np.exp(0)*np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = colors_ph[i_ph], alpha = .8, lw = 3)
+	ax_r_Flu.plot(np.arange(1, max_rank_eff + 1), np.exp(0)*np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = colors_ph[i_ph], alpha = .8, lw = 3)
 	
-	ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r"$\mathrm{" + ph + "}$", color = my_colors_alpha[int(np.mean(zetas)*100)], density = True, histtype = 'stepfilled', edgecolor = 'k')
-	ax_zeta_Flu.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r"$\mathrm{" + ph + "}$", color = my_colors_alpha[int(np.mean(zetas)*100)], density = True, histtype = 'stepfilled', edgecolor = 'k')
+	ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r"$\mathrm{" + ph + "}$", color = colors_ph[i_ph], density = True, histtype = 'stepfilled', edgecolor = 'k')
+	ax_zeta_Flu.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r"$\mathrm{" + ph + "}$", color = colors_ph[i_ph], density = True, histtype = 'stepfilled', edgecolor = 'k')
 
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)

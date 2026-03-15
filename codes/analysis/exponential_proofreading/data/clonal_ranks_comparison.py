@@ -11,7 +11,6 @@ output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Im
 os.makedirs(output_plot, exist_ok=True)
 
 # Parameters
-n_ens = 1000
 gs = [2]  # Number of Poisson processes
 mu = 1.0  # Poisson rate
 T = 15  # Total simulation time
@@ -20,7 +19,7 @@ gamma = 0.4
 alpha = 1e-10
 depth = 6
 anti_mut_epi = 5/4
-n_ensemble = 100
+n_ensemble = 1000
 
 zeta_min = 0.3
 zeta_max = 1.4
@@ -125,16 +124,17 @@ figures = ['4A', '4C-H']
 
 max_rank = 100
 zetas = []
+zetas_fig = []
 
 for rep in tqdm(range(n_ensemble)):
 	x_avg = np.zeros(max_rank)
 	counts_per_ranking = np.zeros(max_rank)
+	x_avg_fig = np.zeros(max_rank)
+	counts_per_ranking_fig = np.zeros(max_rank)
 	# data_ph = data_recall_grouped[(data_recall_grouped['Phenotype']==ph)]
 	len_mice = 0
 
 	for i_fig, fig in enumerate(figures):
-		x_avg_fig = np.zeros(max_rank)
-		counts_per_ranking_fig = np.zeros(max_rank)
 		data_recall_fig = data_recall[(data_recall['Figure']==fig)]
 		data_recall_grouped = data_recall_fig.groupby(['Mouse', 'V', 'J', 'D']).size().reset_index(name='count')
 		# data_recall_grouped = data_recall_fig.groupby(['Mouse', 'CDR3:']).size().reset_index(name='count')
@@ -143,7 +143,6 @@ for rep in tqdm(range(n_ensemble)):
 
 		if rep == n_ensemble - 1:
 			mice_rep = mice
-			print(len(mice))
 		else:
 			mice_rep = np.random.choice(mice, len(mice), replace = True)
 
@@ -170,24 +169,25 @@ for rep in tqdm(range(n_ensemble)):
 				if(x[k]>0):
 					counts_per_ranking[k]+=1
 					x_avg[k]+=x[k]/largest
-					counts_per_ranking_fig[k]+=1
-					x_avg_fig[k]+=x[k]/largest
+					if i_fig==1:
+						counts_per_ranking_fig[k]+=1
+						x_avg_fig[k]+=x[k]/largest
 
 
 	max_rank_eff = len(counts_per_ranking[counts_per_ranking>2])
+	max_rank_eff_fig = len(counts_per_ranking_fig[counts_per_ranking_fig>2])
 
 	x_avg = x_avg[:max_rank_eff]/counts_per_ranking[:max_rank_eff]
-	x_avg_fig = x_avg_fig[:max_rank_eff]/counts_per_ranking_fig[:max_rank_eff]
+	x_avg_fig = x_avg_fig[:max_rank_eff_fig]/counts_per_ranking_fig[:max_rank_eff_fig]
 
 	params, pcov = curve_fit(model, np.log(range(1, max_rank_eff+1))[:max_rank_fit], np.log(x_avg)[:max_rank_fit])
-	params_fig, pcov_fig = curve_fit(model, np.log(range(1, max_rank_eff+1))[:max_rank_fit], np.log(x_avg_fig)[:max_rank_fit])
-	slope = params[0]
-	print(params_fig[0])
-	zetas.append(-slope)
-	zeta = 3*3.5/(4.5*2.1)
+	params_fig, pcov_fig = curve_fit(model, np.log(range(1, max_rank_eff_fig+1))[:max_rank_fit], np.log(x_avg_fig)[:max_rank_fit])
 	
-
-print(np.mean(zetas), int((np.mean(zetas)-zeta_min)*100))
+	slope = params[0]
+	zetas.append(-slope)
+	zetas_fig.append(-params_fig[0])
+	
+print(np.mean(zetas_fig))
 for j in range(len_mice):
 	# ax_r2.lines[-(j+1)].set_color(my_colors_alpha[int((np.mean(zetas)-zeta_min)*100)])
 	ax_r2.lines[-(j+1)].set_color(my_blue)
