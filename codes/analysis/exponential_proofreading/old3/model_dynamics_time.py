@@ -1,5 +1,5 @@
 import sys
-sys.path.append('../../library/')
+sys.path.append('../../../library/')
 from funcs import*
 plt.rcParams['text.usetex'] = True
 
@@ -80,7 +80,7 @@ beta_1, E_1, Kd_1 = get_p_properties(betas, Q0, Es, dE, 1)
 beta_step, E_step, K_step = get_proofreading_properties(betas, Q0, Es, dE, k_step, k_on)
 print('beta_step = %.2f'%beta_step, 'K_step = %.2e'%K_step)
 
-t0 = 1/lambda_A*np.log((lambda_A*N_A)/(k_on*b0))
+t0 = 1/lambda_A*np.log((lambda_A*N_Avg)/(k_on*b0))
 print('--------')
 #--------------------------Loops--------------------------
 
@@ -142,7 +142,7 @@ for L_0 in L_0s:
     for i_p, p in enumerate(ps):
         fig_Pi, ax_Pi =plt.subplots(figsize=(8.0*1.62,8*0.6), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.2, 'top': 0.96})
         fig_N_b_p, ax_N_b_p = plt.subplots(figsize=(8.0*1.62,8*0.6), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.2, 'top': 0.96})
-        fig_N_b_p2, ax_N_b_p2 = plt.subplots(figsize=(8.0*1.62,8*0.6), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.2, 'top': 0.96})
+        fig_N_b_p2, ax_N_b_p2 = plt.subplots(figsize=(5*1.62,5), gridspec_kw={'left':0.12, 'right':.95, 'bottom':.15, 'top': 0.94})
         print('--------')
         print('p = %.2f...'%p)
         beta_p, E_p, Kd_p = get_p_properties(betas, Q0, Es, dE, p)
@@ -191,7 +191,7 @@ for L_0 in L_0s:
             ax_N_b_p.plot(time_array[time_array>1.01*t_Th], 0.96*(N_threshold)*(clone_sizes_C[k*10, time_array>1.01*t_Th][:len(time_array[time_array>1.01*t_Th])]), linewidth = 3, color = my_colors[i_k], linestyle= '-', alpha = .8)
             total_population[time_array>1.01*t_Th] += 0.96*(N_threshold)*(clone_sizes_C[k*10, time_array>1.01*t_Th][:len(time_array[time_array>1.01*t_Th])]) * np.heaviside(time_array[time_array>1.01*t_Th] - t_Th , 1)
 
-            ax_N_b_p2.plot(time_array, np.exp(lambda_B*3/activation_times_C[9*k*10]*(time_array - activation_times_C[1*10])), linewidth = 3, color = my_colors[i_k], linestyle= '-', alpha = .8)
+            ax_N_b_p2.plot(time_array, np.exp(lambda_B*3/activation_times_C[9*k*10]*(time_array - activation_times_C[1*10])), linewidth = 5, color = my_colors[i_k], linestyle= '-', alpha = .8)
         
         # ax_N_b_p.plot(time_array, total_population, linewidth = 4, color = 'darkgreen', linestyle= '-', alpha = .5)
 
@@ -223,11 +223,12 @@ for L_0 in L_0s:
         fig_N_b_p.savefig(output_plot + '/Bcell_p-%.1f_L0-%.0e_'%(p, L_0)+energy_model+'.pdf')
         plt.close(fig_N_b_p)
 
-        my_plot_layout(ax=ax_N_b_p2, yscale = 'log', ticks_labelsize = 40, x_fontsize=30, y_fontsize=30 )
+        # my_plot_layout(ax=ax_N_b_p2, yscale = 'log', ticks_labelsize = 28, x_fontsize=30, y_fontsize=30 )
+        ax_N_b_p2.tick_params(axis='both', which='major', labelsize=28)
         # ax_N_b_p2.set_xticks([])
         ax_N_b_p2.set_xlim(right = Tf, left = T0+1)
-        ax_N_b_p2.set_ylim(bottom = 1e0, top = 5e2)
-        #ax_N_b.set_ylim(bottom = 1e0, top = C*1.1)
+        ax_N_b_p2.set_ylim(bottom = 1e0, top = 1e5)
+        ax_N_b_p2.set_yscale('log')
         fig_N_b_p2.savefig(output_plot + '/Bcell2_p-%.1f_L0-%.0e_'%(p, L_0)+energy_model+'.pdf')
         plt.close(fig_N_b_p2)
 

@@ -103,8 +103,9 @@ for rep in tqdm(range(n_ensemble)):
 	params, pcov = curve_fit(model, np.log(range(1, max_rank_eff+1))[:max_rank_fit], np.log(x_avg)[:max_rank_fit])
 	slope = params[0]
 
-	zeta = 3*3.5/(4.5*2.1)
 	zetas.append(-slope)
+
+print(np.mean(zetas), np.std(zetas))
 
 for j in range(len(mice)):
 	ax_r.lines[-(j+1)].set_color(my_red)
@@ -112,7 +113,6 @@ for j in range(len(mice)):
 ax_r.plot(range(1, max_rank_eff+1), x_avg, color = my_red, markerfacecolor="None", ms = 18, alpha = 1, ls = '', marker = '*', label = r'$%.2f$'%(np.mean(zetas)) + ' ; ' + 'GC')
 
 ax_r.plot(np.arange(1, max_rank_eff + 1), np.exp(0)*np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = my_red, alpha = .8, lw = 3)
-print(np.mean(zetas), np.std(zetas))
 ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r'$\mathrm{GC}$', color = my_red, density = True, histtype = 'stepfilled', edgecolor = 'k')
 
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
@@ -188,8 +188,8 @@ for rep in tqdm(range(n_ensemble)):
 	zetas.append(-slope)
 	zeta = 3*3.5/(4.5*2.1)
 		
+print(np.mean(zetas), np.std(zetas))
 
-print(len(mice))
 for j in range(len(mice)):
 	ax_r.lines[-(j+1)].set_color(my_blue)
 
@@ -220,7 +220,6 @@ data_recall_grouped = data_recall.groupby(['Mouse', 'Phenotype', 'V', 'J', 'D'])
 mice = data_recall_grouped['Mouse'].unique()
 phenotypes = data_recall_grouped['Phenotype'].unique()
 print(phenotypes)
-print(len(mice))
 
 for i_ph, ph in enumerate(phenotypes):
 	max_rank = 100
@@ -273,7 +272,7 @@ for i_ph, ph in enumerate(phenotypes):
 
 	ax_r.plot(np.arange(1, max_rank_eff + 1), np.exp(0)*np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = my_blue, alpha = .8, lw = 3)
 	ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r"$\mathrm{" + ph + "}$", color = my_blue, density = True, histtype = 'stepfilled', edgecolor = 'k')
-	print(-np.mean(zetas))
+	print(np.mean(zetas), np.std(zetas))
 
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
@@ -341,7 +340,7 @@ for rep in tqdm(range(n_ensemble)):
 for j in range(len(mice)):
 	ax_r.lines[-(j+1)].set_color(my_colors_alpha[int(np.mean(zetas)*100)])
 
-print(-np.mean(zetas))
+print(np.mean(zetas), np.std(zetas))
 # ax_r.plot(range(1, max_rank_eff+1), x_avg, color = my_colors_alpha[int(np.mean(zetas)*100)], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = '.', label = r'$%.2f$'%(np.mean(zetas))+ ' ; ' + 'combined')
 
 # ax_r.plot(np.arange(1, max_rank_eff + 1), np.exp(0)*np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = my_colors_alpha[int(np.mean(zetas)*100)], alpha = .8, lw = 3)
@@ -438,10 +437,10 @@ for i_ph, ph in enumerate(phenotypes[[0, 1, 3]]):
 		ax_r.lines[-(j+1)].set_color(colors_ph[i_ph])
 		ax_r_Flu.lines[-(j+1)].set_color(colors_ph[i_ph])
 
+	print(np.mean(zetas), np.std(zetas))
+	
 	ax_r.plot(range(1, max_rank_eff+1), x_avg, color = colors_ph[i_ph], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = 'D', label = r'$%.2f$'%(np.mean(zetas)) + ' ; ' + ph)
 	ax_r_Flu.plot(range(1, max_rank_eff+1), x_avg, color = colors_ph[i_ph], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = 'D', label = r'$%.2f$'%(np.mean(zetas)) + ' ; ' + ph)
-
-	print(ph, len(mice))
 
 	ax_r.plot(np.arange(1, max_rank_eff + 1), np.exp(0)*np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = colors_ph[i_ph], alpha = .8, lw = 3)
 	ax_r_Flu.plot(np.arange(1, max_rank_eff + 1), np.exp(0)*np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = colors_ph[i_ph], alpha = .8, lw = 3)

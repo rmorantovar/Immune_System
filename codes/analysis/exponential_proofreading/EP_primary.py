@@ -162,7 +162,7 @@ if __name__ == "__main__":
     fig_antigen, ax_antigen = plt.subplots(figsize=(5*1.62,5), gridspec_kw={'left':0.12, 'right':.95, 'bottom':.15, 'top': 0.94})
     ax_antigen.plot(t, NA_t, color = antigen_color, linewidth = 5)
     
-    ax_antigen.tick_params(axis='both', which='major', labelsize=22)
+    ax_antigen.tick_params(axis='both', which='major', labelsize=28)
     # ax.legend(loc = 2, fontsize = 14, title = r'$K$', title_fontsize = 16)
     ax_antigen.set_yscale('log')
     ax_antigen.set_xlim(left = 0, right = 8)
@@ -189,7 +189,7 @@ if __name__ == "__main__":
     # ax_Pi.plot(t, np.exp(6*(t-1))*10, color = 'grey', ls = '--', lw = 2)
     ax_Pi.axhline(p.pi_threshold, linestyle="--", label="threshold", color = "k")
     # my_plot_layout(ax=ax_Pi, yscale = 'log', xscale = 'linear', ticks_labelsize = 40, x_fontsize=30, y_fontsize=30 )
-    ax_Pi.tick_params(axis='both', which='major', labelsize=22)
+    ax_Pi.tick_params(axis='both', which='major', labelsize=28)
     # ax_Pi.set_xlabel(r"$t$")
     # ax_Pi.set_ylabel(r"$\pi(t,K)$")
     # ax_Pi.set_title("Internalized antigen per cell")
@@ -212,7 +212,7 @@ if __name__ == "__main__":
     # ax_N_b.set_xlabel("t")
     # ax_N_b.set_ylabel(r"$B(t,K)$")
     # ax_N_b.set_title("B cell population (divides while pi > threshold)")
-    ax_N_b.tick_params(axis='both', which='major', labelsize=22)
+    ax_N_b.tick_params(axis='both', which='major', labelsize=28)
     ax_N_b.set_yscale("log")
     ax_N_b.set_ylim(bottom = 0.99, top=1e5)  # set a reasonable lower limit for log scale
     ax_N_b.set_xlim(left = 0, right = 8)
