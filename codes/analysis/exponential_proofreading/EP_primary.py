@@ -186,7 +186,7 @@ if __name__ == "__main__":
     fig_Pi, ax_Pi =plt.subplots(figsize=(5*1.62,5), gridspec_kw={'left':0.12, 'right':.95, 'bottom':.15, 'top': 0.94})
     for i, K in enumerate(out["Ks"]):
         ax_Pi.plot(t, pi[:, i], label=f"K={K}", linewidth = 5, color = my_colors[i])
-    ax_Pi.plot(t, np.exp(6*(t-1))*10, color = 'grey', ls = '--', lw = 2)
+    # ax_Pi.plot(t, np.exp(6*(t-1))*10, color = 'grey', ls = '--', lw = 2)
     ax_Pi.axhline(p.pi_threshold, linestyle="--", label="threshold", color = "k")
     # my_plot_layout(ax=ax_Pi, yscale = 'log', xscale = 'linear', ticks_labelsize = 40, x_fontsize=30, y_fontsize=30 )
     ax_Pi.tick_params(axis='both', which='major', labelsize=22)
@@ -194,7 +194,7 @@ if __name__ == "__main__":
     # ax_Pi.set_ylabel(r"$\pi(t,K)$")
     # ax_Pi.set_title("Internalized antigen per cell")
     ax_Pi.set_yscale("log")
-    ax_Pi.set_ylim(bottom=0.99, top = 1e5)  # set a reasonable lower limit for log scale
+    ax_Pi.set_ylim(bottom=0.99, top = 5e3)  # set a reasonable lower limit for log scale
     # ax_Pi.legend()
     # ax_Pi.set_xticks([])
     ax_Pi.set_xlim(left = 0, right = 8)
@@ -207,7 +207,7 @@ if __name__ == "__main__":
     fig_N_b, ax_N_b = plt.subplots(figsize=(5*1.62,5), gridspec_kw={'left':0.12, 'right':.95, 'bottom':.15, 'top': 0.94})
     for i, K in enumerate(out["Ks"]):
         ax_N_b.plot(t, B[:, i], label=f"K={K}", linewidth = 5, color = my_colors[i])
-    ax_N_b.plot(t, np.exp(6*0.4*(t-1)), color = 'grey', ls = '--', lw = 2)
+    # ax_N_b.plot(t, np.exp(6*0.4*(t-1)), color = 'grey', ls = '--', lw = 2)
     # my_plot_layout(ax=ax_N_b, yscale = 'log', ticks_labelsize = 40, x_fontsize=30, y_fontsize=30 )
     # ax_N_b.set_xlabel("t")
     # ax_N_b.set_ylabel(r"$B(t,K)$")

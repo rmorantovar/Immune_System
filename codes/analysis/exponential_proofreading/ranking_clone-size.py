@@ -106,7 +106,7 @@ for i_p, p in enumerate((ps)):
     for t_cst in [3.1, 3.5, 4.4]:
         fig_ranking_i, ax_ranking_i = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.15, 'top': 0.94})
         fig_CSD_i, ax_CSD_i = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.15, 'top': 0.94})
-        fig_CSD_2_i, ax_CSD_2_i = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.15, 'top': 0.94})
+        fig_GR_i, ax_GR_i = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.15, 'top': 0.94})
 
         return_data_type = 0
         data, return_data_type = get_data(folder_path = Text_files_path + 'exponential_proofreading/out/', data_type = 'ranking_size_p-%.1f_t_cst-%.1f'%(p, t_cst))
@@ -216,15 +216,15 @@ for i_p, p in enumerate((ps)):
         for j in range(len(trajectories_rank_cst)):
             ranks_j = np.arange(1, trajectories_rank_cst[j]+1)
             len_rank_j = len(ranks_j)
-            ax_ranking_i.plot(ranks_j, trajectories_cst[counter_cst:counter_cst+len_rank_j], color = colors_p[i_p+1], linewidth = 1, alpha = .2)
+            # ax_ranking_i.plot(ranks_j, trajectories_cst[counter_cst:counter_cst+len_rank_j], color = colors_p[i_p+1], linewidth = 1, alpha = .2)
             counter_cst += len_rank_j
         final_Nb_cst = final_Nb_cst/counts_final_Nb_cst
-        ax_ranking_i.plot(ranking, final_Nb_cst, color = colors_p[i_p+1], linewidth = 0, marker = '*', alpha = 1, ms = 10, label = r'$\textrm{CST}$')
+        # ax_ranking_i.plot(ranking, final_Nb_cst, color = colors_p[i_p+1], linewidth = 0, marker = '*', alpha = 1, ms = 10, label = r'$\textrm{CST}$')
 
         my_plot_layout(ax = ax_ranking_i, xscale='log', yscale= 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
-        ax_ranking_i.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
+        # ax_ranking_i.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
         #ax_ranking_i.set_xlim(left = np.exp(E_m+2), right = np.exp(E_m+29))
-        ax_ranking_i.set_ylim(bottom = 2e-2, top = 1.05)
+        ax_ranking_i.set_ylim(bottom = 5e-2, top = 1.05)
         #ax_ranking_i.set_yticks([1, 0.1, 0.01, 0.001])
         #ax_ranking_i.set_yticklabels([1, 0.1, 0.01])
         fig_ranking_i.savefig(output_plot + '/ranking_clone-size_p-%.2f_t_cst-%.1f.pdf'%(p, t_cst))
@@ -273,15 +273,15 @@ for i_p, p in enumerate((ps)):
         #### GROWTH RATES ####
         bins = np.logspace(np.log10(5e-2*0.5),np.log10(lambda_B*2), 40)
 
-        ax_CSD_2_i.hist(growth_rates_total_cst, bins = bins, density = True, alpha = 0.7, color = colors_p[i_p+1], label = r'$\textrm{CST}$')
+        ax_GR_i.hist(growth_rates_total_cst, bins = bins, density = True, alpha = 0.7, color = colors_p[i_p+1], label = r'$\textrm{CST}$')
 
-        my_plot_layout(ax = ax_CSD_2_i, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
-        # ax_CSD_2_i.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
-        ax_CSD_2_i.set_xlim(right = lambda_B*1.2, left = 0.05)
-        ax_CSD_2_i.set_ylim(bottom = 1e-1, top = 2e2)
-        #ax_CSD_2_i.set_yticks([1, 0.1, 0.01, 0.001])
-        #ax_CSD_2_i.set_yticklabels([1, 0.1, 0.01])
-        fig_CSD_2_i.savefig(output_plot + '/growth_rates_p-%.2f_lamAB-%.2f_t_cst-%.1f.pdf'%(p, lambda_A/lambda_B, t_cst))
+        my_plot_layout(ax = ax_GR_i, xscale='log', yscale= 'log', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
+        # ax_GR_i.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
+        ax_GR_i.set_xlim(right = lambda_B*1.2, left = 0.05)
+        ax_GR_i.set_ylim(bottom = 1e-1, top = 2e2)
+        #ax_GR_i.set_yticks([1, 0.1, 0.01, 0.001])
+        #ax_GR_i.set_yticklabels([1, 0.1, 0.01])
+        fig_GR_i.savefig(output_plot + '/growth_rates_p-%.2f_lamAB-%.2f_t_cst-%.1f.pdf'%(p, lambda_A/lambda_B, t_cst))
    
 
 print('----END-----')

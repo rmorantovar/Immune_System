@@ -23,7 +23,7 @@ my_colors4 = [my_blue2, my_purple, my_purple, my_blue, my_blue2, my_purple, my_p
 alpha = 1e-10
 depth = 6
 anti_mut_epi = 5/4
-n_ensemble = 1000
+n_ensemble = 100
 
 color_vals = np.linspace(0, 2, 200)
 cmap = plt.get_cmap('autumn_r')
@@ -112,13 +112,13 @@ for j in range(len(mice)):
 ax_r.plot(range(1, max_rank_eff+1), x_avg, color = my_red, markerfacecolor="None", ms = 18, alpha = 1, ls = '', marker = '*', label = r'$%.2f$'%(np.mean(zetas)) + ' ; ' + 'GC')
 
 ax_r.plot(np.arange(1, max_rank_eff + 1), np.exp(0)*np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = my_red, alpha = .8, lw = 3)
-
+print(np.mean(zetas), np.std(zetas))
 ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r'$\mathrm{GC}$', color = my_red, density = True, histtype = 'stepfilled', edgecolor = 'k')
 
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
 ax_r.set_xlim(right = 5e1)
-ax_r.legend(title = r'$\zeta$', fontsize = 30, title_fontsize = 30, loc = 3)#, loc = (1, 0))
+# ax_r.legend(title = r'$\zeta$', fontsize = 30, title_fontsize = 30, loc = 3)#, loc = (1, 0))
 fig_r.savefig(output_plot + '/ranking_B_cells_1.pdf', transparent=.5)
 
 my_plot_layout(ax =ax_zeta, yscale = 'linear', xscale = 'linear', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
@@ -201,7 +201,7 @@ ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r'$\ma
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
 ax_r.set_xlim(right = 5e1)
-ax_r.legend(title = r'$\zeta$', fontsize = 30, title_fontsize = 30, loc = 3)#, loc = (1, 0))
+# ax_r.legend(title = r'$\zeta$', fontsize = 30, title_fontsize = 30, loc = 3)#, loc = (1, 0))
 fig_r.savefig(output_plot + '/ranking_B_cells_2.pdf', transparent=.5)
 
 my_plot_layout(ax =ax_zeta, yscale = 'linear', xscale = 'linear', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
@@ -278,7 +278,7 @@ for i_ph, ph in enumerate(phenotypes):
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
 ax_r.set_xlim(right = 5e1)
-ax_r.legend(title = r'$\zeta$', fontsize = 30, title_fontsize = 30, loc = 3)#, loc = (1, 0))
+# ax_r.legend(title = r'$\zeta$', fontsize = 30, title_fontsize = 30, loc = 3)#, loc = (1, 0))
 fig_r.savefig(output_plot + '/ranking_B_cells_3.pdf', transparent=.5)
 
 my_plot_layout(ax =ax_zeta, yscale = 'linear', xscale = 'linear', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
@@ -350,7 +350,7 @@ ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r"$\ma
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
 ax_r.set_xlim(right = 5e1)
-ax_r.legend(title = r'$\zeta$', fontsize = 30, title_fontsize = 30, loc = 3)#, loc = (1, 0))
+# ax_r.legend(title = r'$\zeta$', fontsize = 30, title_fontsize = 30, loc = 3)#, loc = (1, 0))
 fig_r.savefig(output_plot + '/ranking_B_cells_3b.pdf', transparent=.5)
 
 my_plot_layout(ax =ax_zeta, yscale = 'linear', xscale = 'linear', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
@@ -361,7 +361,8 @@ ax_zeta.legend(title = r'$\mathrm{sub-pop}$', fontsize = 30, title_fontsize = 30
 fig_zeta.savefig(output_plot + '/zetas_3b.pdf', transparent=.5)
 
 #------------ Experiment 4 (Figure 5) ------------
-colors_ph = [my_red, my_red, my_red, my_blue, my_blue]
+colors_ph = [my_red, my_blue, my_red, my_blue, my_red]
+colors_ph = [my_red, my_blue, my_blue]
 print('Experiment 4 (Figure 5)')
 fig_r_Flu, ax_r_Flu = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'right':.95, 'bottom':.15, 'top': 0.94})
 fig_zeta_Flu, ax_zeta_Flu = plt.subplots(figsize=(10*1.62,8), gridspec_kw={'left':0.12, 'right':.8, 'bottom':.15, 'top': 0.94})
@@ -377,8 +378,8 @@ print(phenotypes)
 
 max_ranks = [100, 100, 100, 100, 100]
 # max_ranks = [10, 10, 10, 10, 10]
-for i_ph, ph in enumerate(phenotypes[:]):
-	max_rank = max_ranks[i_ph]
+for i_ph, ph in enumerate(phenotypes[[0, 1, 3]]):
+	max_rank = 100
 	zetas = []
 
 	for rep in tqdm(range(n_ensemble)):
@@ -390,7 +391,7 @@ for i_ph, ph in enumerate(phenotypes[:]):
 
 		x_avg = np.zeros(max_rank)
 		counts_per_ranking = np.zeros(max_rank)
-		data_ph = data_recall_grouped[(data_recall_grouped['Sort2']==ph)]
+		data_ph = data_recall_grouped[(data_recall_grouped['Sort']==ph)]
 		min_max_rank_mouse = max_rank
 		max_max_rank_mouse = 0
 		for mouse in mice_rep:
@@ -451,7 +452,7 @@ for i_ph, ph in enumerate(phenotypes[:]):
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
 ax_r.set_xlim(right = 5e1)
-ax_r.legend(title = r'$\zeta$', fontsize = 24, title_fontsize = 28, loc = 3)#, loc = (1, 0))
+# ax_r.legend(title = r'$\zeta$', fontsize = 24, title_fontsize = 28, loc = 3)#, loc = (1, 0))
 fig_r.savefig(output_plot + '/ranking_B_cells_4.pdf', transparent=.5)
 
 my_plot_layout(ax =ax_r_Flu, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
@@ -463,14 +464,14 @@ fig_r_Flu.savefig(output_plot + '/ranking_B_cells_Flu.pdf', transparent=.5)
 my_plot_layout(ax =ax_zeta, yscale = 'linear', xscale = 'linear', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 # ax_zeta.set_ylim(bottom = 2e-2, top = 1.1)
 ax_zeta.set_xlim(left = 0.2, right = 1.6)
-ax_zeta.legend(title = r'$\mathrm{sub-pop}$', fontsize = 30, title_fontsize = 30, loc = (1, 0))
+# ax_zeta.legend(title = r'$\mathrm{sub-pop}$', fontsize = 30, title_fontsize = 30, loc = (1, 0))
 fig_zeta.savefig(output_plot + '/zetas_4.pdf', transparent=.5)
 
 my_plot_layout(ax =ax_zeta_Flu, yscale = 'linear', xscale = 'linear', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 # ax_zeta_Flu.set_ylim(bottom = 2e-2, top = 1.1)
 ax_zeta_Flu.set_title('Influenza', fontsize = 30)
 ax_zeta_Flu.set_xlim(left = 0.2, right = 1.6)
-ax_zeta_Flu.legend(title = r'$\mathrm{sub-pop}$', fontsize = 30, title_fontsize = 30, loc = (1, 0))
+# ax_zeta_Flu.legend(title = r'$\mathrm{sub-pop}$', fontsize = 30, title_fontsize = 30, loc = (1, 0))
 fig_zeta_Flu.savefig(output_plot + '/zetas_Flu.pdf', transparent=.5)
 
 
