@@ -30,24 +30,6 @@ class Params:
     t_span: Tuple[float, float]     # (t0, tf)
     t_eval: np.ndarray              # time points for output
 
-# def dNAdtNaive(t, N, lambda_A, lambda_B):
-#     pb = (1+(1e-9/(1e6*60*60*24*np.exp(2.0*(t))/N_Avg)))**(-1)
-#     return (lambda_A * (1 - pb) - 2*pb) * N
-
-# def NA(t: float, lambda_A: float) -> float:
-
-#     # Initial condition
-#     NA0 = 1.0
-#     # Solve the ODE over the time span of your data
-#     solNaive = solve_ivp(dNAdtNaive, t_span=p.t_span, y0=[NA0], t_eval=p.t_eval, args=(lambda_A, p.lambda_B), method="RK45", rtol=1e-6, atol=1e-9)
-#     # Result
-#     NA_real = solNaive.y[0]  # solution N(t) evaluated at t_vals
-#     # Interpolate to get value at time t
-#     return float(np.interp(t, p.t_eval, NA_real))
-
-# def u_on(t: float, p: Params) -> float:
-#     return p.k_on_eff * NA(t, p.lambda_A)
-
 
 def simulate(
         
@@ -127,7 +109,7 @@ if __name__ == "__main__":
 
     # Example g(K): power law g(K)=K^{-sigma}
     
-    def g_power(K: float) -> float:
+    def psi(K: float) -> float:
         sigma = 1
         K_s = 1/((60*7)*3600*24)  # relevant scale for K 
         # K_s = 1e-8
@@ -148,7 +130,7 @@ if __name__ == "__main__":
         t_eval=t_eval,
     )
 
-    out = simulate(Ks, g_power, p, pi0=0.0, B0=1.0)
+    out = simulate(Ks, psi, p, pi0=0.0, B0=1.0)
 
     t = out["t"]
     NA_t = out["NA"]
@@ -168,11 +150,8 @@ if __name__ == "__main__":
     ax_antigen.set_xlim(left = 0, right = 8)
     fig_antigen.savefig(output_plot + '/antigen_primary_.pdf')
     
-    
+    # Plot N_A trajectories
     my_plot_layout(ax=ax_antigen, yscale = 'log', xscale = 'linear', ticks_labelsize = 40, x_fontsize=30, y_fontsize=30 )
-    # ax_antigen.set_xlabel(r"$t$")
-    # ax_antigen.set_ylabel(r"$N_A(t)$")
-    # ax_antigen.set_title("Antigen")
     ax_antigen.set_ylim(top = 1e11, bottom = 8e-1)
     ax_antigen.set_yscale("log")
     # ax_antigen.set_xticks([])
@@ -188,30 +167,21 @@ if __name__ == "__main__":
         ax_Pi.plot(t, pi[:, i], label=f"K={K}", linewidth = 5, color = my_colors[i])
     # ax_Pi.plot(t, np.exp(6*(t-1))*10, color = 'grey', ls = '--', lw = 2)
     ax_Pi.axhline(p.pi_threshold, linestyle="--", label="threshold", color = "k")
-    # my_plot_layout(ax=ax_Pi, yscale = 'log', xscale = 'linear', ticks_labelsize = 40, x_fontsize=30, y_fontsize=30 )
     ax_Pi.tick_params(axis='both', which='major', labelsize=28)
-    # ax_Pi.set_xlabel(r"$t$")
-    # ax_Pi.set_ylabel(r"$\pi(t,K)$")
-    # ax_Pi.set_title("Internalized antigen per cell")
     ax_Pi.set_yscale("log")
     ax_Pi.set_ylim(bottom=0.99, top = 5e3)  # set a reasonable lower limit for log scale
-    # ax_Pi.legend()
     # ax_Pi.set_xticks([])
     ax_Pi.set_xlim(left = 0, right = 8)
     fig_Pi.savefig(output_plot + '/pi_primary.pdf')
     plt.close(fig_Pi)
 
 
-    # Plot B trajectories
+    # Plot N_B trajectories
     fig_N_b, ax_N_b = plt.subplots(figsize=(8.0*1.62,8*0.6), gridspec_kw={'left':0.12, 'right':.98, 'bottom':.2, 'top': 0.96})
     fig_N_b, ax_N_b = plt.subplots(figsize=(5*1.62,5), gridspec_kw={'left':0.12, 'right':.95, 'bottom':.15, 'top': 0.94})
     for i, K in enumerate(out["Ks"]):
         ax_N_b.plot(t, B[:, i], label=f"K={K}", linewidth = 5, color = my_colors[i])
     # ax_N_b.plot(t, np.exp(6*0.4*(t-1)), color = 'grey', ls = '--', lw = 2)
-    # my_plot_layout(ax=ax_N_b, yscale = 'log', ticks_labelsize = 40, x_fontsize=30, y_fontsize=30 )
-    # ax_N_b.set_xlabel("t")
-    # ax_N_b.set_ylabel(r"$B(t,K)$")
-    # ax_N_b.set_title("B cell population (divides while pi > threshold)")
     ax_N_b.tick_params(axis='both', which='major', labelsize=28)
     ax_N_b.set_yscale("log")
     ax_N_b.set_ylim(bottom = 0.99, top=1e5)  # set a reasonable lower limit for log scale
