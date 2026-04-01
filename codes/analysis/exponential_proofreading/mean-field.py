@@ -89,8 +89,8 @@ def compute_demand(pi_vec, N_B_vec, Omega_vec, dDG, p):
     """
     visibility = pi_vec / (pi_vec + p.Theta)
     integrand = Omega_vec * visibility * N_B_vec
-    # return p.tau_eng * p.gamma * np.sum(integrand) * dDG
-    return 0
+    return p.tau_eng * p.gamma * np.sum(integrand) * dDG
+    # return 0
 
 
 def compute_lambda_B(pi_vec, N_T_free, p):
@@ -154,7 +154,8 @@ def rhs(t, y, p, DG_grid, Omega_vec, psi_vec, dDG):
 
     # --- Demand and free T cells ---
     D = compute_demand(pi_vec, N_B_vec, Omega_vec, dDG, p)
-    N_T_free = N_T / (1.0 + D)
+    # N_T_free = N_T / (1.0 + D)
+    N_T_free = N_T 
 
     # --- Division rate ---
     lambda_B = compute_lambda_B(pi_vec, N_T_free, p)
@@ -259,7 +260,8 @@ def run_simulation(p=None, t_span=None, t_eval=None):
     for j in range(N_steps):
         D_arr[j] = compute_demand(pi_arr[:, j], N_B_arr[:, j],
                                   Omega_vec, dDG, p)
-        N_T_free_arr[j] = N_T_arr[j] / (1.0 + D_arr[j])
+        # N_T_free_arr[j] = N_T_arr[j] / (1.0 + D_arr[j])
+        N_T_free_arr[j] = N_T_arr[j]
         lambda_B_arr[:, j] = compute_lambda_B(pi_arr[:, j],
                                               N_T_free_arr[j], p)
 
