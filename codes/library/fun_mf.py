@@ -204,8 +204,8 @@ def run_simulation(p=None, t_span=None, t_eval=None):
     # --- Initial conditions ---
     N_A_init = p.N_A0
     pi_init = np.zeros(p.M)  # no pMHC at t=0
-    # N_B_init = np.ones(p.M)  # one founder cell per clone
-    N_B_init = 1e2*np.exp(-p.sigma * (p.b_0 / p.lambda_A + 1) * DG_grid)  # memory 
+    N_B_init = np.ones(p.M)  # one founder cell per clone
+    # N_B_init = 1e2*np.exp(-p.sigma * (p.b_0 / p.lambda_A + 1) * DG_grid)  # memory 
     N_T_init = p.N_T0
 
     y0 = pack_state(N_A_init, pi_init, N_B_init, N_T_init, p.M)

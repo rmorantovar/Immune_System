@@ -23,15 +23,11 @@ State variables:
 import os
 import sys
 sys.path.append('../../library/')
-import numpy as np
-from scipy.integrate import solve_ivp
-import matplotlib.pyplot as plt
-from dataclasses import dataclass
-from mean_field_lib import*
+from fun_mf import*
 
 
 if __name__ == '__main__':
-    output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/exponential_proofreading/mean_field_dynamics'
+    output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/exponential_proofreading/mean_field_entropy/'
     os.makedirs(output_plot, exist_ok=True)
     # Default parameters
     p = Parameters(
@@ -58,8 +54,8 @@ if __name__ == '__main__':
     res = run_simulation(p=p, t_span=(0, T), t_eval=np.linspace(0, T, 1000))
 
     fig = plot_results(res)
-    fig.savefig(os.path.join(output_plot, 'ep_meanfield_results_no_Tcell_limitation_memory.pdf'), dpi=150, bbox_inches='tight')
-    print(f"Saved: {os.path.join(output_plot, 'ep_meanfield_results_no_Tcell_limitation_memory.pdf')}")
+    fig.savefig(os.path.join(output_plot, 'ep_meanfield_results_no_Tcell_limitation.pdf'), dpi=150, bbox_inches='tight')
+    print(f"Saved: {os.path.join(output_plot, 'ep_meanfield_results_no_Tcell_limitation.pdf')}")
 
     # Print some diagnostics
     print(f"\nFront velocity (theory): v = lambda_A / sigma = {p.lambda_A / p.sigma:.3f}")
