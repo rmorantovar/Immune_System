@@ -20,6 +20,8 @@ State variables:
     N_T(t)          : scalar, total T cells
 """
 
+import os
+
 import numpy as np
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
@@ -71,7 +73,7 @@ class Parameters:
 
 def psi(DG, sigma):
     """Binding/internalization probability. Boltzmann gate."""
-    return np.exp(-sigma * DG)
+    return (1 + np.exp(DG))**-sigma
 
 
 def Omega(DG, beta_star, Omega_0):
@@ -87,7 +89,8 @@ def compute_demand(pi_vec, N_B_vec, Omega_vec, dDG, p):
     """
     visibility = pi_vec / (pi_vec + p.Theta)
     integrand = Omega_vec * visibility * N_B_vec
-    return p.tau_eng * p.gamma * np.sum(integrand) * dDG
+    # return p.tau_eng * p.gamma * np.sum(integrand) * dDG
+    return 0
 
 
 def compute_lambda_B(pi_vec, N_T_free, p):
@@ -102,7 +105,7 @@ def compute_lambda_B(pi_vec, N_T_free, p):
 
     # Avoid division by zero when h_T = 0
     with np.errstate(divide='ignore', invalid='ignore'):
-        inv_lambda = np.where(h_T > 0, 1.0 / h_T + 1.0 / p.b_0, np.inf)
+        inv_lambda = np.where(h_T > 0, (1.0 / h_T) + (1.0 / p.b_0), np.inf)
         lambda_B = np.where(inv_lambda < np.inf, 1.0 / inv_lambda, 0.0)
 
     return lambda_B
@@ -144,11 +147,10 @@ def rhs(t, y, p, DG_grid, Omega_vec, psi_vec, dDG):
     N_T = max(N_T, 0.0)
 
     # --- Antigen ---
-    S_A = p.lambda_A * N_A if p.lambda_A > 0 else 0.0
-    dN_A = S_A - p.delta_A * N_A
-    # For pure exponential growth: dN_A/dt = (lambda_A - delta_A) * N_A
-    # which gives N_A(t) = N_A0 * exp((lambda_A - delta_A) * t)
-    # If we want dN_A/dt = lambda_A * N_A, set delta_A = 0 and S_A = lambda_A * N_A
+    # S_A = p.lambda_A * N_A if p.lambda_A > 0 else 0.0
+    # dN_A = S_A - p.delta_A * N_A
+    pb = (1 + (1e-9/(1e6*24*3600*np.exp(2.0*t)/N_Avg)))**(-1)  # or whatever dependence you intend
+    dN_A = (p.lambda_A * (1 - pb) - 2*pb) * N_A - p.delta_A * N_A
 
     # --- Demand and free T cells ---
     D = compute_demand(pi_vec, N_B_vec, Omega_vec, dDG, p)
@@ -292,8 +294,10 @@ def plot_results(res):
     # --- (a) Antigen ---
     ax = axes[0, 0]
     ax.semilogy(t, res['N_A'])
+    ax.semilogy(t, np.exp(p.lambda_A*t))
     ax.set_xlabel('Time')
     ax.set_ylabel('$N_A(t)$')
+    ax.set_ylim(top = 1e13)
     ax.set_title('Antigen')
 
     # --- (b) Free T cells ---
@@ -315,10 +319,12 @@ def plot_results(res):
     # --- (d) Clone sizes at final time ---
     ax = axes[1, 0]
     N_B_final = res['N_B'][:, -1]
-    ax.semilogy(DG, N_B_final)
+    ax.semilogy(DG, N_B_final, 'o-', label='simulation')
+    ax.semilogy(DG, N_B_final[0]*np.exp(-p.sigma*(p.b_0/p.lambda_A + 1) * DG), 'r--', label='theory')
     ax.set_xlabel('$\\Delta G$')
     ax.set_ylabel('$N_B(t_{\\rm final}, \\Delta G)$')
     ax.set_title('Clone size distribution')
+    ax.legend()
 
     # --- (e) Clone size heatmap ---
     ax = axes[1, 1]
@@ -343,11 +349,11 @@ def plot_results(res):
     # --- (f) Division rate at selected times ---
     ax = axes[1, 2]
     n_snapshots = 5
-    time_indices = np.linspace(0, len(t)-1, n_snapshots, dtype=int)
+    time_indices = np.linspace(0, len(DG)-1, n_snapshots, dtype=int)
     for idx in time_indices:
-        ax.plot(DG, res['lambda_B'][:, idx],
-                label=f't={t[idx]:.1f}', alpha=0.8)
-    ax.set_xlabel('$\\Delta G$')
+        ax.plot(t, res['lambda_B'][idx, :],
+                label=f'$\\Delta G$={t[idx]:.1f}', alpha=0.8)
+    ax.set_xlabel('Time')
     ax.set_ylabel('$\\lambda_B$')
     ax.set_title('Division rate')
     ax.legend(fontsize=8)
@@ -361,16 +367,17 @@ def plot_results(res):
 # ============================================================
 
 if __name__ == '__main__':
-
+    output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/exponential_proofreading/mean_field_dynamics'
+    os.makedirs(output_plot, exist_ok=True)
     # Default parameters
     p = Parameters(
         N_A0=1.0,
         lambda_A=6.0,
-        delta_A=0.0,
+        delta_A=0.1,
         k_on=1e6*1e6*24*3600/N_Avg,
         delta_pi=1.0,
-        Theta=1.0,
-        sigma=1.0,
+        Theta=100.0,
+        sigma=2.0,
         beta_star=2.0,
         N_T0=1e5,
         delta_T=0.0,
@@ -379,16 +386,16 @@ if __name__ == '__main__':
         b_0=2.0,
         delta_B=0.0,
         DG_min=0.0,
-        DG_max=5.0,
-        M=20,
+        DG_max=6.0,
+        M=10,
         Omega_0=1.0,
     )
-    T = 5
+    T = 15
     res = run_simulation(p=p, t_span=(0, T), t_eval=np.linspace(0, T, 500))
 
     fig = plot_results(res)
-    fig.savefig('ep_meanfield_results.png', dpi=150, bbox_inches='tight')
-    print("Saved: ep_meanfield_results.png")
+    fig.savefig(os.path.join(output_plot, 'ep_meanfield_results.png'), dpi=150, bbox_inches='tight')
+    print(f"Saved: {os.path.join(output_plot, 'ep_meanfield_results.png')}")
 
     # Print some diagnostics
     print(f"\nFront velocity (theory): v = lambda_A / sigma = {p.lambda_A / p.sigma:.3f}")
