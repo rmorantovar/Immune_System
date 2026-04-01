@@ -302,8 +302,8 @@ def plot_results(res):
 
     # --- (b) Free T cells ---
     ax = axes[0, 1]
-    ax.plot(t, res['N_T_free'], label='$N_T^{\\rm free}$')
-    ax.plot(t, res['N_T'], '--', label='$N_T$', alpha=0.5)
+    ax.semilogy(t, res['N_T_free'], label='$N_T^{\\rm free}$')
+    ax.semilogy(t, res['N_T'], '--', label='$N_T$', alpha=0.5)
     ax.set_xlabel('Time')
     ax.set_ylabel('T cells')
     ax.set_title('T cell pool')
@@ -324,6 +324,7 @@ def plot_results(res):
     ax.set_xlabel('$\\Delta G$')
     ax.set_ylabel('$N_B(t_{\\rm final}, \\Delta G)$')
     ax.set_title('Clone size distribution')
+    ax.set_ylim(bottom=0.9)
     ax.legend()
 
     # --- (e) Clone size heatmap ---
@@ -340,7 +341,7 @@ def plot_results(res):
     if Gamma > 0 and p.lambda_A > 0:
         DG_front = (p.lambda_A / p.sigma) * t \
                    - (1.0 / p.sigma) * np.log(p.lambda_A / Gamma)
-        DG_front_clipped = np.clip(DG_front, p.DG_min, p.DG_max)
+        DG_front_clipped = np.clip(DG_front, p.DG_min, p.DG_max) #change here p.DG_max for the actual front position, not the grid limit!!!!
         valid = DG_front >= p.DG_min
         ax.plot(t[valid], DG_front_clipped[valid], 'r--', linewidth=2,
                 label='$\\Delta G_{\\rm mf}(t)$')
@@ -374,12 +375,12 @@ if __name__ == '__main__':
         N_A0=1.0,
         lambda_A=6.0,
         delta_A=0.1,
-        k_on=1e6*1e6*24*3600/N_Avg,
+        k_on=1e-1*1e6*1e6*24*3600/N_Avg,
         delta_pi=1.0,
         Theta=100.0,
         sigma=2.0,
         beta_star=2.0,
-        N_T0=1e5,
+        N_T0=1e3,
         delta_T=0.0,
         gamma=1.0,
         tau_eng=0.01,
@@ -387,7 +388,7 @@ if __name__ == '__main__':
         delta_B=0.0,
         DG_min=0.0,
         DG_max=6.0,
-        M=10,
+        M=20,
         Omega_0=1.0,
     )
     T = 15
