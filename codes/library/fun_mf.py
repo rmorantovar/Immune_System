@@ -77,11 +77,11 @@ def compute_lambda_B(pi_vec, N_T_free, p):
     Compute division rate for each clone.
 
     lambda_B = (1/h_T + 1/b_0)^{-1}
-    h_T = gamma * pi/(pi+Theta) * N_T_free
+    h_T = gamma * pi/(pi+Theta) * N_T_free/(N_T_free + K_T)
     """
     hill_coefficient = 2.0  # Adjust this to control the sharpness of the transition
     visibility = pi_vec**hill_coefficient / (pi_vec**hill_coefficient + p.Theta**hill_coefficient)
-    h_T = p.gamma * visibility * N_T_free
+    h_T = p.gamma * visibility * N_T_free/ (N_T_free + 100.0)  # K_T = 10 is an arbitrary saturation constant to prevent unbounded growth of h_T
 
     # Avoid division by zero when h_T = 0
     with np.errstate(divide='ignore', invalid='ignore'):
@@ -295,9 +295,11 @@ def plot_results(res):
     # --- (c) Demand ---
     ax = axes[0, 2]
     ax.semilogy(t, res['D'], color = 'k', label='simulation')
+    ax.hlines(1.0, t[0], t[-1], ls = '--', label='D=1 threshold')
     ax.set_xlabel('Time')
     ax.set_ylabel('$D(t)$')
     ax.set_title('Demand function')
+    ax.set_ylim(bottom=1e-4)
 
     # --- (d) Clone sizes at final time ---
     ax = axes[1, 0]
@@ -328,7 +330,7 @@ def plot_results(res):
     # Overlay theoretical front
     Gamma = p.gamma * p.N_T0 * p.k_on * p.N_A0 / (p.delta_pi * p.Theta)
     if Gamma > 0 and p.lambda_A > 0:
-        DG_front = (p.lambda_A / p.sigma) * t - (1.0 / p.sigma) * np.log(p.lambda_A / Gamma)
+        DG_front = (p.lambda_A / p.sigma) * t - (1.0 / p.sigma) * np.log(p.lambda_A / Gamma) # correct to the right off-set of the moving front!!!!
         DG_front_clipped = np.clip(DG_front, p.DG_min, p.DG_max) #change here p.DG_max for the actual front position, not the grid limit!!!!
         valid = DG_front >= p.DG_min
         ax.plot(t[valid], DG_front_clipped[valid], 'r--', linewidth=2,
