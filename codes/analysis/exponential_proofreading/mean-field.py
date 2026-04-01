@@ -87,7 +87,8 @@ def compute_demand(pi_vec, N_B_vec, Omega_vec, dDG, p):
 
     D = tau_eng * gamma * sum_i Omega_i * [pi_i/(pi_i + Theta)] * N_B_i * dDG
     """
-    visibility = pi_vec / (pi_vec + p.Theta)
+    hill_coefficient = 2.0  # Adjust this to control the sharpness of the transition
+    visibility = pi_vec**hill_coefficient / (pi_vec**hill_coefficient + p.Theta**hill_coefficient)
     integrand = Omega_vec * visibility * N_B_vec
     return p.tau_eng * p.gamma * np.sum(integrand) * dDG
     # return 0
@@ -100,7 +101,8 @@ def compute_lambda_B(pi_vec, N_T_free, p):
     lambda_B = (1/h_T + 1/b_0)^{-1}
     h_T = gamma * pi/(pi+Theta) * N_T_free
     """
-    visibility = pi_vec / (pi_vec + p.Theta)
+    hill_coefficient = 2.0  # Adjust this to control the sharpness of the transition
+    visibility = pi_vec**hill_coefficient / (pi_vec**hill_coefficient + p.Theta**hill_coefficient)
     h_T = p.gamma * visibility * N_T_free
 
     # Avoid division by zero when h_T = 0
@@ -154,6 +156,7 @@ def rhs(t, y, p, DG_grid, Omega_vec, psi_vec, dDG):
 
     # --- Demand and free T cells ---
     D = compute_demand(pi_vec, N_B_vec, Omega_vec, dDG, p)
+    # change here to test T cell limitation vs no limitation
     # N_T_free = N_T / (1.0 + D)
     N_T_free = N_T 
 
@@ -223,7 +226,8 @@ def run_simulation(p=None, t_span=None, t_eval=None):
     # --- Initial conditions ---
     N_A_init = p.N_A0
     pi_init = np.zeros(p.M)  # no pMHC at t=0
-    N_B_init = np.ones(p.M)  # one founder cell per clone
+    # N_B_init = np.ones(p.M)  # one founder cell per clone
+    N_B_init = 1e2*np.exp(-p.sigma * (p.b_0 / p.lambda_A + 1) * DG_grid)  # memory 
     N_T_init = p.N_T0
 
     y0 = pack_state(N_A_init, pi_init, N_B_init, N_T_init, p.M)
@@ -258,12 +262,11 @@ def run_simulation(p=None, t_span=None, t_eval=None):
     lambda_B_arr = np.zeros((p.M, N_steps))
 
     for j in range(N_steps):
-        D_arr[j] = compute_demand(pi_arr[:, j], N_B_arr[:, j],
-                                  Omega_vec, dDG, p)
+        D_arr[j] = compute_demand(pi_arr[:, j], N_B_arr[:, j], Omega_vec, dDG, p)
+        # change here to test T cell limitation vs no limitation
         # N_T_free_arr[j] = N_T_arr[j] / (1.0 + D_arr[j])
         N_T_free_arr[j] = N_T_arr[j]
-        lambda_B_arr[:, j] = compute_lambda_B(pi_arr[:, j],
-                                              N_T_free_arr[j], p)
+        lambda_B_arr[:, j] = compute_lambda_B(pi_arr[:, j], N_T_free_arr[j], p)
 
     return {
         't': t,
@@ -295,7 +298,7 @@ def plot_results(res):
 
     # --- (a) Antigen ---
     ax = axes[0, 0]
-    ax.semilogy(t, res['N_A'])
+    ax.semilogy(t, res['N_A'], color = 'k')
     ax.semilogy(t, np.exp(p.lambda_A*t))
     ax.set_xlabel('Time')
     ax.set_ylabel('$N_A(t)$')
@@ -304,7 +307,7 @@ def plot_results(res):
 
     # --- (b) Free T cells ---
     ax = axes[0, 1]
-    ax.semilogy(t, res['N_T_free'], label='$N_T^{\\rm free}$')
+    ax.semilogy(t, res['N_T_free'], label='$N_T^{\\rm free}$', color = 'k')
     ax.semilogy(t, res['N_T'], '--', label='$N_T$', alpha=0.5)
     ax.set_xlabel('Time')
     ax.set_ylabel('T cells')
@@ -313,7 +316,7 @@ def plot_results(res):
 
     # --- (c) Demand ---
     ax = axes[0, 2]
-    ax.semilogy(t, res['D'])
+    ax.semilogy(t, res['D'], color = 'k', label='simulation')
     ax.set_xlabel('Time')
     ax.set_ylabel('$D(t)$')
     ax.set_title('Demand function')
@@ -321,13 +324,18 @@ def plot_results(res):
     # --- (d) Clone sizes at final time ---
     ax = axes[1, 0]
     N_B_final = res['N_B'][:, -1]
-    ax.semilogy(DG, N_B_final, 'o-', label='simulation')
-    ax.semilogy(DG, N_B_final[0]*np.exp(-p.sigma*(p.b_0/p.lambda_A + 1) * DG), 'r--', label='theory')
+    ax.semilogy(DG, N_B_final, color = 'k', marker='o', ls = '', label='simulation')
+    ax.semilogy(DG, N_B_final[0]*np.exp(-p.sigma*(p.b_0/p.lambda_A + 1) * DG), 'r--', label='naive')
+    ax.semilogy(DG, N_B_final[0]*np.exp(-2*p.sigma*(p.b_0/p.lambda_A + 1) * DG), 'g--', label='memory')
     ax.set_xlabel('$\\Delta G$')
     ax.set_ylabel('$N_B(t_{\\rm final}, \\Delta G)$')
     ax.set_title('Clone size distribution')
     ax.set_ylim(bottom=0.9)
-    ax.legend()
+    ax.legend(loc = 3)
+    axin1 = ax.inset_axes([0.6, 0.6, 0.38, 0.38])
+    axin1.semilogy(DG, res['Omega'])
+    axin1.set_xlabel('$\\Delta G$')
+    axin1.set_ylabel('$\\Omega_0(\\Delta G)$')
 
     # --- (e) Clone size heatmap ---
     ax = axes[1, 1]
@@ -337,12 +345,12 @@ def plot_results(res):
     ax.set_xlabel('Time')
     ax.set_ylabel('$\\Delta G$')
     ax.set_title('Clone size (log)')
+    ax.set_xlim(right = 8)
 
     # Overlay theoretical front
     Gamma = p.gamma * p.N_T0 * p.k_on * p.N_A0 / (p.delta_pi * p.Theta)
     if Gamma > 0 and p.lambda_A > 0:
-        DG_front = (p.lambda_A / p.sigma) * t \
-                   - (1.0 / p.sigma) * np.log(p.lambda_A / Gamma)
+        DG_front = (p.lambda_A / p.sigma) * t - (1.0 / p.sigma) * np.log(p.lambda_A / Gamma)
         DG_front_clipped = np.clip(DG_front, p.DG_min, p.DG_max) #change here p.DG_max for the actual front position, not the grid limit!!!!
         valid = DG_front >= p.DG_min
         ax.plot(t[valid], DG_front_clipped[valid], 'r--', linewidth=2,
@@ -351,11 +359,12 @@ def plot_results(res):
 
     # --- (f) Division rate at selected times ---
     ax = axes[1, 2]
-    n_snapshots = 5
+    n_snapshots = 8
     time_indices = np.linspace(0, len(DG)-1, n_snapshots, dtype=int)
-    for idx in time_indices:
+    colors = plt.cm.Greens_r(np.linspace(0, 1, n_snapshots))
+    for idx, color in zip(time_indices, colors):
         ax.plot(t, res['lambda_B'][idx, :],
-                label=f'$\\Delta G$={t[idx]:.1f}', alpha=0.8)
+                label=f'$\\Delta G$={DG[idx]:.1f}', alpha=0.8, color=color)
     ax.set_xlabel('Time')
     ax.set_ylabel('$\\lambda_B$')
     ax.set_title('Division rate')
@@ -377,28 +386,28 @@ if __name__ == '__main__':
         N_A0=1.0,
         lambda_A=6.0,
         delta_A=0.1,
-        k_on=1e-1*1e6*1e6*24*3600/N_Avg,
-        delta_pi=1.0,
+        k_on=1e0*1e6*1e6*24*3600/N_Avg,
+        delta_pi=0.1,
         Theta=100.0,
-        sigma=2.0,
-        beta_star=2.0,
-        N_T0=1e3,
+        sigma=1.0,
+        beta_star=2.5,
+        N_T0=1e4,
         delta_T=0.0,
         gamma=1.0,
-        tau_eng=0.01,
-        b_0=2.0,
+        tau_eng=0.1,
+        b_0=1.5,
         delta_B=0.0,
         DG_min=0.0,
         DG_max=6.0,
-        M=20,
+        M=10,
         Omega_0=1.0,
     )
-    T = 15
-    res = run_simulation(p=p, t_span=(0, T), t_eval=np.linspace(0, T, 500))
+    T = 12
+    res = run_simulation(p=p, t_span=(0, T), t_eval=np.linspace(0, T, 1000))
 
     fig = plot_results(res)
-    fig.savefig(os.path.join(output_plot, 'ep_meanfield_results.png'), dpi=150, bbox_inches='tight')
-    print(f"Saved: {os.path.join(output_plot, 'ep_meanfield_results.png')}")
+    fig.savefig(os.path.join(output_plot, 'ep_meanfield_results_no_Tcell_limitation_memory.pdf'), dpi=150, bbox_inches='tight')
+    print(f"Saved: {os.path.join(output_plot, 'ep_meanfield_results_no_Tcell_limitation_memory.pdf')}")
 
     # Print some diagnostics
     print(f"\nFront velocity (theory): v = lambda_A / sigma = {p.lambda_A / p.sigma:.3f}")
