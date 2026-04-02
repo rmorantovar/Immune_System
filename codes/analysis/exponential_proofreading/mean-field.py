@@ -41,21 +41,23 @@ if __name__ == '__main__':
         beta_star=2.5,
         N_T0=1e5,
         delta_T=0.0,
-        gamma=10.0,
-        tau_eng=0.1,
+        gamma=100.0,
+        tau_eng=0.01,
         b_0=1.5,
         delta_B=0.0,
         DG_min=0.0,
         DG_max=6.0,
         M=10,
         Omega_0=1.0,
+        T_lim = 1,
+        memory = False
     )
     T = 12
     res = run_simulation(p=p, t_span=(0, T), t_eval=np.linspace(0, T, 1000))
-
+    # print(compute_N_B_tot(res))
     fig = plot_results(res)
-    fig.savefig(os.path.join(output_plot, 'ep_meanfield_results_no_Tcell_limitation.pdf'), dpi=150, bbox_inches='tight')
-    print(f"Saved: {os.path.join(output_plot, 'ep_meanfield_results_no_Tcell_limitation.pdf')}")
+    fig.savefig(os.path.join(output_plot, f'ep_meanfield_results_Tlim-{int(p.T_lim)}.pdf'), dpi=150, bbox_inches='tight')
+    print(f"Saved: {os.path.join(output_plot, f'ep_meanfield_results_Tlim-{int(p.T_lim)}.pdf')}")
 
     # Print some diagnostics
     print(f"\nFront velocity (theory): v = lambda_A / sigma = {p.lambda_A / p.sigma:.3f}")

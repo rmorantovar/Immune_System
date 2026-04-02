@@ -1,5 +1,3 @@
-import os
-
 import numpy as np
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
@@ -43,6 +41,8 @@ class Parameters:
     DG_max: float = 5.0        # lowest affinity in grid
     M: int = 20                # number of grid points
     Omega_0: float = 1.0        # density-of-states prefactor
+    T_lim: bool = False         # whether to include T cell limitation in the demand function
+    memory: bool = False        # whether to use memory-like initial conditions for N_B
 
 
 # ============================================================
@@ -63,7 +63,7 @@ def compute_demand(pi_vec, N_B_vec, Omega_vec, dDG, p):
     """
     Compute the demand function D(t).
 
-    D = tau_eng * gamma * sum_i Omega_i * [pi_i/(pi_i + Theta)] * N_B_i * dDG
+    D = tau_eng * gamma * sum_i Omega_i * [pi_i^h/(pi_i^h + Theta^h)] * N_B_i * dDG
     """
     hill_coefficient = 2.0  # Adjust this to control the sharpness of the transition
     visibility = pi_vec**hill_coefficient / (pi_vec**hill_coefficient + p.Theta**hill_coefficient)
@@ -77,7 +77,7 @@ def compute_lambda_B(pi_vec, N_T_free, p):
     Compute division rate for each clone.
 
     lambda_B = (1/h_T + 1/b_0)^{-1}
-    h_T = gamma * pi/(pi+Theta) * N_T_free/(N_T_free + K_T)
+    h_T = gamma * pi^h/(pi^h+Theta^h) * N_T_free/(N_T_free + K_T)
     """
     hill_coefficient = 2.0  # Adjust this to control the sharpness of the transition
     visibility = pi_vec**hill_coefficient / (pi_vec**hill_coefficient + p.Theta**hill_coefficient)
@@ -89,6 +89,34 @@ def compute_lambda_B(pi_vec, N_T_free, p):
         lambda_B = np.where(inv_lambda < np.inf, 1.0 / inv_lambda, 0.0)
 
     return lambda_B
+
+
+def compute_N_B_tot(res, threshold=2.0):
+    """Total number of activated B cells: sum_i Omega_i * N_B_i * dDG."""
+    DG = res['DG_grid']
+    dDG = DG[1] - DG[0]
+    Omega_vec = res['Omega']
+    N_B = res['N_B']
+    activated = (N_B > threshold).astype(float)
+    return np.sum(Omega_vec[:, None] * activated * N_B * dDG, axis=0)
+
+
+def compute_L_act(res, threshold=2.0):
+    """Number of activated clones: sum_i Omega_i * Theta(N_B_i - threshold) * dDG."""
+    DG = res['DG_grid']
+    dDG = DG[1] - DG[0]
+    Omega_vec = res['Omega']
+    N_B = res['N_B']
+    activated = (N_B > threshold).astype(float)
+    return np.sum(Omega_vec[:, None] * activated * dDG, axis=0)
+
+
+def find_t_D(res, D_threshold=1.0):
+    """Find the time at which D(t) crosses D_threshold."""
+    idx = np.where(res['D'] >= D_threshold)[0]
+    if len(idx) > 0:
+        return res['t'][idx[0]]
+    return np.inf
 
 
 # ============================================================
@@ -135,8 +163,10 @@ def rhs(t, y, p, DG_grid, Omega_vec, psi_vec, dDG):
     # --- Demand and free T cells ---
     D = compute_demand(pi_vec, N_B_vec, Omega_vec, dDG, p)
     # change here to test T cell limitation vs no limitation
-    # N_T_free = N_T / (1.0 + D)
-    N_T_free = N_T 
+    if p.T_lim:
+        N_T_free = N_T / (1.0 + D)
+    else:
+        N_T_free = N_T 
 
     # --- Division rate ---
     lambda_B = compute_lambda_B(pi_vec, N_T_free, p)
@@ -204,8 +234,10 @@ def run_simulation(p=None, t_span=None, t_eval=None):
     # --- Initial conditions ---
     N_A_init = p.N_A0
     pi_init = np.zeros(p.M)  # no pMHC at t=0
-    N_B_init = np.ones(p.M)  # one founder cell per clone
-    # N_B_init = 1e2*np.exp(-p.sigma * (p.b_0 / p.lambda_A + 1) * DG_grid)  # memory 
+    if p.memory:
+        N_B_init = 1e2*np.exp(-p.sigma * (p.b_0 / p.lambda_A + 1) * DG_grid)  # memory
+    else:
+        N_B_init = np.ones(p.M)  # naive
     N_T_init = p.N_T0
 
     y0 = pack_state(N_A_init, pi_init, N_B_init, N_T_init, p.M)
@@ -242,8 +274,10 @@ def run_simulation(p=None, t_span=None, t_eval=None):
     for j in range(N_steps):
         D_arr[j] = compute_demand(pi_arr[:, j], N_B_arr[:, j], Omega_vec, dDG, p)
         # change here to test T cell limitation vs no limitation
-        # N_T_free_arr[j] = N_T_arr[j] / (1.0 + D_arr[j])
-        N_T_free_arr[j] = N_T_arr[j]
+        if p.T_lim:
+            N_T_free_arr[j] = N_T_arr[j] / (1.0 + D_arr[j])
+        else:
+            N_T_free_arr[j] = N_T_arr[j]
         lambda_B_arr[:, j] = compute_lambda_B(pi_arr[:, j], N_T_free_arr[j], p)
 
     return {
