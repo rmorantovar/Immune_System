@@ -23,7 +23,7 @@ State variables:
 import os
 import sys
 sys.path.append('../../library/')
-from fun_mf import*
+from lib_mf import*
 
 
 if __name__ == '__main__':
