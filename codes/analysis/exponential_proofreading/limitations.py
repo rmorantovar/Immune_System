@@ -22,7 +22,6 @@ os.makedirs(output_plot, exist_ok=True)
 
 base = dict(
     N_A0=1.0,
-    lambda_A=6.0,
     delta_A=0.1,
     k_on=1e0*1e6*1e6*24*3600/N_Avg,
     delta_pi=0.1,
@@ -31,24 +30,24 @@ base = dict(
     beta_star=2.5,
     delta_T=0.0,
     gamma=100.00,
-    tau_eng=0.1,
-    b_0=1.5,
+    tau_eng=0.5,
+    b_0=2.0,
     delta_B=0.0,
     DG_min=0.0,
     DG_max=6.0,
-    M=50,
+    M=200,
     Omega_0=1.0,
     T_lim = 1,
     memory = False
 )
 
-T = 16.0
+T = 20.0
 
 # ============================================================
 # Scan N_T: move t_D relative to dynamics
 # ============================================================
 
-N_T_values = [1e4, 1e5, 1e6]
+N_T_values = [1e3, 1e4, 1e5, 1e6]
 
 fig, axes = plt.subplots(2, 3, figsize=(16, 10))
 
@@ -56,7 +55,8 @@ fig, axes = plt.subplots(2, 3, figsize=(16, 10))
 summary = []
 
 for N_T in N_T_values:
-    p = Parameters(**base, N_T0=N_T)
+# for lam_A in [5.0, 6.0]:
+    p = Parameters(**base, N_T0=N_T, lambda_A = 6.)
     res = run_simulation(p=p, t_span=(0, T), t_eval=np.linspace(0, T, 1000))
 
     t = res['t']
@@ -66,6 +66,7 @@ for N_T in N_T_values:
 
     summary.append({
         'N_T': N_T,
+        'lambda_A': 6.0,
         't_D': t_D,
         'N_B_tot_final': N_B_tot[-1],
         'L_act_final': L_act[-1],

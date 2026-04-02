@@ -39,11 +39,11 @@ if __name__ == '__main__':
         Theta=100.0,
         sigma=1.0,
         beta_star=2.5,
-        N_T0=1e5,
+        N_T0=1e3,
         delta_T=0.0,
         gamma=100.0,
         tau_eng=0.01,
-        b_0=1.5,
+        b_0=2.0,
         delta_B=0.0,
         DG_min=0.0,
         DG_max=6.0,
@@ -52,7 +52,7 @@ if __name__ == '__main__':
         T_lim = 1,
         memory = False
     )
-    T = 12
+    T = 20
     res = run_simulation(p=p, t_span=(0, T), t_eval=np.linspace(0, T, 1000))
     # print(compute_N_B_tot(res))
     fig = plot_results(res)

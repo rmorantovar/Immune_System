@@ -81,7 +81,7 @@ def compute_lambda_B(pi_vec, N_T_free, p):
     """
     hill_coefficient = 2.0  # Adjust this to control the sharpness of the transition
     visibility = pi_vec**hill_coefficient / (pi_vec**hill_coefficient + p.Theta**hill_coefficient)
-    h_T = p.gamma * visibility * N_T_free/ (N_T_free + 100.0)  # K_T = 10 is an arbitrary saturation constant to prevent unbounded growth of h_T
+    h_T = p.gamma * visibility * N_T_free/ (N_T_free + 10.0)  # K_T is an arbitrary saturation constant to prevent unbounded growth of h_T
 
     # Avoid division by zero when h_T = 0
     with np.errstate(divide='ignore', invalid='ignore'):
@@ -377,10 +377,10 @@ def plot_results(res):
     time_indices = np.linspace(0, len(DG)-1, n_snapshots, dtype=int)
     colors = plt.cm.Greens_r(np.linspace(0, 1, n_snapshots))
     for idx, color in zip(time_indices, colors):
-        ax.plot(t, res['lambda_B'][idx, :],
+        ax.plot(t, res['lambda_B'][idx, :]/p.b_0,
                 label=f'$\\Delta G$={DG[idx]:.1f}', alpha=0.8, color=color)
     ax.set_xlabel('Time')
-    ax.set_ylabel('$\\lambda_B$')
+    ax.set_ylabel('$\\lambda_B/b_o$')
     ax.set_title('Division rate')
     ax.legend(fontsize=8)
 
