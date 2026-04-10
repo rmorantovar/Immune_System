@@ -31,7 +31,7 @@ base = dict(
     delta_T=0.0,
     gamma=100.00,
     tau_eng=0.5,
-    b_0=2.0,
+    b0=2.0,
     delta_B=0.0,
     DG_min=0.0,
     DG_max=6.0,
@@ -127,7 +127,7 @@ axes[1, 0].legend(fontsize=7)
 axes[1, 1].set_xlabel('Time')
 axes[1, 1].set_ylabel('$d(\\ln N_B^{tot})/dt$')
 axes[1, 1].set_title('Growth rate')
-axes[1, 1].axhline(base['b_0'], color='k', linestyle=':', alpha=0.5, label='$b_0$')
+axes[1, 1].axhline(base['b0'], color='k', linestyle=':', alpha=0.5, label='$b0$')
 axes[1, 1].legend(fontsize=7)
 
 axes[1, 2].set_xlabel('Time')
