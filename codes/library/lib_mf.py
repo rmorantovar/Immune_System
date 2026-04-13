@@ -4,6 +4,26 @@ import matplotlib.pyplot as plt
 from dataclasses import dataclass
 
 N_Avg = 6.02214076e23  # Avogadro's number (molecules per mole)
+k_BT = 1.380649e-23*293
+
+my_red = np.array((228,75,41))/256.
+my_purple = np.array((125,64,119))/256.
+my_purple2 = np.array((116,97,164))/256.
+my_green = np.array((125,165,38))/256.
+my_blue = np.array((76,109,166))/256.
+my_gold = np.array((215,139,45))/256.
+my_brown = np.array((182,90,36))/256.
+my_blue2 = np.array((80,141,188))/256.
+my_yellow = np.array((246,181,56))/256.
+my_yellow2 = np.array((242, 192, 65))/256.
+my_green2 = np.array((158,248,72))/256.
+my_cyan = 'tab:cyan'
+
+antigen_color = my_yellow
+
+my_green_a = np.array((159, 206, 99))/256.
+my_green_b = np.array((79, 173, 91))/256.
+my_green_c = np.array((94, 129, 63))/256.
 # ============================================================
 # Parameters
 # ============================================================
@@ -47,10 +67,85 @@ class Parameters:
     T_lim: bool = False         # whether to include T cell limitation in the demand function
     memory: bool = False        # whether to use memory-like initial conditions for N_B
 
-
 # ============================================================
 # Auxiliary functions
 # ============================================================
+
+def build_repertoire_grid(p):
+    """
+    Grid mode: uniform grid in DG, with Omega weighting.
+ 
+    Returns
+    -------
+    DG_arr : array of DG values (length M)
+    psi_arr : array of psi(DG) values
+    weights : array of Omega(DG) * dDG (used in demand integral)
+    M : number of grid points
+    """
+    DG_arr = np.linspace(p.DG_min, p.DG_max, p.M)
+    dDG = DG_arr[1] - DG_arr[0]
+    psi_arr = psi(DG_arr, p.sigma)
+    Omega_arr = Omega(DG_arr, p.beta_star, p.Omega_0)
+    weights = Omega_arr * dDG  # each bin represents this many clones
+    return DG_arr, psi_arr, weights, p.M
+
+
+def build_repertoire_stochastic(p, DG_max_sim=None, seed=None):
+    """
+    Stochastic mode: sample individual clone energies from Omega(DG).
+ 
+    Samples from the truncated exponential distribution on [DG_min, DG_max_sim].
+    The number of clones is determined by integrating Omega over the range.
+ 
+    Parameters
+    ----------
+    p : Parameters
+    DG_max_sim : float
+        Upper bound of the simulation range. If None, uses p.DG_max.
+    seed : int or None
+        Random seed for reproducibility.
+ 
+    Returns
+    -------
+    DG_arr : array of DG values (length L_sim), sorted
+    psi_arr : array of psi(DG) values
+    weights : array of ones (each entry is one clone)
+    L_sim : number of clones
+    """
+    if DG_max_sim is None:
+        DG_max_sim = p.DG_max
+ 
+    rng = np.random.default_rng(seed)
+ 
+    # Total number of clones in [DG_min, DG_max_sim]:
+    # L_sim = int(Omega_0 / beta_star * (exp(beta_star * DG_max_sim) - exp(beta_star * DG_min)))
+    L_sim = int(p.Omega_0 / p.beta_star * (
+        np.exp(p.beta_star * DG_max_sim) - np.exp(p.beta_star * p.DG_min)
+    ))
+ 
+    if L_sim <= 0:
+        raise ValueError(f"No clones in range [{p.DG_min}, {DG_max_sim}]. "
+                         f"Check Omega_0 and beta_star.")
+ 
+    # Sample from truncated exponential: P(DG) ~ exp(beta_star * DG)
+    # on [DG_min, DG_max_sim].
+    # Use inverse CDF method:
+    # CDF(DG) = (exp(beta_star * DG) - exp(beta_star * DG_min)) /
+    #           (exp(beta_star * DG_max_sim) - exp(beta_star * DG_min))
+    # DG = (1/beta_star) * ln(u * (exp(beta_star*DG_max_sim) - exp(beta_star*DG_min))
+    #                         + exp(beta_star*DG_min))
+ 
+    u = rng.uniform(0, 1, size=L_sim)
+    exp_min = np.exp(p.beta_star * p.DG_min)
+    exp_max = np.exp(p.beta_star * DG_max_sim)
+    DG_arr = (1.0 / p.beta_star) * np.log(u * (exp_max - exp_min) + exp_min)
+    DG_arr = np.sort(DG_arr)
+ 
+    psi_arr = np.exp(-p.sigma * DG_arr)
+    weights = np.ones(L_sim)  # each entry is one clone
+ 
+    return DG_arr, psi_arr, weights, L_sim
+ 
 
 def psi(DG, sigma):
     """Binding/internalization probability. Boltzmann gate."""
@@ -62,16 +157,18 @@ def Omega(DG, beta_star, Omega_0):
     return Omega_0 * np.exp(beta_star * DG)
 
 
-def compute_demand(pi_vec, N_B_vec, Omega_vec, dDG, p):
+def compute_demand(pi_vec, N_B_vec, weights, p):
     """
     Compute the demand function D(t).
-
-    D = tau_eng * h0 * sum_i Omega_i * [pi_i^h/(pi_i^h + Theta^h)] * N_B_i * dDG
+    Grid mode:   D = tau_eng * h0 * sum_i Omega_i * dDG * vis_i * N_B_i
+    Stochastic:  D = tau_eng * h0 * sum_i vis_i * N_B_i
+    In both cases, 'weights' absorbs the difference:
+      grid:       weights_i = Omega_i * dDG
+      stochastic: weights_i = 1
     """
+    activated = (N_B_vec > 2).astype(float)
     visibility = pi_vec**p.hill / (pi_vec**p.hill + p.Theta**p.hill)
-    integrand = Omega_vec * visibility * N_B_vec
-    return p.tau_eng * p.h0 * np.sum(integrand) * dDG
-    # return 0
+    return p.tau_eng * p.h0 * np.sum(weights * visibility * N_B_vec * activated)
 
 
 def compute_lambda_B(pi_vec, N_T_free, p):
@@ -79,7 +176,7 @@ def compute_lambda_B(pi_vec, N_T_free, p):
     Compute division rate for each clone.
 
     lambda_B = (1/h_T + 1/b0)^{-1}
-    h_T = gamma * pi^h/(pi^h+Theta^h) * N_T_free/(N_T_free + K_T)
+    h_T = h0 * pi^h/(pi^h+Theta^h) * N_T_free/(N_T_free + K_T)
     """
     visibility = pi_vec**p.hill / (pi_vec**p.hill + p.Theta**p.hill)
     h_T = p.h0 * visibility * N_T_free/ (N_T_free + 10.0)  # K_T is an arbitrary saturation constant to prevent unbounded growth of h_T
@@ -92,24 +189,25 @@ def compute_lambda_B(pi_vec, N_T_free, p):
     return lambda_B
 
 
-def compute_N_B_tot(res, threshold=2.0):
-    """Total number of activated B cells: sum_i Omega_i * N_B_i * dDG."""
-    DG = res['DG_grid']
-    dDG = DG[1] - DG[0]
-    Omega_vec = res['Omega']
+def compute_N_B_tot(res, threshold=1.5):
+    """Total number of activated B cells."""
     N_B = res['N_B']
-    activated = (N_B >= threshold).astype(float)
-    return np.sum(Omega_vec[:, None] * activated * N_B * dDG, axis=0)
-
-
-def compute_L_act(res, threshold=2.0):
-    """Number of activated clones: sum_i Omega_i * Theta(N_B_i - threshold) * dDG."""
-    DG = res['DG_grid']
-    dDG = DG[1] - DG[0]
-    Omega_vec = res['Omega']
+    w = res['weights']
+    activated = (N_B > threshold).astype(float)
+    return np.sum(w[:, None] * N_B * activated, axis=0)
+ 
+ 
+def compute_L_act(res, threshold=1.5):
+    """Number of activated clones."""
     N_B = res['N_B']
-    activated = (N_B >= threshold).astype(float)
-    return np.sum(Omega_vec[:, None] * activated * dDG, axis=0)
+    w = res['weights']
+    activated = (N_B > threshold).astype(float)
+    return np.sum(w[:, None] * activated, axis=0)
+ 
+ 
+def compute_N1(res):
+    """Size of the largest clone at each time point."""
+    return np.max(res['N_B'], axis=0)
 
 
 def find_t_D(res, D_threshold=1.0):
@@ -118,6 +216,38 @@ def find_t_D(res, D_threshold=1.0):
     if len(idx) > 0:
         return res['t'][idx[0]]
     return np.inf
+ 
+
+def compute_zipf(res, time_index=-1, threshold=1.5):
+    """
+    Compute the Zipf (rank-size) distribution at a given time.
+ 
+    Returns
+    -------
+    ranks : array, 1-indexed ranks
+    sizes : array, clone sizes sorted descending
+    """
+    N_B = res['N_B'][:, time_index]
+    w = res['weights']
+ 
+    if res['mode'] == 'stochastic':
+        # Each entry is one clone
+        activated = N_B > threshold
+        sizes = N_B[activated]
+        sizes = np.sort(sizes)[::-1]
+        ranks = np.arange(1, len(sizes) + 1)
+    else:
+        # Grid mode: each bin has w[i] clones of the same size
+        # Expand into individual clones for ranking
+        sizes_expanded = []
+        for i in range(len(N_B)):
+            if N_B[i] > threshold:
+                n_clones = max(1, int(np.round(w[i])))
+                sizes_expanded.extend([N_B[i]] * n_clones)
+        sizes = np.array(sorted(sizes_expanded, reverse=True))
+        ranks = np.arange(1, len(sizes) + 1)
+ 
+    return ranks, sizes/sizes[0]  # normalize by largest clone size
 
 
 # ============================================================
@@ -143,44 +273,43 @@ def unpack_state(y, M):
     return N_A, pi_vec, N_B_vec, N_T
 
 
-def rhs(t, y, p, Omega_vec, psi_vec, dDG):
+def rhs(t, y, p, M, psi_vec, weights):
     """Right-hand side of the coupled ODE system."""
-
-    M = p.M
+ 
     N_A, pi_vec, N_B_vec, N_T = unpack_state(y, M)
-
+ 
     # Ensure non-negativity
     N_A = max(N_A, 0.0)
     pi_vec = np.maximum(pi_vec, 0.0)
     N_B_vec = np.maximum(N_B_vec, 0.0)
     N_T = max(N_T, 0.0)
-
+ 
     # --- Antigen ---
     # S_A = p.lambda_A * N_A if p.lambda_A > 0 else 0.0
     # dN_A = S_A - p.delta_A * N_A
     pb = (1 + (1e-9/(1e6*24*3600*np.exp(2.0*t)/N_Avg)))**(-1)  # or whatever dependence you intend
     dN_A = (p.lambda_A * (1 - pb) - 2*pb) * N_A - p.delta_A * N_A
-
+ 
     # --- Demand and free T cells ---
-    D = compute_demand(pi_vec, N_B_vec, Omega_vec, dDG, p)
+    D = compute_demand(pi_vec, N_B_vec, weights, p)
     # change here to test T cell limitation vs no limitation
     if p.T_lim:
         N_T_free = N_T / (1.0 + D)
     else:
         N_T_free = N_T 
-
+ 
     # --- Division rate ---
     lambda_B = compute_lambda_B(pi_vec, N_T_free, p)
-
+ 
     # --- pMHC dynamics ---
     dpi = p.k_on * psi_vec * N_A - p.delta_pi * pi_vec - lambda_B * pi_vec
-
+ 
     # --- Clone size dynamics ---
     dN_B = (lambda_B - p.delta_B) * N_B_vec
-
+ 
     # --- T cell dynamics ---
-    dN_T = -p.delta_T * N_T  # constant pool if delta_T = 0
-
+    dN_T = -p.delta_T * N_T
+ 
     return pack_state(dN_A, dpi, dN_B, dN_T, M)
 
 
@@ -188,18 +317,20 @@ def rhs(t, y, p, Omega_vec, psi_vec, dDG):
 # Simulation
 # ============================================================
 
-def run_simulation(p=None, t_span=None, t_eval=None):
+def run_simulation(p=None, t_span=None, t_eval=None, mode='grid', DG_max_sim=None, seed=None):      
     """
     Run the mean-field simulation.
-
+ 
     Parameters
     ----------
     p : Parameters
-        Model parameters. If None, uses defaults.
-    t_span : tuple
-        (t_start, t_end). If None, uses (0, 10).
-    t_eval : array
-        Time points for output. If None, uses 500 points.
+    t_span : tuple (t_start, t_end)
+    t_eval : array of output time points
+    mode : 'grid' or 'stochastic'
+    DG_max_sim : float (stochastic mode only)
+        Upper bound for clone sampling. Default: p.DG_max.
+    seed : int (stochastic mode only)
+        Random seed.
 
     Returns
     -------
@@ -216,36 +347,37 @@ def run_simulation(p=None, t_span=None, t_eval=None):
         'Omega'   : density of states
         'params'  : parameters used
     """
-
     if p is None:
         p = Parameters()
     if t_span is None:
         t_span = (0.0, 10.0)
     if t_eval is None:
         t_eval = np.linspace(t_span[0], t_span[1], 500)
-
-    # --- Grid ---
-    DG_grid = np.linspace(p.DG_min, p.DG_max, p.M)
-    dDG = DG_grid[1] - DG_grid[0]
-
-    # --- Precompute static arrays ---
-    psi_vec = psi(DG_grid, p.sigma)
-    Omega_vec = Omega(DG_grid, p.beta_star, p.Omega_0)
-
+ 
+    # --- Build repertoire ---
+    if mode == 'grid':
+        DG_arr, psi_arr, weights, M = build_repertoire_grid(p)
+    elif mode == 'stochastic':
+        DG_arr, psi_arr, weights, M = build_repertoire_stochastic(
+            p, DG_max_sim=DG_max_sim, seed=seed
+        )
+    else:
+        raise ValueError(f"Unknown mode: {mode}. Use 'grid' or 'stochastic'.")
+ 
     # --- Initial conditions ---
     N_A_init = p.N_A0
-    pi_init = np.zeros(p.M)  # no pMHC at t=0
+    pi_init = np.zeros(M)  # no pMHC at t=0
     if p.memory:
-        N_B_init = 1e2*np.exp(-p.sigma * (p.b0 / p.lambda_A + 1) * DG_grid)  # memory
+        N_B_init = 1e2*np.exp(-p.sigma * (p.b0 / p.lambda_A + 1) * DG_arr)  # memory
     else:
-        N_B_init = np.ones(p.M)  # naive
+        N_B_init = np.ones(M)  # naive
     N_T_init = p.N_T0
-
-    y0 = pack_state(N_A_init, pi_init, N_B_init, N_T_init, p.M)
-
+ 
+    y0 = pack_state(N_A_init, pi_init, N_B_init, N_T_init, M)
+ 
     # --- Integrate ---
     sol = solve_ivp(
-        fun=lambda t, y: rhs(t, y, p, Omega_vec, psi_vec, dDG),
+        fun=lambda t, y: rhs(t, y, p, M, psi_arr, weights),
         t_span=t_span,
         y0=y0,
         t_eval=t_eval,
@@ -254,32 +386,33 @@ def run_simulation(p=None, t_span=None, t_eval=None):
         atol=1e-10,
         max_step=0.01,
     )
-
+ 
     if not sol.success:
         print(f"Warning: integration failed: {sol.message}")
-
-    # --- Unpack solution ---
+ 
+    # --- Unpack ---
     t = sol.t
     N_steps = len(t)
-
+ 
     N_A = sol.y[0, :]
-    pi_arr = sol.y[1:p.M+1, :]           # shape (M, N_steps)
-    N_B_arr = sol.y[p.M+1:2*p.M+1, :]    # shape (M, N_steps)
-    N_T_arr = sol.y[2*p.M+1, :]
-
-    # --- Compute derived quantities ---
+    pi_arr = sol.y[1:M+1, :]
+    N_B_arr = sol.y[M+1:2*M+1, :]
+    N_T_arr = sol.y[2*M+1, :]
+ 
+    # --- Derived quantities ---
     D_arr = np.zeros(N_steps)
     N_T_free_arr = np.zeros(N_steps)
-    lambda_B_arr = np.zeros((p.M, N_steps))
+    lambda_B_arr = np.zeros((M, N_steps))
 
     for j in range(N_steps):
-        D_arr[j] = compute_demand(pi_arr[:, j], N_B_arr[:, j], Omega_vec, dDG, p)
+        D_arr[j] = compute_demand(pi_arr[:, j], N_B_arr[:, j], weights, p)
         # change here to test T cell limitation vs no limitation
         if p.T_lim:
             N_T_free_arr[j] = N_T_arr[j] / (1.0 + D_arr[j])
         else:
             N_T_free_arr[j] = N_T_arr[j]
-        lambda_B_arr[:, j] = compute_lambda_B(pi_arr[:, j], N_T_free_arr[j], p)
+        lambda_B_arr[:, j] = compute_lambda_B(pi_arr[:, j],
+                                              N_T_free_arr[j], p)
 
     return {
         't': t,
@@ -290,9 +423,11 @@ def run_simulation(p=None, t_span=None, t_eval=None):
         'N_T_free': N_T_free_arr,
         'D': D_arr,
         'lambda_B': lambda_B_arr,
-        'DG_grid': DG_grid,
-        'Omega': Omega_vec,
+        'DG': DG_arr,
+        'weights': weights,
         'params': p,
+        'mode': mode,
+        'M': M,
     }
 
 
@@ -300,11 +435,128 @@ def run_simulation(p=None, t_span=None, t_eval=None):
 # Visualization
 # ============================================================
 
+def plot_T_cell_analysis(res):
+    """Basic diagnostic plots."""
+
+    t = res['t']
+    DG = res['DG']
+    p = res['params']
+
+    fig, axes = plt.subplots(2, 3, figsize=(15, 9))
+
+    # --- (a) Antigen ---
+    ax = axes[0, 0]
+    ax.semilogy(t, res['N_A'], color = 'k')
+    ax.semilogy(t, np.exp(p.lambda_A*t))
+    ax.set_xlabel('Time')
+    ax.set_ylabel('$N_A(t)$')
+    ax.set_ylim(top = 1e13)
+    ax.set_title('Antigen')
+
+    # --- (b) Demand ---
+    ax = axes[0, 1]
+    ax.semilogy(t, res['D'], color = 'k', label='simulation')
+    ax.hlines(1.0, t[0], t[-1], ls = '--', label='D=1 threshold')
+    ax.set_xlabel('Time')
+    ax.set_ylabel('$D(t)$')
+    ax.set_title('Demand function')
+    ax.set_ylim(top=1e4)
+    ax.set_ylim(bottom=1e-4)
+
+    # --- (c) Free T cells ---
+    ax = axes[0, 2]
+    ax.semilogy(t, res['N_T_free']/res['N_T'], label='$N_T^{o}/N_T$', color = 'k')
+    ax.set_xlabel('Time')
+    ax.set_ylabel('free T cells/T cells')
+    ax.set_title('T cells')
+    ax.set_ylim(bottom=1e-4)
+    ax.legend()
+
+    # --- (d) Division rate at selected times ---
+    ax = axes[1, 0]
+    n_snapshots = 8
+    time_indices = np.linspace(0, len(DG)-1, n_snapshots, dtype=int)
+    colors = plt.cm.Greens_r(np.linspace(0, 1, n_snapshots))
+    for idx, color in zip(time_indices, colors):
+        ax.plot(t, res['lambda_B'][idx, :]/p.b0, label=f'$\\Delta G$={DG[idx]:.1f}', alpha=0.8, color=color)
+
+    ax.axhline(1.0, color='k', linestyle='--', alpha=0.5)
+    ax.set_xlabel('Time')
+    ax.set_ylabel('$\\lambda_B/b_o$')
+    ax.set_title('Division rate')
+    ax.legend(fontsize=8)
+
+    # # --- (e) Total B-cell population and activated B-cell clones ---
+    ax = axes[1, 1]
+    N_B_tot = compute_N_B_tot(res)
+    Lact = compute_L_act(res)
+    ax.semilogy(t, N_B_tot, label='$N_B^{\\rm tot}$', color = 'k')
+    ax.semilogy(t, Lact, label='$L_{\\rm act}$', color = 'r')
+    ax.set_xlabel('Time')
+    ax.set_ylabel('Activated B cells / clones')
+    ax.set_title('B cell activation')
+    ax.legend() 
+    ax.set_xlabel('Time')
+    ax.set_ylabel('Total activated B cells')
+    ax.set_title('Total activated B cells')
+    ax.set_ylim(top=1e5)
+
+    # --- (f) Clone sizes at final time ---
+    ax = axes[1, 2]
+    N_B_final = res['N_B'][:, -1]
+    if not p.memory:
+        ax.semilogy(DG, N_B_final, marker='o', ls = '', label='simulation', ms = 4, markerfacecolor = my_red, markeredgecolor='k', markeredgewidth=0.5)
+    else:
+        ax.semilogy(DG, N_B_final, marker='o', ls = '', label='simulation', ms = 4, markerfacecolor = my_blue, markeredgecolor='k', markeredgewidth=0.5)
+    ax.semilogy(DG, np.max(N_B_final)*np.exp(-p.sigma*(p.b0/p.lambda_A + 1) * (DG - np.min(DG))), color=my_red, linestyle='--', label='naive')
+    ax.semilogy(DG, np.max(N_B_final)*np.exp(-2*p.sigma*(p.b0/p.lambda_A + 1) * (DG - np.min(DG))), color=my_blue, linestyle='--', label='memory')
+    ax.set_xlabel('$\\Delta G$')
+    ax.set_ylabel('$N_B(t_{\\rm final}, \\Delta G)$')
+    ax.set_title('Clone size distribution')
+    ax.set_ylim(bottom=0.9)
+    # ax.set_xlim(left=-0.1, right=DG[N_B_final > 2.0][-1] + 0.5)
+    ax.legend(loc = 3)
+    
+    axin1 = ax.inset_axes([0.6, 0.6, 0.38, 0.38])
+    if res['mode'] == 'grid':
+        axin1.semilogy(DG, res['weights'])
+    else:
+        axin1.hist(res['DG'], bins=10, density=False, color=my_green, alpha=0.7)
+        axin1.set_yscale('log')
+    axin1.set_xlabel('$\\Delta G$')
+    axin1.set_ylabel('$\\Omega_0(\\Delta G)$')
+
+    # # --- (e) Clone size heatmap ---
+    # ax = axes[1, 1]
+    # log_NB = np.log10(np.maximum(res['N_B'], 1.0))
+    # im = ax.pcolormesh(t, DG, log_NB, shading='auto', cmap='viridis')
+    # fig.colorbar(im, ax=ax, label='$\\log_{10} N_B$')
+    # ax.set_xlabel('Time')
+    # ax.set_ylabel('$\\Delta G$')
+    # ax.set_title('Clone size (log)')
+    # ax.set_xlim(right = 8)
+
+    # # Overlay theoretical front
+    # Gamma = p.h0 * p.N_T0 * p.k_on * p.N_A0 / (p.delta_pi * p.Theta)
+    # if Gamma > 0 and p.lambda_A > 0:
+    #     DG_front = (p.lambda_A / p.sigma) * t - (1.0 / p.sigma) * np.log(p.lambda_A / Gamma) # correct to the right off-set of the moving front!!!!
+    #     DG_front_clipped = np.clip(DG_front, p.DG_min, p.DG_max) #change here p.DG_max for the actual front position, not the grid limit!!!!
+    #     valid = DG_front >= p.DG_min
+    #     ax.plot(t[valid], DG_front_clipped[valid], 'r--', linewidth=2,
+    #             label='$\\Delta G_{\\rm mf}(t)$')
+    #     ax.legend()
+
+    
+    
+    plt.tight_layout()
+    return fig
+
+
 def plot_results(res):
     """Basic diagnostic plots."""
 
     t = res['t']
-    DG = res['DG_grid']
+    DG = res['DG']
     p = res['params']
 
     fig, axes = plt.subplots(2, 3, figsize=(15, 9))
@@ -320,11 +572,10 @@ def plot_results(res):
 
     # --- (b) Free T cells ---
     ax = axes[0, 1]
-    ax.semilogy(t, res['N_T_free'], label='$N_T^{\\rm free}$', color = 'k')
-    ax.semilogy(t, res['N_T'], '--', label='$N_T$', alpha=0.5)
+    ax.semilogy(t, res['N_T_free']/res['N_T'], label='$N_T^{o}/N_T$', color = 'k')
     ax.set_xlabel('Time')
-    ax.set_ylabel('T cells')
-    ax.set_title('T cell pool')
+    ax.set_ylabel('free T cells/T cells')
+    ax.set_title('T cells')
     ax.legend()
 
     # --- (c) Demand ---
@@ -339,17 +590,25 @@ def plot_results(res):
     # --- (d) Clone sizes at final time ---
     ax = axes[1, 0]
     N_B_final = res['N_B'][:, -1]
-    ax.semilogy(DG, N_B_final, color = 'k', marker='o', ls = '', label='simulation')
-    ax.semilogy(DG, N_B_final[0]*np.exp(-p.sigma*(p.b0/p.lambda_A + 1) * DG), 'r--', label='naive')
-    ax.semilogy(DG, N_B_final[0]*np.exp(-2*p.sigma*(p.b0/p.lambda_A + 1) * DG), 'g--', label='memory')
+    if not p.memory:
+        ax.semilogy(DG, N_B_final, marker='o', ls = '', label='simulation', ms = 4, markerfacecolor = my_red, markeredgecolor='k', markeredgewidth=0.5)
+    else:
+        ax.semilogy(DG, N_B_final, marker='o', ls = '', label='simulation', ms = 4, markerfacecolor = my_blue, markeredgecolor='k', markeredgewidth=0.5)
+    ax.semilogy(DG, np.max(N_B_final)*np.exp(-p.sigma*(p.b0/p.lambda_A + 1) * (DG - np.min(DG))), color=my_red, linestyle='--', label='naive')
+    ax.semilogy(DG, np.max(N_B_final)*np.exp(-2*p.sigma*(p.b0/p.lambda_A + 1) * (DG - np.min(DG))), color=my_blue, linestyle='--', label='memory')
     ax.set_xlabel('$\\Delta G$')
     ax.set_ylabel('$N_B(t_{\\rm final}, \\Delta G)$')
     ax.set_title('Clone size distribution')
     ax.set_ylim(bottom=0.9)
-    ax.set_xlim(left=-0.1, right=DG[N_B_final > 2.0][-1] + 0.5)
+    # ax.set_xlim(left=-0.1, right=DG[N_B_final > 2.0][-1] + 0.5)
     ax.legend(loc = 3)
+    
     axin1 = ax.inset_axes([0.6, 0.6, 0.38, 0.38])
-    axin1.semilogy(DG, res['Omega'])
+    if res['mode'] == 'grid':
+        axin1.semilogy(DG, res['weights'])
+    else:
+        axin1.hist(res['DG'], bins=10, density=False, color=my_green, alpha=0.7)
+        axin1.set_yscale('log')
     axin1.set_xlabel('$\\Delta G$')
     axin1.set_ylabel('$\\Omega_0(\\Delta G)$')
 
@@ -394,12 +653,91 @@ def plot_results(res):
     time_indices = np.linspace(0, len(DG)-1, n_snapshots, dtype=int)
     colors = plt.cm.Greens_r(np.linspace(0, 1, n_snapshots))
     for idx, color in zip(time_indices, colors):
-        ax.plot(t, res['lambda_B'][idx, :]/p.b0,
-                label=f'$\\Delta G$={DG[idx]:.1f}', alpha=0.8, color=color)
+        ax.plot(t, res['lambda_B'][idx, :]/p.b0, label=f'$\\Delta G$={DG[idx]:.1f}', alpha=0.8, color=color)
+
+    ax.axhline(1.0, color='k', linestyle='--', alpha=0.5)
     ax.set_xlabel('Time')
     ax.set_ylabel('$\\lambda_B/b_o$')
     ax.set_title('Division rate')
     ax.legend(fontsize=8)
 
+    plt.tight_layout()
+    return fig
+
+
+def plot_diagnostics(res):
+    """Basic diagnostic plots."""
+    t = res['t']
+    p = res['params']
+ 
+    fig, axes = plt.subplots(2, 3, figsize=(16, 10))
+ 
+    # (a) Antigen
+    ax = axes[0, 0]
+    ax.semilogy(t, res['N_A'])
+    ax.set_xlabel('Time'); ax.set_ylabel('$N_A$'); ax.set_title('Antigen')
+ 
+    # (b) T cells
+    ax = axes[0, 1]
+    ax.plot(t, res['N_T_free'], label='$N_T^{free}$')
+    ax.plot(t, res['N_T'], '--', alpha=0.5, label='$N_T$')
+    ax.set_xlabel('Time'); ax.set_ylabel('T cells'); ax.set_title('T cell pool')
+    ax.legend()
+ 
+    # (c) Demand
+    ax = axes[0, 2]
+    ax.semilogy(t, res['D'] + 1e-10)
+    ax.axhline(1, color='k', linestyle=':', alpha=0.5)
+    ax.set_xlabel('Time'); ax.set_ylabel('$D(t)$'); ax.set_title('Demand')
+ 
+    # (d) N_B_tot and L_act
+    ax = axes[1, 0]
+    N_B_tot = compute_N_B_tot(res)
+    L_act = compute_L_act(res)
+    ax.semilogy(t, N_B_tot + 0.1, label='$\\bar{N}$')
+    ax.semilogy(t, L_act + 0.1, label='$L_{act}$')
+    ax.set_xlabel('Time'); ax.set_ylabel('Count'); ax.set_title('B cell response')
+    ax.legend()
+ 
+    # (e) Clone size vs DG at final time
+    ax = axes[1, 1]
+    DG = res['DG']
+    N_B_final = res['N_B'][:, -1]
+    if res['mode'] == 'stochastic':
+        ax.scatter(DG, N_B_final, s=1, alpha=0.3)
+    else:
+        ax.semilogy(DG, N_B_final)
+    ax.set_yscale('log')
+    ax.set_xlabel('$\\Delta G$'); ax.set_ylabel('$N_B$')
+    ax.set_title('Clone sizes (final)')
+ 
+    # (f) Zipf plot at final time
+    ax = axes[1, 2]
+    ranks, sizes = compute_zipf(res, time_index=-1)
+    if len(ranks) > 0:
+        ax.loglog(ranks, sizes, '.', markersize=2)
+        ax.set_xlabel('Rank $k$'); ax.set_ylabel('$N_k$')
+        ax.set_title('Zipf plot (final)')
+ 
+    plt.tight_layout()
+    return fig
+
+
+def plot_zip_comparison(res_grid, res_stochastic):
+    """Compare Zipf plots for grid vs stochastic modes."""
+    fig, ax = plt.subplots(figsize=(6, 4))
+ 
+    # Grid mode
+    ranks_g, sizes_g = compute_zipf(res_grid, time_index=-1)
+    ax.loglog(ranks_g, sizes_g, 'o', label='Grid', alpha=0.5)
+ 
+    # Stochastic mode
+    ranks_s, sizes_s = compute_zipf(res_stochastic, time_index=-1)
+    ax.loglog(ranks_s, sizes_s, '.', label='Stochastic', alpha=0.5)
+ 
+    ax.set_xlabel('Rank $k$')
+    ax.set_ylabel('Normalized clone size $N_k/N_1$')
+    ax.set_title('Zipf plot comparison')
+    ax.legend()
     plt.tight_layout()
     return fig

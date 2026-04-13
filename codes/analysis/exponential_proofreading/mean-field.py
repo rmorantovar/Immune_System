@@ -30,33 +30,18 @@ if __name__ == '__main__':
     output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/exponential_proofreading/mean_field_entropy/'
     os.makedirs(output_plot, exist_ok=True)
     # Default parameters
-    p = Parameters(
-        N_A0=1.0,
-        lambda_A=6.0,
-        delta_A=0.01,
-        k_on=1e0*1e6*1e6*24*3600/N_Avg,
-        delta_pi=24.,
-        Theta=10.0,
-        hill=3.0,
-        sigma=1.0,
-        beta_star=2.5,
-        N_T0=1e10,
-        delta_T=0.0,
-        h0=10,
-        tau_eng=0.5,
-        b0=2.0,
-        delta_B=0.0,
-        DG_min=0.0,
-        DG_max=5.0,
-        M=20,
-        Omega_0=1.0,
-        T_lim = 0,
-        memory = True
+    p = Parameters(N_A0=1.0, lambda_A=6.0, delta_A=0.01,
+                   k_on=1e0*1e6*1e6*24*3600/N_Avg, delta_pi=24., Theta=10.0,
+                   hill=3.0, sigma=1.0, beta_star=2.5,
+                   N_T0=1e10, delta_T=0.0, h0=10,
+                   tau_eng=0.5, b0=2.0, delta_B=0.0,
+                   DG_min=0.0, DG_max=5.0, M=20,
+                   Omega_0=1.0, T_lim = 0, memory = True
     )
-    T = 12
-    res = run_simulation(p=p, t_span=(0, T), t_eval=np.linspace(0, T, 1000))
+    T = 20
+    res_grid = run_simulation(p=p, t_span=(0, T), mode='grid')
     # print(compute_N_B_tot(res))
-    fig = plot_results(res)
+    fig = plot_results(res_grid)
     fig.savefig(os.path.join(output_plot, f'ep_meanfield_results_Tlim-{int(p.T_lim)}.pdf'), dpi=150, bbox_inches='tight')
     print(f"Saved: {os.path.join(output_plot, f'ep_meanfield_results_Tlim-{int(p.T_lim)}.pdf')}")
 
@@ -64,6 +49,6 @@ if __name__ == '__main__':
     print(f"\nFront velocity (theory): v = lambda_A / sigma = {p.lambda_A / p.sigma:.3f}")
     Gamma = p.h0 * p.N_T0 * p.k_on * p.N_A0 / (p.delta_pi * p.Theta)
     print(f"Gamma = {Gamma:.4f}")
-    print(f"Final demand D = {res['D'][-1]:.3f}")
-    print(f"Final N_T_free = {res['N_T_free'][-1]:.3f}")
-    print(f"Max clone size = {res['N_B'][:, -1].max():.2e}")
+    print(f"Final demand D = {res_grid['D'][-1]:.3f}")
+    print(f"Final N_T_free = {res_grid['N_T_free'][-1]:.3f}")
+    print(f"Max clone size = {res_grid['N_B'][:, -1].max():.2e}")
