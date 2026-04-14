@@ -14,16 +14,16 @@ from lib_mf import*
 
 
 if __name__ == '__main__':
-    output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/exponential_proofreading/mean_field_Tcell_jam/'
+    output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/exponential_proofreading/mean_field_Tcell_jam_early/'
     os.makedirs(output_plot, exist_ok=True)
     # Default parameters
     base = dict(N_A0=1.0, delta_A=0.01,
-                k_on=1e0*1e6*1e6*24*3600/N_Avg, delta_pi=24., Theta=10.0,
+                k_on=1e2*1e6*1e6*24*3600/N_Avg, delta_pi=24., Theta=10.0,
                 hill=3.0, sigma=1.0, beta_star=2.5,
                 delta_T=0.0, h0=20,
                 tau_eng=0.01, b0=2.0, delta_B=0.0,
-                DG_min=0.0, DG_max=3.5, M=20,
-                Omega_0=1.0, T_lim = 1, memory = True
+                DG_min=0.0, DG_max=4.0, M=20,
+                Omega_0=1.0, T_lim = 1, memory = False
     )
     T = 16
     # print(compute_N_B_tot(res))
@@ -31,7 +31,9 @@ if __name__ == '__main__':
     # Scan N_T: move t_D relative to dynamics
     # ============================================================
 
+    N_T_values = [1e3] # For testing
     N_T_values = [1e2, 1e3, 1e4, 1e5, 1e20]
+    
 
     fig, axes = plt.subplots(2, 3, figsize=(16, 10))
 
@@ -117,7 +119,7 @@ if __name__ == '__main__':
 
     axes[1, 1].axhline(1.0, color='k', linestyle='--', alpha=0.5)
     axes[1, 1].set_xlabel('Time')
-    axes[1, 1].set_ylabel('$\lambda_B$')
+    axes[1, 1].set_ylabel(r'$\lambda_B$')
     axes[1, 1].set_title('Growth rate')
     axes[1, 1].legend(fontsize=7)
 
