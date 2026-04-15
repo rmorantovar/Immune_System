@@ -24,8 +24,8 @@ if __name__ == '__main__':
                 hill=3.0, sigma=1.0, beta_star=2.5, K_T = 100000.,
                 delta_T=0.0, h0=0.002,
                 tau_eng=0.01, b0=2.0, delta_B=0.0,
-                DG_min=0.0, DG_max=4.0, M=20,
-                Omega_0=1.0, T_lim = 0, memory = False
+                DG_min=0.0, DG_max=3.5, M=20,
+                Omega_0=1.0, T_lim = 1, memory = False
     )
     T = 16
     N_ensemble = 20
@@ -54,7 +54,8 @@ if __name__ == '__main__':
 
             ranks_i, sizes_i = compute_zipf(res, time_index=-1)
             sizes += sizes_i[:len(ranks)]
-
+        
+        label = f'$N_T=1e{int(np.log10(N_T))}$'
         ax_zipf.loglog(ranks, sizes/N_ensemble, marker='o', ls = '', ms = 4, markeredgecolor='k', label=label, markeredgewidth=0.5)
 
 

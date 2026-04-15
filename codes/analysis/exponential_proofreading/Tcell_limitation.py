@@ -18,9 +18,9 @@ if __name__ == '__main__':
     os.makedirs(output_plot, exist_ok=True)
     # Default parameters
     base = dict(N_A0=1.0, delta_A=0.01,
-                k_on=1e2*1e6*1e6*24*3600/N_Avg, delta_pi=24., Theta=10000.0,
+                k_on=1e5*1e6*1e6*24*3600/N_Avg, delta_pi=24., Theta=10000.0,
                 hill=3.0, sigma=1.0, beta_star=2.5, K_T = 100000.,
-                delta_T=0.0, h0=0.002,
+                delta_T=0.0, h0=0.01,
                 tau_eng=0.01, b0=2.0, delta_B=0.0,
                 DG_min=0.0, DG_max=4.0, M=20,
                 Omega_0=1.0, T_lim = 1, memory = False
@@ -42,6 +42,7 @@ if __name__ == '__main__':
 
     for N_T in N_T_values:
     # for lam_A in [5.0, 6.0]:
+        print(f"Running simulation for N_T={N_T:.1e}")
         p = Parameters(**base, N_T0=N_T, lambda_A = 6.)
         # res = run_simulation(p=p, t_span=(0, T), mode='grid')
         res = run_simulation(p=p, t_span=(0, T), mode='stochastic')
