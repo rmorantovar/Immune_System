@@ -14,13 +14,13 @@ from lib_mf import*
 
 
 if __name__ == '__main__':
-    output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/exponential_proofreading/mean_field_Tcell_jam_early/'
+    output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/exponential_proofreading/mean_field_Tcell_jam_2/'
     os.makedirs(output_plot, exist_ok=True)
     # Default parameters
     base = dict(N_A0=1.0, delta_A=0.01,
-                k_on=1e2*1e6*1e6*24*3600/N_Avg, delta_pi=24., Theta=10.0,
-                hill=3.0, sigma=1.0, beta_star=2.5,
-                delta_T=0.0, h0=20,
+                k_on=1e2*1e6*1e6*24*3600/N_Avg, delta_pi=24., Theta=10000.0,
+                hill=3.0, sigma=1.0, beta_star=2.5, K_T = 100000.,
+                delta_T=0.0, h0=0.002,
                 tau_eng=0.01, b0=2.0, delta_B=0.0,
                 DG_min=0.0, DG_max=4.0, M=20,
                 Omega_0=1.0, T_lim = 1, memory = False
@@ -31,11 +31,11 @@ if __name__ == '__main__':
     # Scan N_T: move t_D relative to dynamics
     # ============================================================
 
-    N_T_values = [1e3] # For testing
-    N_T_values = [1e2, 1e3, 1e4, 1e5, 1e20]
+    N_T_values = [1e3, 1e6] # For testing
+    # N_T_values = [1e2, 1e3, 1e4, 1e5, 1e20]
     
 
-    fig, axes = plt.subplots(2, 3, figsize=(16, 10))
+    fig, axes = plt.subplots(3, 2, figsize=(10, 16))
 
     # Storage for summary
     summary = []
@@ -44,7 +44,7 @@ if __name__ == '__main__':
     # for lam_A in [5.0, 6.0]:
         p = Parameters(**base, N_T0=N_T, lambda_A = 6.)
         # res = run_simulation(p=p, t_span=(0, T), mode='grid')
-        res = run_simulation(p=p, t_span=(0, 10), mode='stochastic')
+        res = run_simulation(p=p, t_span=(0, T), mode='stochastic')
 
         # print(compute_N_B_tot(res))
         fig_NT = plot_T_cell_analysis(res)
@@ -69,53 +69,54 @@ if __name__ == '__main__':
 
         label = f'$N_T=1e{int(np.log10(N_T))}$'
 
-        # (a) N_B_tot
+        # (a) N_A
         ax = axes[0, 0]
-        ax.semilogy(t, N_B_tot, label=label)
+        ax.semilogy(t, res['N_A'], label=label)
 
-        # (b) L_act
-        ax = axes[0, 1]
-        ax.semilogy(t, L_act + 0.1, label=label)
-
-        # (c) D(t)
-        ax = axes[0, 2]
-        ax.semilogy(t, res['D'] + 1e-10, label=label)
-
-        # (d) N_T_free / N_T
+        # (b) pi
         ax = axes[1, 0]
-        ax.plot(t, res['N_T_free'] / N_T, label=label)
+        ax.semilogy(t, res['pi'][0, :], label=label)
+        
+        # (c) N_T_free / N_T
+        ax = axes[2, 0]
+        ax.semilogy(t, res['N_T_free'] / N_T, label=label)
+
+        # (d) D(t)
+        ax = axes[0, 1]
+        ax.semilogy(t, res['D'] + 1e-10, label=label)
 
         # (e) Growth rate: d(ln N_B_tot)/dt
         ax = axes[1, 1]
         ax.plot(t, res['lambda_B'][0, :]/p.b0, label=label)
-
-        # (f) N_B_tot / N_T
-        ax = axes[1, 2]
-        ax.plot(t, N_B_tot / N_T, label=label)
+        
+        # (f) N_B_tot and L_act
+        ax = axes[2, 1]
+        ax1 = ax.semilogy(t, N_B_tot, linestyle = '-', label=label)
+        ax.semilogy(t, L_act, linestyle = '--', label=label, color=ax1[0].get_color())
 
 
     # Formatting
     axes[0, 0].set_xlabel('Time')
-    axes[0, 0].set_ylabel('$N_B^{tot}$')
-    axes[0, 0].set_title('Total activated B cells')
+    axes[0, 0].set_ylabel('$N_A$')
+    axes[0, 0].set_title('Antigen dynamics')
     axes[0, 0].legend(fontsize=7)
 
-    axes[0, 1].set_xlabel('Time')
-    axes[0, 1].set_ylabel('$L_{act}$')
-    axes[0, 1].set_title('Number of activated clones')
-    axes[0, 1].legend(fontsize=7)
-
-    axes[0, 2].set_xlabel('Time')
-    axes[0, 2].set_ylabel('$D(t)$')
-    axes[0, 2].set_title('Demand function')
-    axes[0, 2].axhline(1.0, color='k', linestyle=':', alpha=0.5)
-    axes[0, 2].legend(fontsize=7)
-
     axes[1, 0].set_xlabel('Time')
-    axes[1, 0].set_ylabel('$N_T^{free}/N_T$')
-    axes[1, 0].set_title('Fraction free T cells')
-    axes[1, 0].axhline(0.5, color='k', linestyle=':', alpha=0.5)
+    axes[1, 0].set_ylabel(r'$\pi$')
+    axes[1, 0].set_title('pMHC dynamics')
     axes[1, 0].legend(fontsize=7)
+
+    axes[2, 0].set_xlabel('Time')
+    axes[2, 0].set_ylabel('$N_T^o/N_T$')
+    axes[2, 0].set_title('Free T cell fraction')
+    axes[2, 0].axhline(1.0, color='k', linestyle=':', alpha=0.5)
+    axes[2, 0].legend(fontsize=7)
+
+    axes[0, 1].set_xlabel('Time')
+    axes[0, 1].set_ylabel('$D$')
+    axes[0, 1].set_title('Demand function')
+    axes[0, 1].axhline(0.5, color='k', linestyle=':', alpha=0.5)
+    axes[0, 1].legend(fontsize=7)
 
     axes[1, 1].axhline(1.0, color='k', linestyle='--', alpha=0.5)
     axes[1, 1].set_xlabel('Time')
@@ -123,11 +124,11 @@ if __name__ == '__main__':
     axes[1, 1].set_title('Growth rate')
     axes[1, 1].legend(fontsize=7)
 
-    axes[1, 2].set_xlabel('Time')
-    axes[1, 2].set_ylabel('$N_B^{tot} / N_T$')
-    axes[1, 2].set_title('B cells per T cell')
-    # axes[1, 2].set_yscale('log')
-    axes[1, 2].legend(fontsize=7)
+    axes[2, 1].set_xlabel('Time')
+    axes[2, 1].set_ylabel('$N_B^{tot}$ and $L_{act}$' )
+    axes[2, 1].set_title('B cells per T cell')
+    # axes[2, 1].set_yscale('log')
+    axes[2, 1].legend(fontsize=7)
 
     plt.suptitle('Effect of $N_T$ on activation dynamics', fontsize=14)
     plt.tight_layout()

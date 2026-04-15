@@ -16,16 +16,16 @@ from lib_mf import*
 
 
 if __name__ == '__main__':
-    output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/exponential_proofreading/mean_field_Tcell_jam_early/'
+    output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/exponential_proofreading/mean_field_Tcell_jam_2/'
     os.makedirs(output_plot, exist_ok=True)
     # Default parameters
     base = dict(N_A0=1.0, delta_A=0.01,
-                k_on=1e2*1e6*1e6*24*3600/N_Avg, delta_pi=24., Theta=10.0,
-                hill=3.0, sigma=1.0, beta_star=2.5,
-                delta_T=0.0, h0=20,
+                k_on=1e2*1e6*1e6*24*3600/N_Avg, delta_pi=24., Theta=10000.0,
+                hill=3.0, sigma=1.0, beta_star=2.5, K_T = 100000.,
+                delta_T=0.0, h0=0.002,
                 tau_eng=0.01, b0=2.0, delta_B=0.0,
                 DG_min=0.0, DG_max=4.0, M=20,
-                Omega_0=1.0, T_lim = 1 , memory = False
+                Omega_0=1.0, T_lim = 0, memory = False
     )
     T = 16
     N_ensemble = 20
@@ -34,8 +34,8 @@ if __name__ == '__main__':
     # Scan N_T: move t_D relative to dynamics
     # ============================================================
 
-    # N_T_values = [1e3] # For testing
-    N_T_values = [1e2, 1e3, 1e4, 1e5, 1e20]
+    N_T_values = [1e3, 1e6] # For testing
+    # N_T_values = [1e2, 1e3, 1e4, 1e5, 1e20]
 
     fig_zipf, ax_zipf = plt.subplots(figsize=(6, 5))
 
@@ -50,26 +50,10 @@ if __name__ == '__main__':
             print(f" {i+1}/{N_ensemble}...")
             p = Parameters(**base, N_T0=N_T, lambda_A = 6.)
             # res = run_simulation(p=p, t_span=(0, T), mode='grid')
-            res = run_simulation(p=p, t_span=(0, 10), mode='stochastic')
+            res = run_simulation(p=p, t_span=(0, T), mode='stochastic')
 
             ranks_i, sizes_i = compute_zipf(res, time_index=-1)
             sizes += sizes_i[:len(ranks)]
-
-            t = res['t']
-            N_B_tot = compute_N_B_tot(res)
-            L_act = compute_L_act(res)
-            t_D = find_t_D(res)
-
-            summary.append({
-                'N_T': N_T,
-                'lambda_A': 6.0,
-                't_D': t_D,
-                'N_B_tot_final': N_B_tot[-1],
-                'L_act_final': L_act[-1],
-                'D_final': res['D'][-1],
-            })
-
-            label = f'$N_T=1e{int(np.log10(N_T))}$'
 
         ax_zipf.loglog(ranks, sizes/N_ensemble, marker='o', ls = '', ms = 4, markeredgecolor='k', label=label, markeredgewidth=0.5)
 

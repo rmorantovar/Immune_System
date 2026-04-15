@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
+import scipy.stats as stats
 from dataclasses import dataclass
 
 N_Avg = 6.02214076e23  # Avogadro's number (molecules per mole)
@@ -53,6 +54,7 @@ class Parameters:
     h0: float = 0.1         # T-B contact rate constant
     tau_eng: float = 0.1        # T-B engagement duration
     b0: float = 0.3            # intrinsic cell division rate
+    K_T: float = 10.0           # saturation constant for T cell limitation
 
     # --- B cells ---
     delta_B: float = 0.0        # B cell death rate
@@ -66,6 +68,7 @@ class Parameters:
     # --- Simulation options ---
     T_lim: bool = False         # whether to include T cell limitation in the demand function
     memory: bool = False        # whether to use memory-like initial conditions for N_B
+    
 
 # ============================================================
 # Auxiliary functions
@@ -116,11 +119,14 @@ def build_repertoire_stochastic(p, DG_max_sim=None, seed=None):
         DG_max_sim = p.DG_max
  
     rng = np.random.default_rng(seed)
+    n_extra = 3
+    # Replace DG_min with DG_floor in the sampling
+    DG_floor = p.DG_min - n_extra / p.beta_star  # extend by n_extra expected clones
  
     # Total number of clones in [DG_min, DG_max_sim]:
     # L_sim = int(Omega_0 / beta_star * (exp(beta_star * DG_max_sim) - exp(beta_star * DG_min)))
     L_sim = int(p.Omega_0 / p.beta_star * (
-        np.exp(p.beta_star * DG_max_sim) - np.exp(p.beta_star * p.DG_min)
+        np.exp(p.beta_star * DG_max_sim) - np.exp(p.beta_star * DG_floor)
     ))
  
     if L_sim <= 0:
@@ -136,7 +142,7 @@ def build_repertoire_stochastic(p, DG_max_sim=None, seed=None):
     #                         + exp(beta_star*DG_min))
  
     u = rng.uniform(0, 1, size=L_sim)
-    exp_min = np.exp(p.beta_star * p.DG_min)
+    exp_min = np.exp(p.beta_star * DG_floor)
     exp_max = np.exp(p.beta_star * DG_max_sim)
     DG_arr = (1.0 / p.beta_star) * np.log(u * (exp_max - exp_min) + exp_min)
     DG_arr = np.sort(DG_arr)
@@ -168,7 +174,7 @@ def compute_demand(pi_vec, N_B_vec, weights, p):
     """
     activated = (N_B_vec > 2).astype(float)
     visibility = pi_vec**p.hill / (pi_vec**p.hill + p.Theta**p.hill)
-    return p.tau_eng * p.h0 * np.sum(weights * visibility * N_B_vec * activated)
+    return p.tau_eng * p.h0 * np.sum(weights * pi_vec * N_B_vec * activated)
 
 
 def compute_lambda_B(pi_vec, N_T_free, p):
@@ -179,7 +185,8 @@ def compute_lambda_B(pi_vec, N_T_free, p):
     h_T = h0 * pi^h/(pi^h+Theta^h) * N_T_free/(N_T_free + K_T)
     """
     visibility = pi_vec**p.hill / (pi_vec**p.hill + p.Theta**p.hill)
-    h_T = p.h0 * visibility * N_T_free/ (N_T_free + 10.0)  # K_T is an arbitrary saturation constant to prevent unbounded growth of h_T
+    # h_T = p.h0 * visibility * N_T_free/ (N_T_free + p.K_T)  # K_T is an arbitrary saturation constant to prevent unbounded growth of h_T
+    h_T = p.h0 * pi_vec * N_T_free #linear regime
 
     # Avoid division by zero when h_T = 0
     with np.errstate(divide='ignore', invalid='ignore'):
@@ -249,6 +256,23 @@ def compute_zipf(res, time_index=-1, threshold=1.5):
  
     return ranks, sizes/sizes[0]  # normalize by largest clone size
 
+
+def compute_potency(res, time_index=-1, threshold=1.5):
+    """
+    Compute the potency (sum of the clone size times exp(-E)) at a given time.
+ 
+    Returns
+    -------
+    potency : float, total activated B cells normalized by exp(-DG) weighting
+    """
+    N_B = res['N_B'][:, time_index]
+    DG = res['DG']
+    w = res['weights']
+ 
+    activated = N_B > threshold
+    potency = np.sum(N_B[activated] * np.exp(-DG[activated]))
+    
+    return potency 
 
 # ============================================================
 # ODE system
@@ -341,6 +365,7 @@ def run_simulation(p=None, t_span=None, t_eval=None, mode='grid', DG_max_sim=Non
         'N_B'     : clone size array (M x len(t))
         'N_T'     : T cell count
         'N_T_free': free T cells
+        'K_t'      : effective T cell limitation factor
         'D'       : demand function
         'lambda_B': division rate array (M x len(t))
         'DG_grid' : Delta G grid
