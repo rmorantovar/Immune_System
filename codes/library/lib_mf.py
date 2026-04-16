@@ -174,7 +174,8 @@ def compute_demand(pi_vec, N_B_vec, weights, p):
     """
     activated = (N_B_vec > 2).astype(float)
     visibility = pi_vec**p.hill / (pi_vec**p.hill + p.Theta**p.hill)
-    return p.tau_eng * p.h0 * np.sum(weights * pi_vec * N_B_vec * activated)
+    # return p.tau_eng * p.h0 * np.sum(weights * pi_vec * N_B_vec * activated)
+    return np.sum(weights * pi_vec * N_B_vec * activated)
 
 
 def compute_lambda_B(pi_vec, N_T_free, p):
@@ -318,7 +319,7 @@ def rhs(t, y, p, M, psi_vec, weights):
     D = compute_demand(pi_vec, N_B_vec, weights, p)
     # change here to test T cell limitation vs no limitation
     if p.T_lim:
-        N_T_free = N_T / (1.0 + D)
+        N_T_free = N_T / (1.0 + D/p.K_T)  # T cell limitation: free T cells decrease as demand increases
     else:
         N_T_free = N_T 
  
@@ -433,7 +434,7 @@ def run_simulation(p=None, t_span=None, t_eval=None, mode='grid', DG_max_sim=Non
         D_arr[j] = compute_demand(pi_arr[:, j], N_B_arr[:, j], weights, p)
         # change here to test T cell limitation vs no limitation
         if p.T_lim:
-            N_T_free_arr[j] = N_T_arr[j] / (1.0 + D_arr[j])
+            N_T_free_arr[j] = N_T_arr[j] / (1.0 + D_arr[j]/p.K_T)  # T cell limitation: free T cells decrease as demand increases
         else:
             N_T_free_arr[j] = N_T_arr[j]
         lambda_B_arr[:, j] = compute_lambda_B(pi_arr[:, j],
