@@ -24,11 +24,11 @@ if __name__ == '__main__':
                 hill=3.0, sigma=1.0, beta_star=2.5, K_T = 100000.,
                 delta_T=0.0, h0=0.002, N_T0=1e6,
                 tau_eng=0.01, b0=2.0, delta_B=0.0,
-                DG_min=0.0, DG_max=2.5, M=20,
+                DG_min=0.0, DG_max=4.0, M=20,
                 Omega_0=1.0, T_lim = 0
     )
     T = 16
-    N_ensemble = 1000
+    N_ensemble = 200
     # print(compute_N_B_tot(res))
     # ============================================================
     # Scan N_T: move t_D relative to dynamics
