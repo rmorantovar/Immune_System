@@ -14,7 +14,7 @@ from lib_mf import*
 
 
 if __name__ == '__main__':
-    output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/exponential_proofreading/mean_field_Tcell_jam_2/'
+    output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/exponential_proofreading/mean_field_lamA/'
     os.makedirs(output_plot, exist_ok=True)
     # Default parameters
     base = dict(N_A0=1.0, delta_A=0.01,

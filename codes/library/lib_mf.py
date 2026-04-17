@@ -157,6 +157,11 @@ def psi(DG, sigma):
     """Binding/internalization probability. Boltzmann gate."""
     return (1 + np.exp(DG))**-sigma
 
+def G1(pi_vec, p):
+    """B-T cell engagement probability."""
+    # return pi_vec**p.hill / (pi_vec**p.hill + p.Theta**p.hill)
+    return pi_vec
+
 
 def Omega(DG, beta_star, Omega_0):
     """Density of states (number of clones per unit DG)."""
@@ -173,9 +178,9 @@ def compute_demand(pi_vec, N_B_vec, weights, p):
       stochastic: weights_i = 1
     """
     activated = (N_B_vec > 2).astype(float)
-    visibility = pi_vec**p.hill / (pi_vec**p.hill + p.Theta**p.hill)
-    # return p.tau_eng * p.h0 * np.sum(weights * pi_vec * N_B_vec * activated)
-    return np.sum(weights * pi_vec * N_B_vec * activated)
+    visibility = G1(pi_vec, p)
+    # return p.tau_eng * p.h0 * np.sum(weights * visibility * N_B_vec * activated)
+    return np.sum(weights * visibility * N_B_vec * activated)
 
 
 def compute_lambda_B(pi_vec, N_T_free, p):
@@ -185,9 +190,9 @@ def compute_lambda_B(pi_vec, N_T_free, p):
     lambda_B = (1/h_T + 1/b0)^{-1}
     h_T = h0 * pi^h/(pi^h+Theta^h) * N_T_free/(N_T_free + K_T)
     """
-    visibility = pi_vec**p.hill / (pi_vec**p.hill + p.Theta**p.hill)
+    visibility = G1(pi_vec, p)
     # h_T = p.h0 * visibility * N_T_free/ (N_T_free + p.K_T)  # K_T is an arbitrary saturation constant to prevent unbounded growth of h_T
-    h_T = p.h0 * pi_vec * N_T_free #linear regime
+    h_T = p.h0 * visibility * N_T_free #linear regime
 
     # Avoid division by zero when h_T = 0
     with np.errstate(divide='ignore', invalid='ignore'):
