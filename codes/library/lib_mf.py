@@ -157,6 +157,7 @@ def psi(DG, sigma):
     """Binding/internalization probability. Boltzmann gate."""
     return (1 + np.exp(DG))**-sigma
 
+
 def G1(pi_vec, p):
     """B-T cell engagement probability."""
     # return pi_vec**p.hill / (pi_vec**p.hill + p.Theta**p.hill)
@@ -178,21 +179,23 @@ def compute_demand(pi_vec, N_B_vec, weights, p):
       stochastic: weights_i = 1
     """
     activated = (N_B_vec > 2).astype(float)
-    visibility = G1(pi_vec, p)
     # return p.tau_eng * p.h0 * np.sum(weights * visibility * N_B_vec * activated)
-    return np.sum(weights * visibility * N_B_vec * activated)
+    return np.sum(weights * G1(pi_vec, p) * N_B_vec)
 
 
-def compute_lambda_B(pi_vec, N_T_free, p):
+def compute_lambda_B(pi_vec, N_B_vec, N_T, weights, p):
     """
     Compute division rate for each clone.
 
     lambda_B = (1/h_T + 1/b0)^{-1}
     h_T = h0 * pi^h/(pi^h+Theta^h) * N_T_free/(N_T_free + K_T)
     """
-    visibility = G1(pi_vec, p)
-    # h_T = p.h0 * visibility * N_T_free/ (N_T_free + p.K_T)  # K_T is an arbitrary saturation constant to prevent unbounded growth of h_T
-    h_T = p.h0 * visibility * N_T_free #linear regime
+    # h_T = p.h0 * G1(pi_vec, p) * N_T_free/ (N_T_free + p.K_T)  # K_T is an arbitrary saturation constant to prevent unbounded growth of h_T
+    # h_T = p.h0 * G1(pi_vec, p) * N_T_free #linear regime
+
+    D = compute_demand(pi_vec, N_B_vec, weights, p)
+
+    h_T = G1(pi_vec, p) * N_T/(1+D/p.h0) #linear regime
 
     # Avoid division by zero when h_T = 0
     with np.errstate(divide='ignore', invalid='ignore'):
@@ -200,6 +203,26 @@ def compute_lambda_B(pi_vec, N_T_free, p):
         lambda_B = np.where(inv_lambda < np.inf, 1.0 / inv_lambda, 0.0)
 
     return lambda_B
+
+
+def compute_lambda_T(pi_vec, N_B_vec, weights, p):
+    """
+    Compute division rate for T cells.
+
+    lambda_T = (1/h_B + 1/b0)^{-1}
+    h_B = h0 * D, where D is the demand function.
+    """
+    D = compute_demand(pi_vec, N_B_vec, weights, p)
+
+    # h_B = p.h0 * G1(pi_vec, p) * N_T_free/ (N_T_free + p.K_T)  # K_T is an arbitrary saturation constant to prevent unbounded growth of h_T
+    h_B =  D #linear regime
+
+    # Avoid division by zero when h_B = 0
+    with np.errstate(divide='ignore', invalid='ignore'):
+        inv_lambda = np.where(h_B > 0, (1.0 / h_B) + (1.0 / p.b0), np.inf)
+        lambda_T = np.where(inv_lambda < np.inf, 1.0 / inv_lambda, 0.0)
+
+    return lambda_T
 
 
 def compute_N_B_tot(res, threshold=1.5):
@@ -329,7 +352,9 @@ def rhs(t, y, p, M, psi_vec, weights):
         N_T_free = N_T 
  
     # --- Division rate ---
-    lambda_B = compute_lambda_B(pi_vec, N_T_free, p)
+    # lambda_B = compute_lambda_B(pi_vec, N_T_free, p)
+    lambda_B = compute_lambda_B(pi_vec, N_B_vec, N_T, weights, p)
+    # print(lambda_B)
  
     # --- pMHC dynamics ---
     dpi = p.k_on * psi_vec * N_A - p.delta_pi * pi_vec - lambda_B * pi_vec
@@ -338,7 +363,10 @@ def rhs(t, y, p, M, psi_vec, weights):
     dN_B = (lambda_B - p.delta_B) * N_B_vec
  
     # --- T cell dynamics ---
-    dN_T = -p.delta_T * N_T
+    lambda_T = compute_lambda_T(pi_vec, N_B_vec, weights, p)
+    # print(lambda_T)
+    dN_T = lambda_T * N_T  - p.delta_T * N_T
+    # dN_T = (- p.delta_T) * N_T
  
     return pack_state(dN_A, dpi, dN_B, dN_T, M)
 
@@ -442,8 +470,8 @@ def run_simulation(p=None, t_span=None, t_eval=None, mode='grid', DG_max_sim=Non
             N_T_free_arr[j] = N_T_arr[j] / (1.0 + D_arr[j]/p.K_T)  # T cell limitation: free T cells decrease as demand increases
         else:
             N_T_free_arr[j] = N_T_arr[j]
-        lambda_B_arr[:, j] = compute_lambda_B(pi_arr[:, j],
-                                              N_T_free_arr[j], p)
+        # lambda_B_arr[:, j] = compute_lambda_B(pi_arr[:, j], N_T_free_arr[j], p)
+        lambda_B_arr[:, j] = compute_lambda_B(pi_arr[:, j], N_B_arr[:, j], N_T_arr[j], weights, p)
 
     return {
         't': t,
