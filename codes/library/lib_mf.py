@@ -436,10 +436,13 @@ def rhs_complete(t, y, p, M, psi_vec, weights):
     # S_A = p.lambda_A * N_A if p.lambda_A > 0 else 0.0
     # dN_A = S_A - p.delta_A * N_A
     pb = (1 + (1e-9/(1e6*24*3600*np.exp(2.0*t)/N_Avg)))**(-1)  # or whatever dependence you intend
-    dN_A = (p.lambda_A * (1 - pb) - 2*pb) * N_A - p.delta_A * N_A
+    dN_A = (p.lambda_A * (1 - pb) - 4*pb) * N_A - p.delta_A * N_A
       
     # --- pMHC dynamics ---
-    lambda_eff = np.where(N_Bo_vec > 0, 2 * p.b0 * N_Ba_vec / N_Bo_vec, 0.0)
+    N_B_tot = N_Bo_vec + N_BT_vec + N_Ba_vec
+    N_T_tot = N_To + N_Ta
+    lambda_eff = np.where(N_B_tot > 0, p.b0 * N_Ba_vec / N_B_tot, 0.0)
+   
     dpi = p.k_on * psi_vec * N_A - p.delta_pi * pi_vec - lambda_eff * pi_vec
  
     # --- Free B-cell clones ---
@@ -452,10 +455,10 @@ def rhs_complete(t, y, p, M, psi_vec, weights):
     dN_Ba = p.h0 * N_BT_vec - p.b0 * N_Ba_vec  - p.delta_B * N_Ba_vec
  
     # --- Free T cells ---
-    dN_To = - p.k_on * np.sum(weights * pi_vec * N_Bo_vec) * N_To + 2 * p.b0 * N_Ta - p.delta_T * N_To
+    dN_To = - p.k_on * np.sum(weights * pi_vec * N_Bo_vec) * N_To + 1 * p.b0 * N_Ta - p.delta_T * N_To
 
     # --- Activated T cells ---
-    dN_Ta = p.h0 * np.sum(weights * N_BT_vec) - p.b0 * N_Ta - p.delta_T * N_Ta
+    dN_Ta = p.h0 * np.sum(weights * N_BT_vec) - p.b0 * N_Ta - p.delta_T * N_Ta 
  
     return pack_state_complete(dN_A, dpi, dN_Bo, dN_BT, dN_Ba, dN_To, dN_Ta, M)
 
@@ -626,7 +629,7 @@ def run_simulation_complete(p=None, t_span=None, t_eval=None, mode='grid', DG_ma
     if t_span is None:
         t_span = (0.0, 10.0)
     if t_eval is None:
-        t_eval = np.linspace(t_span[0], t_span[1], 500)
+        t_eval = np.linspace(t_span[0], t_span[1], 500  )
  
     # --- Build repertoire ---
     if mode == 'grid':

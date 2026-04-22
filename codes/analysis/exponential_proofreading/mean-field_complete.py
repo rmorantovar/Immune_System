@@ -18,26 +18,26 @@ if __name__ == '__main__':
     os.makedirs(output_plot, exist_ok=True)
     # Default parameters
     base = dict(N_A0=1.0, delta_A=0.01, lambda_A = 6.,
-                k_on=1e2*1e6*1e6*24*3600/N_Avg, delta_pi=24., Theta=1000.0,
+                k_on=1e1*1e6*1e6*24*3600/N_Avg, delta_pi=0.0, Theta=1000.0,
                 hill=1.0, sigma=1.0, beta_star=2.5, K_T = 1e1,
-                delta_T=0.00, h0=0.01,
+                delta_T=0.00, h0=100.0,
                 tau_eng=0.1, b0=2.0, delta_B=0.00,
                 DG_min=0.0, DG_max=3.5, M=20,
-                Omega_0=1.0, memory = False
+                Omega_0=1.0, T_lim = True
     )
-    T = 16
+    T = 14
     # print(compute_N_B_tot(res))
     # ============================================================
     # Scan N_T: move t_D relative to dynamics
     # ============================================================
 
-    N_T_values = [1e2] # For testing
+    N_T_values = [1e6] # For testing
     # N_T_values = [1e2, 1e3, 1e4, 1e5, 1e20]
     
-    for T_lim in [0, 1]:
-        fig, axes = plt.subplots(4, 1, figsize=(8, 12))
-        print(f"-- Running simulation for T_lim={T_lim} --")
-        base['T_lim'] = T_lim
+    for memory in [0]:
+        fig, axes = plt.subplots(5, 1, figsize=(8, 15))
+        print(f"-- Running simulation for memory={memory} --")
+        base['memory'] = memory
         for N_T in N_T_values:
         # for lam_A in [5.0, 6.0]:
             print(f"Running simulation for N_T={N_T:.1e}")
@@ -56,19 +56,30 @@ if __name__ == '__main__':
             # (b) pi
             ax = axes[1]
             ax1 = ax.semilogy(t, res['pi'][0, :], label=label, linewidth = 2)
+            ax.semilogy(t, 1e10*np.exp(-(p.b0)*t), label=label, linewidth = 1, linestyle='--', color='grey', alpha=0.8)
 
-            # (c) T
+            # (c) pi
             ax = axes[2]
-            ax1 = ax.semilogy(t, res['N_To'], label=label, linewidth = 2)
-            ax.semilogy(t, res['N_Ta'], label=label, linewidth = 2, linestyle='--', color=ax1[0].get_color())
-            ax.semilogy(t, res['N_BT'][0, :], label=label, linewidth = 2, linestyle=':', color=ax1[0].get_color())
+            ax1 = ax.plot(t, p.b0*res['N_Ba'][0, :]/(res['N_Bo'][0, :] + res['N_Ba'][0, :] + res['N_BT'][0, :]), label=label, linewidth = 2)
+            ax.axhline(p.b0, 0, T, linewidth = 1, linestyle='--', color='grey', alpha=0.8)
 
-            # (d) B
+            # (d) T
             ax = axes[3]
-            ax1 = ax.semilogy(t, res['N_Bo'][0, :], label=label, linewidth = 2)
-            ax.semilogy(t, res['N_Ba'][0, :], label=label, linewidth = 2, linestyle='--', color=ax1[0].get_color())
-            ax.semilogy(t, res['N_BT'][0, :], label=label, linewidth = 2, linestyle=':', color=ax1[0].get_color())
+            ax1 = ax.semilogy(t, res['N_To'] + res['N_Ta'] + np.sum(res['N_BT'], axis=0), label=label, linewidth = 3)
+            ax.semilogy(t, res['N_To'], label=label, linewidth = 2, linestyle='--', color=ax1[0].get_color())
+            ax.semilogy(t, res['N_Ta'], label=label, linewidth = 2, linestyle=':', color=ax1[0].get_color())
+            ax.semilogy(t, res['N_BT'][0, :], label=label, linewidth = 2, linestyle='-', color='k', alpha=0.8)
 
+            # (e) B
+            ax = axes[4]
+            N_B_total = np.sum(res['N_Bo'] + res['N_Ba'] + res['N_BT'], axis=0)
+            N_B_total = N_B_total - N_B_total[0]
+            ax1 = ax.semilogy(t, res['N_Bo'][0, :] + res['N_Ba'][0, :] + res['N_BT'][0, :], label=label, linewidth = 3)
+            ax.semilogy(t, res['N_Bo'][0, :], label=label, linewidth = 2, linestyle='--', color=ax1[0].get_color())
+            ax.semilogy(t, res['N_Ba'][0, :], label=label, linewidth = 2, linestyle=':', color=ax1[0].get_color())
+            ax.semilogy(t, res['N_BT'][0, :], label=label, linewidth = 2, linestyle='-', color='k', alpha=0.8)
+            # ax.semilogy(t, N_B_total, label=label, linewidth = 3, linestyle='-', alpha=0.8, color=ax1[0].get_color())
+            ax.semilogy(t, 1e-2*np.exp((p.b0)*t), label=label, linewidth = 1, linestyle='--', color='grey', alpha=0.8)
 
         # Formatting
         # axes[0].set_xlabel('Time')
@@ -78,19 +89,26 @@ if __name__ == '__main__':
         # axes[1].set_xlabel('Time')
         axes[1].set_ylabel(r'$\pi$')
         axes[1].set_xticklabels([])
+        axes[1].set_ylim(top = 10*np.max(res['pi'][0, :]))
+
+        # axes[1].set_xlabel('Time')
+        axes[2].set_ylabel(r'$\lambda_B$')
+        axes[2].set_xticklabels([])
 
         # axes[2].set_xlabel('Time')
-        axes[2].set_ylabel('T cells')
-        axes[2].axhline(1.0, color='k', linestyle=':', alpha=0.5)
-        axes[2].set_xticklabels([])
-        # axes[2].legend(fontsize=10)
-
-        axes[3].axhline(1.0, color='k', linestyle='--', alpha=0.5)
-        # axes[3].set_xlabel('Time')
-        axes[3].set_ylabel('B cells')
+        axes[3].set_ylabel('T cells')
+        axes[3].axhline(1.0, color='k', linestyle=':', alpha=0.5)
         axes[3].set_xticklabels([])
+        axes[3].set_yscale('log')
+        axes[3].set_ylim(bottom = 1e-2)
+        # axes[3].legend(fontsize=10)
 
+        axes[4].axhline(1.0, color='k', linestyle='--', alpha=0.5)
+        # axes[4].set_xlabel('Time')
+        axes[4].set_ylabel('B cells')
+        # axes[4].set_xticklabels([])
+        axes[4].set_ylim(bottom = 1e-2)
         
         plt.suptitle('Effect of $N_T$ on activation dynamics', fontsize=14)
         plt.tight_layout()
-        fig.savefig(os.path.join(output_plot, f'comparison_Tlim-{int(base["T_lim"])}_Mem-{int(p.memory)}.pdf'), dpi=150, bbox_inches='tight')
+        fig.savefig(os.path.join(output_plot, f'results_Mem-{int(p.memory)}.pdf'), dpi=150, bbox_inches='tight')
