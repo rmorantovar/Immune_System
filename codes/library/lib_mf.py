@@ -36,7 +36,7 @@ class Parameters:
     # --- Antigen ---
     N_A0: float = 1.0           # initial antigen concentration
     lambda_A: float = 1.0       # antigen growth rate (>0: replication, <0: decay)
-    delta_A: float = 0.0        # antigen clearance rate (set to 0 for pure exponential)
+    delta_A: float = 1.0        # antigen clearance rate (set to 0 for pure exponential)
 
     # --- pMHC ---
     k_on: float = 1.0           # antigen encounter rate (affinity-independent)
@@ -55,6 +55,7 @@ class Parameters:
     tau_eng: float = 0.1        # T-B engagement duration
     b0: float = 0.3            # intrinsic cell division rate
     K_T: float = 10.0           # saturation constant for T cell limitation
+    Tcell_growth_factor: float = 1.0 # factor controlling T cell expansion upon activation (relative to b0)
 
     # --- B cells ---
     delta_B: float = 0.0        # B cell death rate
@@ -73,6 +74,7 @@ class Parameters:
 # ============================================================
 # Auxiliary functions
 # ============================================================
+_call_count = [0]  # list so we can mutate from inside the function
 
 def build_repertoire_grid(p):
     """
@@ -352,6 +354,19 @@ def pack_state_complete(N_A, pi_vec, N_Bo_vec, N_BT_vec, N_Ba_vec, N_To, N_Ta, M
     return y
 
 
+def pack_state_semicomplete(N_A, pi_vec, N_Bo_vec, N_Ba_vec, N_To, N_Ta, M):
+    """Pack all state variables into a single vector for the integrator."""
+    y = np.zeros(4 * M + 3)
+    y[0] = N_A
+    y[1:M+1] = pi_vec
+    y[M+1:2*M+1] = N_Bo_vec
+    y[2*M+1:3*M+1] = N_Ba_vec
+    y[3*M+1] = N_To
+    y[3*M+2] = N_Ta
+
+    return y
+
+
 def unpack_state(y, M):
     """Unpack the state vector."""
     N_A = y[0]
@@ -373,6 +388,17 @@ def unpack_state_complete(y, M):
     return N_A, pi_vec, N_Bo_vec, N_BT_vec, N_Ba_vec, N_To, N_Ta
 
 
+def unpack_state_semicomplete(y, M):
+    """Unpack the state vector."""
+    N_A = y[0]
+    pi_vec = y[1:M+1]
+    N_Bo_vec = y[M+1:2*M+1]
+    N_Ba_vec = y[2*M+1:3*M+1]
+    N_To = y[3*M+1]
+    N_Ta = y[3*M+2]
+    return N_A, pi_vec, N_Bo_vec, N_Ba_vec, N_To, N_Ta
+
+
 def rhs(t, y, p, M, psi_vec, weights):
     """Right-hand side of the coupled ODE system."""
  
@@ -388,7 +414,7 @@ def rhs(t, y, p, M, psi_vec, weights):
     # S_A = p.lambda_A * N_A if p.lambda_A > 0 else 0.0
     # dN_A = S_A - p.delta_A * N_A
     pb = (1 + (1e-9/(1e6*24*3600*np.exp(2.0*t)/N_Avg)))**(-1)  # or whatever dependence you intend
-    dN_A = (p.lambda_A * (1 - pb) - 2*pb) * N_A - p.delta_A * N_A
+    dN_A = (p.lambda_A * (1 - pb) - p.delta_A*pb) * N_A - 0.01 * N_A
  
     # --- Demand and free T cells ---
     D = compute_demand(pi_vec, N_B_vec, weights, p)
@@ -419,6 +445,10 @@ def rhs(t, y, p, M, psi_vec, weights):
 
 
 def rhs_complete(t, y, p, M, psi_vec, weights):
+    _call_count[0] += 1
+    if _call_count[0] % 1000 == 0:
+        print(f"  t = {t:.4f}, calls = {_call_count[0]}")
+        
     """Right-hand side of the coupled ODE system."""
  
     N_A, pi_vec, N_Bo_vec, N_BT_vec, N_Ba_vec, N_To, N_Ta = unpack_state_complete(y, M)
@@ -436,7 +466,7 @@ def rhs_complete(t, y, p, M, psi_vec, weights):
     # S_A = p.lambda_A * N_A if p.lambda_A > 0 else 0.0
     # dN_A = S_A - p.delta_A * N_A
     pb = (1 + (1e-9/(1e6*24*3600*np.exp(2.0*t)/N_Avg)))**(-1)  # or whatever dependence you intend
-    dN_A = (p.lambda_A * (1 - pb) - 4*pb) * N_A - p.delta_A * N_A
+    dN_A = (p.lambda_A * (1 - pb) - p.delta_A*pb) * N_A - 0.01 * N_A
       
     # --- pMHC dynamics ---
     N_B_tot = N_Bo_vec + N_BT_vec + N_Ba_vec
@@ -446,21 +476,66 @@ def rhs_complete(t, y, p, M, psi_vec, weights):
     dpi = p.k_on * psi_vec * N_A - p.delta_pi * pi_vec - lambda_eff * pi_vec
  
     # --- Free B-cell clones ---
-    dN_Bo = - p.k_on * pi_vec * N_Bo_vec * N_To + 2 * p.b0 * N_Ba_vec - p.delta_B * N_Bo_vec
+    dN_Bo = - p.k_on * pi_vec**p.hill * N_Bo_vec * N_To/(N_To + p.K_T) + 2 * p.b0 * N_Ba_vec - p.delta_B * N_Bo_vec
 
     # --- T-B conjugates ---
-    dN_BT = p.k_on * pi_vec * N_Bo_vec * N_To - p.h0 * N_BT_vec
+    dN_BT = p.k_on * pi_vec**p.hill * N_Bo_vec * N_To/(N_To + p.K_T) - p.h0 * N_BT_vec
 
     # --- Activated B-cell clones ---
     dN_Ba = p.h0 * N_BT_vec - p.b0 * N_Ba_vec  - p.delta_B * N_Ba_vec
  
     # --- Free T cells ---
-    dN_To = - p.k_on * np.sum(weights * pi_vec * N_Bo_vec) * N_To + 1 * p.b0 * N_Ta - p.delta_T * N_To
+    dN_To = - p.k_on * np.sum(weights * pi_vec**p.hill * N_Bo_vec) * N_To/(N_To + p.K_T) + 2 * p.b0 * N_Ta - p.delta_T * N_To
 
     # --- Activated T cells ---
     dN_Ta = p.h0 * np.sum(weights * N_BT_vec) - p.b0 * N_Ta - p.delta_T * N_Ta 
  
     return pack_state_complete(dN_A, dpi, dN_Bo, dN_BT, dN_Ba, dN_To, dN_Ta, M)
+
+
+def rhs_semicomplete(t, y, p, M, psi_vec, weights):
+    # _call_count[0] += 1
+    # if _call_count[0] % 1000 == 0:
+    #     print(f"  t = {t:.4f}, calls = {_call_count[0]}")
+        
+    """Right-hand side of the coupled ODE system."""
+ 
+    N_A, pi_vec, N_Bo_vec, N_Ba_vec, N_To, N_Ta = unpack_state_semicomplete(y, M)
+ 
+    # Ensure non-negativity
+    N_A = max(N_A, 0.0)
+    pi_vec = np.maximum(pi_vec, 0.0)
+    N_Bo_vec = np.maximum(N_Bo_vec, 0.0)
+    N_Ba_vec = np.maximum(N_Ba_vec, 0.0)
+    N_To = max(N_To, 0.0)
+    N_Ta = max(N_Ta, 0.0)
+ 
+    # --- Antigen ---
+    # S_A = p.lambda_A * N_A if p.lambda_A > 0 else 0.0
+    # dN_A = S_A - p.delta_A * N_A
+    pb = (1 + (1e-9/(1e6*24*3600*np.exp(2.0*t)/N_Avg)))**(-1)  # or whatever dependence you intend
+    dN_A = (p.lambda_A * (1 - pb) - p.delta_A*pb) * N_A - 0.01 * N_A
+      
+    # --- pMHC dynamics ---
+    N_B_tot = N_Bo_vec + N_Ba_vec
+    N_T_tot = N_To + N_Ta
+    lambda_eff = np.where(N_B_tot > 0, p.b0 * N_Ba_vec / N_B_tot, 0.0)
+   
+    dpi = p.k_on * psi_vec * N_A - p.delta_pi * pi_vec - lambda_eff * pi_vec
+ 
+    # --- Free B-cell clones ---
+    dN_Bo = - p.k_on * pi_vec**p.hill * N_Bo_vec * N_To/(N_To + p.K_T) + 2 * p.b0 * N_Ba_vec - p.delta_B * N_Bo_vec
+
+    # --- Activated B-cell clones ---
+    dN_Ba = p.k_on * pi_vec**p.hill * N_Bo_vec * N_To/(N_To + p.K_T) - p.b0 * N_Ba_vec  - p.delta_B * N_Ba_vec
+ 
+    # --- Free T cells ---
+    dN_To = - p.k_on * np.sum(weights * pi_vec**p.hill * N_Bo_vec) * N_To/(N_To + p.K_T) + p.Tcell_growth_factor * p.b0 * N_Ta - p.delta_T * N_To
+
+    # --- Activated T cells ---
+    dN_Ta = p.k_on * np.sum(weights * pi_vec**p.hill * N_Bo_vec) * N_To/(N_To + p.K_T) - p.b0 * N_Ta - p.delta_T * N_Ta 
+ 
+    return pack_state_semicomplete(dN_A, dpi, dN_Bo, dN_Ba, dN_To, dN_Ta, M)
 
 # ============================================================
 # Simulation
@@ -654,19 +729,21 @@ def run_simulation_complete(p=None, t_span=None, t_eval=None, mode='grid', DG_ma
     N_Ta_init = 0.0
  
     y0 = pack_state_complete(N_A_init, pi_init, N_Bo_init, N_BT_init, N_Ba_init, N_To_init, N_Ta_init, M)
- 
+    
+    
     # --- Integrate ---
+    #method='BDF', 'LSODA' o 'RK45', rtol=1e-6, atol=1e-8, max_step=0.1
+    _call_count[0] = 0
     sol = solve_ivp(
         fun=lambda t, y: rhs_complete(t, y, p, M, psi_arr, weights),
         t_span=t_span,
         y0=y0,
         t_eval=t_eval,
-        method='RK45',
-        rtol=1e-8,
-        atol=1e-10,
-        max_step=0.01,
+        method='LSODA',
+        rtol=1e-4,
+        atol=1e-5
     )
- 
+    print(f"Total RHS calls: {_call_count[0]}")
     if not sol.success:
         print(f"Warning: integration failed: {sol.message}")
  
@@ -701,6 +778,117 @@ def run_simulation_complete(p=None, t_span=None, t_eval=None, mode='grid', DG_ma
         'M': M,
     }
 
+
+def run_simulation_semicomplete(p=None, t_span=None, t_eval=None, mode='grid', DG_max_sim=None, seed=None):      
+    """
+    Run the mean-field simulation.
+ 
+    Parameters
+    ----------
+    p : Parameters
+    t_span : tuple (t_start, t_end)
+    t_eval : array of output time points
+    mode : 'grid' or 'stochastic'
+    DG_max_sim : float (stochastic mode only)
+        Upper bound for clone sampling. Default: p.DG_max.
+    seed : int (stochastic mode only)
+        Random seed.
+
+    Returns
+    -------
+    result : dict with keys:
+        't'       : time array
+        'N_A'     : antigen concentration
+        'pi'      : pMHC array (M x len(t))
+        'N_Bo'    : free B-cell clones (M x len(t))
+        'N_Ba'    : activated B-cell clones (M x len(t))
+        'N_To'    : free T cells (len(t))
+        'N_Ta'    : activated T cells (len(t))
+        'h_T'     : T-cell help rates
+        'h_B'     : B-cell help rate
+        'D'       : demand function
+        'lambda_B': division rate array (M x len(t))
+        'lambda_T': division rate array (len(t))
+        'DG_grid' : Delta G grid
+        'Omega'   : density of states
+        'params'  : parameters used
+    """
+    if p is None:
+        p = Parameters()
+    if t_span is None:
+        t_span = (0.0, 10.0)
+    if t_eval is None:
+        t_eval = np.linspace(t_span[0], t_span[1], 500  )
+ 
+    # --- Build repertoire ---
+    if mode == 'grid':
+        DG_arr, psi_arr, weights, M = build_repertoire_grid(p)
+    elif mode == 'stochastic':
+        DG_arr, psi_arr, weights, M = build_repertoire_stochastic(
+            p, DG_max_sim=DG_max_sim, seed=seed
+        )
+    else:
+        raise ValueError(f"Unknown mode: {mode}. Use 'grid' or 'stochastic'.")
+ 
+    # --- Initial conditions ---
+    N_A_init = p.N_A0
+    pi_init = np.zeros(M)  # no pMHC at t=0
+    if p.memory:
+        N_Bo_init = 1e2*np.exp(-p.sigma * (p.b0 / p.lambda_A + 1) * DG_arr)  # memory
+    else:
+        N_Bo_init = np.ones(M)  # naive
+    N_Ba_init = np.zeros(M)
+    N_To_init = p.N_T0
+    N_Ta_init = 0.0
+ 
+    y0 = pack_state_semicomplete(N_A_init, pi_init, N_Bo_init, N_Ba_init, N_To_init, N_Ta_init, M)
+    
+    
+    # --- Integrate ---
+    #method='BDF', 'LSODA' o 'RK45', rtol=1e-6, atol=1e-8, max_step=0.1
+    # _call_count[0] = 0
+    sol = solve_ivp(
+        fun=lambda t, y: rhs_semicomplete(t, y, p, M, psi_arr, weights),
+        t_span=t_span,
+        y0=y0,
+        t_eval=t_eval,
+        method='LSODA',
+        rtol=1e-4,
+        atol=1e-5
+    )
+    # print(f"Total RHS calls: {_call_count[0]}")
+    if not sol.success:
+        print(f"Warning: integration failed: {sol.message}")
+ 
+    # --- Unpack ---
+    t = sol.t
+    N_steps = len(t)
+ 
+    N_A, pi_arr, N_Bo_arr, N_Ba_arr, N_To_arr, N_Ta_arr = unpack_state_semicomplete(sol.y, M)
+    
+    # --- Derived quantities ---
+    D_arr = np.zeros(N_steps)
+    N_T_free_arr = np.zeros(N_steps)
+    lambda_B_arr = np.zeros((M, N_steps))
+    lambda_T_arr = np.zeros(N_steps)
+    h_T_arr = np.zeros((M, N_steps))
+    h_B_arr = np.zeros(N_steps)
+    
+
+    return {
+        't': t,
+        'N_A': N_A,
+        'pi': pi_arr,
+        'N_Bo': N_Bo_arr,
+        'N_Ba': N_Ba_arr,
+        'N_To': N_To_arr,
+        'N_Ta': N_Ta_arr,
+        'DG': DG_arr,
+        'weights': weights,
+        'params': p,
+        'mode': mode,
+        'M': M,
+    }
 # ============================================================
 # Visualization
 # ============================================================
