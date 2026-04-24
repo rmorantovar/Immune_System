@@ -16,25 +16,25 @@ from lib_mf import*
 
 
 if __name__ == '__main__':
-    output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/exponential_proofreading/mean_field_Tcell_jam_2/'
+    output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/exponential_proofreading/mean_field_semicomplete/'
     os.makedirs(output_plot, exist_ok=True)
     # Default parameters
-    base = dict(N_A0=1.0, delta_A=0.01,
-                k_on=1e2*1e6*1e6*24*3600/N_Avg, delta_pi=24., Theta=10000.0,
-                hill=3.0, sigma=1.0, beta_star=2.5, K_T = 100000.,
-                delta_T=0.0, h0=0.002,
-                tau_eng=0.01, b0=2.0, delta_B=0.0,
-                DG_min=0.0, DG_max=3.5, M=20,
-                Omega_0=1.0, T_lim = 1, memory = False
+    base = dict(N_A0=1.0, delta_A=4.0, lambda_A = 6.,
+                k_on=1e2*1e6*1e6*24*3600/N_Avg, delta_pi=0.1, Theta=1000.0,
+                hill=2.0, sigma=1.0, beta_star=2.5, K_T = 1e5,
+                delta_T=0.00, h0=1000.0, Tcell_growth_factor=2.0,
+                tau_eng=0.1, b0=2.0, delta_B=0.00,
+                DG_min=0.0, DG_max=2.5, M=20,
+                Omega_0=1.0, T_lim = True, memory = 1
     )
-    T = 16
-    N_ensemble = 20
+    T = 12
+    N_ensemble = 100
     # print(compute_N_B_tot(res))
     # ============================================================
     # Scan N_T: move t_D relative to dynamics
     # ============================================================
 
-    N_T_values = [1e3, 1e6] # For testing
+    N_T_values = [1e4] # For testing
     # N_T_values = [1e2, 1e3, 1e4, 1e5, 1e20]
 
     fig_zipf, ax_zipf = plt.subplots(figsize=(6, 5))
@@ -48,22 +48,22 @@ if __name__ == '__main__':
         sizes = np.zeros_like(ranks)
         for i in range(N_ensemble):
             print(f" {i+1}/{N_ensemble}...")
-            p = Parameters(**base, N_T0=N_T, lambda_A = 6.)
+            p = Parameters(**base, N_T0=N_T)
             # res = run_simulation(p=p, t_span=(0, T), mode='grid')
-            res = run_simulation(p=p, t_span=(0, T), mode='stochastic')
+            res = run_simulation_semicomplete(p=p, t_span=(0, T), mode='stochastic')
 
             ranks_i, sizes_i = compute_zipf(res, time_index=-1)
             sizes += sizes_i[:len(ranks)]
         
         label = f'$N_T=1e{int(np.log10(N_T))}$'
-        ax_zipf.loglog(ranks, sizes/N_ensemble, marker='o', ls = '', ms = 4, markeredgecolor='k', label=label, markeredgewidth=0.5)
-
+        ax_zipf.loglog(ranks, sizes/N_ensemble, marker='o', ls = '', ms = 4, alpha = 0.5, markerfacecolor='grey', markeredgecolor='k', label=label, markeredgewidth=0.5)
 
     # Formatting
     ax_zipf.loglog(ranks, ranks**(-p.sigma*(p.b0/p.lambda_A + 1)/p.beta_star), linestyle = '--', markersize=2, color = my_red, label='Zipf slope')
     ax_zipf.loglog(ranks, ranks**(-2*p.sigma*(p.b0/p.lambda_A + 1)/p.beta_star), linestyle = '--', markersize=2, color = my_blue, label='Zipf slope')
-    ax_zipf.set_xlabel('Rank $k$'); ax_zipf.set_ylabel('$N_k$')
-    ax_zipf.set_title('Zipf plot (final)')
+    ax_zipf.set_xlabel('Rank $k$', fontsize = 16)
+    ax_zipf.set_ylabel('$N_k$', fontsize = 16)
+    ax_zipf.tick_params(labelsize=14)
     ax_zipf.legend(fontsize=7)
     plt.tight_layout()
-    fig_zipf.savefig(os.path.join(output_plot, f'Zipf_Tlim-{int(base["T_lim"])}_Mem-{int(p.memory)}.pdf'), dpi=150, bbox_inches='tight')
+    fig_zipf.savefig(os.path.join(output_plot, f'Zipf_Mem-{int(p.memory)}.pdf'), dpi=150, bbox_inches='tight')

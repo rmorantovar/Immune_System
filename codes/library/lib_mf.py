@@ -286,7 +286,7 @@ def compute_zipf(res, time_index=-1, threshold=1.5):
     ranks : array, 1-indexed ranks
     sizes : array, clone sizes sorted descending
     """
-    N_B = res['N_B'][:, time_index]
+    N_B = res['N_Bo'][:, time_index] + res['N_Ba'][:, time_index]
     w = res['weights']
  
     if res['mode'] == 'stochastic':
