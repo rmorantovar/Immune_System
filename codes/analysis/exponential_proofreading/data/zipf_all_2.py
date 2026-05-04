@@ -45,6 +45,7 @@ fig_r.savefig(output_plot + '/ranking_B_cells_0.pdf', transparent=.5)
 fig_zeta, ax_zeta = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'right':.95, 'bottom':.15, 'top': 0.94})
 fig_scaling1, ax_scaling1 = plt.subplots(figsize = (8*1.62,8), gridspec_kw={'left':0.12, 'right':.95, 'bottom':.15, 'top': 0.94})
 fig_scaling2, ax_scaling2 = plt.subplots(figsize = (8*1.62,8), gridspec_kw={'left':0.12, 'right':.95, 'bottom':.15, 'top': 0.94})
+fig_entropy, ax_entropy = plt.subplots(figsize = (8*1.62,8), gridspec_kw={'left':0.12, 'right':.95, 'bottom':.15, 'top': 0.94})
 
 scaling_dict = defaultdict(list)
 
@@ -141,6 +142,7 @@ ax_zeta.scatter(0, (np.mean(zetas_mice)), color = my_red, edgecolor = 'k', s = 1
 
 ax_scaling1.plot((np.linspace(1, 400, 100))**(np.mean(zetas))/(1-np.mean(zetas))*((np.linspace(1, 400, 100))**(1-np.mean(zetas))-1), (np.linspace(1, 400, 100)*1.0)**(np.mean(zetas)), color = my_red, linestyle = '--')
 ax_scaling2.plot((np.linspace(1, 400, 100))**(np.mean(zetas))/(1-np.mean(zetas))*((np.linspace(1, 400, 100))**(1-np.mean(zetas))-1), np.linspace(1, 400, 100), color = my_red, linestyle = '--')
+ax_entropy.plot(np.linspace(1, 200, 100), - np.mean(zetas)*((-np.linspace(1, 200, 100)**(1-np.mean(zetas))*np.log(np.linspace(1, 200, 100)))/(np.linspace(1, 200, 100)**(1-np.mean(zetas))-1) + (1)/(1-np.mean(zetas))) + np.log((np.linspace(1, 200, 100)**(1-np.mean(zetas))-1)/(1-np.mean(zetas))) , color = my_red, linestyle = '--')
 
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
@@ -248,6 +250,7 @@ ax_zeta.scatter(1, (np.mean(zetas_mice)), color = my_blue, edgecolor = 'k', s = 
 
 ax_scaling1.plot((np.linspace(1, 400, 100))**(np.mean(zetas))/(1-np.mean(zetas))*((np.linspace(1, 400, 100))**(1-np.mean(zetas))-1), (np.linspace(1, 400, 100)*1.0)**(np.mean(zetas)), color = my_blue, linestyle = '--')
 ax_scaling2.plot((np.linspace(1, 400, 100))**(np.mean(zetas))/(1-np.mean(zetas))*((np.linspace(1, 400, 100))**(1-np.mean(zetas))-1), np.linspace(1, 400, 100), color = my_blue, linestyle = '--')
+ax_entropy.plot(np.linspace(1, 200, 100), - np.mean(zetas)*((-np.linspace(1, 200, 100)**(1-np.mean(zetas))*np.log(np.linspace(1, 200, 100)))/(np.linspace(1, 200, 100)**(1-np.mean(zetas))-1) + (1)/(1-np.mean(zetas))) + np.log((np.linspace(1, 200, 100)**(1-np.mean(zetas))-1)/(1-np.mean(zetas))) , color = my_blue, linestyle = '--')
 
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
@@ -347,6 +350,7 @@ for i_ph, ph in enumerate(phenotypes):
 
 	ax_scaling1.plot((np.linspace(1, 400, 100))**(np.mean(zetas))/(1-np.mean(zetas))*((np.linspace(1, 400, 100))**(1-np.mean(zetas))-1), (np.linspace(1, 400, 100)*1.0)**(np.mean(zetas)), color = my_blue, linestyle = '--')
 	ax_scaling2.plot((np.linspace(1, 400, 100))**(np.mean(zetas))/(1-np.mean(zetas))*((np.linspace(1, 400, 100))**(1-np.mean(zetas))-1), np.linspace(1, 400, 100), color = my_blue, linestyle = '--')
+	ax_entropy.plot(np.linspace(1, 200, 100), - np.mean(zetas)*((-np.linspace(1, 200, 100)**(1-np.mean(zetas))*np.log(np.linspace(1, 200, 100)))/(np.linspace(1, 200, 100)**(1-np.mean(zetas))-1) + (1)/(1-np.mean(zetas))) + np.log((np.linspace(1, 200, 100)**(1-np.mean(zetas))-1)/(1-np.mean(zetas))) , color = my_blue, linestyle = '--')
 
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
@@ -442,6 +446,7 @@ ax_zeta.scatter(4, (np.mean(zetas_mice)), color = my_blue, edgecolor = 'k', s = 
 
 ax_scaling1.plot((np.linspace(1, 400, 100))**(np.mean(zetas))/(1-np.mean(zetas))*((np.linspace(1, 400, 100))**(1-np.mean(zetas))-1), (np.linspace(1, 400, 100)*1.0)**(np.mean(zetas)), color = my_blue2, linestyle = '--')
 ax_scaling2.plot((np.linspace(1, 400, 100))**(np.mean(zetas))/(1-np.mean(zetas))*((np.linspace(1, 400, 100))**(1-np.mean(zetas))-1), np.linspace(1, 400, 100), color = my_blue2, linestyle = '--')
+ax_entropy.plot(np.linspace(1, 200, 100), - np.mean(zetas)*((-np.linspace(1, 200, 100)**(1-np.mean(zetas))*np.log(np.linspace(1, 200, 100)))/(np.linspace(1, 200, 100)**(1-np.mean(zetas))-1) + (1)/(1-np.mean(zetas))) + np.log((np.linspace(1, 200, 100)**(1-np.mean(zetas))-1)/(1-np.mean(zetas))) , color = my_blue2, linestyle = '--')
 
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
@@ -561,6 +566,7 @@ for i_ph, ph in enumerate(phenotypes):
 
 	ax_scaling1.plot((np.linspace(1, 400, 100))**(np.mean(zetas))/(1-np.mean(zetas))*((np.linspace(1, 400, 100))**(1-np.mean(zetas))-1), (np.linspace(1, 400, 100)*1.0)**(np.mean(zetas)), color = colors_ph[i_ph], linestyle = '--')
 	ax_scaling2.plot((np.linspace(1, 400, 100))**(np.mean(zetas))/(1-np.mean(zetas))*((np.linspace(1, 400, 100))**(1-np.mean(zetas))-1), np.linspace(1, 400, 100), color = colors_ph[i_ph], linestyle = '--')
+	ax_entropy.plot(np.linspace(1, 200, 100), - np.mean(zetas)*((-np.linspace(1, 200, 100)**(1-np.mean(zetas))*np.log(np.linspace(1, 200, 100)))/(np.linspace(1, 200, 100)**(1-np.mean(zetas))-1) + (1)/(1-np.mean(zetas))) + np.log((np.linspace(1, 200, 100)**(1-np.mean(zetas))-1)/(1-np.mean(zetas))) , color = colors_ph[i_ph], linestyle = '--')
 
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
@@ -681,6 +687,7 @@ for i_ph, ph in enumerate(phenotypes):
 
 	ax_scaling1.plot((np.linspace(1, 400, 100))**(np.mean(zetas))/(1-np.mean(zetas))*((np.linspace(1, 400, 100))**(1-np.mean(zetas))-1), (np.linspace(1, 400, 100)*1.0)**(np.mean(zetas)), color = my_blue2, linestyle = '--')
 	ax_scaling1.plot((np.linspace(1, 400, 100))**(np.mean(zetas))/(1-np.mean(zetas))*((np.linspace(1, 400, 100))**(1-np.mean(zetas))-1), (np.linspace(1, 400, 100)*1.0)**(np.mean(zetas)), color = my_blue2, linestyle = '--')
+	ax_entropy.plot(np.linspace(1, 200, 100), - np.mean(zetas)*((-np.linspace(1, 200, 100)**(1-np.mean(zetas))*np.log(np.linspace(1, 200, 100)))/(np.linspace(1, 200, 100)**(1-np.mean(zetas))-1) + (1)/(1-np.mean(zetas))) + np.log((np.linspace(1, 200, 100)**(1-np.mean(zetas))-1)/(1-np.mean(zetas))) , color = my_blue2, linestyle = '--')
 
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
@@ -723,6 +730,18 @@ ax_scaling2.tick_params(labelsize = 20)
 # ax_scaling2.set_xscale('log')
 ax_scaling2.legend(title = 'Response', title_fontsize = 20, fontsize = 15, loc = 2)
 fig_scaling2.savefig(output_plot + '/size_scaling_2_linear.pdf', bbox_inches = 'tight')
+
+sns.scatterplot(data = scaling_results, x = 'L_act', y = 'S', hue = 'phenotype', style = 'experiment', ax = ax_entropy, s = 100, palette = [my_red, my_blue, my_blue, my_blue2, my_purple, 'darkorange', 'purple', 'brown', 'pink'], edgecolors = 'black', alpha = 0.8)
+# ax_entropy.plot(np.linspace(1, 130, 100), (np.linspace(1, 130, 100)*1.0)**(1), color = 'k', linestyle = '--', alpha = .8)
+ax_entropy.set_xlabel(r'$L_{act}$', fontsize = 30)
+ax_entropy.set_ylabel(r'$S$', fontsize = 30)
+# ax_entropy.set_ylim(bottom=0, top = 200)
+ax_entropy.set_xlim(left=3, right = 175)
+ax_entropy.tick_params(labelsize = 20)
+# ax_entropy.set_yscale('log')
+# ax_entropy.set_xscale('log')
+ax_entropy.legend(title = 'Response', title_fontsize = 20, fontsize = 15, loc = 4)
+fig_entropy.savefig(output_plot + '/size_scaling_entropy.pdf', bbox_inches = 'tight')
 
 
 # #------------ Experiment 4 (day 9) ------------
