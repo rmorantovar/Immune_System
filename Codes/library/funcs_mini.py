@@ -374,13 +374,13 @@ def apply_filter_C(clone_sizes, activation_times, energies, lim_size):
 
     return clone_sizes_C, activation_times_C, energies_C, filter_C, n_C
 
-def my_plot_layout(ax, yscale = 'linear', xscale = 'linear', ticks_labelsize = 24, xlabel = '', ylabel = '', title = '', x_fontsize=24, y_fontsize = 24, t_fontsize = 24, bottom = None, top = None, left = None, right = None):
+def my_plot_layout(ax, yscale = 'linear', xscale = 'linear', ticks_labelsize = 24, xlabel = '', ylabel = '', title = '', x_fontsize=24, y_fontsize = 24, t_fontsize = 24):#, bottom = 'auto', top = 'auto', left = 'auto', right = 'auto'):
     ax.tick_params(labelsize = ticks_labelsize, width=2)
     ax.tick_params(axis='both', which='minor', width=2)
     ax.set_xscale(xscale)
     ax.set_yscale(yscale)
-    ax.set_xlim(left = left, right = right)
-    ax.set_ylim(bottom = bottom, top = top)
+    # ax.set_xlim(left = left, right = right)
+    # ax.set_ylim(bottom = bottom, top = top)
     ax.set_xlabel(xlabel, fontsize = x_fontsize)
     ax.set_ylabel(ylabel, fontsize = y_fontsize)
     ax.set_title(title, fontsize = t_fontsize)

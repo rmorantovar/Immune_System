@@ -6,8 +6,8 @@ plt.rcParams['text.usetex'] = True
 project = 'exponential_proofreading'
 subproject = 'data'
 experiment = 0
-root_dir = f"/Users/robertomorantovar/Dropbox/Research/Immune_system/{project}/{subproject}/mesin2020"
-output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/'+project+'/'+subproject+'/mesin2020/clone-size/all'
+root_dir = f"/Users/robertomorantovar/Dropbox/Research_files/Immune_system/{project}/{subproject}/mesin2020"
+output_plot = '/Users/robertomorantovar/Dropbox/_Documents/Research/Projects/Immune_System/_Repository/Figures/'+project+'/'+subproject+'/mesin2020/zipf/all'
 os.makedirs(output_plot, exist_ok=True)
 
 # Parameters
@@ -43,6 +43,7 @@ ax_r.set_xlim(right = 4e1)
 fig_r.savefig(output_plot + '/ranking_B_cells_0.pdf', transparent=.5)
 
 fig_zeta, ax_zeta = plt.subplots(figsize=(10*1.62,8), gridspec_kw={'left':0.12, 'right':.8, 'bottom':.15, 'top': 0.94})
+violin_pos = 0
 
 #------------ Experiment 1 (Figure 1D) ------------
 print("Experiment 1")
@@ -59,6 +60,7 @@ mice = data_primary_grouped['Mouse'].unique()
 max_rank = 100
 max_rank_fit = 20
 zetas = []
+zetas_mice = []
 for rep in tqdm(range(n_ensemble)):
 	if rep == n_ensemble - 1:
 		mice_rep = mice
@@ -80,7 +82,8 @@ for rep in tqdm(range(n_ensemble)):
 		max_rank_mouse = len(x)
 		if rep == n_ensemble - 1:
 			ax_r.step(range(1, max_rank_mouse+1), x/largest, color = my_red, alpha = .5, lw = 0.5)
-		
+			params_mouse, pcov_mouse = curve_fit(model, np.log(range(1, len(x)+1)), np.log(x/largest))
+			zetas_mice.append(-params_mouse[0])
 		if len(x)>max_rank:
 			x = x[:max_rank]
 		else:
@@ -113,7 +116,19 @@ for j in range(len(mice)):
 ax_r.plot(range(1, max_rank_eff+1), x_avg, color = my_red, markerfacecolor="None", ms = 18, alpha = 1, ls = '', marker = '*', label = r'$%.2f$'%(np.mean(zetas)) + ' ; ' + 'GC')
 
 ax_r.plot(np.arange(1, max_rank_eff + 1), np.exp(0)*np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = my_red, alpha = .8, lw = 3)
-ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r'$\mathrm{GC}$', color = my_red, density = True, histtype = 'stepfilled', edgecolor = 'k')
+
+parts = ax_zeta.violinplot([zetas], positions = [0], showmeans = True, showextrema = False)
+# ax_zeta.scatter(np.random.normal(0, 0.04, len(zetas)), (zetas), color = my_red, alpha = 0.5, edgecolor = 'None', s = 100)
+for i, body in enumerate(parts['bodies']):
+    body.set_facecolor(my_red)
+    body.set_edgecolor('black')
+    body.set_alpha(0.5)
+# parts['cbars'].set_color('black')
+# parts['cmins'].set_color('black')
+# parts['cmaxes'].set_color('black')
+parts['cmeans'].set_color(my_red)
+ax_zeta.scatter(np.random.normal(0, 0.04, len(zetas_mice)), (zetas_mice), color = my_red, edgecolor = 'k', s = 80, alpha = .5)
+ax_zeta.scatter(0, (np.mean(zetas_mice)), color = my_red, edgecolor = 'k', s = 150)
 
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
@@ -122,9 +137,11 @@ ax_r.set_xlim(right = 5e1)
 fig_r.savefig(output_plot + '/ranking_B_cells_1.pdf', transparent=.5)
 
 my_plot_layout(ax =ax_zeta, yscale = 'linear', xscale = 'linear', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
-# ax_zeta.set_ylim(bottom = 2e-2, top = 1.1)
-ax_zeta.set_xlim(left = 0.2, right = 1.6)
-ax_zeta.legend(title = r'$\mathrm{sub-pop}$', fontsize = 30, title_fontsize = 30, loc = (1, 0))
+ax_zeta.set_xticks([0, 1], ['', ''])
+ax_zeta.set_ylabel(r'$\zeta$', fontsize = 30)
+ax_zeta.tick_params(axis='y', labelsize=30)
+ax_zeta.tick_params(axis='x', labelsize=20)
+# ax_zeta.legend(title = r'$\mathrm{sub-pop}$', fontsize = 30, title_fontsize = 30, loc = (1, 0))
 fig_zeta.savefig(output_plot + '/zetas_1.pdf', transparent=.5)
 
 
@@ -136,11 +153,10 @@ data_recall_grouped = data_recall.groupby(['Mouse', 'V', 'J', 'D']).size().reset
 # data_recall_grouped = data_recall.groupby(['Mouse', 'CDR3:']).size().reset_index(name='count')
 # data_recall_grouped = data_recall.groupby(['Mouse', 'Sequence']).size().reset_index(name='count')
 mice = data_recall_grouped['Mouse'].unique()
-# phenotypes = data_recall_grouped['Phenotype'].unique()
 
-# for i_ph, ph in enumerate(phenotypes):
 max_rank = 100
 zetas = []
+zetas_mice = []
 for rep in tqdm(range(n_ensemble)):
 
 	if rep == n_ensemble - 1:
@@ -163,7 +179,9 @@ for rep in tqdm(range(n_ensemble)):
 		max_rank_mouse = len(x)
 		if rep == n_ensemble - 1:
 			ax_r.step(range(1, max_rank_mouse+1), x/largest, color = my_blue, alpha = .5, lw = 0.5)
-		
+			params_mouse, pcov_mouse = curve_fit(model, np.log(range(1, len(x)+1)), np.log(x/largest))
+			zetas_mice.append(-params_mouse[0])
+
 		if max_rank_mouse>max_rank:
 			x = x[:max_rank]
 		else:
@@ -196,7 +214,19 @@ for j in range(len(mice)):
 ax_r.plot(range(1, max_rank_eff+1), x_avg, color = my_blue, markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = 'o', label = r'$%.2f$'%(np.mean(zetas)) + ' ; ' + 'GC + fm')
 
 ax_r.plot(np.arange(1, max_rank_eff + 1), np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = my_blue, alpha = .8, lw = 3)
-ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r'$\mathrm{GC+m}$', color = my_blue, density = True, histtype = 'stepfilled', edgecolor = 'k')
+
+parts = ax_zeta.violinplot([zetas], positions = [1], showmeans = True, showextrema = False)
+# ax_zeta.scatter(np.random.normal(1, 0.04, len(zetas)), (zetas), color = my_blue, alpha = 0.5, edgecolor = 'None', s = 100)
+for i, body in enumerate(parts['bodies']):
+	body.set_facecolor(my_blue)
+	body.set_edgecolor('black')
+	body.set_alpha(0.5)
+# parts['cbars'].set_color('black')
+# parts['cmins'].set_color('black')
+# parts['cmaxes'].set_color('black')
+parts['cmeans'].set_color(my_blue)
+ax_zeta.scatter(np.random.normal(1, 0.04, len(zetas_mice)), (zetas_mice), color = my_blue, edgecolor = 'k', s = 80, alpha = .5)
+ax_zeta.scatter(1, (np.mean(zetas_mice)), color = my_blue, edgecolor = 'k', s = 150)
 
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
@@ -205,9 +235,10 @@ ax_r.set_xlim(right = 5e1)
 fig_r.savefig(output_plot + '/ranking_B_cells_2.pdf', transparent=.5)
 
 my_plot_layout(ax =ax_zeta, yscale = 'linear', xscale = 'linear', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
-# ax_zeta.set_ylim(bottom = 2e-2, top = 1.1)
-ax_zeta.set_xlim(left = 0.2, right = 1.6)
-ax_zeta.legend(title = r'$\mathrm{sub-pop}$', fontsize = 30, title_fontsize = 30, loc = (1, 0))
+ax_zeta.set_xticks([0, 1], ['', ''])
+ax_zeta.set_ylabel(r'$\zeta$', fontsize = 30)
+ax_zeta.tick_params(axis='y', labelsize=30)
+ax_zeta.tick_params(axis='x', labelsize=20)
 fig_zeta.savefig(output_plot + '/zetas_2.pdf', transparent=.5)
 
 #------------ Experiment 3 (Figure 4C) ------------
@@ -224,6 +255,7 @@ print(phenotypes)
 for i_ph, ph in enumerate(phenotypes):
 	max_rank = 100
 	zetas = []
+	zetas_mice = []
 	for rep in tqdm(range(n_ensemble)):
 
 		if rep == n_ensemble - 1:
@@ -245,7 +277,8 @@ for i_ph, ph in enumerate(phenotypes):
 			max_rank_mouse = len(x)
 			if rep == n_ensemble - 1:
 				ax_r.step(range(1, max_rank_mouse+1), x/largest, color = my_blue, alpha = .5, lw = 0.5)
-			
+				params_mouse, pcov_mouse = curve_fit(model, np.log(range(1, len(x)+1)), np.log(x/largest))
+				zetas_mice.append(-params_mouse[0])
 			if max_rank_mouse>max_rank:
 				x = x[:max_rank]
 			else:
@@ -271,8 +304,18 @@ for i_ph, ph in enumerate(phenotypes):
 	ax_r.plot(range(1, max_rank_eff+1), x_avg, color = my_blue, markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = '^', label = r'$%.2f$'%(np.mean(zetas))+ ' ; ' + ph)
 
 	ax_r.plot(np.arange(1, max_rank_eff + 1), np.exp(0)*np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = my_blue, alpha = .8, lw = 3)
-	ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r"$\mathrm{" + ph + "}$", color = my_blue, density = True, histtype = 'stepfilled', edgecolor = 'k')
-	print(np.mean(zetas), np.std(zetas))
+	parts = ax_zeta.violinplot([zetas], positions = [i_ph+2], showmeans = True, showextrema = False)
+	for i, body in enumerate(parts['bodies']):
+		body.set_facecolor(my_blue)
+		body.set_edgecolor('black')
+		body.set_alpha(0.5)
+	parts['cmeans'].set_color(my_blue)
+	# parts['cbars'].set_color('black')
+	# parts['cmins'].set_color('black')
+	# parts['cmaxes'].set_color('black')
+	parts['cmeans'].set_color(my_blue)
+	ax_zeta.scatter(np.random.normal(i_ph+2, 0.04, len(zetas_mice)), (zetas_mice), color = my_blue, edgecolor = 'k', s = 80, alpha = .5)
+	ax_zeta.scatter(i_ph+2, (np.mean(zetas_mice)), color = my_blue, edgecolor = 'k', s = 150)
 
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
@@ -281,10 +324,10 @@ ax_r.set_xlim(right = 5e1)
 fig_r.savefig(output_plot + '/ranking_B_cells_3.pdf', transparent=.5)
 
 my_plot_layout(ax =ax_zeta, yscale = 'linear', xscale = 'linear', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
-# ax_zeta.set_ylim(bottom = 2e-2, top = 1.1)
-ax_zeta.set_title('CGG', fontsize = 30)
-ax_zeta.set_xlim(left = 0.2, right = 1.6)
-ax_zeta.legend(title = r'$\mathrm{sub-pop}$', fontsize = 30, title_fontsize = 30, loc = (1, 0))
+ax_zeta.set_xticks([0, 1, 2, 3], ['', '', 'GC + fm', 'GC + fm + recall'])
+ax_zeta.set_ylabel(r'$\zeta$', fontsize = 30)
+ax_zeta.tick_params(axis='y', labelsize=30)
+ax_zeta.tick_params(axis='x', labelsize=20)
 fig_zeta.savefig(output_plot + '/zetas_3.pdf', transparent=.5)
 
 #------------ Experiment 3 (Figure 4C) ------------ 2
@@ -298,6 +341,7 @@ mice = data_recall_grouped['Mouse'].unique()
 
 max_rank = 100
 zetas = []
+zetas_mice = []
 for rep in tqdm(range(n_ensemble)):
 	x_avg = np.zeros(max_rank)
 	counts_per_ranking = np.zeros(max_rank)
@@ -317,7 +361,8 @@ for rep in tqdm(range(n_ensemble)):
 		max_rank_mouse = len(x)
 		if rep == n_ensemble - 1:
 			ax_r.step(range(1, max_rank_mouse+1), x/largest, color = my_colors2[0], alpha = .5, lw = 0.5)
-		
+			params_mouse, pcov_mouse = curve_fit(model, np.log(range(1, len(x)+1)), np.log(x/largest))
+			zetas_mice.append(-params_mouse[0])
 		if max_rank_mouse>max_rank:
 			x = x[:max_rank]
 		else:
@@ -344,7 +389,18 @@ print(np.mean(zetas), np.std(zetas))
 # ax_r.plot(range(1, max_rank_eff+1), x_avg, color = my_colors_alpha[int(np.mean(zetas)*100)], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = '.', label = r'$%.2f$'%(np.mean(zetas))+ ' ; ' + 'combined')
 
 # ax_r.plot(np.arange(1, max_rank_eff + 1), np.exp(0)*np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = my_colors_alpha[int(np.mean(zetas)*100)], alpha = .8, lw = 3)
-ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r"$\mathrm{combined}$", color = my_colors_alpha[int(np.mean(zetas)*100)], density = True, histtype = 'stepfilled', edgecolor = 'k')
+
+parts = ax_zeta.violinplot([zetas], positions = [4], showmeans = True, showextrema = False)
+for i, body in enumerate(parts['bodies']):
+	body.set_facecolor(my_blue)
+	body.set_edgecolor('black')
+	body.set_alpha(0.5)
+# parts['cbars'].set_color('black')
+# parts['cmins'].set_color('black')
+# parts['cmaxes'].set_color('black')
+parts['cmeans'].set_color(my_blue)
+ax_zeta.scatter(np.random.normal(4, 0.04, len(zetas_mice)), (zetas_mice), color = my_blue, edgecolor = 'k', s = 80, alpha = .5)
+ax_zeta.scatter(4, (np.mean(zetas_mice)), color = my_blue, edgecolor = 'k', s = 150)
 
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
@@ -353,18 +409,16 @@ ax_r.set_xlim(right = 5e1)
 fig_r.savefig(output_plot + '/ranking_B_cells_3b.pdf', transparent=.5)
 
 my_plot_layout(ax =ax_zeta, yscale = 'linear', xscale = 'linear', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
-# ax_zeta.set_ylim(bottom = 2e-2, top = 1.1)
-ax_zeta.set_title('CGG', fontsize = 30)
-ax_zeta.set_xlim(left = 0.2, right = 1.6)
-ax_zeta.legend(title = r'$\mathrm{sub-pop}$', fontsize = 30, title_fontsize = 30, loc = (1, 0))
+ax_zeta.set_xticks([0, 1, 2, 3, 4], ['', '', 'GC + fm', 'GC + fm + recall', 'combined'])
+ax_zeta.set_ylabel(r'$\zeta$', fontsize = 30)
+ax_zeta.tick_params(axis='y', labelsize=30)
+ax_zeta.tick_params(axis='x', labelsize=20)
 fig_zeta.savefig(output_plot + '/zetas_3b.pdf', transparent=.5)
 
 #------------ Experiment 4 (Figure 5) ------------
 colors_ph = [my_red, my_blue, my_red, my_blue, my_red]
 colors_ph = [my_red, my_blue, my_blue]
 print('Experiment 4 (Figure 5)')
-fig_r_Flu, ax_r_Flu = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'right':.95, 'bottom':.15, 'top': 0.94})
-fig_zeta_Flu, ax_zeta_Flu = plt.subplots(figsize=(10*1.62,8), gridspec_kw={'left':0.12, 'right':.8, 'bottom':.15, 'top': 0.94})
 
 data_infection = pd.read_excel(root_dir + "/1-s2.0-S0092867419313170-mmc1.xlsx", sheet_name = 'Influenza', header = 2)
 data_recall_grouped = data_infection.groupby(['Experiment / Mouse', 'Sort', 'V', 'J', 'D']).size().reset_index(name='count')
@@ -380,6 +434,7 @@ max_ranks = [100, 100, 100, 100, 100]
 for i_ph, ph in enumerate(phenotypes[[0, 1, 3]]):
 	max_rank = 100
 	zetas = []
+	zetas_mice = []
 
 	for rep in tqdm(range(n_ensemble)):
 
@@ -405,8 +460,9 @@ for i_ph, ph in enumerate(phenotypes[[0, 1, 3]]):
 			max_rank_mouse = len(x)
 			if rep == n_ensemble - 1:
 				ax_r.step(range(1, max_rank_mouse+1), x/largest, color = colors_ph[i_ph], alpha = .5, lw = 0.5)
-				ax_r_Flu.step(range(1, max_rank_mouse+1), x/largest, color = colors_ph[i_ph], alpha = .5, lw = 0.5)
-			
+				params_mouse, pcov_mouse = curve_fit(model, np.log(range(1, len(x)+1)), np.log(x/largest))
+				zetas_mice.append(-params_mouse[0])
+
 			if len(x)>max_rank:
 				x = x[:max_rank]
 			else:
@@ -435,18 +491,25 @@ for i_ph, ph in enumerate(phenotypes[[0, 1, 3]]):
 
 	for j in range(len(mice)):
 		ax_r.lines[-(j+1)].set_color(colors_ph[i_ph])
-		ax_r_Flu.lines[-(j+1)].set_color(colors_ph[i_ph])
 
 	print(np.mean(zetas), np.std(zetas))
 	
 	ax_r.plot(range(1, max_rank_eff+1), x_avg, color = colors_ph[i_ph], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = 'D', label = r'$%.2f$'%(np.mean(zetas)) + ' ; ' + ph)
-	ax_r_Flu.plot(range(1, max_rank_eff+1), x_avg, color = colors_ph[i_ph], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = 'D', label = r'$%.2f$'%(np.mean(zetas)) + ' ; ' + ph)
 
 	ax_r.plot(np.arange(1, max_rank_eff + 1), np.exp(0)*np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = colors_ph[i_ph], alpha = .8, lw = 3)
-	ax_r_Flu.plot(np.arange(1, max_rank_eff + 1), np.exp(0)*np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = colors_ph[i_ph], alpha = .8, lw = 3)
 	
-	ax_zeta.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r"$\mathrm{" + ph + "}$", color = colors_ph[i_ph], density = True, histtype = 'stepfilled', edgecolor = 'k')
-	ax_zeta_Flu.hist(zetas, bins = np.linspace(0.2, 1.6, 20), alpha = .7, label = r"$\mathrm{" + ph + "}$", color = colors_ph[i_ph], density = True, histtype = 'stepfilled', edgecolor = 'k')
+	parts = ax_zeta.violinplot([zetas], positions = [i_ph+5], showmeans = True, showextrema = False)
+	for i, body in enumerate(parts['bodies']):
+		body.set_facecolor(colors_ph[i_ph])
+		body.set_edgecolor('black')
+		body.set_alpha(0.5)
+	parts['cmeans'].set_color(colors_ph[i_ph])
+	# parts['cbars'].set_color('black')
+	# parts['cmins'].set_color('black')
+	# parts['cmaxes'].set_color('black')
+	parts['cmeans'].set_color(colors_ph[i_ph])
+	ax_zeta.scatter(np.random.normal(i_ph+5, 0.04, len(zetas_mice)), (zetas_mice), color = colors_ph[i_ph], edgecolor = 'k', s = 80, alpha = .5)
+	ax_zeta.scatter(i_ph+5, (np.mean(zetas_mice)), color = colors_ph[i_ph], edgecolor = 'k', s = 150)
 
 my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
@@ -454,24 +517,12 @@ ax_r.set_xlim(right = 5e1)
 # ax_r.legend(title = r'$\zeta$', fontsize = 24, title_fontsize = 28, loc = 3)#, loc = (1, 0))
 fig_r.savefig(output_plot + '/ranking_B_cells_4.pdf', transparent=.5)
 
-my_plot_layout(ax =ax_r_Flu, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
-ax_r_Flu.set_ylim(bottom = 2e-2, top = 1.1)
-ax_r_Flu.set_xlim(right = 5e1)
-ax_r_Flu.legend(title = r'$\zeta$', fontsize = 30, title_fontsize = 30, loc = 3)#, loc = (1, 0))
-fig_r_Flu.savefig(output_plot + '/ranking_B_cells_Flu.pdf', transparent=.5)
-
-my_plot_layout(ax =ax_zeta, yscale = 'linear', xscale = 'linear', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
-# ax_zeta.set_ylim(bottom = 2e-2, top = 1.1)
-ax_zeta.set_xlim(left = 0.2, right = 1.6)
-# ax_zeta.legend(title = r'$\mathrm{sub-pop}$', fontsize = 30, title_fontsize = 30, loc = (1, 0))
+my_plot_layout(ax =ax_zeta, yscale = 'linear', xscale = 'linear', ticks_labelsize= 20, x_fontsize=30, y_fontsize=30 )
+ax_zeta.set_xticks([0, 1, 2, 3, 4, 5, 6, 7], ['', '', 'GC + fm', 'PB + fm', 'combined', 'GC', 'GC + fm', 'PB + fm'])
+ax_zeta.set_ylabel(r'$\zeta$', fontsize = 30)
+ax_zeta.tick_params(axis='y', labelsize=30)
+ax_zeta.tick_params(axis='x', labelsize=20)
 fig_zeta.savefig(output_plot + '/zetas_4.pdf', transparent=.5)
-
-my_plot_layout(ax =ax_zeta_Flu, yscale = 'linear', xscale = 'linear', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
-# ax_zeta_Flu.set_ylim(bottom = 2e-2, top = 1.1)
-ax_zeta_Flu.set_title('Influenza', fontsize = 30)
-ax_zeta_Flu.set_xlim(left = 0.2, right = 1.6)
-# ax_zeta_Flu.legend(title = r'$\mathrm{sub-pop}$', fontsize = 30, title_fontsize = 30, loc = (1, 0))
-fig_zeta_Flu.savefig(output_plot + '/zetas_Flu.pdf', transparent=.5)
 
 
 # #------------ Experiment 4 (day 9) ------------

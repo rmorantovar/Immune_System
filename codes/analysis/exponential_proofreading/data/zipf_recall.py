@@ -1,13 +1,13 @@
 import sys
-sys.path.append('../../../my_lib/')
+sys.path.append('../../../library/')
 from funcs import*
 plt.rcParams['text.usetex'] = True
 
-project = 'memory_response'
+project = 'exponential_proofreading'
 subproject = 'data'
 experiment = 0
-root_dir = f"/Users/robertomorantovar/Dropbox/Research/Immune_system/{project}/{subproject}/mesin2020"
-output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/'+project+'/'+ subproject + '/mesin2020/recall'
+root_dir = f"/Users/robertomorantovar/Dropbox/Research_files/Immune_system/{project}/{subproject}/mesin2020"
+output_plot = '/Users/robertomorantovar/Dropbox/_Documents/Research/Projects/Immune_System/_Repository/Figures/'+project+'/'+ subproject + '/mesin2020/zipf/recall'
 os.makedirs(output_plot, exist_ok=True)
 
 # Parameters
@@ -49,6 +49,7 @@ max_rank_fit = 20
 
 for i_ph, ph in enumerate(phs):
     zetas = []
+    zetas_mice = []
     data_ph = data_recall[(data_recall['Phenotype']==ph)]
     print(ph)
     for rep in tqdm(range(n_ensemble)):
@@ -80,7 +81,9 @@ for i_ph, ph in enumerate(phs):
                 max_rank_mouse = len(x)
                 if rep == n_ensemble - 1:
                     ax_r2.step(range(1, max_rank_mouse+1), x/largest, color = my_colors[0], alpha = .5, lw = 0.5)
-                
+                    params_mouse, pcov_mouse = curve_fit(model, np.log(range(1, len(x)+1)), np.log(x/largest))
+                    zetas_mice.append(-params_mouse[0])
+
                 if max_rank_mouse>max_rank:
                     x = x[:max_rank]
                 else:
@@ -102,14 +105,20 @@ for i_ph, ph in enumerate(phs):
         zetas.append(-slope)
         zeta = 3*3.5/(4.5*2.1)
         
-    print(np.mean(zetas), int((np.mean(zetas)-zeta_min)*100))
-    for j in range(len_mice):
-        ax_r2.lines[-(j+1)].set_color(my_colors_alpha[int((np.mean(zetas)-zeta_min)*100)])
+    print(zetas[-1])
+    color = my_colors_alpha[int((np.mean(zetas)-zeta_min)*100)]
 
-    ax_r2.plot(range(1, max_rank_eff+1), x_avg, color = my_colors_alpha[int((np.mean(zetas)-zeta_min)*100)], markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = markers_ph[i_ph], label = r'$%.2f$'%(np.mean(zetas)) + ' ; ' + ph)
-    ax_r2.plot(np.arange(1, max_rank_eff + 1), np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = my_colors_alpha[int((np.mean(zetas)-zeta_min)*100)], alpha = .8, lw = 3)
+    ax_r2.plot(range(1, max_rank_eff+1), x_avg, color = color, markerfacecolor="None", ms = 12, alpha = 1, ls = '', marker = markers_ph[i_ph], label = r'$%.2f$'%(np.mean(zetas)) + ' ; ' + ph)
+    ax_r2.plot(np.arange(1, max_rank_eff + 1), np.arange(1, max_rank_eff + 1)**(-np.mean(zetas)), color = color, alpha = .8, lw = 3)
 
-    ax_zeta2.hist(zetas, bins = np.linspace(0.2, 1.6, 30), alpha = .7, label = r'$\mathrm{GC+m}$', color = my_colors_alpha[int((np.mean(zetas)-zeta_min)*100)], density = True, histtype = 'stepfilled', edgecolor = 'k')
+    parts = ax_zeta2.violinplot([zetas], positions=[i_ph], showmeans=True, showextrema=False)
+    for i, body in enumerate(parts['bodies']):
+        body.set_facecolor(color)
+        body.set_edgecolor('black')
+        body.set_alpha(0.5)
+    parts['cmeans'].set_color(color)
+    ax_zeta2.scatter(np.random.normal(i_ph, 0.04, len(zetas_mice)), zetas_mice, color=color, edgecolor='k', s=80, alpha=.5)
+    ax_zeta2.scatter(i_ph, np.mean(zetas_mice), color=color, edgecolor='k', s=150)
 
 my_plot_layout(ax =ax_r2, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_r2.set_ylim(bottom = 2e-2, top = 1.1)
@@ -119,6 +128,7 @@ fig_r2.savefig(output_plot + '/ranking_B_cells2.pdf', transparent=.5)
 
 my_plot_layout(ax =ax_zeta2, yscale = 'linear', xscale = 'linear', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 # ax_zeta2.set_ylim(bottom = 2e-2, top = 1.1)
-ax_zeta2.set_xlim(left = 0.15, right = 1.6)
+ax_zeta2.set_xticks(range(len(phs)), ['']*len(phs))
+ax_zeta2.set_ylabel(r'$\zeta$', fontsize=30)
 # ax_zeta2.legend(title = r'$\mathrm{sub-pop}$', fontsize = 22, title_fontsize = 30, loc = (1, 0))
 fig_zeta2.savefig(output_plot + '/zetas.pdf', transparent=.5)
