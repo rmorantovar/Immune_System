@@ -197,7 +197,7 @@ for rep in tqdm(range(n_ensemble)):
 				counts_per_ranking[k]+=1
 				x_avg[k]+=x[k]/largest
 
-	max_rank_eff = len(counts_per_ranking[counts_per_ranking>3])
+	max_rank_eff = len(counts_per_ranking[counts_per_ranking>2])
 
 	x_avg = x_avg[:max_rank_eff]/counts_per_ranking[:max_rank_eff]
 
@@ -478,7 +478,7 @@ for i_ph, ph in enumerate(phenotypes[[0, 1, 3]]):
 					counts_per_ranking[k]+=1
 					x_avg[k]+=x[k]/largest
 
-		max_rank_eff = len(counts_per_ranking[counts_per_ranking>1])
+		max_rank_eff = len(counts_per_ranking[counts_per_ranking>2])
 		x_avg = x_avg[:max_rank_eff]/counts_per_ranking[:max_rank_eff]
 
 		params, pcov = curve_fit(model, np.log(range(1, max_rank_eff+1))[:max_rank_fit], np.log(x_avg[:])[:max_rank_fit])
@@ -518,7 +518,7 @@ ax_r.set_xlim(right = 5e1)
 fig_r.savefig(output_plot + '/ranking_B_cells_4.pdf', transparent=.5)
 
 my_plot_layout(ax =ax_zeta, yscale = 'linear', xscale = 'linear', ticks_labelsize= 20, x_fontsize=30, y_fontsize=30 )
-ax_zeta.set_xticks([0, 1, 2, 3, 4, 5, 6, 7], ['', '', 'GC + fm', 'PB + fm', 'combined', 'GC', 'GC + fm', 'PB + fm'])
+ax_zeta.set_xticks([0, 1, 2, 3, 4, 5, 6, 7], ['exp1/naive', 'exp2/recall', 'exp3/recall', 'exp3/recall', 'exp3/recall', 'exp4/naive', 'exp4/recall', 'exp4/recall'])
 ax_zeta.set_ylabel(r'$\zeta$', fontsize = 30)
 ax_zeta.tick_params(axis='y', labelsize=30)
 ax_zeta.tick_params(axis='x', labelsize=20)
