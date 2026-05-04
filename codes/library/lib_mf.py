@@ -524,16 +524,16 @@ def rhs_semicomplete(t, y, p, M, psi_vec, weights):
     dpi = p.k_on * psi_vec * N_A - p.delta_pi * pi_vec - lambda_eff * pi_vec
  
     # --- Free B-cell clones ---
-    dN_Bo = - p.k_on * pi_vec**p.hill * N_Bo_vec * N_To/(N_To + p.K_T) + 2 * p.b0 * N_Ba_vec - p.delta_B * N_Bo_vec
+    dN_Bo = - p.h0 * pi_vec**p.hill * N_Bo_vec * N_To/(N_To + p.K_T) + 2 * p.b0 * N_Ba_vec - p.delta_B * N_Bo_vec
 
     # --- Activated B-cell clones ---
-    dN_Ba = p.k_on * pi_vec**p.hill * N_Bo_vec * N_To/(N_To + p.K_T) - p.b0 * N_Ba_vec  - p.delta_B * N_Ba_vec
+    dN_Ba = p.h0 * pi_vec**p.hill * N_Bo_vec * N_To/(N_To + p.K_T) - p.b0 * N_Ba_vec  - p.delta_B * N_Ba_vec
  
     # --- Free T cells ---
-    dN_To = - p.k_on * np.sum(weights * pi_vec**p.hill * N_Bo_vec) * N_To/(N_To + p.K_T) + p.Tcell_growth_factor * p.b0 * N_Ta - p.delta_T * N_To
+    dN_To = - p.h0 * np.sum(weights * pi_vec**p.hill * N_Bo_vec) * N_To/(N_To + p.K_T) + p.Tcell_growth_factor * p.b0 * N_Ta - p.delta_T * N_To
 
     # --- Activated T cells ---
-    dN_Ta = p.k_on * np.sum(weights * pi_vec**p.hill * N_Bo_vec) * N_To/(N_To + p.K_T) - p.b0 * N_Ta - p.delta_T * N_Ta 
+    dN_Ta = p.h0 * np.sum(weights * pi_vec**p.hill * N_Bo_vec) * N_To/(N_To + p.K_T) - p.b0 * N_Ta - p.delta_T * N_Ta 
  
     return pack_state_semicomplete(dN_A, dpi, dN_Bo, dN_Ba, dN_To, dN_Ta, M)
 
