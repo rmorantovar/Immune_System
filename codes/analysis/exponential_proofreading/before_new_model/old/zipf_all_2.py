@@ -40,7 +40,7 @@ my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
 ax_r.set_xlim(right = 4e1)
 # ax_r.legend(title = r'$\zeta$', fontsize = 30, title_fontsize = 30, loc = (1, 0))
-fig_r.savefig(output_plot + '/ranking_B_cells_0.pdf', transparent=.5)
+fig_r.savefig(output_plot + '/ranking_B_cells_0.pdf', bbox_inches = 'tight', transparent=.5)
 
 fig_zeta, ax_zeta = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'right':.95, 'bottom':.15, 'top': 0.94})
 fig_scaling1, ax_scaling1 = plt.subplots(figsize = (8*1.62,8), gridspec_kw={'left':0.12, 'right':.95, 'bottom':.15, 'top': 0.94})
@@ -148,7 +148,7 @@ my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
 ax_r.set_xlim(right = 5e1)
 # ax_r.legend(title = r'$\zeta$', fontsize = 30, title_fontsize = 30, loc = 3)#, loc = (1, 0))
-fig_r.savefig(output_plot + '/ranking_B_cells_1.pdf', transparent=.5)
+fig_r.savefig(output_plot + '/ranking_B_cells_1.pdf', bbox_inches = 'tight', transparent=.5)
 
 my_plot_layout(ax =ax_zeta, yscale = 'linear', xscale = 'linear', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_zeta.set_xticks([0, 1], ['', ''])
@@ -156,7 +156,7 @@ ax_zeta.set_ylabel(r'$\zeta$', fontsize = 30)
 ax_zeta.tick_params(axis='y', labelsize=30)
 ax_zeta.tick_params(axis='x', labelsize=14, rotation = 45)
 # ax_zeta.legend(title = r'$\mathrm{sub-pop}$', fontsize = 30, title_fontsize = 30, loc = (1, 0))
-fig_zeta.savefig(output_plot + '/zetas_1.pdf', transparent=.5)
+fig_zeta.savefig(output_plot + '/zetas_1.pdf', bbox_inches = 'tight', transparent=.5)
 
 
 #------------ Experiment 2 (Figure 4A) ------------
@@ -256,14 +256,14 @@ my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
 ax_r.set_xlim(right = 5e1)
 # ax_r.legend(title = r'$\zeta$', fontsize = 30, title_fontsize = 30, loc = 3)#, loc = (1, 0))
-fig_r.savefig(output_plot + '/ranking_B_cells_2.pdf', transparent=.5)
+fig_r.savefig(output_plot + '/ranking_B_cells_2.pdf', bbox_inches = 'tight', transparent=.5)
 
 my_plot_layout(ax =ax_zeta, yscale = 'linear', xscale = 'linear', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_zeta.set_xticks([0, 1], ['', ''])
 ax_zeta.set_ylabel(r'$\zeta$', fontsize = 30)
 ax_zeta.tick_params(axis='y', labelsize=30)
 ax_zeta.tick_params(axis='x', labelsize=14, rotation = 45)
-fig_zeta.savefig(output_plot + '/zetas_2.pdf', transparent=.5)
+fig_zeta.savefig(output_plot + '/zetas_2.pdf', bbox_inches = 'tight', transparent=.5)
 
 #------------ Experiment 3 (Figure 4C) ------------
 print('Experiment 3 (Figure 4C)')
@@ -356,14 +356,14 @@ my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
 ax_r.set_xlim(right = 5e1)
 # ax_r.legend(title = r'$\zeta$', fontsize = 30, title_fontsize = 30, loc = 3)#, loc = (1, 0))
-fig_r.savefig(output_plot + '/ranking_B_cells_3.pdf', transparent=.5)
+fig_r.savefig(output_plot + '/ranking_B_cells_3.pdf', bbox_inches = 'tight', transparent=.5)
 
 my_plot_layout(ax =ax_zeta, yscale = 'linear', xscale = 'linear', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_zeta.set_xticks([0, 1, 2, 3], ['', '', 'GC + fm', 'PB + fm'])
 ax_zeta.set_ylabel(r'$\zeta$', fontsize = 30)
 ax_zeta.tick_params(axis='y', labelsize=30)
 ax_zeta.tick_params(axis='x', labelsize=14, rotation = 45)
-fig_zeta.savefig(output_plot + '/zetas_3.pdf', transparent=.5)
+fig_zeta.savefig(output_plot + '/zetas_3.pdf', bbox_inches = 'tight', transparent=.5)
 
 #------------ Experiment 3 (Figure 4C) ------------ 2
 print('Experiment 3 (Figure 4C) - 2')
@@ -452,14 +452,14 @@ my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
 ax_r.set_xlim(right = 5e1)
 # ax_r.legend(title = r'$\zeta$', fontsize = 30, title_fontsize = 30, loc = 3)#, loc = (1, 0))
-fig_r.savefig(output_plot + '/ranking_B_cells_3b.pdf', transparent=.5)
+fig_r.savefig(output_plot + '/ranking_B_cells_3b.pdf', bbox_inches = 'tight', transparent=.5)
 
 my_plot_layout(ax =ax_zeta, yscale = 'linear', xscale = 'linear', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_zeta.set_xticks([0, 1, 2, 3, 4], ['', '', 'GC + fm', 'GC + fm + recall', 'combined'])
 ax_zeta.set_ylabel(r'$\zeta$', fontsize = 30)
 ax_zeta.tick_params(axis='y', labelsize=30)
 ax_zeta.tick_params(axis='x', labelsize=14, rotation = 45)
-fig_zeta.savefig(output_plot + '/zetas_3b.pdf', transparent=.5)
+fig_zeta.savefig(output_plot + '/zetas_3b.pdf', bbox_inches = 'tight', transparent=.5)
 
 #------------ Experiment 4 (Figure 5) ------------
 colors_ph = [my_red, my_blue, my_red, my_blue, my_red]
@@ -572,14 +572,13 @@ my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
 ax_r.set_xlim(right = 5e1)
 # ax_r.legend(title = r'$\zeta$', fontsize = 24, title_fontsize = 28, loc = 3)#, loc = (1, 0))
-fig_r.savefig(output_plot + '/ranking_B_cells_4.pdf', transparent=.5)
+fig_r.savefig(output_plot + '/ranking_B_cells_4.pdf', bbox_inches = 'tight', transparent=.5)
 
-my_plot_layout(ax =ax_zeta, yscale = 'linear', xscale = 'linear', ticks_labelsize= 20, x_fontsize=30, y_fontsize=30 )
 ax_zeta.set_xticks([0, 1, 2, 3, 4, 5, 6, 7, 8], ['exp1/naive', 'exp2/recall', 'exp3/recall', 'exp3/recall', 'exp3/recall', 'exp4/naive', 'exp4/recall', 'exp4/M', 'exp4/recall'])
 ax_zeta.set_ylabel(r'$\zeta$', fontsize = 30)
 ax_zeta.tick_params(axis='y', labelsize=30)
-ax_zeta.tick_params(axis='x', labelsize=14, rotation = 45)
-fig_zeta.savefig(output_plot + '/zetas_4.pdf', transparent=.5)
+ax_zeta.tick_params(axis='x', labelsize=24, rotation = 45)
+fig_zeta.savefig(output_plot + '/zetas_4.pdf', bbox_inches = 'tight', transparent=.5)
 
 
 #------------ Experiment 4 (Figure 5) ------------ 2
@@ -693,14 +692,13 @@ my_plot_layout(ax =ax_r, yscale = 'log', xscale = 'log', ticks_labelsize= 40, x_
 ax_r.set_ylim(bottom = 2e-2, top = 1.1)
 ax_r.set_xlim(right = 5e1)
 # ax_r.legend(title = r'$\zeta$', fontsize = 24, title_fontsize = 28, loc = 3)#, loc = (1, 0))
-fig_r.savefig(output_plot + '/ranking_B_cells_4b.pdf', transparent=.5)
+fig_r.savefig(output_plot + '/ranking_B_cells_4b.pdf', bbox_inches = 'tight', transparent=.5)
 
-my_plot_layout(ax =ax_zeta, yscale = 'linear', xscale = 'linear', ticks_labelsize= 20, x_fontsize=30, y_fontsize=30 )
 ax_zeta.set_xticks([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], ['exp1/naive', 'exp2/recall', 'exp3/recall', 'exp3/recall', 'exp3/recall', 'exp4/naive', 'exp4/recall', 'exp4/M', 'exp4/recall', 'exp4/recall'])
 ax_zeta.set_ylabel(r'$\zeta$', fontsize = 30)
 ax_zeta.tick_params(axis='y', labelsize=30)
-ax_zeta.tick_params(axis='x', labelsize=14, rotation = 45)
-fig_zeta.savefig(output_plot + '/zetas_4b.pdf', transparent=.5)
+ax_zeta.tick_params(axis='x', labelsize=24, rotation = 45)
+fig_zeta.savefig(output_plot + '/zetas_4b.pdf', bbox_inches = 'tight', transparent=.5)
 
 
 # #------------ Scaling plot ------------
@@ -714,10 +712,12 @@ ax_scaling1.set_ylabel(r'$N_1$', fontsize = 30)
 ax_scaling1.set_ylim(bottom=0, top = 80)
 ax_scaling1.set_xlim(left=1, right = 400)
 ax_scaling1.tick_params(labelsize = 20)
+ax_scaling1.tick_params(axis='y', labelsize=30)
+ax_scaling1.tick_params(axis='x', labelsize=30)
 # ax_scaling1.set_yscale('log')
 # ax_scaling1.set_xscale('log')
 ax_scaling1.legend(title = 'Response', title_fontsize = 20, fontsize = 15, loc = 4)
-fig_scaling1.savefig(output_plot + '/size_scaling_1_linear.pdf', bbox_inches = 'tight')
+fig_scaling1.savefig(output_plot + '/size_scaling_1_linear.pdf', bbox_inches = 'tight', transparent=.5)
 
 sns.scatterplot(data = scaling_results, x = 'barN', y = 'L_act', hue = 'phenotype', style = 'experiment', ax = ax_scaling2, s = 100, palette = [my_red, my_blue, my_blue, my_blue2, my_purple, 'darkorange', 'purple', 'brown', 'pink'], edgecolors = 'black', alpha = 0.8)
 # ax_scaling2.plot(np.linspace(1, 130, 100), (np.linspace(1, 130, 100)*1.0)**(1), color = 'k', linestyle = '--', alpha = .8)
@@ -725,11 +725,12 @@ ax_scaling2.set_xlabel(r'$N_B^{\mathrm{tot}}$', fontsize = 30)
 ax_scaling2.set_ylabel(r'$L_{act}$', fontsize = 30)
 ax_scaling2.set_ylim(bottom=0, top = 200)
 ax_scaling2.set_xlim(left=1, right = 400)
-ax_scaling2.tick_params(labelsize = 20)
+ax_scaling2.tick_params(axis='y', labelsize=30)
+ax_scaling2.tick_params(axis='x', labelsize=30)
 # ax_scaling2.set_yscale('log')
 # ax_scaling2.set_xscale('log')
 ax_scaling2.legend(title = 'Response', title_fontsize = 20, fontsize = 15, loc = 2)
-fig_scaling2.savefig(output_plot + '/size_scaling_2_linear.pdf', bbox_inches = 'tight')
+fig_scaling2.savefig(output_plot + '/size_scaling_2_linear.pdf', bbox_inches = 'tight', transparent=.5)
 
 sns.scatterplot(data = scaling_results, x = 'L_act', y = 'S', hue = 'phenotype', style = 'experiment', ax = ax_entropy, s = 100, palette = [my_red, my_blue, my_blue, my_blue2, my_purple, 'darkorange', 'purple', 'brown', 'pink'], edgecolors = 'black', alpha = 0.8)
 # ax_entropy.plot(np.linspace(1, 130, 100), (np.linspace(1, 130, 100)*1.0)**(1), color = 'k', linestyle = '--', alpha = .8)
@@ -737,11 +738,12 @@ ax_entropy.set_xlabel(r'$L_{act}$', fontsize = 30)
 ax_entropy.set_ylabel(r'$S$', fontsize = 30)
 # ax_entropy.set_ylim(bottom=0, top = 200)
 ax_entropy.set_xlim(left=3, right = 175)
-ax_entropy.tick_params(labelsize = 20)
+ax_entropy.tick_params(axis='y', labelsize=30)
+ax_entropy.tick_params(axis='x', labelsize=30)
 # ax_entropy.set_yscale('log')
 # ax_entropy.set_xscale('log')
 ax_entropy.legend(title = 'Response', title_fontsize = 20, fontsize = 15, loc = 4)
-fig_entropy.savefig(output_plot + '/size_scaling_entropy.pdf', bbox_inches = 'tight')
+fig_entropy.savefig(output_plot + '/size_scaling_entropy.pdf', bbox_inches = 'tight', transparent=.5)
 
 
 # #------------ Experiment 4 (day 9) ------------
