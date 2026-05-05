@@ -1,8 +1,12 @@
 """
-Study N_B_tot (total activated B cells) and L_act (number of activated clones)
-across the D~1 crossover.
+Complete model: explicit T-B conjugate intermediate state N_BT.
 
-Uses functions from ep_meanfield_sim.py.
+State variables per clone:
+    N_Bo  : resting (free) B cells
+    N_Ba  : activated (dividing) B cells
+    N_To  : free T cells
+    N_Ta  : activated T cells
+
 """
 
 import numpy as np
