@@ -91,7 +91,10 @@ def run_bootstrap(data_grouped, mice, mouse_col,
                     d['barN'].append(N)
                     d['S'].append(S_i)
                     d['zeta'].append(-params_m[0])
-                    d['SlogLact'].append(- S_i + np.log(len(counts)))
+                    if -params_m[0] < 1:
+                        d['SlogLact'].append(abs(- S_i + np.log(len(counts))))
+                    else:
+                        d['SlogLact'].append(abs(- S_i + np.log(len(counts))))
 
             x = (x[:MAX_RANK] if n_clones > MAX_RANK
                  else np.pad(x, (0, MAX_RANK - n_clones), mode='constant'))
@@ -146,15 +149,15 @@ def plot_theory_curves(ax_scaling1, ax_scaling2, ax_entropy, ax_entropy2, zeta_m
     barN = L ** Z / (1 - Z) * (L ** (1 - Z) - 1)
     S_th = (-Z * ((-L_e ** (1 - Z) * np.log(L_e)) / (L_e ** (1 - Z) - 1) + 1 / (1 - Z))
             + np.log((L_e ** (1 - Z) - 1) / (1 - Z)))
-    S1_z = z/(z-1) - np.log(1-z)
+    S1_z = z/(1-z) + np.log(1-z)
     S2_z = z/(z-1) - np.log(z-1)
     
     ax_scaling1.plot(barN, L ** Z, color=color, linestyle='--')
     ax_scaling2.plot(barN, L,      color=color, linestyle='--')
     ax_entropy.plot(L_e, S_th,    color=color, linestyle='--')
     # ax_entropy2.plot(L_e, -S_th + np.log(L_e),    color=color, linestyle='--')
-    ax_entropy2.plot(z, -S1_z,    color=color, linestyle='--')
-    ax_entropy2.plot(z, -S2_z,    color=color, linestyle='--')
+    ax_entropy2.plot(z, abs(-S1_z),    color=color, linestyle='--')
+    ax_entropy2.plot(z, abs(-S2_z),    color=color, linestyle='--')
 
 
 def apply_ranking_layout(fig_r, ax_r, suffix):
@@ -383,9 +386,9 @@ sns.scatterplot(data=scaling_results, x='zeta', y='SlogLact',
                 hue='phenotype', style='experiment', ax=ax_entropy_zeta,
                 s=100, palette=palette, edgecolors='black', alpha=0.8)
 ax_entropy_zeta.set_xlabel(r'$\zeta$', fontsize=30)
-ax_entropy_zeta.set_ylabel(r'$S - \log L_{act}$', fontsize=30)
+ax_entropy_zeta.set_ylabel(r'$|\log L_{act}-S|$', fontsize=30)
 # ax_entropy_zeta.set_xlim(left=2, right=160)
-ax_entropy_zeta.set_ylim(bottom=-0.05, top=1.5)
+ax_entropy_zeta.set_ylim(bottom=-0.05, top=4)
 ax_entropy_zeta.tick_params(axis='both', labelsize=30)
 ax_entropy_zeta.legend(title='Response', title_fontsize=20, fontsize=15, loc=4)
 fig_entropy_zeta.savefig(output_plot + '/size_scaling_entropy_zeta.pdf', bbox_inches='tight', transparent=.5)
