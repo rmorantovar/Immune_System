@@ -90,6 +90,7 @@ def run_bootstrap(data_grouped, mice, mouse_col,
                     d['L_act'].append(len(counts))
                     d['barN'].append(N)
                     d['S'].append(S_i)
+                    d['zeta'].append(-params_m[0])
 
             x = (x[:MAX_RANK] if n_clones > MAX_RANK
                  else np.pad(x, (0, MAX_RANK - n_clones), mode='constant'))
@@ -172,6 +173,7 @@ fig_zeta,     ax_zeta     = plt.subplots(**fig_kw)
 fig_scaling1, ax_scaling1 = plt.subplots(**fig_kw)
 fig_scaling2, ax_scaling2 = plt.subplots(**fig_kw)
 fig_entropy,  ax_entropy  = plt.subplots(**fig_kw)
+fig_entropy_zeta,  ax_entropy_zeta  = plt.subplots(**fig_kw)
 
 scaling_dict = defaultdict(list)
 apply_ranking_layout(fig_r, ax_r, '0')
@@ -368,3 +370,14 @@ ax_entropy.set_ylim(bottom=0.5, top=4.8)
 ax_entropy.tick_params(axis='both', labelsize=30)
 ax_entropy.legend(title='Response', title_fontsize=20, fontsize=15, loc=4)
 fig_entropy.savefig(output_plot + '/size_scaling_entropy.pdf', bbox_inches='tight', transparent=.5)
+
+sns.scatterplot(data=scaling_results, x='zeta', y='S',
+                hue='phenotype', style='experiment', ax=ax_entropy_zeta,
+                s=100, palette=palette, edgecolors='black', alpha=0.8)
+ax_entropy_zeta.set_xlabel(r'$\zeta$', fontsize=30)
+ax_entropy_zeta.set_ylabel(r'$S$', fontsize=30)
+# ax_entropy_zeta.set_xlim(left=2, right=160)
+ax_entropy_zeta.set_ylim(bottom=0.5, top=4.8)
+ax_entropy_zeta.tick_params(axis='both', labelsize=30)
+ax_entropy_zeta.legend(title='Response', title_fontsize=20, fontsize=15, loc=4)
+fig_entropy_zeta.savefig(output_plot + '/size_scaling_entropy_zeta.pdf', bbox_inches='tight', transparent=.5)
