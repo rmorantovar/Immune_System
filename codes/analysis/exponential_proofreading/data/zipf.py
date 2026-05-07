@@ -22,9 +22,10 @@ os.makedirs(output_plot, exist_ok=True)
 
 EXCEL_FILE   = root_dir + "/1-s2.0-S0092867419313170-mmc1.xlsx"
 CLONE_COLS   = ['V', 'J', 'D']
+# CLONE_COLS   = ['CDR3:']
 MAX_RANK     = 100
 MAX_RANK_FIT = 15
-N_ENSEMBLE   = 1000
+N_ENSEMBLE   = 400
 RUN_EXPERIMENTS = {'1', '2', '3a', '3b', '2-3a', '2-3b', '4a', '4b'}
 RUN_EXPERIMENTS = {'1', '2-3a','4a'}
 
@@ -35,6 +36,13 @@ my_colors2      = [my_purple, my_purple, my_purple, my_cyan, my_purple, my_blue2
 
 def model(x, m):
     return m * x
+
+def barN(L, Z):
+    return L ** Z / (1 - Z) * (L ** (1 - Z) - 1)
+
+def S_th(L_e, Z):
+    return (-Z * ((-L_e ** (1 - Z) * np.log(L_e)) / (L_e ** (1 - Z) - 1) + 1 / (1 - Z))
+            + np.log((L_e ** (1 - Z) - 1) / (1 - Z)))
 
 
 # ── Data ──────────────────────────────────────────────────────────────────────
@@ -149,21 +157,26 @@ def plot_zeta_violin(ax_zeta, zetas, zetas_mice, position, color):
     # ax_zeta.scatter(position, np.median(zetas_mice), color=color, edgecolor='k', s=150, marker='X')
 
 
-def plot_theory_curves(ax_scaling1, ax_scaling2, ax_entropy, ax_entropy_zeta, ax_entropy_logL_zeta, zeta_mean, color):
+def plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_entropy_zeta, ax_entropy_logL_zeta, zeta_mean, zeta_std, color):
     L   = np.linspace(1, 400, 100)
     L_e = np.linspace(1, 200, 100)
     z1 = np.linspace(0.01, 0.99, 100)
     z2 = np.linspace(1.01, 2.5, 100)
     Z   = zeta_mean
-    barN = L ** Z / (1 - Z) * (L ** (1 - Z) - 1)
-    S_th = (-Z * ((-L_e ** (1 - Z) * np.log(L_e)) / (L_e ** (1 - Z) - 1) + 1 / (1 - Z))
-            + np.log((L_e ** (1 - Z) - 1) / (1 - Z)))
+    Z_min = Z - 2*zeta_std
+    Z_max = Z + 2*zeta_std
+    
     S1_z = z1/(1-z1) + np.log(1-z1)
     S2_z = z2/(z2-1) - np.log(z2-1)
     
-    ax_scaling1.plot(barN, L ** Z, color=color, linestyle='--')
-    ax_scaling2.plot(barN, L,      color=color, linestyle='--')
-    ax_entropy.plot(L_e, S_th,    color=color, linestyle='--')
+    ax_scaling1.plot(barN(L, Z), L ** Z, color=color, linestyle='--')
+    ax_scaling1.fill_betweenx(L ** Z, barN(L, Z_min), barN(L, Z_max), color=color, alpha=0.1)
+    ax_scaling2.plot(barN(L, Z), L,      color=color, linestyle='--')
+    ax_scaling2.fill_betweenx(L, barN(L, Z_min), barN(L, Z_max), color=color, alpha=0.1)
+    ax_entropy.plot(L_e, S_th(L_e, Z),    color=color, linestyle='--')
+    ax_entropy.fill_between(L_e, S_th(L_e, Z_min), S_th(L_e, Z_max), color=color, alpha=0.1)
+    ax_scaling3.plot(L ** Z, L,      color=color, linestyle='--')
+    ax_scaling3.fill_betweenx(L, L ** Z_min, L ** Z_max, color=color, alpha=0.1)
     # ax_entropy2.plot(L_e, -S_th + np.log(L_e),    color=color, linestyle='--')
     # ax_entropy_logL_zeta.plot(z, abs(-S1_z),    color=color, linestyle='--')
     # ax_entropy_logL_zeta.plot(z, abs(-S2_z),    color=color, linestyle='--')
@@ -196,6 +209,7 @@ fig_r,        ax_r        = plt.subplots(**fig_kw)
 fig_zeta,     ax_zeta     = plt.subplots(**fig_kw)
 fig_scaling1, ax_scaling1 = plt.subplots(**fig_kw)
 fig_scaling2, ax_scaling2 = plt.subplots(**fig_kw)
+fig_scaling3, ax_scaling3 = plt.subplots(**fig_kw)
 fig_entropy,  ax_entropy  = plt.subplots(**fig_kw)
 fig_entropy_zeta,  ax_entropy_zeta  = plt.subplots(**fig_kw)
 fig_entropy_logL_zeta,  ax_entropy_logL_zeta  = plt.subplots(**fig_kw)
@@ -226,7 +240,7 @@ if '1' in RUN_EXPERIMENTS:
     plot_ranking_result(ax_r, x_avg, mre, np.mean(zetas), my_red, '*',
                         r'$%.2f$' % np.mean(zetas) + ' ; GC', ms=18)
     plot_zeta_violin(ax_zeta, zetas, zetas_mice, position=0, color=my_red)
-    plot_theory_curves(ax_scaling1, ax_scaling2, ax_entropy, ax_entropy_zeta, ax_entropy_logL_zeta, np.mean(zetas), my_red)
+    plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_entropy_zeta, ax_entropy_logL_zeta, np.mean(zetas), np.std(zetas), my_red)
     apply_ranking_layout(fig_r, ax_r, '1')
     apply_zeta_layout(fig_zeta, ax_zeta, '1', [0, 1], ['', ''])
 
@@ -252,7 +266,7 @@ if '2' in RUN_EXPERIMENTS:
     plot_ranking_result(ax_r, x_avg, mre, np.mean(zetas), my_blue, 'o',
                         r'$%.2f$' % np.mean(zetas) + ' ; GC + fm')
     plot_zeta_violin(ax_zeta, zetas, zetas_mice, position=1, color=my_blue)
-    # plot_theory_curves(ax_scaling1, ax_scaling2, ax_entropy, ax_entropy_zeta, ax_entropy_logL_zeta, np.mean(zetas), my_blue)
+    # plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_entropy_zeta, ax_entropy_logL_zeta, np.mean(zetas), np.std(zetas), my_blue)
     apply_ranking_layout(fig_r, ax_r, '2')
     apply_zeta_layout(fig_zeta, ax_zeta, '2', [0, 1], ['', ''])
 
@@ -281,7 +295,7 @@ if '3a' in RUN_EXPERIMENTS:
         plot_ranking_result(ax_r, x_avg, mre, np.mean(zetas), colors_ph[i_ph], '^',
                             r'$%.2f$' % np.mean(zetas) + ' ; ' + ph)
         plot_zeta_violin(ax_zeta, zetas, zetas_mice, position=i_ph + 2, color=colors_ph[i_ph])
-        # plot_theory_curves(ax_scaling1, ax_scaling2, ax_entropy, ax_entropy_zeta, ax_entropy_logL_zeta, np.mean(zetas), colors_ph[i_ph])
+        # plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_entropy_zeta, ax_entropy_logL_zeta, np.mean(zetas), np.std(zetas), colors_ph[i_ph])
 
     apply_ranking_layout(fig_r, ax_r, '3')
     apply_zeta_layout(fig_zeta, ax_zeta, '3', [0, 1, 2, 3], ['', '', 'GC + fm', 'PB + fm'])
@@ -307,7 +321,7 @@ if '3b' in RUN_EXPERIMENTS:
     recolor_last_lines(ax_r, len(mice), my_colors_alpha[int(np.mean(zetas) * 100)])
     # ranking point omitted (combined lines already visible on ax_r)
     plot_zeta_violin(ax_zeta, zetas, zetas_mice, position=4, color=my_blue2)
-    # plot_theory_curves(ax_scaling1, ax_scaling2, ax_entropy, ax_entropy_zeta, ax_entropy_logL_zeta, np.mean(zetas), my_blue2)
+    # plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_entropy_zeta, ax_entropy_logL_zeta, np.mean(zetas), np.std(zetas), my_blue2)
     apply_ranking_layout(fig_r, ax_r, '3b')
     apply_zeta_layout(fig_zeta, ax_zeta, '3b',
                       [0, 1, 2, 3, 4], ['', '', 'GC + fm', 'GC + fm + recall', 'combined'])
@@ -345,7 +359,7 @@ if '2-3a' in RUN_EXPERIMENTS:
     plot_ranking_result(ax_r, x_avg, mre, np.mean(zetas), my_blue, 's',
                         r'$%.2f$' % np.mean(zetas) + ' ; GC + fm (pooled 2\&3)')
     plot_zeta_violin(ax_zeta, zetas, zetas_mice, position=5, color=my_blue)
-    plot_theory_curves(ax_scaling1, ax_scaling2, ax_entropy, ax_entropy_zeta, ax_entropy_logL_zeta, np.mean(zetas), my_blue)
+    plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_entropy_zeta, ax_entropy_logL_zeta, np.mean(zetas), np.std(zetas), my_blue)
     apply_ranking_layout(fig_r, ax_r, '23a')
     apply_zeta_layout(fig_zeta, ax_zeta, '23a',
                       [0, 1, 2, 3, 4, 5],
@@ -375,7 +389,7 @@ if '2-3b' in RUN_EXPERIMENTS:
     plot_ranking_result(ax_r, x_avg, mre, np.mean(zetas), my_blue2, 'P',
                         r'$%.2f$' % np.mean(zetas) + ' ; all (pooled 2\&3)')
     plot_zeta_violin(ax_zeta, zetas, zetas_mice, position=6, color=my_blue2)
-    # plot_theory_curves(ax_scaling1, ax_scaling2, ax_entropy, ax_entropy_zeta, ax_entropy_logL_zeta, np.mean(zetas), my_blue2)
+    # plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_entropy_zeta, ax_entropy_logL_zeta, np.mean(zetas), np.std(zetas), my_blue2)
     apply_ranking_layout(fig_r, ax_r, '23b')
     apply_zeta_layout(fig_zeta, ax_zeta, '23b',
                       [0, 1, 2, 3, 4, 5, 6],
@@ -408,7 +422,7 @@ if '4a' in RUN_EXPERIMENTS:
         plot_ranking_result(ax_r, x_avg, mre, np.mean(zetas), colors_ph[i_ph], 'D',
                             r'$%.2f$' % np.mean(zetas) + ' ; ' + ph)
         plot_zeta_violin(ax_zeta, zetas, zetas_mice, position=i_ph + 7, color=colors_ph[i_ph])
-        plot_theory_curves(ax_scaling1, ax_scaling2, ax_entropy, ax_entropy_zeta, ax_entropy_logL_zeta, np.mean(zetas), colors_ph[i_ph])
+        plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_entropy_zeta, ax_entropy_logL_zeta, np.mean(zetas), np.std(zetas), colors_ph[i_ph])
 
     apply_ranking_layout(fig_r, ax_r, '4')
     apply_zeta_layout(fig_zeta, ax_zeta, '4',
@@ -444,7 +458,7 @@ if '4b' in RUN_EXPERIMENTS:
         recolor_last_lines(ax_r, len(mice), colors_ph[i_ph])
         # ranking point omitted (combined lines already visible on ax_r)
         plot_zeta_violin(ax_zeta, zetas, zetas_mice, position=i_ph + 11, color=colors_ph[i_ph])
-        # plot_theory_curves(ax_scaling1, ax_scaling2, ax_entropy, ax_entropy_zeta, ax_entropy_logL_zeta, np.mean(zetas), my_blue2)
+        # plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_entropy_zeta, ax_entropy_logL_zeta, np.mean(zetas), np.std(zetas), my_blue2)
 
     apply_ranking_layout(fig_r, ax_r, '4b')
     apply_zeta_layout(fig_zeta, ax_zeta, '4b',
@@ -463,6 +477,7 @@ palette = [my_red, my_blue, my_cyan, my_purple]
 sns.scatterplot(data=scaling_results, x='barN', y='N1',
                 hue='phenotype', style='experiment', ax=ax_scaling1,
                 s=150, palette=palette, edgecolors='black', alpha=0.8)
+my_plot_layout(ax=ax_scaling1, yscale='linear', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
 ax_scaling1.set_xlabel(r'$N_B^{\mathrm{tot}}$', fontsize=30)
 ax_scaling1.set_ylabel(r'$N_1$', fontsize=30)
 ax_scaling1.set_ylim(bottom=0, top=80)
@@ -474,6 +489,7 @@ fig_scaling1.savefig(output_plot + '/size_scaling_1_linear.pdf', bbox_inches='ti
 sns.scatterplot(data=scaling_results, x='barN', y='L_act',
                 hue='phenotype', style='experiment', ax=ax_scaling2,
                 s=150, palette=palette, edgecolors='black', alpha=0.8)
+my_plot_layout(ax=ax_scaling2, yscale='linear', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
 ax_scaling2.set_xlabel(r'$N_B^{\mathrm{tot}}$', fontsize=30)
 ax_scaling2.set_ylabel(r'$L_{act}$', fontsize=30)
 ax_scaling2.set_ylim(bottom=0, top=125)
@@ -482,13 +498,27 @@ ax_scaling2.tick_params(axis='both', labelsize=30)
 ax_scaling2.legend(title='Response', title_fontsize=20, fontsize=15, loc=2)
 fig_scaling2.savefig(output_plot + '/size_scaling_2_linear.pdf', bbox_inches='tight', transparent=.5)
 
+sns.scatterplot(data=scaling_results, x='N1', y='L_act',
+                hue='phenotype', style='experiment', ax=ax_scaling3,
+                s=150, palette=palette, edgecolors='black', alpha=0.8)
+my_plot_layout(ax=ax_scaling3, yscale='linear', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
+ax_scaling3.set_xlabel(r'$N_1$', fontsize=30)
+ax_scaling3.set_ylabel(r'$L_{act}$', fontsize=30)
+ax_scaling3.set_ylim(bottom=0, top=125)
+ax_scaling3.set_xlim(left=0, right=80)
+ax_scaling3.tick_params(axis='both', labelsize=30)
+ax_scaling3.legend(title='Response', title_fontsize=20, fontsize=15, loc=4)
+fig_scaling3.savefig(output_plot + '/size_scaling_3_linear.pdf', bbox_inches='tight', transparent=.5)
+
 sns.scatterplot(data=scaling_results, x='L_act', y='S',
                 hue='phenotype', style='experiment', ax=ax_entropy,
                 s=150, palette=palette, edgecolors='black', alpha=0.8)
+my_plot_layout(ax=ax_entropy, yscale='linear', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
 ax_entropy.set_xlabel(r'$L_{act}$', fontsize=30)
 ax_entropy.set_ylabel(r'$S$', fontsize=30)
 ax_entropy.set_xlim(left=2, right=160)
 ax_entropy.set_ylim(bottom=0.5, top=4.8)
+# ax_entropy.set_xscale('log')
 ax_entropy.tick_params(axis='both', labelsize=30)
 ax_entropy.legend(title='Response', title_fontsize=20, fontsize=15, loc=4)
 fig_entropy.savefig(output_plot + '/size_scaling_entropy.pdf', bbox_inches='tight', transparent=.5)
@@ -497,6 +527,7 @@ fig_entropy.savefig(output_plot + '/size_scaling_entropy.pdf', bbox_inches='tigh
 sns.scatterplot(data=scaling_results, x='zeta', y='S',
                 hue='phenotype', style='experiment', ax=ax_entropy_zeta,
                 s=150, palette=palette, edgecolors='black', alpha=0.8)
+my_plot_layout(ax=ax_entropy_zeta, yscale='linear', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
 ax_entropy_zeta.set_xlabel(r'$\zeta$', fontsize=30)
 ax_entropy_zeta.set_ylabel(r'$S$', fontsize=30)
 # ax_entropy_zeta.set_xlim(left=2, right=160)
@@ -508,6 +539,7 @@ fig_entropy_zeta.savefig(output_plot + '/size_scaling_entropy_zeta.pdf', bbox_in
 sns.scatterplot(data=scaling_results, x='L_act', y='SlogLact',
                 hue='phenotype', style='experiment', ax=ax_entropy_logL_zeta,
                 s=150, palette=palette, edgecolors='black', alpha=0.8)
+my_plot_layout(ax=ax_entropy_logL_zeta, yscale='linear', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
 ax_entropy_logL_zeta.set_xlabel(r'$L_{act}$', fontsize=30)
 ax_entropy_logL_zeta.set_ylabel(r'$|\log L_{act}-S|$', fontsize=30)
 # ax_entropy_logL_zeta.set_xlim(left=2, right=160)
