@@ -42,10 +42,10 @@ os.makedirs(output_plot, exist_ok=True)
 
 EXCEL_FILE = root_dir + "/1-s2.0-S0092867419313170-mmc1.xlsx"
 
-CLONE_DEF  = 'VDJ'                   # 'VDJ' or 'CDR3'
+CLONE_DEF  = 'CDR3'                   # 'VDJ' or 'CDR3'
 CLONE_COLS = ['V', 'J', 'D'] if CLONE_DEF == 'VDJ' else ['CDR3:']
 
-N_SCATTER_PAIRS = 9                   # example pairs to scatter-plot
+N_SCATTER_PAIRS = 16                  # example pairs to scatter-plot
 
 
 # ── Data loading ──────────────────────────────────────────────────────────────
@@ -231,7 +231,7 @@ fig_hm.savefig(output_plot + f'/jaccard_heatmap_{CLONE_DEF}.pdf', bbox_inches='t
 
 # ── Example scatter plots ─────────────────────────────────────────────────────
 
-n_cols = 3
+n_cols = 4
 n_rows = (N_SCATTER_PAIRS + n_cols - 1) // n_cols
 fig_sc, axes_sc = plt.subplots(n_rows, n_cols,
                                 figsize=(5 * n_cols, 4.5 * n_rows),
@@ -240,10 +240,7 @@ fig_sc, axes_sc = plt.subplots(n_rows, n_cols,
                                              'hspace': 0.45, 'wspace': 0.35})
 axes_sc = axes_sc.flatten()
 
-# pick a spread of same-experiment and cross-experiment pairs
-sample_same = results[results['same_exp']].nlargest(N_SCATTER_PAIRS // 2, 'shared')
-sample_diff = results[~results['same_exp']].nlargest(N_SCATTER_PAIRS - N_SCATTER_PAIRS // 2, 'shared')
-sample      = pd.concat([sample_same, sample_diff]).head(N_SCATTER_PAIRS)
+sample = results.nlargest(N_SCATTER_PAIRS, 'shared')
 
 for i, (_, row) in enumerate(sample.iterrows()):
     df = compute_overlap(all_counts[row['pop_a']], all_counts[row['pop_b']])
