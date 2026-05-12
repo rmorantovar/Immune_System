@@ -40,7 +40,7 @@ if __name__ == '__main__':
     # N_T_values = [1e2, 1e3, 1e4, 1e5, 1e20]
     fig_Z, ax_Z = plt.subplots(figsize=(8, 5))
     fig_N, ax_N = plt.subplots(figsize=(8, 5))
-    color_sigma = [my_blue, my_purple, my_gold]
+    color_sigma = [my_blue2, my_purple2, my_gold]
     for i_m, memory in enumerate([0]):
         print(f"-- Running simulation for memory={memory} --")
         base['memory'] = memory
