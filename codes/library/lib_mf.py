@@ -149,7 +149,7 @@ def build_repertoire_stochastic(p, DG_max_sim=None, seed=None):
     DG_arr = (1.0 / p.beta_star) * np.log(u * (exp_max - exp_min) + exp_min)
     DG_arr = np.sort(DG_arr)
  
-    psi_arr = np.exp(-p.sigma * DG_arr)
+    psi_arr = psi(DG_arr, p.sigma)
     weights = np.ones(L_sim)  # each entry is one clone
  
     return DG_arr, psi_arr, weights, L_sim
@@ -157,7 +157,7 @@ def build_repertoire_stochastic(p, DG_max_sim=None, seed=None):
 
 def psi(DG, sigma):
     """Binding/internalization probability. Boltzmann gate."""
-    return (1 + np.exp(DG))**-sigma
+    return (1 + np.exp(DG+0.5))**-sigma
 
 
 def G1(pi_vec, p):
@@ -309,7 +309,7 @@ def compute_zipf(res, time_index=-1, threshold=1.5):
     return ranks, sizes/sizes[0]  # normalize by largest clone size
 
 
-def compute_potency(res, time_index=-1, threshold=1.5):
+def compute_potency(res, time_index=-1, threshold=2.0):
     """
     Compute the potency (sum of the clone size times exp(-E)) at a given time.
  
@@ -317,7 +317,7 @@ def compute_potency(res, time_index=-1, threshold=1.5):
     -------
     potency : float, total activated B cells normalized by exp(-DG) weighting
     """
-    N_B = res['N_B'][:, time_index]
+    N_B = res['N_Bo'][:, time_index] + res['N_Ba'][:, time_index]
     DG = res['DG']
     w = res['weights']
  
@@ -834,7 +834,7 @@ def run_simulation_semicomplete(p=None, t_span=None, t_eval=None, mode='grid', D
     N_A_init = p.N_A0
     pi_init = np.zeros(M)  # no pMHC at t=0
     if p.memory:
-        N_Bo_init = 1e2*np.exp(-p.sigma * (p.b0 / p.lambda_A + 1) * DG_arr)  # memory
+        N_Bo_init = 1e3*np.exp(-p.sigma * (p.b0 / p.lambda_A + 1) * DG_arr)  # memory
     else:
         N_Bo_init = np.ones(M)  # naive
     N_Ba_init = np.zeros(M)
