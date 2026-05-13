@@ -28,6 +28,7 @@ MAX_RANK_FIT = 15
 N_ENSEMBLE   = 400
 RUN_EXPERIMENTS = {'1', '2', '3a', '3b', '2-3a', '2-3b', '4a', '4b'}
 RUN_EXPERIMENTS = {'1', '2-3a','4a'}
+RUN_EXPERIMENTS = {'1', '2'}
 
 color_vals      = np.linspace(0, 2, 200)
 my_colors_alpha = [plt.get_cmap('autumn_r')(v) for v in color_vals]
@@ -186,8 +187,8 @@ def apply_ranking_layout(fig_r, ax_r, suffix):
     my_plot_layout(ax=ax_r, yscale='log', xscale='log', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
     ax_r.set_ylim(bottom=2e-2, top=1.1)
     ax_r.set_xlim(right=5e1)
-    ax_r.set_xlabel(r'$\mathrm{Rank, } k $', fontsize=30)
-    ax_r.set_ylabel(r'$\mathrm{Relative clone size, } x_k $', fontsize=30)
+    # ax_r.set_xlabel(r'$\mathrm{Rank, } k $', fontsize=30)
+    # ax_r.set_ylabel(r'$\mathrm{Relative clone size, } x_k $', fontsize=30)
     ax_r.tick_params(axis='y', labelsize=30)
     ax_r.tick_params(axis='x', labelsize=30)
     fig_r.savefig(output_plot + f'/ranking_B_cells_{suffix}.pdf', bbox_inches='tight', transparent=.5)
@@ -229,15 +230,15 @@ if '1' in RUN_EXPERIMENTS:
     mice = data['Mouse'].unique()
 
     x_avg, mre, zetas, zetas_mice = run_bootstrap(
-        data, mice, 'Mouse', ax_r=ax_r, line_color=my_red,
+        data, mice, 'Mouse', ax_r=ax_r, line_color=my_green_a,
         scaling_info=dict(experiment='1', response='naive', phenotype='GC', scaling_dict=scaling_dict),
     )
     print(np.mean(zetas), np.std(zetas))
     violin_stats.append(dict(experiment='1', response='naive', phenotype='GC',
                              violin_zeta_mean=np.mean(zetas), violin_zeta_std=np.std(zetas),
                              mice_zeta_mean=np.mean(zetas_mice), mice_zeta_std=np.std(zetas_mice)))
-    recolor_last_lines(ax_r, len(mice), my_red)
-    plot_ranking_result(ax_r, x_avg, mre, np.mean(zetas), my_red, '*',
+    recolor_last_lines(ax_r, len(mice), my_green_a)
+    plot_ranking_result(ax_r, x_avg, mre, np.mean(zetas), my_green_a, '*',
                         r'$%.2f$' % np.mean(zetas) + ' ; GC', ms=18)
     plot_zeta_violin(ax_zeta, zetas, zetas_mice, position=0, color=my_red)
     plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_entropy_zeta, ax_entropy_logL_zeta, np.mean(zetas), np.std(zetas), my_red)
@@ -255,15 +256,15 @@ if '2' in RUN_EXPERIMENTS:
     mice = data['Mouse'].unique()
 
     x_avg, mre, zetas, zetas_mice = run_bootstrap(
-        data, mice, 'Mouse', ax_r=ax_r, line_color=my_blue,
+        data, mice, 'Mouse', ax_r=ax_r, line_color=my_blue2,
         scaling_info=dict(experiment='2', response='recall', phenotype='GC + fm', scaling_dict=scaling_dict),
     )
     print(np.mean(zetas), np.std(zetas))
     violin_stats.append(dict(experiment='2', response='recall', phenotype='GC + fm',
                              violin_zeta_mean=np.mean(zetas), violin_zeta_std=np.std(zetas),
                              mice_zeta_mean=np.mean(zetas_mice), mice_zeta_std=np.std(zetas_mice)))
-    recolor_last_lines(ax_r, len(mice), my_blue)
-    plot_ranking_result(ax_r, x_avg, mre, np.mean(zetas), my_blue, 'o',
+    recolor_last_lines(ax_r, len(mice), my_blue2)
+    plot_ranking_result(ax_r, x_avg, mre, np.mean(zetas), my_blue2, 'o',
                         r'$%.2f$' % np.mean(zetas) + ' ; GC + fm')
     plot_zeta_violin(ax_zeta, zetas, zetas_mice, position=1, color=my_blue)
     # plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_entropy_zeta, ax_entropy_logL_zeta, np.mean(zetas), np.std(zetas), my_blue)

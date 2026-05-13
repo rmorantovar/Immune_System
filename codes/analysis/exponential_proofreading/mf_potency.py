@@ -28,7 +28,7 @@ if __name__ == '__main__':
                 Omega_0=1.0, T_lim = True, N_T0=1e4
     )
     T = 12
-    N_ensemble = 10
+    N_ensemble = 2
     # print(compute_N_B_tot(res))
     # ============================================================
     # Scan N_T: move t_D relative to dynamics
