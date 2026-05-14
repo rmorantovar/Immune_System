@@ -230,15 +230,15 @@ if '1' in RUN_EXPERIMENTS:
     mice = data['Mouse'].unique()
 
     x_avg, mre, zetas, zetas_mice = run_bootstrap(
-        data, mice, 'Mouse', ax_r=ax_r, line_color=my_green_a,
+        data, mice, 'Mouse', ax_r=ax_r, line_color='limegreen',
         scaling_info=dict(experiment='1', response='naive', phenotype='GC', scaling_dict=scaling_dict),
     )
     print(np.mean(zetas), np.std(zetas))
     violin_stats.append(dict(experiment='1', response='naive', phenotype='GC',
                              violin_zeta_mean=np.mean(zetas), violin_zeta_std=np.std(zetas),
                              mice_zeta_mean=np.mean(zetas_mice), mice_zeta_std=np.std(zetas_mice)))
-    recolor_last_lines(ax_r, len(mice), my_green_a)
-    plot_ranking_result(ax_r, x_avg, mre, np.mean(zetas), my_green_a, '*',
+    recolor_last_lines(ax_r, len(mice), 'limegreen')
+    plot_ranking_result(ax_r, x_avg, mre, np.mean(zetas), 'limegreen', '*',
                         r'$%.2f$' % np.mean(zetas) + ' ; GC', ms=18)
     plot_zeta_violin(ax_zeta, zetas, zetas_mice, position=0, color=my_red)
     plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_entropy_zeta, ax_entropy_logL_zeta, np.mean(zetas), np.std(zetas), my_red)
@@ -256,15 +256,15 @@ if '2' in RUN_EXPERIMENTS:
     mice = data['Mouse'].unique()
 
     x_avg, mre, zetas, zetas_mice = run_bootstrap(
-        data, mice, 'Mouse', ax_r=ax_r, line_color=my_blue2,
+        data, mice, 'Mouse', ax_r=ax_r, line_color=my_blue,
         scaling_info=dict(experiment='2', response='recall', phenotype='GC + fm', scaling_dict=scaling_dict),
     )
     print(np.mean(zetas), np.std(zetas))
     violin_stats.append(dict(experiment='2', response='recall', phenotype='GC + fm',
                              violin_zeta_mean=np.mean(zetas), violin_zeta_std=np.std(zetas),
                              mice_zeta_mean=np.mean(zetas_mice), mice_zeta_std=np.std(zetas_mice)))
-    recolor_last_lines(ax_r, len(mice), my_blue2)
-    plot_ranking_result(ax_r, x_avg, mre, np.mean(zetas), my_blue2, 'o',
+    recolor_last_lines(ax_r, len(mice), my_blue)
+    plot_ranking_result(ax_r, x_avg, mre, np.mean(zetas), my_blue, 'o',
                         r'$%.2f$' % np.mean(zetas) + ' ; GC + fm')
     plot_zeta_violin(ax_zeta, zetas, zetas_mice, position=1, color=my_blue)
     # plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_entropy_zeta, ax_entropy_logL_zeta, np.mean(zetas), np.std(zetas), my_blue)
