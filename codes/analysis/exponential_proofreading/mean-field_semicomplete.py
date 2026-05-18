@@ -1,5 +1,5 @@
 """
-Complete model: explicit T-B conjugate intermediate state N_BT.
+Complete model: non-explicit T-B conjugate intermediate state N_BT.
 
 State variables per clone:
     N_Bo  : resting (free) B cells
@@ -15,7 +15,7 @@ import os
 import sys
 sys.path.append('../../library/')
 from lib_mf import*
-plt.rcParams['text.usetex'] = True
+
 
 
 if __name__ == '__main__':

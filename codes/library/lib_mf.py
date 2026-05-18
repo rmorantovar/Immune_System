@@ -25,6 +25,8 @@ antigen_color = my_yellow
 my_green_a = np.array((159, 206, 99))/256.
 my_green_b = np.array((79, 173, 91))/256.
 my_green_c = np.array((94, 129, 63))/256.
+
+plt.rcParams['text.usetex'] = True
 # ============================================================
 # Parameters
 # ============================================================
@@ -325,6 +327,24 @@ def compute_potency(res, time_index=-1, threshold=2.0):
     potency = np.sum(N_B[activated] * np.exp(-DG[activated]))
     
     return potency 
+
+
+def compute_yield(res, time_index=-1, threshold=2.0):
+    """
+    Compute the yield (sum of the clone size) at a given time.
+ 
+    Returns
+    -------
+    yield : float, total activated B cells
+    """
+    N_B = res['N_Bo'][:, time_index] + res['N_Ba'][:, time_index]
+    DG = res['DG']
+    w = res['weights']
+ 
+    activated = N_B > threshold
+    yield_ = np.sum(N_B[activated])
+    
+    return yield_ 
 
 # ============================================================
 # ODE system
