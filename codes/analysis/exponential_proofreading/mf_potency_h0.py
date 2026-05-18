@@ -25,7 +25,7 @@ if __name__ == '__main__':
     output_plot = f'/Users/robertomorantovar/Dropbox/_Documents/Research/Projects/Immune_System/_Repository/Figures/{project}/{model}/{submodel}//{subproject}/{subsubproject}/'
     os.makedirs(output_plot, exist_ok=True)
     # Default parameters
-    base = dict(N_A0=1.0, delta_A=6.0, lambda_A = 6.,
+    base = dict(N_A0=1.0, delta_A=6.0, lambda_A = 4.,
                 k_on=1e2*1e6*1e6*24*3600/N_Avg, delta_pi=0.1, Theta=1000.0,
                 hill=1.0, sigma=1.0, beta_star=2.5, K_T = 1e5,
                 delta_T=0.00, Tcell_growth_factor=2.0,
@@ -45,7 +45,7 @@ if __name__ == '__main__':
 
     # Storage for summary
     summary = []
-    h0s = np.logspace(-5, -2, 20)
+    h0s = np.logspace(-2, 2, 10)
     potencies = []
     Byields = []
     for h0 in h0s:
