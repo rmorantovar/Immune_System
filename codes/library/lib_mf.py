@@ -346,6 +346,26 @@ def compute_yield(res, time_index=-1, threshold=2.0):
     
     return yield_ 
 
+
+def produce_memory(res):
+    """
+    Produce memory at the end of a response. Memory is produced in the following way: N_mem cells are drawn randomly
+    from the N_B_tot resulting from the expansion. 
+ 
+    Returns
+    -------
+    DG_memory : float, energies of the memory clones
+    N_memory : float, number of memory cells per clone
+    """
+    N_B = res['N_Bo'][:, -1] + res['N_Ba'][:, -1]
+    N_B_activated = N_B[N_B > 2.0]
+    N_B_activated_cells = [i for i, count in enumerate(N_B_activated) for _ in range(int(count))]
+    index_memory = np.random.choice(N_B_activated_cells, size=min(int(1e3), len(N_B_activated_cells)), replace=False)
+    unique_index_memory, N_memory = np.unique(index_memory, return_counts=True)
+    DG_memory = res['DG'][unique_index_memory]
+
+    return DG_memory, N_memory
+
 # ============================================================
 # ODE system
 # ============================================================
@@ -863,7 +883,6 @@ def run_simulation_semicomplete(p=None, t_span=None, t_eval=None, mode='grid', D
  
     y0 = pack_state_semicomplete(N_A_init, pi_init, N_Bo_init, N_Ba_init, N_To_init, N_Ta_init, M)
     
-    
     # --- Integrate ---
     #method='BDF', 'LSODA' o 'RK45', rtol=1e-6, atol=1e-8, max_step=0.1
     # _call_count[0] = 0
@@ -876,7 +895,7 @@ def run_simulation_semicomplete(p=None, t_span=None, t_eval=None, mode='grid', D
         rtol=1e-4,
         atol=1e-5
     )
-    # print(f"Total RHS calls: {_call_count[0]}")
+
     if not sol.success:
         print(f"Warning: integration failed: {sol.message}")
  

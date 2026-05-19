@@ -26,12 +26,12 @@ if __name__ == '__main__':
     output_plot = f'/Users/robertomorantovar/Dropbox/_Documents/Research/Projects/Immune_System/_Repository/Figures/{project}/{model}/{submodel}/{subproject}/{subsubproject}/'
     os.makedirs(output_plot, exist_ok=True)
     # Default parameters
-    base = dict(N_A0=1.0, delta_A=4.0, lambda_A = 6., sigma= 1.0,
+    base = dict(N_A0=1.0, delta_A=4.0, lambda_A = 6., sigma= 2.0,
                 k_on=1e1*1e6*1e6*24*3600/N_Avg, delta_pi=0.1, Theta=1000.0,
                 hill=1.0, beta_star=2.3, K_T = 1e5,
                 delta_T=0.00, Tcell_growth_factor=2.0,
                 tau_eng=0.1, b0=2.0, delta_B=0.00,
-                DG_min=0.0, DG_max=4.0, M=20,
+                DG_min=0.0, DG_max=3.2, M=20,
                 Omega_0=1.0, T_lim = True, N_T0 = 1e4
     )
     T = 12
@@ -41,23 +41,39 @@ if __name__ == '__main__':
     # ============================================================
 
     fig_Z, ax_Z = plt.subplots(figsize=(8, 5))
+    fig_Z_memory, ax_Z_memory = plt.subplots(figsize=(8, 5))
     fig_N, ax_N = plt.subplots(figsize=(8, 5))
-    color_sigma = [my_red, my_blue2, my_purple2, my_gold, my_brown]
-    for i_m, memory in enumerate([0]):
-        print(f"-- Running simulation for memory={memory} --")
-        base['memory'] = memory
-        for i_h0, h0 in enumerate([1e-3, 1e-2, 1e-1, 1, 10]):
+    colors_sim = [my_red, my_blue2, my_purple2, my_gold, my_brown]
+
+    h0s = np.logspace(-2, 1, 5)
+    initial_memory_potency = []
+
+    for i_h0, h0 in enumerate(h0s):
+        print(f"Running simulation for h0={h0}")
+        base['h0'] = h0
+        label = f'$h_0={h0}$'
+        
+        for i_m, memory in enumerate([0]):
+            print(f"-- Running simulation for memory={memory} --")
+            base['memory'] = memory
             figs, axes = plt.subplots(6, 1, figsize=(8, 18))
-            print(f"Running simulation for h0={h0}")
-            base['h0'] = h0
+
             p = Parameters(**base)
+
             # res = run_simulation(p=p, t_span=(0, T), mode='grid')
             res = run_simulation_semicomplete(p=p, t_span=(0, T), mode='stochastic', seed=0)
 
             print(res['M'])
             t = res['t']
+
+            DG_memory, N_memory = produce_memory(res)
+
+            ax_Z_memory.bar(DG_memory, N_memory, width=0.1, color=colors_sim[i_h0], alpha=0.5, label=label)
+
+            Z0_memory = np.sum(N_memory*np.exp(-DG_memory))
+            initial_memory_potency.append(Z0_memory)
             
-            label = f'$h_0={h0}$'
+           
 
             # (a) N_A
             axi = axes[0]
@@ -69,6 +85,7 @@ if __name__ == '__main__':
             axi.semilogy(t, res['pi'][40, :], label=label, linewidth = 2, alpha=0.5, color=ax1[0].get_color())
             axi.semilogy(t, res['pi'][-1, :], label=label, linewidth = 2, alpha=0.2, color=ax1[0].get_color())
             axi.semilogy(t, 1e10*np.exp(-(p.b0)*t), label=label, linewidth = 1, linestyle='--', color='grey', alpha=0.8)
+            axi.axhline(p.b0/p.h0, 0, T, linewidth = 1, linestyle='--', color='grey', alpha=0.8)
 
             # (c) lambda_B
             axi = axes[2]
@@ -110,7 +127,7 @@ if __name__ == '__main__':
             axi.semilogy(t, 1e-2*np.exp((p.b0)*t), label=label, linewidth = 1, linestyle='--', color='grey', alpha=0.8)
             
             # Clone size shared axis
-            ax1 = ax_N.semilogy(t, N_B_total, linewidth = 3, color=color_sigma[i_h0], label=label)
+            ax1 = ax_N.semilogy(t, N_B_total, linewidth = 3, color=colors_sim[i_h0], label=label)
             # ax_N.semilogy(t, res['N_Bo'][0, :] + res['N_Ba'][0, :], label=label, linewidth = 2, alpha=1, color=ax1[0].get_color())
             # ax_N.semilogy(t, res['N_Bo'][40, :] + res['N_Ba'][40, :], label=label, linewidth = 2, alpha=0.5, color=ax1[0].get_color())
             # ax_N.semilogy(t, res['N_Bo'][-1, :] + res['N_Ba'][-1, :], label=label, linewidth = 2, alpha=0.2, color=ax1[0].get_color())
@@ -120,7 +137,7 @@ if __name__ == '__main__':
                 color = my_blue
             else:
                 color = my_red
-            ax1 = ax_Z.semilogy(t, Z_B_total, linewidth = 2, color=color_sigma[i_h0], label=label)
+            ax1 = ax_Z.semilogy(t, Z_B_total, linewidth = 2, color=colors_sim[i_h0], label=label)
             # ax_Z.semilogy(t, Z_B[0, :], label=label, linewidth = 3, alpha=0.5, color=ax1[0].get_color())
 
             # Formatting
@@ -134,7 +151,7 @@ if __name__ == '__main__':
             # axes[1].set_xlabel('Time')
             axes[1].set_ylabel(r'$\pi$', fontsize = 16)
             axes[1].set_xticklabels([])
-            axes[1].set_ylim(bottom = 1e-4, top = 10*np.max(res['pi'][0, :]))
+            axes[1].set_ylim(bottom = 1e-4, top = 1e3)
             axes[1].set_xlim(0, T)
 
             # axes[2].set_xlabel('Time')
@@ -149,7 +166,7 @@ if __name__ == '__main__':
             axes[3].set_xticklabels([])
             axes[3].set_xlim(0, T)
             axes[3].set_yscale('log')
-            axes[3].set_ylim(bottom = 5e-1*p.N_T0)
+            axes[3].set_ylim(bottom = 0.1*p.N_T0, top = 1e5*p.N_T0)
             # axes[3].legend(fontsize=10)
             axes[3].tick_params(labelsize=14)
 
@@ -204,3 +221,16 @@ if __name__ == '__main__':
     ax_Z.legend(fontsize=14)
     plt.tight_layout()
     fig_Z.savefig(os.path.join(output_plot, f'potency_summary.pdf'), dpi=150, bbox_inches='tight')
+
+    # ax_Z_memory.plot(h0s, initial_memory_potency, marker='o', color=my_blue)
+    # ax_Z_memory.set_ylabel(r'$\mathrm{Potency, } Z_0$', fontsize = 16)
+    # ax_Z_memory.set_xticklabels([])
+    # ax_Z_memory.set_xlabel(r'$h_0$', fontsize = 16)
+    # ax_Z_memory.set_ylim(bottom = 5e-1, top = 1e7)
+    # ax_Z_memory.set_xlim(0, T)
+    # ax_Z_memory.set_xscale('log')
+    # ax_Z_memory.set_yscale('log')
+    ax_Z_memory.tick_params(labelsize=14)
+    ax_Z_memory.legend(fontsize=14)
+    plt.tight_layout()
+    fig_Z_memory.savefig(os.path.join(output_plot, f'Z0_memory.pdf'), dpi=150, bbox_inches='tight')
