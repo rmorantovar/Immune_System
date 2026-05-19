@@ -357,7 +357,7 @@ def produce_memory(res):
     DG_memory : float, energies of the memory clones
     N_memory : float, number of memory cells per clone
     """
-    N_B = res['N_Bo'][:, -1] + res['N_Ba'][:, -1]
+    N_B = (res['N_Bo'][:, -1] + res['N_Ba'][:, -1])*res['weights']  # total number of cells per bin at the end of the response
     # N_B[N_B<2.0] = 0
     N_B_activated = N_B[N_B > 2.0]
     N_B_activated_cells = [i for i, count in enumerate(N_B_activated) for _ in range(int(count))]
