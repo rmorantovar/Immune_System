@@ -358,9 +358,10 @@ def produce_memory(res):
     N_memory : float, number of memory cells per clone
     """
     N_B = res['N_Bo'][:, -1] + res['N_Ba'][:, -1]
+    # N_B[N_B<2.0] = 0
     N_B_activated = N_B[N_B > 2.0]
     N_B_activated_cells = [i for i, count in enumerate(N_B_activated) for _ in range(int(count))]
-    index_memory = np.random.choice(N_B_activated_cells, size=min(int(1e3), len(N_B_activated_cells)), replace=False)
+    index_memory = np.random.choice(N_B_activated_cells, size=min(int(1e2), len(N_B_activated_cells)), replace=False)
     unique_index_memory, N_memory = np.unique(index_memory, return_counts=True)
     DG_memory = res['DG'][unique_index_memory]
 
@@ -858,7 +859,7 @@ def run_simulation_semicomplete(p=None, t_span=None, t_eval=None, mode='grid', D
     if t_span is None:
         t_span = (0.0, 10.0)
     if t_eval is None:
-        t_eval = np.linspace(t_span[0], t_span[1], 500  )
+        t_eval = np.linspace(t_span[0], t_span[1], 500)
  
     # --- Build repertoire ---
     if mode == 'grid':
