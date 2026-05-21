@@ -27,11 +27,11 @@ if __name__ == '__main__':
     os.makedirs(output_plot, exist_ok=True)
     # Default parameters
     base = dict(N_A0=1.0, lambda_A = 6.0, delta_A=4.0, sigma= 1.0,
-                k_on=1e1*1e6*1e6*24*3600/N_Avg, delta_pi=0.1, Theta=1000.0,
+                k_on=1e0*1e6*1e6*24*3600/N_Avg, delta_pi=0.1, Theta=1000.0,
                 hill=1.0, beta_star=2.5, K_T = 1e5,
                 delta_T=0.00, Tcell_growth_factor=2.0,
                 tau_eng=0.1, b0=2.0, delta_B=0.00,
-                DG_min=0.0, DG_max=4.5, M=20,
+                DG_min=0.0, DG_max=5.0, M=20,
                 Omega_0=1.0, T_lim = True, N_T0 = 1e4
     )
     T = 15
@@ -42,12 +42,12 @@ if __name__ == '__main__':
 
     fig_Z, ax_Z = plt.subplots(figsize=(8, 5))
     fig_Z_memory, ax_Z_memory = plt.subplots(figsize=(8, 5))
-    axins = ax_Z_memory.inset_axes([0.35, 0.55, 0.4, 0.35])
+    axins = ax_Z_memory.inset_axes([0.55, 0.0, 0.4, 0.35])
     fig_N, ax_N = plt.subplots(figsize=(8, 5))
     colors_sim = [my_red, my_blue2, my_purple2, my_gold, my_brown, my_blue, my_green, 'tab:orange', my_purple, my_cyan]
-    N_ensembles = 100
+    N_ensembles = 10
 
-    h0s = np.logspace(-3, np.log10(1*base['b0']), 10)
+    h0s = np.logspace(-3, np.log10(base['b0']), 10)
     initial_memory_potency = []
     initial_memory_potency_std = []
     print(f"Running simulation")
@@ -75,7 +75,7 @@ if __name__ == '__main__':
                 Z0_memory = np.sum(N_memory*np.exp(-DG_memory))
                 initial_memory_potencies_h0.append(Z0_memory)
 
-            ax_Z_memory.bar(DG_memory, N_memory, width=0.1, color=colors_sim[i_h0], alpha=0.5, label=label)
+            ax_Z_memory.plot(DG_memory, N_memory, color=colors_sim[i_h0], alpha=0.5, label=label)
             initial_memory_potency.append(np.mean(initial_memory_potencies_h0))
             initial_memory_potency_std.append(np.std(initial_memory_potencies_h0))
 
@@ -119,9 +119,9 @@ if __name__ == '__main__':
             # axi.semilogy(t, res['N_Ba'][0, :], label=label, linewidth = 2, linestyle=':', color=ax1[0].get_color())
             # axi.semilogy(t, N_B_total, label=label, linewidth = 3, linestyle='-', alpha=0.8, color=ax1[0].get_color())
             axi.semilogy(t, 1e-2*np.exp((p.b0)*t), label=label, linewidth = 1, linestyle='--', color='grey', alpha=0.8)
-            L_act = (N_B != 0).sum(axis=0)
+            L_act = ((N_B != 0)*res['weights'][:, None]).sum(axis=0)
             print(res['weights'][-1], np.sum(res['weights']))
-            ax1 = axi.semilogy(t, [np.sum(res['weights'][0: L_act[i_t]]) for i_t in range(len(t))], label=label, linewidth = 4, color = my_green)
+            ax1 = axi.semilogy(t, L_act, label=label, linewidth = 4, color = my_green)
 
             # (f) Potency
             axi = axes[2, 1]
@@ -161,9 +161,9 @@ if __name__ == '__main__':
             axes[1, 0].set_ylim(bottom = 1e-4, top = 1e4)
             axes[1, 0].set_xlim(0, T)
 
-            # axes[0, 2].set_xlabel('Time')
+            axes[2, 0].set_xlabel('Time', fontsize = 16)
             axes[2, 0].set_ylabel(r'$\lambda_B/b_o$', fontsize = 16)
-            axes[2, 0].set_xticklabels([])
+            # axes[2, 0].set_xticklabels([])
             axes[2, 0].set_xlim(0, T)
             axes[2, 0].tick_params(labelsize=14)
 
@@ -180,8 +180,8 @@ if __name__ == '__main__':
             axes[1, 1].axhline(1.0, color='k', linestyle='--', alpha=0.5)
             # axes[1, 1].set_xlabel('Time')
             axes[1, 1].set_ylabel('B cells', fontsize = 16)
-            # axes[1, 1].set_xticklabels([])
-            axes[1, 1].set_xlabel('Time', fontsize = 16)
+            axes[1, 1].set_xticklabels([])
+            # axes[1, 1].set_xlabel('Time', fontsize = 16)
             axes[1, 1].set_ylim(bottom = 5e-1, top = 1e8)
             axes[1, 1].set_xlim(0, T)
             axes[1, 1].set_yscale('log')
@@ -189,7 +189,7 @@ if __name__ == '__main__':
 
             # axes[2, 0].set_xlabel('Time')
             axes[2, 1].set_ylabel('Potency, $Z$', fontsize = 16)
-            # axes[2, 0].set_xticklabels([])
+            # axes[2, 1].set_xticklabels([])
             axes[2, 1].set_xlabel('Time', fontsize = 16)
             axes[2, 1].set_ylim(bottom = 5e-1, top = 1e8)
             axes[2, 1].set_xlim(0, T)
@@ -232,13 +232,14 @@ if __name__ == '__main__':
     axins.plot(h0s, initial_memory_potency, marker='o', color=my_blue)
     axins.set_xscale('log')
     axins.set_yscale('log')
+    ax_Z_memory.plot(res['DG'], res['weights'], marker='o', color='k')
     # ax_Z_memory.set_ylabel(r'$\mathrm{Potency, } Z_0$', fontsize = 16)
     # ax_Z_memory.set_xticklabels([])
     # ax_Z_memory.set_xlabel(r'$h_0$', fontsize = 16)
     # ax_Z_memory.set_ylim(bottom = 5e-1, top = 1e7)
     # ax_Z_memory.set_xlim(0, T)
     # ax_Z_memory.set_xscale('log')
-    # ax_Z_memory.set_yscale('log')
+    ax_Z_memory.set_yscale('log')
     ax_Z_memory.tick_params(labelsize=14)
     ax_Z_memory.legend(title = r'$h_0$', title_fontsize = 12, fontsize=12)
     plt.tight_layout()

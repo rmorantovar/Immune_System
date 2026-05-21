@@ -361,7 +361,7 @@ def produce_memory(res):
     # N_B[N_B<2.0] = 0
     N_B_activated = N_B[N_B > 2.0]
     N_B_activated_cells = [i for i, count in enumerate(N_B_activated) for _ in range(int(count))]
-    index_memory = np.random.choice(N_B_activated_cells, size=min(int(1e2), len(N_B_activated_cells)), replace=False)
+    index_memory = np.random.choice(N_B_activated_cells, size=min(int(1e4), len(N_B_activated_cells)), replace=False)
     unique_index_memory, N_memory = np.unique(index_memory, return_counts=True)
     DG_memory = res['DG'][unique_index_memory]
 
