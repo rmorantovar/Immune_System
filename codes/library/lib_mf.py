@@ -43,7 +43,7 @@ class Parameters:
     # --- pMHC ---
     k_on: float = 1.0           # antigen encounter rate (affinity-independent)
     delta_pi: float = 1.0       # pMHC surface turnover rate (fast)
-    Theta: float = 1.0           # pMHC half-maximal threshold
+    pi_star: float = 1.0           # pMHC half-maximal threshold
     hill: float = 3.0             # Hill coefficient for T cell activation (controls sharpness of transition)
 
     # --- Binding ---
@@ -250,25 +250,25 @@ def compute_lambda_T(pi_vec, N_B_vec, weights, p):
     return lambda_T
 
 
-def compute_N_B_tot(res, threshold=1.5):
+def compute_N_B_tot(res, threshold=2.0):
     """Total number of activated B cells."""
-    N_B = res['N_B']
+    N_B = res['N_Bo'] + res['N_Ba']
     w = res['weights']
     activated = (N_B > threshold).astype(float)
     return np.sum(w[:, None] * N_B * activated, axis=0)
  
  
-def compute_L_act(res, threshold=1.5):
+def compute_L_act(res, threshold=2.0):
     """Number of activated clones."""
-    N_B = res['N_B']
+    N_B = res['N_Bo'] + res['N_Ba']
     w = res['weights']
     activated = (N_B > threshold).astype(float)
     return np.sum(w[:, None] * activated, axis=0)
  
- 
+
 def compute_N1(res):
-    """Size of the largest clone at each time point."""
-    return np.max(res['N_B'], axis=0)
+    N_B = res['N_Bo'] + res['N_Ba']
+    return np.max(N_B, axis=0)
 
 
 def find_t_D(res, D_threshold=1.0):
@@ -324,9 +324,19 @@ def compute_potency(res, time_index=-1, threshold=2.0):
     w = res['weights']
  
     activated = N_B > threshold
-    potency = np.sum(N_B[activated] * np.exp(-DG[activated]))
+    potency = np.sum(w[activated] * N_B[activated] * np.exp(-DG[activated]))
     
     return potency 
+
+
+def compute_potency_t(res, threshold=2.0):
+    """Ω-weighted potency at every time point, activated cells only."""
+    N_B = res['N_Bo'] + res['N_Ba']            # (M, N_t)
+    w = res['weights']                          # (M,)
+    DG = res['DG']                              # (M,)
+    activated = (N_B > threshold).astype(float)
+    Z_B = w[:, None] * N_B * np.exp(-DG[:, None]) * activated
+    return np.sum(Z_B, axis=0)                  # (N_t,)
 
 
 def compute_yield(res, time_index=-1, threshold=2.0):
@@ -342,29 +352,48 @@ def compute_yield(res, time_index=-1, threshold=2.0):
     w = res['weights']
  
     activated = N_B > threshold
-    yield_ = np.sum(N_B[activated])
+    yield_ = np.sum(w[activated] * N_B[activated])
     
     return yield_ 
 
 
-def produce_memory(res):
-    """
-    Produce memory at the end of a response. Memory is produced in the following way: N_mem cells are drawn randomly
-    from the N_B_tot resulting from the expansion. 
+# def produce_memory(res):
+#     """
+#     Produce memory at the end of a response. Memory is produced in the following way: N_mem cells are drawn randomly
+#     from the N_B_tot resulting from the expansion. 
  
-    Returns
-    -------
-    DG_memory : float, energies of the memory clones
-    N_memory : float, number of memory cells per clone
-    """
-    N_B = (res['N_Bo'][:, -1] + res['N_Ba'][:, -1])*res['weights']  # total number of cells per bin at the end of the response
-    # N_B[N_B<2.0] = 0
-    N_B_activated = N_B[N_B > 2.0]
-    N_B_activated_cells = [i for i, count in enumerate(N_B_activated) for _ in range(int(count))]
-    index_memory = np.random.choice(N_B_activated_cells, size=min(int(1e4), len(N_B_activated_cells)), replace=False)
-    unique_index_memory, N_memory = np.unique(index_memory, return_counts=True)
-    DG_memory = res['DG'][unique_index_memory]
+#     Returns
+#     -------
+#     DG_memory : float, energies of the memory clones
+#     N_memory : float, number of memory cells per clone
+#     """
+#     N_B = (res['N_Bo'][:, -1] + res['N_Ba'][:, -1])*res['weights']  # total number of cells per bin at the end of the response
+#     activated_idx = np.where(N_B > 2.0)[0]
+#     cells = [idx for idx in activated_idx for _ in range(int(N_B[idx]))]
+#     print(len(cells))
+#     index_memory = np.random.choice(cells, size=min(int(1e3), len(cells)), replace=False)
+#     # N_B_activated_cells = [i for i, count in enumerate(N_B_activated) for _ in range(int(count))]
+#     # index_memory = np.random.choice(N_B_activated_cells, size=min(int(1e3), len(N_B_activated_cells)), replace=False)
+#     unique_index_memory, N_memory = np.unique(index_memory, return_counts=True)
+#     DG_memory = res['DG'][unique_index_memory]
 
+#     return DG_memory, N_memory
+
+def produce_memory(res, n_mem=int(1e4)):
+    per_clone = res['N_Bo'][:, -1] + res['N_Ba'][:, -1]   # per-clone count
+    w = res['weights']
+    activated_idx = np.where(per_clone > 2.0)[0]           # threshold on per-clone
+    counts = (per_clone * w)[activated_idx]                # cells per bin, for sampling
+    total = counts.sum()
+    if total <= 0:
+        return np.array([]), np.array([])
+    n_draw = min(n_mem, int(total))
+    print(n_draw)
+    probs = counts / total
+    drawn = np.random.multinomial(n_draw, probs)
+    nz = drawn > 0
+    DG_memory = res['DG'][activated_idx[nz]]
+    N_memory = drawn[nz]
     return DG_memory, N_memory
 
 # ============================================================
@@ -565,15 +594,19 @@ def rhs_semicomplete(t, y, p, M, psi_vec, weights):
     dpi = p.k_on * psi_vec * N_A - p.delta_pi * pi_vec - lambda_eff * pi_vec
  
     # --- Free B-cell clones ---
+    # dN_Bo = - p.h0 * (pi_vec**p.hill / (pi_vec**p.hill + p.pi_star**p.hill)) * N_Bo_vec * N_To/(N_To + p.K_T) + 2 * p.b0 * N_Ba_vec - p.delta_B * N_Bo_vec
     dN_Bo = - p.h0 * pi_vec**p.hill * N_Bo_vec * N_To/(N_To + p.K_T) + 2 * p.b0 * N_Ba_vec - p.delta_B * N_Bo_vec
 
     # --- Activated B-cell clones ---
+    # dN_Ba = p.h0 * (pi_vec**p.hill / (pi_vec**p.hill + p.pi_star**p.hill)) * N_Bo_vec * N_To/(N_To + p.K_T) - p.b0 * N_Ba_vec  - p.delta_B * N_Ba_vec
     dN_Ba = p.h0 * pi_vec**p.hill * N_Bo_vec * N_To/(N_To + p.K_T) - p.b0 * N_Ba_vec  - p.delta_B * N_Ba_vec
  
     # --- Free T cells ---
+    # dN_To = - p.h0 * np.sum(weights * (pi_vec**p.hill / (pi_vec**p.hill + p.pi_star**p.hill)) * N_Bo_vec) * N_To/(N_To + p.K_T) + p.Tcell_growth_factor * p.b0 * N_Ta - p.delta_T * N_To
     dN_To = - p.h0 * np.sum(weights * pi_vec**p.hill * N_Bo_vec) * N_To/(N_To + p.K_T) + p.Tcell_growth_factor * p.b0 * N_Ta - p.delta_T * N_To
 
     # --- Activated T cells ---
+    # dN_Ta = p.h0 * np.sum(weights * (pi_vec**p.hill / (pi_vec**p.hill + p.pi_star**p.hill)) * N_Bo_vec) * N_To/(N_To + p.K_T) - p.b0 * N_Ta - p.delta_T * N_Ta 
     dN_Ta = p.h0 * np.sum(weights * pi_vec**p.hill * N_Bo_vec) * N_To/(N_To + p.K_T) - p.b0 * N_Ta - p.delta_T * N_Ta 
  
     return pack_state_semicomplete(dN_A, dpi, dN_Bo, dN_Ba, dN_To, dN_Ta, M)
