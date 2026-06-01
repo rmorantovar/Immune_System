@@ -3,6 +3,7 @@ from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 import scipy.stats as stats
 from dataclasses import dataclass
+from cycler import cycler
 
 N_Avg = 6.02214076e23  # Avogadro's number (molecules per mole)
 k_BT = 1.380649e-23*293
@@ -27,6 +28,16 @@ my_green_b = np.array((79, 173, 91))/256.
 my_green_c = np.array((94, 129, 63))/256.
 
 plt.rcParams['text.usetex'] = True
+
+# Option 1: via rcParams with a named colormap
+plt.rcParams['axes.prop_cycle'] = cycler(color=plt.cm.tab10.colors)
+
+# Option 2: use tab20 if you need more distinct colors
+# plt.rcParams['axes.prop_cycle'] = cycler(color=plt.cm.tab20.colors)
+
+# Option 3: apply a built-in style that uses tab colors
+# plt.style.use('tableau-colorblind10')   # or 'default' which uses tab10
+
 # ============================================================
 # Parameters
 # ============================================================
@@ -388,7 +399,8 @@ def produce_memory(res, n_mem=int(1e4)):
     if total <= 0:
         return np.array([]), np.array([])
     n_draw = min(n_mem, int(total))
-    print(n_draw)
+    n_draw = (n_mem * total)/(n_mem + total)  # adjust n_draw to avoid sampling more than available
+    # print(n_draw)
     probs = counts / total
     drawn = np.random.multinomial(n_draw, probs)
     nz = drawn > 0
