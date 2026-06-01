@@ -45,9 +45,9 @@ if __name__ == '__main__':
     fig_Y_memory, ax_Y_memory = plt.subplots(figsize=(8, 5))
 
     print(f"Running simulation")
-    sigmas = [1.0, 1.5, 2.0, 3.0]
-    for sigma in sigmas:
-        print(f"... for sigma={sigma:.1g}")
+    etas = [1.0, 1.5, 2.0, 3.0]
+    for eta in etas:
+        print(f"... for eta={eta:.1g}")
         fig_Z_t, ax_Z_t = plt.subplots(figsize=(8, 5))
         fig_N_t, ax_N_t = plt.subplots(figsize=(8, 5))
         fig_hist, ax_hist = plt.subplots(figsize=(8, 5))
@@ -60,7 +60,7 @@ if __name__ == '__main__':
         final_primary_potency = []
         initial_memory_yield = []
         final_primary_yield = []
-        base['sigma'] = sigma
+        base['eta'] = eta
         for i_h0, h0 in enumerate(h0s):
             # print(f"... for h0={h0:.2g}")
             base['h0'] = h0
@@ -233,7 +233,7 @@ if __name__ == '__main__':
         ax_N_t.set_yscale('log')
         ax_N_t.tick_params(labelsize=14)
         # ax_N_t.legend(fontsize=14)
-        fig_N_t.savefig(os.path.join(output_plot, f'yield_sigma-{sigma:.1f}.pdf'), dpi=150, bbox_inches='tight')
+        fig_N_t.savefig(os.path.join(output_plot, f'yield_eta-{eta:.1f}.pdf'), dpi=150, bbox_inches='tight')
 
         ax_Z_t.plot(t, 1e-2*np.exp((p.b0)*t), linewidth = 1, linestyle='--', color='grey', alpha=0.8)
         ax_Z_t.axhline(1.0, color='k', linestyle='--', alpha=0.5)
@@ -246,7 +246,7 @@ if __name__ == '__main__':
         ax_Z_t.set_yscale('log')
         ax_Z_t.tick_params(labelsize=14)
         # ax_Z_t.legend(fontsize=14)
-        fig_Z_t.savefig(os.path.join(output_plot, f'potency_sigma-{sigma:.1f}.pdf'), dpi=150, bbox_inches='tight')
+        fig_Z_t.savefig(os.path.join(output_plot, f'potency_eta-{eta:.1f}.pdf'), dpi=150, bbox_inches='tight')
 
         ax_hist.plot(res['DG'], res['weights'], marker='o', color='grey')
         ax_hist.set_ylabel(r'$\mathrm{\# cells}$', fontsize = 16)
@@ -258,7 +258,7 @@ if __name__ == '__main__':
         ax_hist.set_yscale('log') 
         ax_hist.tick_params(labelsize=14)
         # ax_hist.legend(title = r'$\pi^*$', title_fontsize = 12, fontsize=10, loc = 4)
-        fig_hist.savefig(os.path.join(output_plot, f'Z0_memory_sigma-{sigma:.1f}.pdf'), dpi=150, bbox_inches='tight')
+        fig_hist.savefig(os.path.join(output_plot, f'Z0_memory_eta-{eta:.1f}.pdf'), dpi=150, bbox_inches='tight')
 
 
         ax_Z_Y_total.plot(pi_stars, initial_memory_potency, marker='o', color=my_purple, alpha = .7, ms = 8, lw = 2, label=r'$\mathrm{Memory\ potency}$')
@@ -272,7 +272,7 @@ if __name__ == '__main__':
         ax_Z_Y_total.set_ylim(bottom = 2e-1, top = 5e9)
         ax_Z_Y_total.tick_params(which='both', labelsize=14)
         ax_Z_Y_total.legend(fontsize=14)
-        fig_Z_Y_total.savefig(os.path.join(output_plot, f'Z_memory_total_sigma-{sigma:.1f}.pdf'), dpi=150, bbox_inches='tight')
+        fig_Z_Y_total.savefig(os.path.join(output_plot, f'Z_memory_total_eta-{eta:.1f}.pdf'), dpi=150, bbox_inches='tight')
 
         ax_Z_Y_mean.plot(pi_stars, np.array(initial_memory_potency)/np.array(initial_memory_yield), marker='D', color=my_purple, alpha = .7, ms = 8, lw = 2, label=r'$\mathrm{Memory\ potency}$')
         ax_Z_Y_mean.plot(pi_stars, np.array(final_primary_potency)/np.array(final_primary_yield), marker='D', color=my_red, alpha = .7, ms = 8, lw = 2, label=r'$\mathrm{Primary\ potency}$')
@@ -283,10 +283,10 @@ if __name__ == '__main__':
         ax_Z_Y_mean.set_ylim(bottom = 5e-4, top = 1e1)
         ax_Z_Y_mean.tick_params(which='both', labelsize=14)
         ax_Z_Y_mean.legend(fontsize=14)
-        fig_Z_Y_mean.savefig(os.path.join(output_plot, f'Z_memory_mean_sigma-{sigma:.1f}.pdf'), dpi=150, bbox_inches='tight')
+        fig_Z_Y_mean.savefig(os.path.join(output_plot, f'Z_memory_mean_eta-{eta:.1f}.pdf'), dpi=150, bbox_inches='tight')
 
-        ax_Z_memory.plot(pi_stars, initial_memory_potency, marker='', alpha = .7, ms = 10, lw = 2, label = f'${sigma:.1f}$')
-        ax_Y_memory.plot(pi_stars, initial_memory_yield, marker='', alpha = .7, ms = 10, lw = 2, label = f'${sigma:.1f}$')
+        ax_Z_memory.plot(pi_stars, initial_memory_potency, marker='', alpha = .7, ms = 10, lw = 2, label = f'${eta:.1f}$')
+        ax_Y_memory.plot(pi_stars, initial_memory_yield, marker='', alpha = .7, ms = 10, lw = 2, label = f'${eta:.1f}$')
 
     ax_Z_memory.set_xscale('log')
     ax_Z_memory.set_yscale('log')
@@ -294,7 +294,7 @@ if __name__ == '__main__':
     ax_Z_memory.set_ylabel(r'$Z$', fontsize = 14)
     ax_Z_memory.set_ylim(bottom = 5e-1, top = 5e3)
     ax_Z_memory.tick_params(which='both', labelsize=14)
-    ax_Z_memory.legend(fontsize=12, title = r'$\sigma$', title_fontsize = 14)
+    ax_Z_memory.legend(fontsize=12, title = r'$\eta$', title_fontsize = 14)
     fig_Z_memory.savefig(os.path.join(output_plot, f'Z_memory.pdf'), dpi=150, bbox_inches='tight')
 
     ax_Y_memory.set_xscale('log')
@@ -303,5 +303,5 @@ if __name__ == '__main__':
     ax_Y_memory.set_ylabel(r'$Y$', fontsize = 14)
     ax_Y_memory.set_ylim(bottom = 5e-1, top = 2e4)
     ax_Y_memory.tick_params(which='both', labelsize=14)
-    ax_Y_memory.legend(fontsize=12, title = r'$\sigma$', title_fontsize = 14)
+    ax_Y_memory.legend(fontsize=12, title = r'$\eta$', title_fontsize = 14)
     fig_Y_memory.savefig(os.path.join(output_plot, f'Y_memory.pdf'), dpi=150, bbox_inches='tight')

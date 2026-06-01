@@ -58,7 +58,7 @@ class Parameters:
     hill: float = 3.0             # Hill coefficient for T cell activation (controls sharpness of transition)
 
     # --- Binding ---
-    sigma: float = 1.0          # specificity parameter: psi(DG) = exp(-sigma * DG)
+    eta: float = 1.0          # specificity parameter: psi(DG) = exp(-eta * DG)
     beta_star: float = 2.0      # density-of-states exponent
 
     # --- T cells ---
@@ -102,7 +102,7 @@ def build_repertoire_grid(p):
     """
     DG_arr = np.linspace(p.DG_min, p.DG_max, p.M)
     dDG = DG_arr[1] - DG_arr[0]
-    psi_arr = psi(DG_arr, p.sigma)
+    psi_arr = psi(DG_arr, p.eta)
     Omega_arr = Omega(DG_arr, p.beta_star, p.Omega_0)
     weights = Omega_arr * dDG  # each bin represents this many clones
     return DG_arr, psi_arr, weights, p.M
@@ -162,15 +162,15 @@ def build_repertoire_stochastic(p, DG_max_sim=None, seed=None):
     DG_arr = (1.0 / p.beta_star) * np.log(u * (exp_max - exp_min) + exp_min)
     DG_arr = np.sort(DG_arr)
  
-    psi_arr = psi(DG_arr, p.sigma)
+    psi_arr = psi(DG_arr, p.eta)
     weights = np.ones(L_sim)  # each entry is one clone
  
     return DG_arr, psi_arr, weights, L_sim
  
 
-def psi(DG, sigma):
+def psi(DG, eta):
     """Binding/internalization probability. Boltzmann gate."""
-    return (1 + np.exp(DG+0.5))**-sigma
+    return (1 + np.exp(DG+0.5))**-eta
 
 
 def G1(pi_vec, p):
@@ -681,7 +681,7 @@ def run_simulation(p=None, t_span=None, t_eval=None, mode='grid', DG_max_sim=Non
     N_A_init = p.N_A0
     pi_init = np.zeros(M)  # no pMHC at t=0
     if p.memory:
-        N_B_init = 1e2*np.exp(-p.sigma * (p.b0 / p.lambda_A + 1) * DG_arr)  # memory
+        N_B_init = 1e2*np.exp(-p.eta * (p.b0 / p.lambda_A + 1) * DG_arr)  # memory
     else:
         N_B_init = np.ones(M)  # naive
     N_T_init = p.N_T0
@@ -806,7 +806,7 @@ def run_simulation_complete(p=None, t_span=None, t_eval=None, mode='grid', DG_ma
     N_A_init = p.N_A0
     pi_init = np.zeros(M)  # no pMHC at t=0
     if p.memory:
-        N_Bo_init = 1e2*np.exp(-p.sigma * (p.b0 / p.lambda_A + 1) * DG_arr)  # memory
+        N_Bo_init = 1e2*np.exp(-p.eta * (p.b0 / p.lambda_A + 1) * DG_arr)  # memory
     else:
         N_Bo_init = np.ones(M)  # naive
     N_BT_init = np.zeros(M)
@@ -920,7 +920,7 @@ def run_simulation_semicomplete(p=None, t_span=None, t_eval=None, mode='grid', D
     N_A_init = p.N_A0
     pi_init = np.zeros(M)  # no pMHC at t=0
     if p.memory:
-        N_Bo_init = 1e3*np.exp(-p.sigma * (p.b0 / p.lambda_A + 1) * DG_arr)  # memory
+        N_Bo_init = 1e3*np.exp(-p.eta * (p.b0 / p.lambda_A + 1) * DG_arr)  # memory
     else:
         N_Bo_init = np.ones(M)  # naive
     N_Ba_init = np.zeros(M)
@@ -1051,8 +1051,8 @@ def plot_T_cell_analysis(res):
         ax.semilogy(DG, N_B_final, marker='o', ls = '', label='simulation', ms = 4, markerfacecolor = my_red, markeredgecolor='k', markeredgewidth=0.5)
     else:
         ax.semilogy(DG, N_B_final, marker='o', ls = '', label='simulation', ms = 4, markerfacecolor = my_blue, markeredgecolor='k', markeredgewidth=0.5)
-    ax.semilogy(DG, np.max(N_B_final)*np.exp(-p.sigma*(p.b0/p.lambda_A + 1) * (DG - np.min(DG))), color=my_red, linestyle='--', label='naive')
-    ax.semilogy(DG, np.max(N_B_final)*np.exp(-2*p.sigma*(p.b0/p.lambda_A + 1) * (DG - np.min(DG))), color=my_blue, linestyle='--', label='memory')
+    ax.semilogy(DG, np.max(N_B_final)*np.exp(-p.eta*(p.b0/p.lambda_A + 1) * (DG - np.min(DG))), color=my_red, linestyle='--', label='naive')
+    ax.semilogy(DG, np.max(N_B_final)*np.exp(-2*p.eta*(p.b0/p.lambda_A + 1) * (DG - np.min(DG))), color=my_blue, linestyle='--', label='memory')
     ax.set_xlabel('$\\Delta G$')
     ax.set_ylabel('$N_B(t_{\\rm final}, \\Delta G)$')
     ax.set_title('Clone size distribution')
@@ -1082,7 +1082,7 @@ def plot_T_cell_analysis(res):
     # # Overlay theoretical front
     # Gamma = p.h0 * p.N_T0 * p.k_on * p.N_A0 / (p.delta_pi * p.Theta)
     # if Gamma > 0 and p.lambda_A > 0:
-    #     DG_front = (p.lambda_A / p.sigma) * t - (1.0 / p.sigma) * np.log(p.lambda_A / Gamma) # correct to the right off-set of the moving front!!!!
+    #     DG_front = (p.lambda_A / p.eta) * t - (1.0 / p.eta) * np.log(p.lambda_A / Gamma) # correct to the right off-set of the moving front!!!!
     #     DG_front_clipped = np.clip(DG_front, p.DG_min, p.DG_max) #change here p.DG_max for the actual front position, not the grid limit!!!!
     #     valid = DG_front >= p.DG_min
     #     ax.plot(t[valid], DG_front_clipped[valid], 'r--', linewidth=2,
@@ -1137,8 +1137,8 @@ def plot_results(res):
         ax.semilogy(DG, N_B_final, marker='o', ls = '', label='simulation', ms = 4, markerfacecolor = my_red, markeredgecolor='k', markeredgewidth=0.5)
     else:
         ax.semilogy(DG, N_B_final, marker='o', ls = '', label='simulation', ms = 4, markerfacecolor = my_blue, markeredgecolor='k', markeredgewidth=0.5)
-    ax.semilogy(DG, np.max(N_B_final)*np.exp(-p.sigma*(p.b0/p.lambda_A + 1) * (DG - np.min(DG))), color=my_red, linestyle='--', label='naive')
-    ax.semilogy(DG, np.max(N_B_final)*np.exp(-2*p.sigma*(p.b0/p.lambda_A + 1) * (DG - np.min(DG))), color=my_blue, linestyle='--', label='memory')
+    ax.semilogy(DG, np.max(N_B_final)*np.exp(-p.eta*(p.b0/p.lambda_A + 1) * (DG - np.min(DG))), color=my_red, linestyle='--', label='naive')
+    ax.semilogy(DG, np.max(N_B_final)*np.exp(-2*p.eta*(p.b0/p.lambda_A + 1) * (DG - np.min(DG))), color=my_blue, linestyle='--', label='memory')
     ax.set_xlabel('$\\Delta G$')
     ax.set_ylabel('$N_B(t_{\\rm final}, \\Delta G)$')
     ax.set_title('Clone size distribution')
@@ -1168,7 +1168,7 @@ def plot_results(res):
     # # Overlay theoretical front
     # Gamma = p.h0 * p.N_T0 * p.k_on * p.N_A0 / (p.delta_pi * p.Theta)
     # if Gamma > 0 and p.lambda_A > 0:
-    #     DG_front = (p.lambda_A / p.sigma) * t - (1.0 / p.sigma) * np.log(p.lambda_A / Gamma) # correct to the right off-set of the moving front!!!!
+    #     DG_front = (p.lambda_A / p.eta) * t - (1.0 / p.eta) * np.log(p.lambda_A / Gamma) # correct to the right off-set of the moving front!!!!
     #     DG_front_clipped = np.clip(DG_front, p.DG_min, p.DG_max) #change here p.DG_max for the actual front position, not the grid limit!!!!
     #     valid = DG_front >= p.DG_min
     #     ax.plot(t[valid], DG_front_clipped[valid], 'r--', linewidth=2,
