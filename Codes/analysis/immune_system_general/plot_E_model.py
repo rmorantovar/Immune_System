@@ -1,10 +1,10 @@
 import sys
-sys.path.append('../library/')
-from functions import*
+sys.path.append('../../library/')
+from functions_2 import*
 plt.rcParams['text.usetex'] = True
 warnings.filterwarnings("ignore")
 
-Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/'
+Text_files_path = '/Users/robertomorantovar/Dropbox/Research_files/Immune_System/'
 
 #--------------- PARAMETERS ---------------------
 
@@ -39,8 +39,8 @@ for i_model, energy_model in enumerate(energy_models):
 
     Motif, M, Alphabet = get_motif_em(antigen = 'R', energy_model = energy_model, M = [], read_matrix = True, Text_files_path = Text_files_path)
 
-    df = pd.read_csv(Text_files_path + 'E_model/All_data_' + energy_model + '.csv')
-    f = open(Text_files_path + 'E_model/trajectories_'+energy_model+'.pkl', 'rb')
+    df = pd.read_csv(Text_files_path + 'primary_response/E_model/All_data_' + energy_model + '.csv')
+    f = open(Text_files_path + 'primary_response/E_model/trajectories_'+energy_model+'.pkl', 'rb')
     trajectories = pickle.load(f)
     l_trajectories = 10000-2
 
@@ -73,41 +73,47 @@ for i_model, energy_model in enumerate(energy_models):
     # #--------------------------Loops--------------------------
     # ax_Omega.scatter(np.exp(np.mean(np.log(K_ms))), (1/(20**l)), marker = 'o', color = colors_models[i_model], s = 28)
     # #ax_Omega.scatter(np.exp(np.mean(np.log(K_rs))), 10**rho_average[Es_average<(np.mean(np.log(K_rs)))][-1], marker = '*', color = colors_models[i_model], s = 28)
+    
+    project = 'primary_response'
+    model = '0_Shape_Space'
+    submodel = 'E_model'
+    output_plot = f'/Users/robertomorantovar/Dropbox/_Documents/Research/Projects/Immune_System/_Repository/Figures/{project}/{model}/{submodel}/'
+    os.makedirs(output_plot, exist_ok=True)
 
     my_plot_layout(ax=ax_Omega, xscale = 'log', yscale = 'log')
     ax_Omega.legend(fontsize = 20)
     ax_Omega.set_ylim(top = 1)
     ax_Omega.set_xlim(right = 1)
-    fig_Omega.savefig('../../Figures/0_Shape_Space/energy_model_'+energy_model+'.pdf')
+    fig_Omega.savefig(output_plot + 'energy_model_' + energy_model + '.pdf')
 
     # my_plot_layout(ax_Omega=ax_Omega, xscale = 'log', yscale = 'linear')
-    # fig_Omega.savefig('../../Figures/0_Shape_Space/energy_model_2_'+energy_model+'.pdf')
+    # fig_Omega.savefig(output_plot + 'energy_model_2_' + energy_model + '.pdf')
 
     my_plot_layout(ax=ax_betas, xscale = 'linear', yscale = 'linear')
     ax_betas.set_xlim(left = 1.6, right = 3.8)
     #ax_betas.legend(fontsize = 20)
     #ax_Omega.set_xlim(left = np.exp(my_E_m-1))
-    fig_betas.savefig('../../Figures/0_Shape_Space/betas_'+energy_model+'.pdf')
+    fig_betas.savefig(output_plot + 'betas_'+energy_model+'.pdf')
 
     my_plot_layout(ax=ax_K_r, xscale = 'log', yscale = 'linear')
     #ax_K_r.set_xlim(left = 1.5, right = 3.5)
     #ax_K_r.legend(fontsize = 20)
     #ax_K_r.set_xlim(left = np.exp(my_E_m-1))
-    fig_K_r.savefig('../../Figures/0_Shape_Space/K_r_'+energy_model+'.pdf')
+    fig_K_r.savefig(output_plot + 'K_r_'+energy_model+'.pdf')
 
     my_plot_layout(ax=ax_K_m, xscale = 'log', yscale = 'linear')
     #ax_K_m.set_xlim(left = 1.5, right = 3.5)
     #ax_K_m.legend(fontsize = 20)
     #ax_K_m.set_xlim(left = np.exp(my_E_m-1))
-    fig_K_m.savefig('../../Figures/0_Shape_Space/K_m_'+energy_model+'.pdf')
+    fig_K_m.savefig(output_plot + 'K_m_'+energy_model+'.pdf')
 
 
     my_plot_layout(ax=ax_l_sigma, xscale = 'linear', yscale = 'linear')
     #ax_l_sigma.set_xlim(left = 1.5, right = 3.5)
     #ax_l_sigma.legend(fontsize = 20)
-    ax_l_sigma.set_yticks(range(17, 27, 3))
-    ax_l_sigma.set_ylim(bottom = 17, top = 27)
-    fig_l_sigma.savefig('../../Figures/0_Shape_Space/l_vs_std_'+energy_model+'.pdf')
+    ax_l_sigma.set_yticks(range(13 , 30, 3))
+    ax_l_sigma.set_ylim(bottom = 13, top = 30)
+    fig_l_sigma.savefig(output_plot + 'l_vs_std_'+energy_model+'.pdf')
 
     # my_plot_layout(ax_Omega=ax4, xscale = 'linear', yscale = 'linear')
     # ax4.set_xlim(left = 0.4, right = 1.6)

@@ -329,7 +329,7 @@ def get_motif(antigen, Matrix, Text_files_path):
 
 def get_motif_em(antigen, energy_model, M, Text_files_path, read_matrix = True):
 
-	Alphabet = np.loadtxt(Text_files_path+'Input_files/Alphabet_'+energy_model+'.txt', dtype=bytes, delimiter='\t').astype(str)
+	Alphabet = np.loadtxt(Text_files_path+'in/Alphabet_'+energy_model+'.txt', dtype=bytes, delimiter='\t').astype(str)
 	Alphabet_list = Alphabet.tolist()
 	antigen_list = [i for i in antigen]
 
@@ -337,7 +337,7 @@ def get_motif_em(antigen, energy_model, M, Text_files_path, read_matrix = True):
 		if energy_model == 'Gaussian':
 			M = np.random.normal(0, 1, size=(20, 20))
 		else:
-			M = np.loadtxt(Text_files_path+'Input_files/' + energy_model + '.txt', skiprows= 0, usecols=range(0,20))
+			M = np.loadtxt(Text_files_path+'in/' + energy_model + '.txt', skiprows= 0, usecols=range(0,20))
 	else:
 		M = M
 
