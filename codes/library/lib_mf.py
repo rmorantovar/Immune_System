@@ -1,3 +1,4 @@
+
 import numpy as np
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
@@ -37,6 +38,7 @@ plt.rcParams['axes.prop_cycle'] = cycler(color=plt.cm.tab10.colors)
 
 # Option 3: apply a built-in style that uses tab colors
 # plt.style.use('tableau-colorblind10')   # or 'default' which uses tab10
+
 
 # ============================================================
 # Parameters
@@ -83,7 +85,6 @@ class Parameters:
     T_lim: bool = False         # whether to include T cell limitation in the demand function
     memory: bool = False        # whether to use memory-like initial conditions for N_B
     
-
 # ============================================================
 # Auxiliary functions
 # ============================================================
@@ -368,28 +369,6 @@ def compute_yield(res, time_index=-1, threshold=2.0):
     return yield_ 
 
 
-# def produce_memory(res):
-#     """
-#     Produce memory at the end of a response. Memory is produced in the following way: N_mem cells are drawn randomly
-#     from the N_B_tot resulting from the expansion. 
- 
-#     Returns
-#     -------
-#     DG_memory : float, energies of the memory clones
-#     N_memory : float, number of memory cells per clone
-#     """
-#     N_B = (res['N_Bo'][:, -1] + res['N_Ba'][:, -1])*res['weights']  # total number of cells per bin at the end of the response
-#     activated_idx = np.where(N_B > 2.0)[0]
-#     cells = [idx for idx in activated_idx for _ in range(int(N_B[idx]))]
-#     print(len(cells))
-#     index_memory = np.random.choice(cells, size=min(int(1e3), len(cells)), replace=False)
-#     # N_B_activated_cells = [i for i, count in enumerate(N_B_activated) for _ in range(int(count))]
-#     # index_memory = np.random.choice(N_B_activated_cells, size=min(int(1e3), len(N_B_activated_cells)), replace=False)
-#     unique_index_memory, N_memory = np.unique(index_memory, return_counts=True)
-#     DG_memory = res['DG'][unique_index_memory]
-
-#     return DG_memory, N_memory
-
 def produce_memory(res, n_mem=int(1e4)):
     per_clone = res['N_Bo'][:, -1] + res['N_Ba'][:, -1]   # per-clone count
     w = res['weights']
@@ -412,7 +391,7 @@ def produce_memory(res, n_mem=int(1e4)):
 # ODE system
 # ============================================================
 
-def pack_state(N_A, pi_vec, N_B_vec, N_T, M):
+def pack_state_approx(N_A, pi_vec, N_B_vec, N_T, M):
     """Pack all state variables into a single vector for the integrator."""
     y = np.zeros(2 * M + 2)
     y[0] = N_A
@@ -449,7 +428,17 @@ def pack_state_semicomplete(N_A, pi_vec, N_Bo_vec, N_Ba_vec, N_To, N_Ta, M):
     return y
 
 
-def unpack_state(y, M):
+def pack_state_null(N_A, N_Bo_vec, N_Ba_vec, M):
+    """Pack all state variables into a single vector for the integrator."""
+    y = np.zeros(4 * M + 3)
+    y[0] = N_A
+    y[1:M+1] = N_Bo_vec
+    y[M+1:2*M+1] = N_Ba_vec
+
+    return y
+
+
+def unpack_state_approx(y, M):
     """Unpack the state vector."""
     N_A = y[0]
     pi_vec = y[1:M+1]
@@ -481,10 +470,18 @@ def unpack_state_semicomplete(y, M):
     return N_A, pi_vec, N_Bo_vec, N_Ba_vec, N_To, N_Ta
 
 
-def rhs(t, y, p, M, psi_vec, weights):
+def unpack_state_null(y, M):
+    """Unpack the state vector."""
+    N_A = y[0]
+    N_Bo_vec = y[1:M+1]
+    N_Ba_vec = y[M+1:2*M+1]
+    return N_A, N_Bo_vec, N_Ba_vec
+
+
+def rhs_approx(t, y, p, M, psi_vec, weights):
     """Right-hand side of the coupled ODE system."""
  
-    N_A, pi_vec, N_B_vec, N_T = unpack_state(y, M)
+    N_A, pi_vec, N_B_vec, N_T = unpack_state_approx(y, M)
  
     # Ensure non-negativity
     N_A = max(N_A, 0.0)
@@ -523,7 +520,7 @@ def rhs(t, y, p, M, psi_vec, weights):
     dN_T = lambda_T * N_T  - p.delta_T * N_T
     # dN_T = (- p.delta_T) * N_T
  
-    return pack_state(dN_A, dpi, dN_B, dN_T, M)
+    return pack_state_approx(dN_A, dpi, dN_B, dN_T, M)
 
 
 def rhs_complete(t, y, p, M, psi_vec, weights):
@@ -623,11 +620,45 @@ def rhs_semicomplete(t, y, p, M, psi_vec, weights):
  
     return pack_state_semicomplete(dN_A, dpi, dN_Bo, dN_Ba, dN_To, dN_Ta, M)
 
+
+def rhs_null(t, y, p, M, psi_vec, weights):
+    # _call_count[0] += 1
+    # if _call_count[0] % 1000 == 0:
+    #     print(f"  t = {t:.4f}, calls = {_call_count[0]}")
+        
+    """Right-hand side of the coupled ODE system."""
+ 
+    N_A, N_Bo_vec, N_Ba_vec = unpack_state_null(y, M)
+ 
+    # Ensure non-negativity
+    N_A = max(N_A, 0.0)
+    N_Bo_vec = np.maximum(N_Bo_vec, 0.0)
+    N_Ba_vec = np.maximum(N_Ba_vec, 0.0)
+ 
+    # --- Antigen ---
+    # S_A = p.lambda_A * N_A if p.lambda_A > 0 else 0.0
+    # dN_A = S_A - p.delta_A * N_A
+    pb = (1 + (1e-9/(1e6*24*3600*np.exp(2.0*t)/N_Avg)))**(-1)  # or whatever dependence you intend
+    dN_A = (p.lambda_A * (1 - pb) - p.delta_A*pb) * N_A - 0.01 * N_A
+      
+    # --- antigen processing ---
+    u_p = p.k_on * psi_vec * N_A
+ 
+    # --- Free B-cell clones ---
+    # dN_Bo = - p.h0 * (pi_vec**p.hill / (pi_vec**p.hill + p.pi_star**p.hill)) * N_Bo_vec * N_To/(N_To + p.K_T) + 2 * p.b0 * N_Ba_vec - p.delta_B * N_Bo_vec
+    dN_Bo = - p.h0 * u_p * N_Bo_vec + 2 * p.b0 * N_Ba_vec - p.delta_B * N_Bo_vec
+
+    # --- Activated B-cell clones ---
+    # dN_Ba = p.h0 * (pi_vec**p.hill / (pi_vec**p.hill + p.pi_star**p.hill)) * N_Bo_vec * N_To/(N_To + p.K_T) - p.b0 * N_Ba_vec  - p.delta_B * N_Ba_vec
+    dN_Ba = p.h0 * u_p * N_Bo_vec - p.b0 * N_Ba_vec  - p.delta_B * N_Ba_vec
+ 
+    return pack_state_null(dN_A, dN_Bo, dN_Ba, M)
+
 # ============================================================
 # Simulation
 # ============================================================
 
-def run_simulation(p=None, t_span=None, t_eval=None, mode='grid', DG_max_sim=None, seed=None):      
+def run_simulation_approx(p=None, t_span=None, t_eval=None, mode='grid', DG_max_sim=None, seed=None):      
     """
     Run the mean-field simulation.
  
@@ -686,11 +717,11 @@ def run_simulation(p=None, t_span=None, t_eval=None, mode='grid', DG_max_sim=Non
         N_B_init = np.ones(M)  # naive
     N_T_init = p.N_T0
  
-    y0 = pack_state(N_A_init, pi_init, N_B_init, N_T_init, M)
+    y0 = pack_state_approx(N_A_init, pi_init, N_B_init, N_T_init, M)
  
     # --- Integrate ---
     sol = solve_ivp(
-        fun=lambda t, y: rhs(t, y, p, M, psi_arr, weights),
+        fun=lambda t, y: rhs_approx(t, y, p, M, psi_arr, weights),
         t_span=t_span,
         y0=y0,
         t_eval=t_eval,
@@ -705,7 +736,7 @@ def run_simulation(p=None, t_span=None, t_eval=None, mode='grid', DG_max_sim=Non
  
     # --- Unpack ---
     t = sol.t
-    N_A, pi_arr, N_B_arr, N_T_arr = unpack_state(sol.y, M)
+    N_A, pi_arr, N_B_arr, N_T_arr = unpack_state_approx(sol.y, M)
  
     # --- Derived quantities ---
     N_steps = len(t)
@@ -952,13 +983,7 @@ def run_simulation_semicomplete(p=None, t_span=None, t_eval=None, mode='grid', D
     N_A, pi_arr, N_Bo_arr, N_Ba_arr, N_To_arr, N_Ta_arr = unpack_state_semicomplete(sol.y, M)
     
     # --- Derived quantities ---
-    D_arr = np.zeros(N_steps)
-    N_T_free_arr = np.zeros(N_steps)
-    lambda_B_arr = np.zeros((M, N_steps))
-    lambda_T_arr = np.zeros(N_steps)
-    h_T_arr = np.zeros((M, N_steps))
-    h_B_arr = np.zeros(N_steps)
-    
+    # h_T_arr = np.zeros((M, N_steps))
 
     return {
         't': t,
@@ -974,6 +999,97 @@ def run_simulation_semicomplete(p=None, t_span=None, t_eval=None, mode='grid', D
         'mode': mode,
         'M': M,
     }
+
+
+def run_simulation_null(p=None, t_span=None, t_eval=None, mode='grid', DG_max_sim=None, seed=None):      
+    """
+    Run the mean-field simulation.
+ 
+    Parameters
+    ----------
+    p : Parameters
+    t_span : tuple (t_start, t_end)
+    t_eval : array of output time points
+    mode : 'grid' or 'stochastic'
+    DG_max_sim : float (stochastic mode only)
+        Upper bound for clone sampling. Default: p.DG_max.
+    seed : int (stochastic mode only)
+        Random seed.
+
+    Returns
+    -------
+    result : dict with keys:
+        't'       : time array
+        'N_A'     : antigen concentration
+        'N_Bo'    : free B-cell clones (M x len(t))
+        'N_Ba'    : activated B-cell clones (M x len(t))
+        'lambda_B': division rate array (M x len(t))
+        'lambda_T': division rate array (len(t))
+        'DG_grid' : Delta G grid
+        'Omega'   : density of states
+        'params'  : parameters used
+    """
+    if p is None:
+        p = Parameters()
+    if t_span is None:
+        t_span = (0.0, 10.0)
+    if t_eval is None:
+        t_eval = np.linspace(t_span[0], t_span[1], 500)
+ 
+    # --- Build repertoire ---
+    if mode == 'grid':
+        DG_arr, psi_arr, weights, M = build_repertoire_grid(p)
+    elif mode == 'stochastic':
+        DG_arr, psi_arr, weights, M = build_repertoire_stochastic(
+            p, DG_max_sim=DG_max_sim, seed=seed
+        )
+    else:
+        raise ValueError(f"Unknown mode: {mode}. Use 'grid' or 'stochastic'.")
+ 
+    # --- Initial conditions ---
+    N_A_init = p.N_A0
+    if p.memory:
+        N_Bo_init = 1e3*np.exp(-p.eta * (p.b0 / p.lambda_A + 1) * DG_arr)  # memory
+    else:
+        N_Bo_init = np.ones(M)  # naive
+    N_Ba_init = np.zeros(M)
+ 
+    y0 = pack_state_null(N_A_init, N_Bo_init, N_Ba_init, M)
+    
+    # --- Integrate ---
+    #method='BDF', 'LSODA' o 'RK45', rtol=1e-6, atol=1e-8, max_step=0.1
+    # _call_count[0] = 0
+    sol = solve_ivp(
+        fun=lambda t, y: rhs_null(t, y, p, M, psi_arr, weights),
+        t_span=t_span,
+        y0=y0,
+        t_eval=t_eval,
+        method='LSODA',
+        rtol=1e-4,
+        atol=1e-5
+    )
+
+    if not sol.success:
+        print(f"Warning: integration failed: {sol.message}")
+ 
+    # --- Unpack ---
+    t = sol.t
+    N_steps = len(t)
+ 
+    N_A, N_Bo_arr, N_Ba_arr = unpack_state_null(sol.y, M)
+    
+    return {
+        't': t,
+        'N_A': N_A,
+        'N_Bo': N_Bo_arr,
+        'N_Ba': N_Ba_arr,
+        'DG': DG_arr,
+        'weights': weights,
+        'params': p,
+        'mode': mode,
+        'M': M,
+    }
+
 # ============================================================
 # Visualization
 # ============================================================
