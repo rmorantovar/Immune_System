@@ -45,7 +45,7 @@ if __name__ == '__main__':
     fig_Z_memory_mean, ax_Z_memory_mean = plt.subplots(figsize=(8, 5))
     fig_N_t, ax_N_t = plt.subplots(figsize=(8, 5))
     colors_sim = [my_red, my_blue2, my_purple2, my_gold, my_brown, my_blue, my_green, 'tab:orange', my_purple, my_cyan]
-    N_ensembles = 1
+    N_ensemble = 1
 
     h0s = np.logspace(-4, np.log10(base['b0']), 10)
     pi_stars = (base['b0']/h0s)**(1/base['hill'])
@@ -73,7 +73,7 @@ if __name__ == '__main__':
             initial_memory_yield_pi_star = []
             final_primary_yield_pi_star = []
 
-            for i_ensemble in range(N_ensembles):
+            for i_ensemble in range(N_ensemble):
                 # res = run_simulation_semicomplete(p=p, t_span=(0, T), mode='stochastic', seed=None)
                 res = run_simulation_semicomplete(p=p, t_span=(0, T), mode='grid')
                 # print(res['M'])

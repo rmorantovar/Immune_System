@@ -14,56 +14,90 @@ import sys
 sys.path.append('../../library/')
 from lib_mf import*
 
+project = 'exponential_proofreading'
+model = 'meanfield'
+submodel = 'semicomplete'
+subproject = 'zipf'
+subsubproject = 'h0'
 
-if __name__ == '__main__':
-    output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/exponential_proofreading/mean_field_semicomplete/'
-    os.makedirs(output_plot, exist_ok=True)
-    # Default parameters
-    base = dict(N_A0=1.0, delta_A=4.0, lambda_A = 6.,
-                k_on=1e2*1e6*1e6*24*3600/N_Avg, delta_pi=0.1, Theta=1000.0,
-                hill=2.0, sigma=1.0, beta_star=2.5, K_T = 1e5,
-                delta_T=0.00, h0=1000.0, Tcell_growth_factor=2.0,
-                tau_eng=0.1, b0=2.0, delta_B=0.00,
-                DG_min=0.0, DG_max=2.5, M=20,
-                Omega_0=1.0, T_lim = True, memory = 1
-    )
-    T = 12
-    N_ensemble = 100
-    # print(compute_N_B_tot(res))
-    # ============================================================
-    # Scan N_T: move t_D relative to dynamics
-    # ============================================================
+for submodel in ['semicomplete', 'null']:
+    if __name__ == '__main__':
+        output_plot = f'/Users/robertomorantovar/Dropbox/_Documents/Research/Projects/Immune_System/_Repository/Figures/{project}/{model}/{submodel}/{subproject}/{subsubproject}/'
+        os.makedirs(output_plot, exist_ok=True)
+        # Default parameters
+        base = dict(N_A0=1.0, lambda_A = 6.0, delta_A=6.0,
+                    k_on=1e0*1e6*1e6*24*3600/N_Avg, delta_pi=0.1,
+                    hill=1.0, beta_star=2.5, K_T = 1e4,
+                    delta_T=0.00, Tcell_growth_factor=2.0,
+                    tau_eng=0.1, b0=2.0, delta_B=0.00,
+                    DG_min=0.0, DG_max=8.0, M=40,
+                    Omega_0=1.0, T_lim = True, N_T0 = 1e6
+        )
+        T = 15
+        # print(compute_N_B_tot(res))
+        # ============================================================
+        # Scan N_T: move t_D relative to dynamics
+        # ============================================================
+        colors_sim = [my_red, my_blue2, my_purple2, my_gold, my_brown, my_blue, my_green, 'tab:orange', my_purple, my_cyan]
+        colors_sim = plt.cm.viridis(np.linspace(0, 1, 50))
+        N_ensemble = 1
+        fig_zipf, ax_zipf = plt.subplots(figsize=(8, 5))
 
-    N_T_values = [1e4] # For testing
-    # N_T_values = [1e2, 1e3, 1e4, 1e5, 1e20]
+        print(f"Running simulation")
+        etas = [1.0]
+        for eta in etas:
+            print(f"... for eta={eta:.1g}")
+            
+            h0s = np.array([base['b0'], 10*base['b0']])
+            pi_stars = (base['b0']/h0s)**(1/base['hill'])
+            initial_memory_potency = []
+            final_primary_potency = []
+            initial_memory_yield = []
+            final_primary_yield = []
+            base['eta'] = eta
+            for i_h0, h0 in enumerate(h0s):
+                # print(f"... for h0={h0:.2g}")
+                base['h0'] = h0
+                pi_star = (base['b0']/base['h0'])**(1/base['hill'])
+                label = f'${pi_star:.2g}$'
+                
+                for i_m, memory in enumerate([0]):
+                    # print(f"... ... for memory={memory}")
+                    base['memory'] = memory
+                    # figs, axes = plt.subplots(3, 2, figsize=(16, 15))
 
-    fig_zipf, ax_zipf = plt.subplots(figsize=(6, 5))
+                    p = Parameters(**base)
+                    
+                    initial_memory_potencies_pi_star = []
+                    final_primary_potencies_pi_star = []
+                    initial_memory_yield_pi_star = []
+                    final_primary_yield_pi_star = []
+                    ranks = np.linspace(1, 100, 100)
+                    sizes = np.zeros_like(ranks)
+                    for i_ensemble in range(N_ensemble):
+                        if submodel == 'semicomplete':
+                            res = run_simulation_semicomplete(p=p, t_span=(0, T), mode='grid')
+                        if submodel == 'null':
+                            res = run_simulation_null(p=p, t_span=(0, T), mode='grid')
 
-    # Storage for summary
-    summary = []
+                        ranks_i, sizes_i = compute_zipf(res, time_index=-1)
+                        sizes += sizes_i[:len(ranks)]
+            
 
-    for N_T in N_T_values:
-        print(f"Running simulation for N_T={N_T:.1e}")
-        ranks = np.linspace(1, 100, 100)
-        sizes = np.zeros_like(ranks)
-        for i in range(N_ensemble):
-            print(f" {i+1}/{N_ensemble}...")
-            p = Parameters(**base, N_T0=N_T)
-            # res = run_simulation(p=p, t_span=(0, T), mode='grid')
-            res = run_simulation_semicomplete(p=p, t_span=(0, T), mode='stochastic')
+                    ax_zipf.loglog(ranks, sizes/N_ensemble, marker='o', ls = '', ms = 4, alpha = 0.5, markeredgecolor= 'k', markeredgewidth=0.5)
+                
+            zeta = p.eta*(p.b0/p.lambda_A + p.b0/np.min([p.b0, p.delta_A]))/p.beta_star
+            ax_zipf.loglog(ranks, ranks**(-zeta), linestyle = '--', markersize=2, label=f'{zeta:.2g}', color = 'k')
 
-            ranks_i, sizes_i = compute_zipf(res, time_index=-1)
-            sizes += sizes_i[:len(ranks)]
+            zeta_null = p.eta*(p.b0/p.lambda_A + p.b0/p.delta_A)/p.beta_star
+            ax_zipf.loglog(ranks, ranks**(-zeta_null), linestyle = '--', markersize=2, label=f'{zeta_null:.2g}', color = 'grey')
+        # Formatting
         
-        label = f'$N_T=1e{int(np.log10(N_T))}$'
-        ax_zipf.loglog(ranks, sizes/N_ensemble, marker='o', ls = '', ms = 4, alpha = 0.5, markerfacecolor='grey', markeredgecolor='k', label=label, markeredgewidth=0.5)
-
-    # Formatting
-    ax_zipf.loglog(ranks, ranks**(-p.sigma*(p.b0/p.lambda_A + 1)/p.beta_star), linestyle = '--', markersize=2, color = my_red, label='Zipf slope')
-    ax_zipf.loglog(ranks, ranks**(-2*p.sigma*(p.b0/p.lambda_A + 1)/p.beta_star), linestyle = '--', markersize=2, color = my_blue, label='Zipf slope')
-    ax_zipf.set_xlabel('Rank $k$', fontsize = 16)
-    ax_zipf.set_ylabel('$N_k$', fontsize = 16)
-    ax_zipf.tick_params(labelsize=14)
-    ax_zipf.legend(fontsize=7)
-    plt.tight_layout()
-    fig_zipf.savefig(os.path.join(output_plot, f'Zipf_Mem-{int(p.memory)}.pdf'), dpi=150, bbox_inches='tight')
+        # ax_zipf.loglog(ranks, ranks**(-2*p.eta*(p.b0/p.lambda_A + 1)/p.beta_star), linestyle = '--', markersize=2, color = my_blue, label='Zipf slope')
+        ax_zipf.set_xlabel(r'Rank $k$', fontsize = 16)
+        ax_zipf.set_ylabel(r'$N_k$', fontsize = 16)
+        ax_zipf.set_ylim(bottom = 6e-2, top = 1.1e0)
+        ax_zipf.set_xlim(left = 0.8e0, right = 1.1e2)
+        ax_zipf.tick_params(labelsize=14)
+        ax_zipf.legend(fontsize=12, title=r'$\zeta$', title_fontsize=14)
+        fig_zipf.savefig(os.path.join(output_plot, f'Zipf.pdf'), dpi=150, bbox_inches='tight')

@@ -291,7 +291,7 @@ def find_t_D(res, D_threshold=1.0):
     return np.inf
  
 
-def compute_zipf(res, time_index=-1, threshold=1.5):
+def compute_zipf(res, time_index=-1, threshold=2.0):
     """
     Compute the Zipf (rank-size) distribution at a given time.
  

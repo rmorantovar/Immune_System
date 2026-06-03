@@ -25,7 +25,7 @@ if __name__ == '__main__':
     output_plot = f'/Users/robertomorantovar/Dropbox/_Documents/Research/Projects/Immune_System/_Repository/Figures/{project}/{model}/{submodel}/{subproject}/{subsubproject}/'
     os.makedirs(output_plot, exist_ok=True)
     # Default parameters
-    base = dict(N_A0=1.0, lambda_A = 6.0, delta_A=4.0,
+    base = dict(N_A0=1.0, lambda_A = 6.0, delta_A=6.0,
                 k_on=1e0*1e6*1e6*24*3600/N_Avg, delta_pi=0.1,
                 hill=1.0, beta_star=2.5, K_T = 1e4,
                 delta_T=0.00, Tcell_growth_factor=2.0,
@@ -47,7 +47,7 @@ if __name__ == '__main__':
     print(f"Running simulation")
     etas = [1.0, 1.5, 2.0, 3.0]
     for eta in etas:
-        print(f"... for eta={eta:.1g}")
+        print(f"... for eta={eta:.1f}")
         fig_Z_t, ax_Z_t = plt.subplots(figsize=(8, 5))
         fig_N_t, ax_N_t = plt.subplots(figsize=(8, 5))
         fig_hist, ax_hist = plt.subplots(figsize=(8, 5))
@@ -233,6 +233,7 @@ if __name__ == '__main__':
         ax_N_t.tick_params(labelsize=14)
         # ax_N_t.legend(fontsize=14)
         fig_N_t.savefig(os.path.join(output_plot, f'yield_eta-{eta:.1f}.pdf'), dpi=150, bbox_inches='tight')
+        plt.close(fig_N_t)
 
         ax_Z_t.plot(t, 1e-2*np.exp((p.b0)*t), linewidth = 1, linestyle='--', color='grey', alpha=0.8)
         ax_Z_t.axhline(1.0, color='k', linestyle='--', alpha=0.5)
@@ -246,6 +247,7 @@ if __name__ == '__main__':
         ax_Z_t.tick_params(labelsize=14)
         # ax_Z_t.legend(fontsize=14)
         fig_Z_t.savefig(os.path.join(output_plot, f'potency_eta-{eta:.1f}.pdf'), dpi=150, bbox_inches='tight')
+        plt.close(fig_Z_t)
 
         ax_hist.plot(res['DG'], res['weights'], marker='o', color='grey')
         ax_hist.set_ylabel(r'$\mathrm{\# cells}$', fontsize = 16)
@@ -258,6 +260,7 @@ if __name__ == '__main__':
         ax_hist.tick_params(labelsize=14)
         # ax_hist.legend(title = r'$\pi^*$', title_fontsize = 12, fontsize=10, loc = 4)
         fig_hist.savefig(os.path.join(output_plot, f'Z0_memory_eta-{eta:.1f}.pdf'), dpi=150, bbox_inches='tight')
+        plt.close(fig_hist)
 
 
         ax_Z_Y_total.plot(pi_stars, initial_memory_potency, marker='o', color=my_purple, alpha = .7, ms = 8, lw = 2, label=r'$\mathrm{Memory\ potency}$')
@@ -272,6 +275,7 @@ if __name__ == '__main__':
         ax_Z_Y_total.tick_params(which='both', labelsize=14)
         ax_Z_Y_total.legend(fontsize=14)
         fig_Z_Y_total.savefig(os.path.join(output_plot, f'Z_memory_total_eta-{eta:.1f}.pdf'), dpi=150, bbox_inches='tight')
+        plt.close(fig_Z_Y_total)
 
         ax_Z_Y_mean.plot(pi_stars, np.array(initial_memory_potency)/np.array(initial_memory_yield), marker='D', color=my_purple, alpha = .7, ms = 8, lw = 2, label=r'$\mathrm{Memory\ potency}$')
         ax_Z_Y_mean.plot(pi_stars, np.array(final_primary_potency)/np.array(final_primary_yield), marker='D', color=my_red, alpha = .7, ms = 8, lw = 2, label=r'$\mathrm{Primary\ potency}$')
@@ -283,6 +287,7 @@ if __name__ == '__main__':
         ax_Z_Y_mean.tick_params(which='both', labelsize=14)
         ax_Z_Y_mean.legend(fontsize=14)
         fig_Z_Y_mean.savefig(os.path.join(output_plot, f'Z_memory_mean_eta-{eta:.1f}.pdf'), dpi=150, bbox_inches='tight')
+        plt.close(fig_Z_Y_mean)
 
         ax_Z_memory.plot(pi_stars, initial_memory_potency, marker='', alpha = .7, ms = 10, lw = 2, label = f'${eta:.1f}$')
         ax_Y_memory.plot(pi_stars, initial_memory_yield, marker='', alpha = .7, ms = 10, lw = 2, label = f'${eta:.1f}$')
