@@ -16,7 +16,6 @@ from lib_mf import*
 
 project = 'exponential_proofreading'
 model = 'meanfield'
-submodel = 'semicomplete'
 subproject = 'zipf'
 subsubproject = 'h0'
 
@@ -90,7 +89,7 @@ for submodel in ['semicomplete', 'null']:
             ax_zipf.loglog(ranks, ranks**(-zeta), linestyle = '--', markersize=2, label=f'{zeta:.2g}', color = 'k')
 
             zeta_null = p.eta*(p.b0/p.lambda_A + p.b0/p.delta_A)/p.beta_star
-            ax_zipf.loglog(ranks, ranks**(-zeta_null), linestyle = '--', markersize=2, label=f'{zeta_null:.2g}', color = 'grey')
+            ax_zipf.loglog(ranks, ranks**(-zeta_null), linestyle = ':', markersize=2, label=f'{zeta_null:.2g}', color = 'grey')
         # Formatting
         
         # ax_zipf.loglog(ranks, ranks**(-2*p.eta*(p.b0/p.lambda_A + 1)/p.beta_star), linestyle = '--', markersize=2, color = my_blue, label='Zipf slope')
