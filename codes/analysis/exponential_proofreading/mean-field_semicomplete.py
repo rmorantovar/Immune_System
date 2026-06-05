@@ -25,7 +25,7 @@ if __name__ == '__main__':
     output_plot = f'/Users/robertomorantovar/Dropbox/_Documents/Research/Projects/Immune_System/_Repository/Figures/{project}/{model}/{submodel}/{subproject}/{subsubproject}/'
     os.makedirs(output_plot, exist_ok=True)
     # Default parameters
-    base = dict(N_A0=1.0, lambda_A = 6.0, delta_A=4.0, sigma= 1.0,
+    base = dict(N_A0=1.0, lambda_A = 6.0, delta_A=4.0, eta= 1.0,
                 k_on=1e0*1e6*1e6*24*3600/N_Avg, delta_pi=0.1,
                 hill=1.0, beta_star=2.5, K_T = 1e4,
                 delta_T=0.00, Tcell_growth_factor=2.0,
@@ -47,7 +47,7 @@ if __name__ == '__main__':
     colors_sim = [my_red, my_blue2, my_purple2, my_gold, my_brown, my_blue, my_green, 'tab:orange', my_purple, my_cyan]
     N_ensemble = 1
 
-    h0s = np.logspace(-4, np.log10(base['b0']), 10)
+    h0s = np.array([10*base['b0']])
     pi_stars = (base['b0']/h0s)**(1/base['hill'])
     initial_memory_potency = []
     final_primary_potency = []
@@ -65,6 +65,9 @@ if __name__ == '__main__':
             print(f"... ... for memory={memory}")
             base['memory'] = memory
             figs, axes = plt.subplots(3, 2, figsize=(16, 15))
+            fig_NA, ax_NA = plt.subplots(figsize=(8 * 1.62, 6), gridspec_kw={'left': .15, 'right': .95, 'bottom': .15, 'top': .94})
+            fig_pi, ax_pi = plt.subplots(figsize=(8 * 1.62, 6), gridspec_kw={'left': .15, 'right': .95, 'bottom': .15, 'top': .94})
+            fig_NB, ax_NB = plt.subplots(figsize=(8 * 1.62, 6), gridspec_kw={'left': .15, 'right': .95, 'bottom': .15, 'top': .94})
 
             p = Parameters(**base)
             
@@ -100,6 +103,7 @@ if __name__ == '__main__':
             # (a) N_A
             axi = axes[0, 0]
             axi.plot(t, res['N_A'], label=label, linewidth = 2, color = antigen_color)
+            ax_NA.plot(t, res['N_A'], label=label, linewidth = 4, color = antigen_color)
 
             # (b) pi
             axi = axes[1, 0]
@@ -108,6 +112,12 @@ if __name__ == '__main__':
             axi.plot(t, res['pi'][-10, :], label=label, linewidth = 2, alpha=0.2, color=ax1[0].get_color())
             axi.plot(t, 1e8*np.exp(-(p.b0)*t), label=label, linewidth = 1, linestyle='--', color='grey', alpha=0.8)
             axi.axhline(pi_star, 0, T, linewidth = 1, linestyle='--', color='grey', alpha=0.8)
+
+            ax1 = ax_pi.plot(t, res['pi'][0, :], label=label, linewidth = 4, color=my_red)
+            ax_pi.plot(t, res['pi'][10, :], label=label, linewidth = 3, alpha=0.5, color=ax1[0].get_color())
+            ax_pi.plot(t, res['pi'][-10, :], label=label, linewidth = 2, alpha=0.2, color=ax1[0].get_color())
+            ax_pi.plot(t, 1e8*np.exp(-(p.b0)*t), label=label, linewidth = 1, linestyle='--', color='grey', alpha=0.8)
+            ax_pi.axhline(pi_star, 0, T, linewidth = 1, linestyle='--', color='grey', alpha=0.8)
 
             # (c) lambda_B
             axi = axes[2, 0]
@@ -127,7 +137,7 @@ if __name__ == '__main__':
             axi = axes[1, 1]
             # activated = N_B > 1.5
             N_B_total = compute_N_B_tot(res)
-            ax1 = axi.semilogy(t, N_B_total, label=label, linewidth = 4)
+            ax1 = axi.plot(t, N_B_total, label=label, linewidth = 4)
             axi.semilogy(t, N_B[0, :], label=label, linewidth = 2, alpha=1, color=ax1[0].get_color())
             axi.semilogy(t, N_B[10, :], label=label, linewidth = 2, alpha=0.5, color=ax1[0].get_color())
             axi.semilogy(t, N_B[-10, :], label=label, linewidth = 2, alpha=0.2, color=ax1[0].get_color())
@@ -137,6 +147,15 @@ if __name__ == '__main__':
             axi.semilogy(t, 1e-2*np.exp((p.b0)*t), label=label, linewidth = 1, linestyle='--', color='grey', alpha=0.8)
             L_act = compute_L_act(res)
             ax1 = axi.semilogy(t, L_act, label=label, linewidth = 4, color = my_green)
+
+            # ax1 = ax_NB.plot(t, N_B_total, label=label, linewidth = 4, color = ax1[0].get_color())
+            ax1 = ax_NB.plot(t, N_B[0, :], label=label, linewidth = 4, alpha=1, color=my_red)
+            ax_NB.plot(t, N_B[10, :], label=label, linewidth = 3, alpha=0.5, color=ax1[0].get_color())
+            ax_NB.plot(t, N_B[-10, :], label=label, linewidth = 2, alpha=0.2, color=ax1[0].get_color())
+            # ax_NB.plot(t, res['N_Bo'][0, :], label=label, linewidth = 2, linestyle='--', color=ax1[0].get_color())
+            # ax_NB.plot(t, res['N_Ba'][0, :], label=label, linewidth = 2, linestyle=':', color=ax1[0].get_color())
+            # ax_NB.plot(t, N_B_total, label=label, linewidth = 3, linestyle='-', alpha=0.8, color=ax1[0].get_color())
+            ax_NB.plot(t, 1e-2*np.exp((p.b0)*t), label=label, linewidth = 1, linestyle='--', color='grey', alpha=0.8)
 
             # (f) Potency
             axi = axes[2, 1]
@@ -169,7 +188,17 @@ if __name__ == '__main__':
             axes[0, 0].set_xticklabels([])
             axes[0, 0].set_ylim(bottom = 1e-1)
             axes[0, 0].set_xlim(0, T)
+            axes[0, 0].set_yscale('log')
             axes[0, 0].tick_params(labelsize=14)
+
+            # ax_NA.set_ylabel('$N_A$', fontsize = 16)
+            ax_NA.set_xticklabels([])
+            ax_NA.set_ylim(bottom = 1e-1, top = 1e11)
+            ax_NA.set_xlim(0, T)
+            ax_NA.set_yscale('log')
+            ax_NA.tick_params(axis='y', labelsize=30)
+            ax_NA.tick_params(axis='x', labelsize=30)
+            fig_NA.savefig(os.path.join(output_plot, f'N_A.pdf'), dpi=150, bbox_inches='tight')
 
             # axes[1].set_xlabel('Time')
             axes[1, 0].set_ylabel(r'$\pi$', fontsize = 16)
@@ -177,6 +206,15 @@ if __name__ == '__main__':
             axes[1, 0].set_ylim(bottom = 1e-2, top = 1e4)
             axes[1, 0].set_xlim(0, T)
             axes[1, 0].set_yscale('log')
+
+            # ax_pi.set_ylabel(r'$\pi$', fontsize = 16)
+            ax_pi.set_xticklabels([])
+            ax_pi.set_ylim(bottom = 1e-2, top = 1e3)
+            ax_pi.set_xlim(0, T)
+            ax_pi.set_yscale('log')
+            ax_pi.tick_params(axis='y', labelsize=30)
+            ax_pi.tick_params(axis='x', labelsize=30)
+            fig_pi.savefig(os.path.join(output_plot, f'pi.pdf'), dpi=150, bbox_inches='tight')
 
             axes[2, 0].set_xlabel('Time', fontsize = 16)
             axes[2, 0].set_ylabel(r'$\lambda_B/b_o$', fontsize = 16)
@@ -203,6 +241,17 @@ if __name__ == '__main__':
             axes[1, 1].set_xlim(0, T)
             axes[1, 1].set_yscale('log')
             axes[1, 1].tick_params(labelsize=14)
+
+            ax_NB.axhline(1.0, color='k', linestyle='--', alpha=0.5)
+            # ax_NB.set_xlabel('Time', fontsize = 16)
+            # ax_NB.set_ylabel('B cells', fontsize = 16)
+            ax_NB.set_xticklabels([])
+            ax_NB.set_ylim(bottom = 5e-1, top = 8e6)
+            ax_NB.set_xlim(0, T)
+            ax_NB.set_yscale('log')
+            ax_NB.tick_params(axis='y', labelsize=30)
+            ax_NB.tick_params(axis='x', labelsize=30)
+            fig_NB.savefig(os.path.join(output_plot, f'N_B.pdf'), dpi=150, bbox_inches='tight')
 
             # axes[2, 0].set_xlabel('Time')
             axes[2, 1].set_ylabel('Potency, $Z$', fontsize = 16)

@@ -28,7 +28,7 @@ MAX_RANK_FIT = 15
 N_ENSEMBLE   = 400
 RUN_EXPERIMENTS = {'1', '2', '3a', '3b', '2-3a', '2-3b', '4a', '4b'}
 RUN_EXPERIMENTS = {'1', '2-3a','4a'}
-RUN_EXPERIMENTS = {'1', '2'}
+# RUN_EXPERIMENTS = {'1', '2'}
 
 color_vals      = np.linspace(0, 2, 200)
 my_colors_alpha = [plt.get_cmap('autumn_r')(v) for v in color_vals]
@@ -184,7 +184,6 @@ def plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_ent
 
 
 def apply_ranking_layout(fig_r, ax_r, suffix):
-    my_plot_layout(ax=ax_r, yscale='log', xscale='log', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
     ax_r.set_ylim(bottom=2e-2, top=1.1)
     ax_r.set_xlim(right=5e1)
     # ax_r.set_xlabel(r'$\mathrm{Rank, } k $', fontsize=30)
@@ -230,15 +229,15 @@ if '1' in RUN_EXPERIMENTS:
     mice = data['Mouse'].unique()
 
     x_avg, mre, zetas, zetas_mice = run_bootstrap(
-        data, mice, 'Mouse', ax_r=ax_r, line_color='limegreen',
+        data, mice, 'Mouse', ax_r=ax_r, line_color=my_red,
         scaling_info=dict(experiment='1', response='naive', phenotype='GC', scaling_dict=scaling_dict),
     )
     print(np.mean(zetas), np.std(zetas))
     violin_stats.append(dict(experiment='1', response='naive', phenotype='GC',
                              violin_zeta_mean=np.mean(zetas), violin_zeta_std=np.std(zetas),
                              mice_zeta_mean=np.mean(zetas_mice), mice_zeta_std=np.std(zetas_mice)))
-    recolor_last_lines(ax_r, len(mice), 'limegreen')
-    plot_ranking_result(ax_r, x_avg, mre, np.mean(zetas), 'limegreen', '*',
+    recolor_last_lines(ax_r, len(mice), my_red)
+    plot_ranking_result(ax_r, x_avg, mre, np.mean(zetas), my_red, '*',
                         r'$%.2f$' % np.mean(zetas) + ' ; GC', ms=18)
     plot_zeta_violin(ax_zeta, zetas, zetas_mice, position=0, color=my_red)
     plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_entropy_zeta, ax_entropy_logL_zeta, np.mean(zetas), np.std(zetas), my_red)
@@ -503,12 +502,12 @@ sns.scatterplot(data=scaling_results, x='N1', y='L_act',
                 hue='phenotype', style='experiment', ax=ax_scaling3,
                 s=150, palette=palette, edgecolors='black', alpha=0.8)
 my_plot_layout(ax=ax_scaling3, yscale='linear', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
-ax_scaling3.set_xlabel(r'$N_1$', fontsize=30)
-ax_scaling3.set_ylabel(r'$L_{act}$', fontsize=30)
+# ax_scaling3.set_xlabel(r'$N_1$', fontsize=30)
+# ax_scaling3.set_ylabel(r'$L_{act}$', fontsize=30)
 ax_scaling3.set_ylim(bottom=0, top=125)
 ax_scaling3.set_xlim(left=0, right=80)
 ax_scaling3.tick_params(axis='both', labelsize=30)
-ax_scaling3.legend(title='Response', title_fontsize=20, fontsize=15, loc=4)
+ax_scaling3.legend(title='Response', title_fontsize=20, fontsize=15, loc=1)
 fig_scaling3.savefig(output_plot + '/size_scaling_3_linear.pdf', bbox_inches='tight', transparent=.5)
 
 sns.scatterplot(data=scaling_results, x='L_act', y='S',

@@ -39,22 +39,23 @@ if __name__ == '__main__':
     # Scan N_T: move t_D relative to dynamics
     # ============================================================
     colors_sim = [my_red, my_blue2, my_purple2, my_gold, my_brown, my_blue, my_green, 'tab:orange', my_purple, my_cyan]
-    colors_sim = plt.cm.viridis(np.linspace(0, 1, 50))
+    N_h0 = 4
+    colors_sim = plt.cm.coolwarm_r(np.linspace(0, 1, N_h0))
     N_ensembles = 1
-    fig_Z_memory, ax_Z_memory = plt.subplots(figsize=(8, 5))
-    fig_Y_memory, ax_Y_memory = plt.subplots(figsize=(8, 5))
+    fig_Z_memory, ax_Z_memory = plt.subplots(figsize=(8 * 1.62, 8), gridspec_kw={'left': .15, 'right': .95, 'bottom': .15, 'top': .94})
+    fig_Y_memory, ax_Y_memory = plt.subplots(figsize=(8 * 1.62, 8), gridspec_kw={'left': .15, 'right': .95, 'bottom': .15, 'top': .94})
 
     print(f"Running simulation")
-    etas = [1.0, 1.5, 2.0, 3.0]
+    etas = [1.0]
     for eta in etas:
         print(f"... for eta={eta:.1g}")
-        fig_Z_t, ax_Z_t = plt.subplots(figsize=(8, 5))
-        fig_N_t, ax_N_t = plt.subplots(figsize=(8, 5))
-        fig_hist, ax_hist = plt.subplots(figsize=(8, 5))
-        fig_Z_Y_total, ax_Z_Y_total = plt.subplots(figsize=(8, 5))
-        fig_Z_Y_mean, ax_Z_Y_mean = plt.subplots(figsize=(8, 5))
+        fig_Z_t, ax_Z_t = plt.subplots(figsize=(8 * 1.62, 8), gridspec_kw={'left': .15, 'right': .95, 'bottom': .15, 'top': .94})
+        fig_N_t, ax_N_t = plt.subplots(figsize=(8 * 1.62, 8), gridspec_kw={'left': .15, 'right': .95, 'bottom': .15, 'top': .94})
+        fig_hist, ax_hist = plt.subplots(figsize=(8 * 1.62, 8), gridspec_kw={'left': .15, 'right': .95, 'bottom': .15, 'top': .94})
+        fig_Z_Y_total, ax_Z_Y_total = plt.subplots(figsize=(8 * 1.62, 8), gridspec_kw={'left': .15, 'right': .95, 'bottom': .15, 'top': .94})
+        fig_Z_Y_mean, ax_Z_Y_mean = plt.subplots(figsize=(8 * 1.62, 8), gridspec_kw={'left': .15, 'right': .95, 'bottom': .15, 'top': .94})
         
-        h0s = np.logspace(np.log10(base['b0']/4e3), np.log10(base['b0']), 50)
+        h0s = np.flip(np.logspace(np.log10(base['b0']/1e3), np.log10(base['b0']), N_h0))
         pi_stars = (base['b0']/h0s)**(1/base['hill'])
         initial_memory_potency = []
         final_primary_potency = []
@@ -65,7 +66,7 @@ if __name__ == '__main__':
             # print(f"... for h0={h0:.2g}")
             base['h0'] = h0
             pi_star = (base['b0']/base['h0'])**(1/base['hill'])
-            label = f'${pi_star:.2g}$'
+            label = f'${pi_star:.0f}$'
             
             for i_m, memory in enumerate([0]):
                 # print(f"... ... for memory={memory}")
@@ -97,7 +98,7 @@ if __name__ == '__main__':
                     initial_memory_yield_pi_star.append(np.sum(N_memory))
                     
 
-                ax_hist.plot(DG_memory, N_memory, color=colors_sim[i_h0], alpha=0.5, label=label)
+                ax_hist.bar(x = DG_memory, height = N_memory, width=0.2, color=colors_sim[i_h0], alpha=0.9, label=label)
                 initial_memory_potency.append(np.mean(initial_memory_potencies_pi_star))
                 final_primary_potency.append(np.mean(final_primary_potencies_pi_star))
                 initial_memory_yield.append(np.mean(initial_memory_yield_pi_star))
@@ -250,16 +251,16 @@ if __name__ == '__main__':
         fig_Z_t.savefig(os.path.join(output_plot, f'potency_eta-{eta:.1f}.pdf'), dpi=150, bbox_inches='tight')
         plt.close(fig_Z_t)
 
-        ax_hist.plot(res['DG'], res['weights'], marker='o', color='grey')
-        ax_hist.set_ylabel(r'$\mathrm{\# cells}$', fontsize = 16)
-        ax_hist.set_xlabel(r'$\Delta G$', fontsize = 16)
+        ax_hist.plot(res['DG'], res['weights'], marker='o', color='grey', label = r'$\Omega_0(\Delta G)$')
+        # ax_hist.set_ylabel(r'$\mathrm{\# cells}$', fontsize = 16)
+        # ax_hist.set_xlabel(r'$\Delta G$', fontsize = 16)
         # ax_hist.set_xticklabels([])
         # ax_hist.set_ylim(bottom = 5e-1, top = 1e7)
         ax_hist.set_ylim(bottom = 8e-1, top = 1e6)
         # ax_hist.set_xscale('log')
         ax_hist.set_yscale('log') 
-        ax_hist.tick_params(labelsize=14)
-        # ax_hist.legend(title = r'$\pi^*$', title_fontsize = 12, fontsize=10, loc = 4)
+        ax_hist.tick_params(which = 'both', labelsize=30)
+        ax_hist.legend(title = r'$\pi_c$', title_fontsize = 30, fontsize=24, loc = 2)
         fig_hist.savefig(os.path.join(output_plot, f'Z0_memory_eta-{eta:.1f}.pdf'), dpi=150, bbox_inches='tight')
         plt.close(fig_hist)
 
@@ -289,16 +290,17 @@ if __name__ == '__main__':
         fig_Z_Y_mean.savefig(os.path.join(output_plot, f'Z_memory_mean_eta-{eta:.1f}.pdf'), dpi=150, bbox_inches='tight')
         plt.close(fig_Z_Y_mean)
 
-        ax_Z_memory.plot(pi_stars, initial_memory_potency, marker='', alpha = .7, ms = 10, lw = 2, label = f'${eta:.1f}$')
-        ax_Y_memory.plot(pi_stars, initial_memory_yield, marker='', alpha = .7, ms = 10, lw = 2, label = f'${eta:.1f}$')
+        ax_Z_memory.plot(pi_stars, initial_memory_potency, marker='', alpha = .7, ms = 10, lw = 4, label = f'${eta:.1f}$')
+        ax_Y_memory.plot(pi_stars, initial_memory_yield, marker='', alpha = .7, ms = 10, lw = 4, label = f'${eta:.1f}$')
         
 
     ax_Z_memory.set_xscale('log')
     ax_Z_memory.set_yscale('log')
-    ax_Z_memory.set_xlabel(r'$\pi^*$', fontsize=14)
-    ax_Z_memory.set_ylabel(r'$Z$', fontsize = 14)
+    # ax_Z_memory.set_xlabel(r'$\pi^*$', fontsize=14)
+    # ax_Z_memory.set_ylabel(r'$Z$', fontsize = 14)
     ax_Z_memory.set_ylim(bottom = 5e-1, top = 5e3)
-    ax_Z_memory.tick_params(which='both', labelsize=14)
+    ax_Z_memory.tick_params(axis='y', labelsize=30)
+    ax_Z_memory.tick_params(axis='x', labelsize=30)
     ax_Z_memory.legend(fontsize=12, title = r'$\eta$', title_fontsize = 14)
     fig_Z_memory.savefig(os.path.join(output_plot, f'Z_memory.pdf'), dpi=150, bbox_inches='tight')
 
@@ -307,6 +309,7 @@ if __name__ == '__main__':
     ax_Y_memory.set_xlabel(r'$\pi^*$', fontsize=14)
     ax_Y_memory.set_ylabel(r'$Y$', fontsize = 14)
     ax_Y_memory.set_ylim(bottom = 5e-1, top = 2e4)
-    ax_Y_memory.tick_params(which='both', labelsize=14)
+    ax_Y_memory.tick_params(axis='y', labelsize=30)
+    ax_Y_memory.tick_params(axis='x', labelsize=30)
     ax_Y_memory.legend(fontsize=12, title = r'$\eta$', title_fontsize = 14)
     fig_Y_memory.savefig(os.path.join(output_plot, f'Y_memory.pdf'), dpi=150, bbox_inches='tight')
