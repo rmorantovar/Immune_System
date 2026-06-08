@@ -59,9 +59,14 @@ class Parameters:
     pi_star: float = 1.0           # pMHC half-maximal threshold
     hill: float = 3.0             # Hill coefficient for T cell activation (controls sharpness of transition)
 
-    # --- Binding ---
+    # --- Binding Repertoire ---
     eta: float = 1.0          # specificity parameter: psi(DG) = exp(-eta * DG)
     beta_star: float = 2.0      # density-of-states exponent
+    sigma_E: float = 4.0            # width of the Gaussian in the density of states (controls diversity of clones)
+    DG_min: float = 0.0         # highest affinity (smallest DG)
+    DG_max: float = 5.0        # lowest affinity in grid
+    M: int = 20                # number of grid points
+    omega_0: float = 1.0        # density-of-states prefactor
 
     # --- T cells ---
     N_T0: float = 1000.0         # initial T cell pool
@@ -74,12 +79,6 @@ class Parameters:
 
     # --- B cells ---
     delta_B: float = 0.0        # B cell death rate
-
-    # --- Repertoire ---
-    DG_min: float = 0.0         # highest affinity (smallest DG)
-    DG_max: float = 5.0        # lowest affinity in grid
-    M: int = 20                # number of grid points
-    Omega_0: float = 1.0        # density-of-states prefactor
     
     # --- Simulation options ---
     T_lim: bool = False         # whether to include T cell limitation in the demand function
@@ -98,20 +97,20 @@ def build_repertoire_grid(p):
     -------
     DG_arr : array of DG values (length M)
     psi_arr : array of psi(DG) values
-    weights : array of Omega(DG) * dDG (used in demand integral)
+    weights : array of Omega_0(DG) * dDG (used in demand integral)
     M : number of grid points
     """
     DG_arr = np.linspace(p.DG_min, p.DG_max, p.M)
     dDG = DG_arr[1] - DG_arr[0]
     psi_arr = psi(DG_arr, p.eta)
-    Omega_arr = Omega(DG_arr, p.beta_star, p.Omega_0)
+    Omega_arr = Omega_0(DG_arr, p.beta_star, p.omega_0, p.sigma_E)
     weights = Omega_arr * dDG  # each bin represents this many clones
     return DG_arr, psi_arr, weights, p.M
 
 
 def build_repertoire_stochastic(p, DG_max_sim=None, seed=None):
     """
-    Stochastic mode: sample individual clone energies from Omega(DG).
+    Stochastic mode: sample individual clone energies from Omega_0(DG).
  
     Samples from the truncated exponential distribution on [DG_min, DG_max_sim].
     The number of clones is determined by integrating Omega over the range.
@@ -140,14 +139,14 @@ def build_repertoire_stochastic(p, DG_max_sim=None, seed=None):
     DG_floor = p.DG_min - n_extra / p.beta_star  # extend by n_extra expected clones
  
     # Total number of clones in [DG_min, DG_max_sim]:
-    # L_sim = int(Omega_0 / beta_star * (exp(beta_star * DG_max_sim) - exp(beta_star * DG_min)))
-    L_sim = int(p.Omega_0 / p.beta_star * (
+    # L_sim = int(omega_0 / beta_star * (exp(beta_star * DG_max_sim) - exp(beta_star * DG_min)))
+    L_sim = int(p.omega_0 / p.beta_star * (
         np.exp(p.beta_star * DG_max_sim) - np.exp(p.beta_star * DG_floor)
     ))
  
     if L_sim <= 0:
         raise ValueError(f"No clones in range [{p.DG_min}, {DG_max_sim}]. "
-                         f"Check Omega_0 and beta_star.")
+                         f"Check omega_0 and beta_star.")
  
     # Sample from truncated exponential: P(DG) ~ exp(beta_star * DG)
     # on [DG_min, DG_max_sim].
@@ -180,9 +179,10 @@ def G1(pi_vec, p):
     return pi_vec
 
 
-def Omega(DG, beta_star, Omega_0):
+def Omega_0(DG, beta_star, omega_0, sigma_E):
     """Density of states (number of clones per unit DG)."""
-    return Omega_0 * np.exp(beta_star * DG)
+    # return omega_0 * np.exp(beta_star * DG)
+    return omega_0 * np.exp(beta_star * DG - DG**2 / (2 * sigma_E**2))
 
 
 def compute_demand(pi_vec, N_B_vec, weights, p):

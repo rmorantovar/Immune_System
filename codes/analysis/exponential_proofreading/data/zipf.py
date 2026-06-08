@@ -185,11 +185,13 @@ def plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_ent
 
 def apply_ranking_layout(fig_r, ax_r, suffix):
     ax_r.set_ylim(bottom=2e-2, top=1.1)
-    ax_r.set_xlim(right=5e1)
+    ax_r.set_xlim(left = 0.9, right=5e1)
     # ax_r.set_xlabel(r'$\mathrm{Rank, } k $', fontsize=30)
     # ax_r.set_ylabel(r'$\mathrm{Relative clone size, } x_k $', fontsize=30)
     ax_r.tick_params(axis='y', labelsize=30)
     ax_r.tick_params(axis='x', labelsize=30)
+    ax_r.set_yscale('log')
+    ax_r.set_xscale('log')
     fig_r.savefig(output_plot + f'/ranking_B_cells_{suffix}.pdf', bbox_inches='tight', transparent=.5)
 
 
@@ -210,6 +212,7 @@ fig_zeta,     ax_zeta     = plt.subplots(**fig_kw)
 fig_scaling1, ax_scaling1 = plt.subplots(**fig_kw)
 fig_scaling2, ax_scaling2 = plt.subplots(**fig_kw)
 fig_scaling3, ax_scaling3 = plt.subplots(**fig_kw)
+fig_scaling4, ax_scaling4 = plt.subplots(**fig_kw)
 fig_entropy,  ax_entropy  = plt.subplots(**fig_kw)
 fig_entropy_zeta,  ax_entropy_zeta  = plt.subplots(**fig_kw)
 fig_entropy_logL_zeta,  ax_entropy_logL_zeta  = plt.subplots(**fig_kw)
@@ -509,6 +512,18 @@ ax_scaling3.set_xlim(left=0, right=80)
 ax_scaling3.tick_params(axis='both', labelsize=30)
 ax_scaling3.legend(title='Response', title_fontsize=20, fontsize=15, loc=1)
 fig_scaling3.savefig(output_plot + '/size_scaling_3_linear.pdf', bbox_inches='tight', transparent=.5)
+
+scaling_results['barN_prediction'] = scaling_results['N1']/(1-scaling_results['zeta'])*(scaling_results['L_act']**(1-scaling_results['zeta']) - 1)
+sns.histplot(data=scaling_results, x='barN_prediction', bins = 20,
+                hue='experiment', ax=ax_scaling4, palette=palette, alpha=0.5)
+my_plot_layout(ax=ax_scaling4, yscale='linear', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
+# ax_scaling4.set_xlabel(r'$N_1$', fontsize=30)
+# ax_scaling4.set_ylabel(r'$L_{act}$', fontsize=30)
+# ax_scaling4.set_ylim(bottom=0, top=125)
+# ax_scaling4.set_xlim(left=0, right=80)
+ax_scaling4.tick_params(axis='both', labelsize=30)
+ax_scaling4.legend(title='Response', title_fontsize=20, fontsize=15, loc=1)
+fig_scaling4.savefig(output_plot + '/size_scaling_4.pdf', bbox_inches='tight', transparent=.5)
 
 sns.scatterplot(data=scaling_results, x='L_act', y='S',
                 hue='phenotype', style='experiment', ax=ax_entropy,

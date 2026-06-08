@@ -30,8 +30,8 @@ if __name__ == '__main__':
                 hill=1.0, beta_star=2.5, K_T = 1e4,
                 delta_T=0.00, Tcell_growth_factor=2.0,
                 tau_eng=0.1, b0=2.0, delta_B=0.00,
-                DG_min=0.0, DG_max=8.0, M=30,
-                Omega_0=1.0, T_lim = True, N_T0 = 1e6
+                DG_min=0.0, DG_max=8.0, M=20,
+                omega_0=1.0, T_lim = True, N_T0 = 1e6
     )
     T = 15
     # print(compute_N_B_tot(res))
@@ -251,7 +251,9 @@ if __name__ == '__main__':
         fig_Z_t.savefig(os.path.join(output_plot, f'potency_eta-{eta:.1f}.pdf'), dpi=150, bbox_inches='tight')
         plt.close(fig_Z_t)
 
-        ax_hist.plot(res['DG'], res['weights'], marker='o', color='grey', label = r'$\Omega_0(\Delta G)$')
+        ax_hist.plot(res['DG'], res['weights'], marker='o', ls = '', color='black', label = r'$\Omega_0(\Delta G)$')
+        ax_hist.plot(res['DG'], Omega_0(res['DG'], p.beta_star, p.omega_0, p.sigma_E), color='black')
+        ax_hist.plot(res['DG'], p.omega_0*np.exp(p.beta_star*res['DG']), color='grey')
         # ax_hist.set_ylabel(r'$\mathrm{\# cells}$', fontsize = 16)
         # ax_hist.set_xlabel(r'$\Delta G$', fontsize = 16)
         # ax_hist.set_xticklabels([])
