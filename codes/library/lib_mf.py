@@ -381,7 +381,7 @@ def produce_memory(res, n_mem=int(1e4)):
     n_draw = (n_mem * total)/(n_mem + total)  # adjust n_draw to avoid sampling more than available
     # print(n_draw)
     probs = counts / total
-    drawn = np.random.multinomial(n_draw, probs)
+    drawn = np.random.multinomial(int(n_draw), probs)
     nz = drawn > 0
     DG_memory = res['DG'][activated_idx[nz]]
     N_memory = drawn[nz]
