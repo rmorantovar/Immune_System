@@ -33,7 +33,7 @@ for submodel in ['semicomplete', 'null']:
                     tau_eng=0.1, b0=2.0, delta_B=0.00,
                     DG_min=0.0, DG_max=8.0, M=20,
                     omega_0=1.0, T_lim = True, N_T0 = 1e6,
-                    memory = 1
+                    sigma_E = np.sqrt(6)
         )
         T = 15
         # print(compute_N_B_tot(res))
@@ -41,7 +41,7 @@ for submodel in ['semicomplete', 'null']:
         # Scan N_T: move t_D relative to dynamics
         # ============================================================
         colors_sim = [my_red, my_blue2, my_purple2, my_gold, my_brown, my_blue, my_green, 'tab:orange', my_purple, my_cyan]
-        N_h0 = 4
+        N_h0 = 20
         colors_sim = plt.cm.coolwarm_r(np.linspace(0, 1, N_h0))
         N_ensembles = 1
         fig_Z_memory, ax_Z_memory = plt.subplots(figsize=(8 * 1.62, 8), gridspec_kw={'left': .15, 'right': .95, 'bottom': .15, 'top': .94})
@@ -57,7 +57,7 @@ for submodel in ['semicomplete', 'null']:
             fig_Z_Y_total, ax_Z_Y_total = plt.subplots(figsize=(8 * 1.62, 8), gridspec_kw={'left': .15, 'right': .95, 'bottom': .15, 'top': .94})
             fig_Z_Y_mean, ax_Z_Y_mean = plt.subplots(figsize=(8 * 1.62, 8), gridspec_kw={'left': .15, 'right': .95, 'bottom': .15, 'top': .94})
             
-            h0s = np.flip(np.logspace(np.log10(base['b0']/1e2), np.log10(base['b0']), N_h0))
+            h0s = np.flip(np.logspace(np.log10(base['b0']/5e2), np.log10(base['b0']), N_h0))
             pi_stars = (base['b0']/h0s)**(1/base['hill'])
             initial_memory_potency = []
             final_primary_potency = []
@@ -70,7 +70,7 @@ for submodel in ['semicomplete', 'null']:
                 pi_star = (base['b0']/base['h0'])**(1/base['hill'])
                 label = f'${pi_star:.0f}$'
                 
-                for i_m, memory in enumerate([1]):
+                for i_m, memory in enumerate([0]):
                     # print(f"... ... for memory={memory}")
                     base['memory'] = memory
                     # figs, axes = plt.subplots(3, 2, figsize=(16, 15))
@@ -257,14 +257,19 @@ for submodel in ['semicomplete', 'null']:
             plt.close(fig_Z_t)
 
             alpha = p.eta * (p.b0 / p.lambda_A + 1)
-            ax_hist.plot(res['DG'], 1e3 * res['weights']*np.exp(- alpha * res['DG']), marker='o', ls = '', color='black', label = r'$\Omega_0(\Delta G)$')
-            ax_hist.plot(res['DG'], 5e-15 * Omega_0(res['DG'] + alpha * p.sigma_E**2, p.beta_star, p.omega_0, p.sigma_E), color='black')
-            ax_hist.plot(res['DG'], 5e2*p.omega_0*np.exp((p.beta_star - alpha)*res['DG']), color='grey')
+            DG_array = np.linspace(0, 16, 100)
+            ax_hist.plot(res['DG'], res['weights'], marker='o', ls = '', color='black', label = r'$\Omega_0(\Delta G)$')
+            ax_hist.plot(res['DG'], 1e3 * res['weights']*np.exp(- alpha * res['DG']), marker='o', ls = '', color='grey', label = r'$\Omega_M(\Delta G)$')
+            ax_hist.plot(DG_array,  Omega_0(DG_array, p.beta_star, p.omega_0, p.sigma_E), color='black')
+            ax_hist.plot(DG_array, p.omega_0*np.exp((p.beta_star)*DG_array), color='black', ls = '--')
+            ax_hist.plot(DG_array, 5e-5 * Omega_0(DG_array  + alpha * p.sigma_E**2 , p.beta_star, p.omega_0, p.sigma_E), color='grey')
+            ax_hist.plot(DG_array, 5e2*p.omega_0*np.exp((p.beta_star - alpha)*DG_array), color='grey', ls = '--')
+            ax_hist.vlines([p.sigma_E**2*p.beta_star, p.sigma_E**2*p.beta_star - p.sigma_E**2*alpha], ymin = 10, ymax = 1e11, color='grey', linestyle='--', alpha=0.5)
+            print([p.sigma_E**2*p.beta_star, p.sigma_E**2*p.beta_star - p.sigma_E**2*alpha])
             # ax_hist.set_ylabel(r'$\mathrm{\# cells}$', fontsize = 16)
             # ax_hist.set_xlabel(r'$\Delta G$', fontsize = 16)
             # ax_hist.set_xticklabels([])
-            # ax_hist.set_ylim(bottom = 5e-1, top = 1e7)
-            # ax_hist.set_ylim(bottom = 8e-1, top = 1e6)
+            ax_hist.set_ylim(bottom = 1e0, top = 1e10)
             # ax_hist.set_xscale('log')
             ax_hist.set_yscale('log') 
             ax_hist.tick_params(which = 'both', labelsize=30)
@@ -303,10 +308,10 @@ for submodel in ['semicomplete', 'null']:
             
 
         ax_Z_memory.set_xscale('log')
-        ax_Z_memory.set_yscale('log')
+        # ax_Z_memory.set_yscale('log')
         # ax_Z_memory.set_xlabel(r'$\pi^*$', fontsize=14)
         # ax_Z_memory.set_ylabel(r'$Z$', fontsize = 14)
-        ax_Z_memory.set_ylim(bottom = 5e-1, top = 5e3)
+        ax_Z_memory.set_ylim(bottom = 1e1, top = 5e2)
         ax_Z_memory.tick_params(axis='y', labelsize=30)
         ax_Z_memory.tick_params(axis='x', labelsize=30)
         ax_Z_memory.legend(fontsize=12, title = r'$\eta$', title_fontsize = 14)
@@ -316,7 +321,7 @@ for submodel in ['semicomplete', 'null']:
         ax_Y_memory.set_yscale('log')
         ax_Y_memory.set_xlabel(r'$\pi^*$', fontsize=14)
         ax_Y_memory.set_ylabel(r'$Y$', fontsize = 14)
-        ax_Y_memory.set_ylim(bottom = 5e-1, top = 2e4)
+        # ax_Y_memory.set_ylim(bottom = 5e-1, top = 2e4)
         ax_Y_memory.tick_params(axis='y', labelsize=30)
         ax_Y_memory.tick_params(axis='x', labelsize=30)
         ax_Y_memory.legend(fontsize=12, title = r'$\eta$', title_fontsize = 14)
