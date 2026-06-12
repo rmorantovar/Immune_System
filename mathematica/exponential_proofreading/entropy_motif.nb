@@ -1517,8 +1517,8 @@ Cell[BoxData["2.2`"], "Output",
   "Out[127]=",ExpressionUUID->"d3cb3cc2-6ec3-481b-90e8-e8190be783d2"]
 }, Open  ]]
 },
-WindowSize->{2175, 915},
-WindowMargins->{{Automatic, 0}, {Automatic, 0}},
+WindowSize->{1238, 915},
+WindowMargins->{{0, Automatic}, {Automatic, 0}},
 Magnification:>1.5 Inherited,
 FrontEndVersion->"14.3 for Mac OS X ARM (64-bit) (July 8, 2025)",
 StyleDefinitions->"Default.nb",
@@ -1536,7 +1536,7 @@ CellTagsIndex->{}
 (*NotebookFileOutline
 Notebook[{
 Cell[CellGroupData[{
-Cell[576, 22, 3250, 77, 197, "Input",ExpressionUUID->"4f512c82-0bc0-4dc7-b4ad-accf6feb5f55"],
+Cell[576, 22, 3250, 77, 258, "Input",ExpressionUUID->"4f512c82-0bc0-4dc7-b4ad-accf6feb5f55"],
 Cell[3829, 101, 40145, 832, 386, "Output",ExpressionUUID->"d8b1dcbd-b0e3-4419-91a5-553bb054e698"]
 }, Open  ]],
 Cell[43989, 936, 131, 3, 44, "Input",ExpressionUUID->"946c55b0-bbec-4c4f-b9ac-7c1695dcae34"],
