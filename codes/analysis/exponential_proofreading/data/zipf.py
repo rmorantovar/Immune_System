@@ -548,7 +548,7 @@ sns.scatterplot(data=scaling_results, x='L_act', y='S',
 my_plot_layout(ax=ax_entropy, yscale='linear', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
 ax_entropy.set_xlabel(r'$L_{act}$', fontsize=30)
 ax_entropy.set_ylabel(r'$S$', fontsize=30)
-ax_entropy.set_xlim(left=2, right=160)
+ax_entropy.set_xlim(left=2, right=120)
 ax_entropy.set_ylim(bottom=0.5, top=4.8)
 # ax_entropy.set_xscale('log')
 ax_entropy.tick_params(axis='both', labelsize=30)
@@ -559,15 +559,16 @@ fig_entropy.savefig(output_plot + '/size_scaling_entropy.pdf', bbox_inches='tigh
 sns.scatterplot(data=scaling_results, x='N1', y='Z',
                 hue='phenotype', style='experiment', ax=ax_entropy_zeta,
                 s=150, palette=palette, edgecolors='black', alpha=0.8)
-ax_entropy_zeta.plot(x, x/(1.05+1/2.3-1), 'k--')  # Example line plot, replace with actual function if needed
+ax_entropy_zeta.plot(x, x/(1.05+1/2.5-1), 'k--')  # Example line plot, replace with actual function if needed
+ax_entropy_zeta.plot(x, x**(1/0.52 - 1/1.3)/(-0.52-1/2.5+1), 'k--')  # Example line plot, replace with actual function if needed
 my_plot_layout(ax=ax_entropy_zeta, yscale='linear', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
 # ax_entropy_zeta.set_xlabel(r'$\zeta$', fontsize=30)
 # ax_entropy_zeta.set_ylabel(r'$S$', fontsize=30)
 ax_entropy_zeta.set_xlim(left=1, right=60)
 ax_entropy_zeta.set_ylim(bottom=10, top=130)
 ax_entropy_zeta.tick_params(axis='both', labelsize=30)
-ax_entropy_zeta.set_xscale('log')
-ax_entropy_zeta.set_yscale('log')
+# ax_entropy_zeta.set_xscale('log')
+# ax_entropy_zeta.set_yscale('log')
 ax_entropy_zeta.legend(title='Response', title_fontsize=20, fontsize=15, loc=4)
 fig_entropy_zeta.savefig(output_plot + '/size_scaling_entropy_zeta.pdf', bbox_inches='tight', transparent=.5)
 
