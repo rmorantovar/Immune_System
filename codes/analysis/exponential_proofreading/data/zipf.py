@@ -83,12 +83,14 @@ def run_bootstrap(data_grouped, mice, mouse_col,
             counts = data_grouped[data_grouped[mouse_col] == mouse]['count'].to_numpy()
             if len(counts) == 0 or np.sum(counts) == 0:
                 continue
-
+            
             N       = np.sum(counts)
             S_i     = -np.sum((counts / N) * np.log(counts / N))
             largest = np.max(counts)
             x       = np.flip(counts[counts.argsort()])
             n_clones = len(x)
+            pseudo_E = np.log(np.arange(1, len(counts) + 1)) / 2.5
+            Z       = np.sum(x * np.exp(-pseudo_E))
 
             if is_last:
                 if ax_r is not None:
@@ -107,6 +109,7 @@ def run_bootstrap(data_grouped, mice, mouse_col,
                     d['barN'].append(N)
                     d['S'].append(S_i)
                     d['zeta'].append(-params_m[0])
+                    d['Z'].append(Z)
                     if -params_m[0] < 1:
                         d['SlogLact'].append(abs(- S_i + np.log(len(counts))))
                     else:
@@ -172,12 +175,20 @@ def plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_ent
     
     ax_scaling1.plot(barN(L, Z), L ** Z, color=color, linestyle='--')
     ax_scaling1.fill_betweenx(L ** Z, barN(L, Z_min), barN(L, Z_max), color=color, alpha=0.1)
+    
     ax_scaling2.plot(barN(L, Z), L,      color=color, linestyle='--')
     ax_scaling2.fill_betweenx(L, barN(L, Z_min), barN(L, Z_max), color=color, alpha=0.1)
+    
+    # ax_scaling3.plot(L ** Z, L,      color=color, linestyle='--')
+    # ax_scaling3.fill_betweenx(L, L ** Z_min, L ** Z_max, color=color, alpha=0.1)
+    ax_scaling3.plot(L ** Z, L,      color=color, linestyle='--')
+    ax_scaling3.fill_betweenx(L, L, 200, color=my_blue, alpha=0.05)
+    ax_scaling3.fill_betweenx(L, 0, L, color=my_red, alpha=0.05)
+    
+    
     ax_entropy.plot(L_e, S_th(L_e, Z),    color=color, linestyle='--')
     ax_entropy.fill_between(L_e, S_th(L_e, Z_min), S_th(L_e, Z_max), color=color, alpha=0.1)
-    ax_scaling3.plot(L ** Z, L,      color=color, linestyle='--')
-    ax_scaling3.fill_betweenx(L, L ** Z_min, L ** Z_max, color=color, alpha=0.1)
+    
     # ax_entropy2.plot(L_e, -S_th + np.log(L_e),    color=color, linestyle='--')
     # ax_entropy_logL_zeta.plot(z, abs(-S1_z),    color=color, linestyle='--')
     # ax_entropy_logL_zeta.plot(z, abs(-S2_z),    color=color, linestyle='--')
@@ -504,25 +515,31 @@ fig_scaling2.savefig(output_plot + '/size_scaling_2_linear.pdf', bbox_inches='ti
 sns.scatterplot(data=scaling_results, x='N1', y='L_act',
                 hue='phenotype', style='experiment', ax=ax_scaling3,
                 s=150, palette=palette, edgecolors='black', alpha=0.8)
+x = np.linspace(1, 240, 100)
+ax_scaling3.plot(x, x, 'k--')  # Example line plot, replace with actual function if needed
 my_plot_layout(ax=ax_scaling3, yscale='linear', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
 # ax_scaling3.set_xlabel(r'$N_1$', fontsize=30)
 # ax_scaling3.set_ylabel(r'$L_{act}$', fontsize=30)
+# ax_scaling3.set_xscale('log')
+# ax_scaling3.set_yscale('log')
 ax_scaling3.set_ylim(bottom=0, top=125)
-ax_scaling3.set_xlim(left=0, right=80)
+ax_scaling3.set_xlim(left=0, right=60)
 ax_scaling3.tick_params(axis='both', labelsize=30)
 ax_scaling3.legend(title='Response', title_fontsize=20, fontsize=15, loc=1)
 fig_scaling3.savefig(output_plot + '/size_scaling_3_linear.pdf', bbox_inches='tight', transparent=.5)
 
 scaling_results['barN_prediction'] = scaling_results['N1']/(1-scaling_results['zeta'])*(scaling_results['L_act']**(1-scaling_results['zeta']) - 1)
-sns.histplot(data=scaling_results, x='barN_prediction', bins = 20,
-                hue='experiment', ax=ax_scaling4, palette=palette, alpha=0.5)
+sns.scatterplot(data=scaling_results, x='barN_prediction', y='barN',
+                style='experiment', hue='phenotype', ax=ax_scaling4,
+                s=150, palette=palette, edgecolors='black', alpha=0.8)
+ax_scaling4.plot(x, x, 'k--')  # Example line plot, replace with actual function if needed
 my_plot_layout(ax=ax_scaling4, yscale='linear', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
 # ax_scaling4.set_xlabel(r'$N_1$', fontsize=30)
 # ax_scaling4.set_ylabel(r'$L_{act}$', fontsize=30)
 # ax_scaling4.set_ylim(bottom=0, top=125)
 # ax_scaling4.set_xlim(left=0, right=80)
 ax_scaling4.tick_params(axis='both', labelsize=30)
-ax_scaling4.legend(title='Response', title_fontsize=20, fontsize=15, loc=1)
+ax_scaling4.legend(title='Response', title_fontsize=20, fontsize=15, loc=4)
 fig_scaling4.savefig(output_plot + '/size_scaling_4.pdf', bbox_inches='tight', transparent=.5)
 
 sns.scatterplot(data=scaling_results, x='L_act', y='S',
@@ -539,15 +556,18 @@ ax_entropy.legend(title='Response', title_fontsize=20, fontsize=15, loc=4)
 fig_entropy.savefig(output_plot + '/size_scaling_entropy.pdf', bbox_inches='tight', transparent=.5)
 
 
-sns.scatterplot(data=scaling_results, x='zeta', y='S',
+sns.scatterplot(data=scaling_results, x='N1', y='Z',
                 hue='phenotype', style='experiment', ax=ax_entropy_zeta,
                 s=150, palette=palette, edgecolors='black', alpha=0.8)
+ax_entropy_zeta.plot(x, x/(1.05+1/2.3-1), 'k--')  # Example line plot, replace with actual function if needed
 my_plot_layout(ax=ax_entropy_zeta, yscale='linear', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
-ax_entropy_zeta.set_xlabel(r'$\zeta$', fontsize=30)
-ax_entropy_zeta.set_ylabel(r'$S$', fontsize=30)
-# ax_entropy_zeta.set_xlim(left=2, right=160)
-# ax_entropy_zeta.set_ylim(bottom=-0.05, top=4)
+# ax_entropy_zeta.set_xlabel(r'$\zeta$', fontsize=30)
+# ax_entropy_zeta.set_ylabel(r'$S$', fontsize=30)
+ax_entropy_zeta.set_xlim(left=1, right=60)
+ax_entropy_zeta.set_ylim(bottom=10, top=130)
 ax_entropy_zeta.tick_params(axis='both', labelsize=30)
+ax_entropy_zeta.set_xscale('log')
+ax_entropy_zeta.set_yscale('log')
 ax_entropy_zeta.legend(title='Response', title_fontsize=20, fontsize=15, loc=4)
 fig_entropy_zeta.savefig(output_plot + '/size_scaling_entropy_zeta.pdf', bbox_inches='tight', transparent=.5)
 
