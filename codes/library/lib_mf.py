@@ -60,6 +60,7 @@ class Parameters:
     hill: float = 3.0             # Hill coefficient for T cell activation (controls sharpness of transition)
 
     # --- Binding Repertoire ---
+    # alpha: float = 1.3         # exponent of the power-law scaling of potency with N1
     eta: float = 1.0          # specificity parameter: psi(DG) = exp(-eta * DG)
     beta_star: float = 2.0      # density-of-states exponent
     sigma_E: float = 4.0            # width of the Gaussian in the density of states (controls diversity of clones)

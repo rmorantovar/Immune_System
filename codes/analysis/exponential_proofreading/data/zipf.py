@@ -24,15 +24,17 @@ EXCEL_FILE   = root_dir + "/1-s2.0-S0092867419313170-mmc1.xlsx"
 CLONE_COLS   = ['V', 'J', 'D']
 # CLONE_COLS   = ['CDR3:']
 MAX_RANK     = 100
-MAX_RANK_FIT = 15
+MAX_RANK_FIT = 20
 N_ENSEMBLE   = 400
 RUN_EXPERIMENTS = {'1', '2', '3a', '3b', '2-3a', '2-3b', '4a', '4b'}
-RUN_EXPERIMENTS = {'1', '2-3a','4a'}
+RUN_EXPERIMENTS = {'1', '2-3b','4a'}
 # RUN_EXPERIMENTS = {'1', '2'}
 
 color_vals      = np.linspace(0, 2, 200)
 my_colors_alpha = [plt.get_cmap('autumn_r')(v) for v in color_vals]
 my_colors2      = [my_purple, my_purple, my_purple, my_cyan, my_purple, my_blue2]
+
+alpha = 1.2
 
 
 def model(x, m):
@@ -90,6 +92,7 @@ def run_bootstrap(data_grouped, mice, mouse_col,
             x       = np.flip(counts[counts.argsort()])
             n_clones = len(x)
             pseudo_E = np.log(np.arange(1, len(counts) + 1)) / 2.5
+            pseudo_E = -np.log(x/N) / alpha
             Z       = np.sum(x * np.exp(-pseudo_E))
 
             if is_last:
@@ -393,17 +396,17 @@ if '2-3b' in RUN_EXPERIMENTS:
 
     x_avg, mre, zetas, zetas_mice = run_bootstrap(
         data_23b, mice_23b, 'Mouse', ax_r=ax_r, line_color=my_blue2,
-        scaling_info=dict(experiment='2-3b', response='recall', phenotype='all', scaling_dict=scaling_dict),
+        scaling_info=dict(experiment='2-3b', response='recall', phenotype='GC + pb + fm', scaling_dict=scaling_dict),
     )
     print(np.mean(zetas), np.std(zetas))
-    violin_stats.append(dict(experiment='2-3b', response='recall', phenotype='all',
+    violin_stats.append(dict(experiment='2-3b', response='recall', phenotype='GC + pb + fm',
                              violin_zeta_mean=np.mean(zetas), violin_zeta_std=np.std(zetas),
                              mice_zeta_mean=np.mean(zetas_mice), mice_zeta_std=np.std(zetas_mice)))
     recolor_last_lines(ax_r, len(mice_23b), my_blue2)
     plot_ranking_result(ax_r, x_avg, mre, np.mean(zetas), my_blue2, 'P',
                         r'$%.2f$' % np.mean(zetas) + ' ; all (pooled 2\&3)')
     plot_zeta_violin(ax_zeta, zetas, zetas_mice, position=6, color=my_blue2)
-    # plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_entropy_zeta, ax_entropy_logL_zeta, np.mean(zetas), np.std(zetas), my_blue2)
+    plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_entropy_zeta, ax_entropy_logL_zeta, np.mean(zetas), np.std(zetas), my_cyan)
     apply_ranking_layout(fig_r, ax_r, '23b')
     apply_zeta_layout(fig_zeta, ax_zeta, '23b',
                       [0, 1, 2, 3, 4, 5, 6],
@@ -494,8 +497,8 @@ sns.scatterplot(data=scaling_results, x='barN', y='N1',
 my_plot_layout(ax=ax_scaling1, yscale='linear', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
 ax_scaling1.set_xlabel(r'$N_B^{\mathrm{tot}}$', fontsize=30)
 ax_scaling1.set_ylabel(r'$N_1$', fontsize=30)
-ax_scaling1.set_ylim(bottom=0, top=80)
-ax_scaling1.set_xlim(left=1, right=400)
+ax_scaling1.set_ylim(bottom=0, top=60)
+ax_scaling1.set_xlim(left=1, right=200)
 ax_scaling1.tick_params(axis='both', labelsize=30)
 ax_scaling1.legend(title='Response', title_fontsize=20, fontsize=15, loc=4)
 fig_scaling1.savefig(output_plot + '/size_scaling_1_linear.pdf', bbox_inches='tight', transparent=.5)
@@ -515,7 +518,7 @@ fig_scaling2.savefig(output_plot + '/size_scaling_2_linear.pdf', bbox_inches='ti
 sns.scatterplot(data=scaling_results, x='N1', y='L_act',
                 hue='phenotype', style='experiment', ax=ax_scaling3,
                 s=150, palette=palette, edgecolors='black', alpha=0.8)
-x = np.linspace(1, 240, 100)
+x = np.linspace(1, 500, 1000)
 ax_scaling3.plot(x, x, 'k--')  # Example line plot, replace with actual function if needed
 my_plot_layout(ax=ax_scaling3, yscale='linear', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
 # ax_scaling3.set_xlabel(r'$N_1$', fontsize=30)
@@ -529,6 +532,10 @@ ax_scaling3.legend(title='Response', title_fontsize=20, fontsize=15, loc=1)
 fig_scaling3.savefig(output_plot + '/size_scaling_3_linear.pdf', bbox_inches='tight', transparent=.5)
 
 scaling_results['barN_prediction'] = scaling_results['N1']/(1-scaling_results['zeta'])*(scaling_results['L_act']**(1-scaling_results['zeta']) - 1)
+scaling_results['barN_prediction'] = scaling_results.apply(
+    lambda r: r['N1'] * np.sum(np.arange(1, int(r['L_act']) + 1) ** (-r['zeta'])),
+    axis=1
+)
 sns.scatterplot(data=scaling_results, x='barN_prediction', y='barN',
                 style='experiment', hue='phenotype', ax=ax_scaling4,
                 s=150, palette=palette, edgecolors='black', alpha=0.8)
@@ -536,8 +543,10 @@ ax_scaling4.plot(x, x, 'k--')  # Example line plot, replace with actual function
 my_plot_layout(ax=ax_scaling4, yscale='linear', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
 # ax_scaling4.set_xlabel(r'$N_1$', fontsize=30)
 # ax_scaling4.set_ylabel(r'$L_{act}$', fontsize=30)
-# ax_scaling4.set_ylim(bottom=0, top=125)
-# ax_scaling4.set_xlim(left=0, right=80)
+ax_scaling4.set_xscale('log')
+ax_scaling4.set_yscale('log')
+ax_scaling4.set_ylim(bottom=3e1, top=5e2)
+ax_scaling4.set_xlim(left=3e1, right=5e2)
 ax_scaling4.tick_params(axis='both', labelsize=30)
 ax_scaling4.legend(title='Response', title_fontsize=20, fontsize=15, loc=4)
 fig_scaling4.savefig(output_plot + '/size_scaling_4.pdf', bbox_inches='tight', transparent=.5)
@@ -559,18 +568,18 @@ fig_entropy.savefig(output_plot + '/size_scaling_entropy.pdf', bbox_inches='tigh
 sns.scatterplot(data=scaling_results, x='N1', y='Z',
                 hue='phenotype', style='experiment', ax=ax_entropy_zeta,
                 s=150, palette=palette, edgecolors='black', alpha=0.8)
-ax_entropy_zeta.plot(x, x/(1.05+1/2.5-1), 'k--')  # Example line plot, replace with actual function if needed
-ax_entropy_zeta.plot(x, x**(1/0.52 - 1/1.3)/(-0.52-1/2.5+1), 'k--')  # Example line plot, replace with actual function if needed
+ax_entropy_zeta.plot(x, x/(1.05+1.05/alpha-1), color = my_blue)  # Example line plot, replace with actual function if needed
+ax_entropy_zeta.plot(x, x**(1/0.52*(1 - 0.52/alpha))/(-0.52-0.52/alpha+1), color = my_red)  # Example line plot, replace with actual function if needed
 my_plot_layout(ax=ax_entropy_zeta, yscale='linear', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
 # ax_entropy_zeta.set_xlabel(r'$\zeta$', fontsize=30)
 # ax_entropy_zeta.set_ylabel(r'$S$', fontsize=30)
 ax_entropy_zeta.set_xlim(left=1, right=60)
-ax_entropy_zeta.set_ylim(bottom=10, top=130)
+ax_entropy_zeta.set_ylim(bottom=5e-1, top=3e1)
 ax_entropy_zeta.tick_params(axis='both', labelsize=30)
 # ax_entropy_zeta.set_xscale('log')
 # ax_entropy_zeta.set_yscale('log')
 ax_entropy_zeta.legend(title='Response', title_fontsize=20, fontsize=15, loc=4)
-fig_entropy_zeta.savefig(output_plot + '/size_scaling_entropy_zeta.pdf', bbox_inches='tight', transparent=.5)
+fig_entropy_zeta.savefig(output_plot + '/size_scaling_Z.pdf', bbox_inches='tight', transparent=.5)
 
 sns.scatterplot(data=scaling_results, x='L_act', y='SlogLact',
                 hue='phenotype', style='experiment', ax=ax_entropy_logL_zeta,
