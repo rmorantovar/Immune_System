@@ -112,6 +112,7 @@ def run_bootstrap(data_grouped, mice, mouse_col, ax_r=None, line_color=None, sca
                     d['S'].append(S_i)
                     d['zeta'].append(-params_m[0])
                     d['Z'].append(Z)
+                    d['N'].append(x)
                     if -params_m[0] < 1:
                         d['SlogLact'].append(abs(- S_i + np.log(len(counts))))
                     else:
@@ -521,7 +522,6 @@ fig_scaling2.savefig(output_plot + '/size_scaling_2_linear.pdf', bbox_inches='ti
 for exp in scaling_results['experiment'].unique():
     for ph in scaling_results['phenotype'].unique():
         exp_data = scaling_results[(scaling_results['experiment'] == exp) & (scaling_results['phenotype'] == ph)]['N1']
-        print(exp, ph, exp_data)
         ax_scaling3.hist(exp_data, bins=10, alpha=0.8, label=f'{exp}-{ph}')
 x = np.linspace(1, 500, 1000)
 # ax_scaling3.plot(x, x, 'k--')  # Example line plot, replace with actual function if needed
