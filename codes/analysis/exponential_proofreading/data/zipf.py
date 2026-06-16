@@ -27,14 +27,14 @@ MAX_RANK     = 100
 MAX_RANK_FIT = 20
 N_ENSEMBLE   = 400
 RUN_EXPERIMENTS = {'1', '2', '3a', '3b', '2-3a', '2-3b', '4a', '4b'}
-RUN_EXPERIMENTS = {'1', '2-3b','4a'}
+RUN_EXPERIMENTS = {'1', '2-3a','4a'}
 # RUN_EXPERIMENTS = {'1', '2'}
 
 color_vals      = np.linspace(0, 2, 200)
 my_colors_alpha = [plt.get_cmap('autumn_r')(v) for v in color_vals]
 my_colors2      = [my_purple, my_purple, my_purple, my_cyan, my_purple, my_blue2]
 
-alpha = 1.2
+alpha = 1.8
 
 
 def model(x, m):
@@ -62,8 +62,7 @@ def load_and_group(sheet_name, header, group_cols, filter_specs=None):
 
 # ── Bootstrap ─────────────────────────────────────────────────────────────────
 
-def run_bootstrap(data_grouped, mice, mouse_col,
-                  ax_r=None, line_color=None, scaling_info=None):
+def run_bootstrap(data_grouped, mice, mouse_col, ax_r=None, line_color=None, scaling_info=None):
     """Bootstrap Zipf exponent zeta over mice.
 
     On the last repetition (the non-bootstrap one), individual mouse curves are
@@ -74,7 +73,7 @@ def run_bootstrap(data_grouped, mice, mouse_col,
     Returns: x_avg_eff, max_rank_eff, zetas (array), zetas_mice (array)
     """
     zetas, zetas_mice = [], []
-
+    print(len(mice), "total mice, running bootstrap...")
     for rep in tqdm(range(N_ENSEMBLE)):
         is_last            = rep == N_ENSEMBLE - 1
         mice_rep           = mice if is_last else np.random.choice(mice, len(mice), replace=True)
@@ -92,7 +91,7 @@ def run_bootstrap(data_grouped, mice, mouse_col,
             x       = np.flip(counts[counts.argsort()])
             n_clones = len(x)
             pseudo_E = np.log(np.arange(1, len(counts) + 1)) / 2.5
-            pseudo_E = -np.log(x/N) / alpha
+            pseudo_E = -np.log(x/largest) / alpha
             Z       = np.sum(x * np.exp(-pseudo_E))
 
             if is_last:
@@ -198,6 +197,7 @@ def plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_ent
 
 
 def apply_ranking_layout(fig_r, ax_r, suffix):
+    my_plot_layout(ax=ax_r, yscale='log', xscale='log', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
     ax_r.set_ylim(bottom=2e-2, top=1.1)
     ax_r.set_xlim(left = 0.9, right=5e1)
     # ax_r.set_xlabel(r'$\mathrm{Rank, } k $', fontsize=30)
@@ -406,7 +406,7 @@ if '2-3b' in RUN_EXPERIMENTS:
     plot_ranking_result(ax_r, x_avg, mre, np.mean(zetas), my_blue2, 'P',
                         r'$%.2f$' % np.mean(zetas) + ' ; all (pooled 2\&3)')
     plot_zeta_violin(ax_zeta, zetas, zetas_mice, position=6, color=my_blue2)
-    plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_entropy_zeta, ax_entropy_logL_zeta, np.mean(zetas), np.std(zetas), my_cyan)
+    plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_entropy_zeta, ax_entropy_logL_zeta, np.mean(zetas), np.std(zetas), my_blue2)
     apply_ranking_layout(fig_r, ax_r, '23b')
     apply_zeta_layout(fig_zeta, ax_zeta, '23b',
                       [0, 1, 2, 3, 4, 5, 6],
@@ -416,7 +416,7 @@ if '2-3b' in RUN_EXPERIMENTS:
 # ── Experiment 4a: infection per sort (Figure 5) ─────────────────────────────
 
 if '4a' in RUN_EXPERIMENTS:
-    print("Experiment 4 (Figure 5)")
+    print("Experiment 4a (Figure 5)")
     colors_ph = [my_red, my_blue, my_cyan, my_purple]
     data = load_and_group('Influenza_IGH', header=2,
                           group_cols=['Experiment / Mouse', 'Sort'] + CLONE_COLS,
@@ -429,10 +429,10 @@ if '4a' in RUN_EXPERIMENTS:
     for i_ph, ph in enumerate(phenotypes[[0, 1]]):#, 3, 2]]):
         x_avg, mre, zetas, zetas_mice = run_bootstrap(
             data[data['Sort'] == ph], mice, 'Experiment / Mouse', ax_r=ax_r, line_color=colors_ph[i_ph],
-            scaling_info=dict(experiment='4', response='recall', phenotype=ph, scaling_dict=scaling_dict),
+            scaling_info=dict(experiment='4a', response='recall', phenotype=ph, scaling_dict=scaling_dict),
         )
         print(np.mean(zetas), np.std(zetas))
-        violin_stats.append(dict(experiment='4', response='recall', phenotype=ph,
+        violin_stats.append(dict(experiment='4a', response='recall', phenotype=ph,
                                  violin_zeta_mean=np.mean(zetas), violin_zeta_std=np.std(zetas),
                                  mice_zeta_mean=np.mean(zetas_mice), mice_zeta_std=np.std(zetas_mice)))
         recolor_last_lines(ax_r, len(mice), colors_ph[i_ph])
@@ -441,8 +441,8 @@ if '4a' in RUN_EXPERIMENTS:
         plot_zeta_violin(ax_zeta, zetas, zetas_mice, position=i_ph + 7, color=colors_ph[i_ph])
         plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_entropy_zeta, ax_entropy_logL_zeta, np.mean(zetas), np.std(zetas), colors_ph[i_ph])
 
-    apply_ranking_layout(fig_r, ax_r, '4')
-    apply_zeta_layout(fig_zeta, ax_zeta, '4',
+    apply_ranking_layout(fig_r, ax_r, '4a')
+    apply_zeta_layout(fig_zeta, ax_zeta, '4a',
                       list(range(11)),
                       ['exp1/naive', 'exp2/recall', 'exp3/recall', 'exp3/recall', 'exp3/recall',
                        'GC+fm pool', 'all pool',
@@ -453,7 +453,7 @@ if '4a' in RUN_EXPERIMENTS:
 # ── Experiment 4b: infection combined fm (Figure 5) ──────────────────────────
 
 if '4b' in RUN_EXPERIMENTS:
-    print("Experiment 4 (Figure 5) - 2")
+    print("Experiment 4b (Figure 5) - 2")
     colors_ph = [my_blue2, my_blue, my_blue, my_blue, my_red]
     data = load_and_group('Influenza_IGH', header=2,
                           group_cols=['Experiment / Mouse', 'Sort2'] + CLONE_COLS,
@@ -466,10 +466,10 @@ if '4b' in RUN_EXPERIMENTS:
     for i_ph, ph in enumerate(phenotypes):
         x_avg, mre, zetas, zetas_mice = run_bootstrap(
             data[data['Sort2'] == ph], mice, 'Experiment / Mouse', ax_r=ax_r, line_color=colors_ph[i_ph],
-            scaling_info=dict(experiment='4', response='recall', phenotype='combined', scaling_dict=scaling_dict),
+            scaling_info=dict(experiment='4b', response='recall', phenotype='combined', scaling_dict=scaling_dict),
         )
         print(np.mean(zetas), np.std(zetas))
-        violin_stats.append(dict(experiment='4', response='recall', phenotype='combined',
+        violin_stats.append(dict(experiment='4b', response='recall', phenotype='combined',
                                  violin_zeta_mean=np.mean(zetas), violin_zeta_std=np.std(zetas),
                                  mice_zeta_mean=np.mean(zetas_mice), mice_zeta_std=np.std(zetas_mice)))
         recolor_last_lines(ax_r, len(mice), colors_ph[i_ph])
@@ -495,24 +495,24 @@ sns.scatterplot(data=scaling_results, x='barN', y='N1',
                 hue='phenotype', style='experiment', ax=ax_scaling1,
                 s=150, palette=palette, edgecolors='black', alpha=0.8)
 my_plot_layout(ax=ax_scaling1, yscale='linear', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
-ax_scaling1.set_xlabel(r'$N_B^{\mathrm{tot}}$', fontsize=30)
-ax_scaling1.set_ylabel(r'$N_1$', fontsize=30)
+# ax_scaling1.set_xlabel(r'$N_B^{\mathrm{tot}}$', fontsize=30)
+# ax_scaling1.set_ylabel(r'$N_1$', fontsize=30)
 ax_scaling1.set_ylim(bottom=0, top=60)
 ax_scaling1.set_xlim(left=1, right=200)
 ax_scaling1.tick_params(axis='both', labelsize=30)
-ax_scaling1.legend(title='Response', title_fontsize=20, fontsize=15, loc=4)
+ax_scaling1.legend(title_fontsize=20, fontsize=20, loc=2)
 fig_scaling1.savefig(output_plot + '/size_scaling_1_linear.pdf', bbox_inches='tight', transparent=.5)
 
 sns.scatterplot(data=scaling_results, x='barN', y='L_act',
                 hue='phenotype', style='experiment', ax=ax_scaling2,
                 s=150, palette=palette, edgecolors='black', alpha=0.8)
 my_plot_layout(ax=ax_scaling2, yscale='linear', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
-ax_scaling2.set_xlabel(r'$N_B^{\mathrm{tot}}$', fontsize=30)
-ax_scaling2.set_ylabel(r'$L_{act}$', fontsize=30)
+# ax_scaling2.set_xlabel(r'$N_B^{\mathrm{tot}}$', fontsize=30)
+# ax_scaling2.set_ylabel(r'$L_{act}$', fontsize=30)
 ax_scaling2.set_ylim(bottom=0, top=125)
 ax_scaling2.set_xlim(left=1, right=200)
 ax_scaling2.tick_params(axis='both', labelsize=30)
-ax_scaling2.legend(title='Response', title_fontsize=20, fontsize=15, loc=2)
+ax_scaling2.legend(title_fontsize=20, fontsize=20, loc=2)
 fig_scaling2.savefig(output_plot + '/size_scaling_2_linear.pdf', bbox_inches='tight', transparent=.5)
 
 sns.scatterplot(data=scaling_results, x='N1', y='L_act',
@@ -528,7 +528,7 @@ my_plot_layout(ax=ax_scaling3, yscale='linear', xscale='linear', ticks_labelsize
 ax_scaling3.set_ylim(bottom=0, top=125)
 ax_scaling3.set_xlim(left=0, right=60)
 ax_scaling3.tick_params(axis='both', labelsize=30)
-ax_scaling3.legend(title='Response', title_fontsize=20, fontsize=15, loc=1)
+ax_scaling3.legend(title_fontsize=20, fontsize=20, loc=0)
 fig_scaling3.savefig(output_plot + '/size_scaling_3_linear.pdf', bbox_inches='tight', transparent=.5)
 
 scaling_results['barN_prediction'] = scaling_results['N1']/(1-scaling_results['zeta'])*(scaling_results['L_act']**(1-scaling_results['zeta']) - 1)
@@ -548,7 +548,7 @@ ax_scaling4.set_yscale('log')
 ax_scaling4.set_ylim(bottom=3e1, top=5e2)
 ax_scaling4.set_xlim(left=3e1, right=5e2)
 ax_scaling4.tick_params(axis='both', labelsize=30)
-ax_scaling4.legend(title='Response', title_fontsize=20, fontsize=15, loc=4)
+ax_scaling4.legend(title_fontsize=20, fontsize=20, loc=4)
 fig_scaling4.savefig(output_plot + '/size_scaling_4.pdf', bbox_inches='tight', transparent=.5)
 
 sns.scatterplot(data=scaling_results, x='L_act', y='S',
@@ -561,7 +561,7 @@ ax_entropy.set_xlim(left=2, right=120)
 ax_entropy.set_ylim(bottom=0.5, top=4.8)
 # ax_entropy.set_xscale('log')
 ax_entropy.tick_params(axis='both', labelsize=30)
-ax_entropy.legend(title='Response', title_fontsize=20, fontsize=15, loc=4)
+ax_entropy.legend(title_fontsize=20, fontsize=20, loc=4)
 fig_entropy.savefig(output_plot + '/size_scaling_entropy.pdf', bbox_inches='tight', transparent=.5)
 
 
@@ -574,11 +574,11 @@ my_plot_layout(ax=ax_entropy_zeta, yscale='linear', xscale='linear', ticks_label
 # ax_entropy_zeta.set_xlabel(r'$\zeta$', fontsize=30)
 # ax_entropy_zeta.set_ylabel(r'$S$', fontsize=30)
 ax_entropy_zeta.set_xlim(left=1, right=60)
-ax_entropy_zeta.set_ylim(bottom=5e-1, top=3e1)
+ax_entropy_zeta.set_ylim(bottom=5e-1, top=3e2)
 ax_entropy_zeta.tick_params(axis='both', labelsize=30)
 # ax_entropy_zeta.set_xscale('log')
 # ax_entropy_zeta.set_yscale('log')
-ax_entropy_zeta.legend(title='Response', title_fontsize=20, fontsize=15, loc=4)
+ax_entropy_zeta.legend(title_fontsize=20, fontsize=20, loc=0)
 fig_entropy_zeta.savefig(output_plot + '/size_scaling_Z.pdf', bbox_inches='tight', transparent=.5)
 
 sns.scatterplot(data=scaling_results, x='L_act', y='SlogLact',
@@ -590,7 +590,7 @@ ax_entropy_logL_zeta.set_ylabel(r'$|\log L_{act}-S|$', fontsize=30)
 # ax_entropy_logL_zeta.set_xlim(left=2, right=160)
 # ax_entropy_logL_zeta.set_ylim(bottom=-0.05, top=4)
 ax_entropy_logL_zeta.tick_params(axis='both', labelsize=30)
-ax_entropy_logL_zeta.legend(title='Response', title_fontsize=20, fontsize=15, loc=4)
+ax_entropy_logL_zeta.legend(title_fontsize=20, fontsize=20, loc=4)
 fig_entropy_logL_zeta.savefig(output_plot + '/size_scaling_entropy-logL_zeta.pdf', bbox_inches='tight', transparent=.5)
 
 
