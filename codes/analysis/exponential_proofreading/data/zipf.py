@@ -35,7 +35,7 @@ color_vals      = np.linspace(0, 2, 200)
 my_colors_alpha = [plt.get_cmap('autumn_r')(v) for v in color_vals]
 my_colors2      = [my_purple, my_purple, my_purple, my_cyan, my_purple, my_blue2]
 
-alpha = 1.3
+alpha = 1.5
 
 
 def model(x, m):
@@ -113,8 +113,11 @@ def run_bootstrap(data_grouped, mice, mouse_col, ax_r=None, line_color=None, sca
                     d['S'].append(S_i)
                     d['zeta'].append(-params_m[0])
                     d['Z'].append(Z)
-                    d['N'].append(-np.log(counts / N)/alpha)                          # one value per clone  (clone-weighted)
-                    d['N_cells'].append(-np.repeat(np.log(counts / N)/alpha, counts)) # each repeated 'count' times (cell-weighted)
+                    jitter = np.random.uniform(-0.5, 0.5, size=counts.shape)
+                    d['N'].append(-np.log((counts + 0) / N)/alpha) # one value per clone  (clone-weighted)
+                    rep = np.repeat(counts/N, [int(1000*c/N) for c in counts])
+                    jitter_rep = np.random.uniform(-0.5, 0.5, size=rep.shape)
+                    d['N_cells'].append(-np.log((rep + 0))/alpha) # each repeated 'count' times (cell-weighted)
                     if -params_m[0] < 1:
                         d['SlogLact'].append(abs(- S_i + np.log(len(counts))))
                     else:
@@ -195,8 +198,8 @@ def plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_ent
     ax_entropy.fill_between(L_e, S_th(L_e, Z_min), S_th(L_e, Z_max), color=color, alpha=0.1)
     
     # ax_entropy2.plot(L_e, -S_th + np.log(L_e),    color=color, linestyle='--')
-    # ax_entropy_logL_zeta.plot(z, abs(-S1_z),    color=color, linestyle='--')
-    # ax_entropy_logL_zeta.plot(z, abs(-S2_z),    color=color, linestyle='--')
+    # ax_Omega.plot(z, abs(-S1_z),    color=color, linestyle='--')
+    # ax_Omega.plot(z, abs(-S2_z),    color=color, linestyle='--')
 
 
 def apply_ranking_layout(fig_r, ax_r, suffix):
@@ -286,7 +289,7 @@ if '2' in RUN_EXPERIMENTS:
     plot_ranking_result(ax_r, x_avg, mre, np.mean(zetas), my_blue, 'o',
                         r'$%.2f$' % np.mean(zetas) + ' ; GC + fm')
     plot_zeta_violin(ax_zeta, zetas, zetas_mice, position=1, color=my_blue)
-    # plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_entropy_zeta, ax_entropy_logL_zeta, np.mean(zetas), np.std(zetas), my_blue)
+    # plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_entropy_zeta, ax_Omega, np.mean(zetas), np.std(zetas), my_blue)
     apply_ranking_layout(fig_r, ax_r, '2')
     apply_zeta_layout(fig_zeta, ax_zeta, '2', [0, 1], ['', ''])
 
@@ -603,30 +606,47 @@ N_clone = {ph: all_N[ph_clone == ph]     for ph in phenotypes}
 N_cell  = {ph: all_N_cell[ph_cell == ph] for ph in phenotypes}
 S1 = {ph: differential_entropy(N_clone[ph]) for ph in phenotypes}
 S2 = {ph: differential_entropy(N_cell[ph]) for ph in phenotypes}
+MAX_FIT_E = 60
 
 for ph in phenotypes:
-    fig_entropy_logL_zeta,  ax_entropy_logL_zeta  = plt.subplots(**fig_kw)
+    fig_Omega,  ax_Omega  = plt.subplots(**fig_kw)
     E1 = N_clone[ph]
     E2 = N_cell[ph]
-    bins = np.linspace(0, 4, 30)    
+    bins = np.linspace(np.min(E2), np.max(E2), int((np.max(E2)-np.min(E2))/0.1))    
     counts1, edges1 = np.histogram(E1, bins=bins, density=True)
     counts2, edges2 = np.histogram(E2, bins=bins, density=True)
-    x0 = np.linspace(0, 4, 100)
+    x0 = np.linspace(np.min(E2), np.max(E2), 50)
     x1, y1 = (edges1[:-1] + edges1[1:]) / 2, counts1
     x2, y2 = (edges2[:-1] + edges2[1:]) / 2, counts2
-    y1_new = np.interp(x0, x1, y1)  # Interpolate to ensure the same x values for both distributions
-    y2_new = np.interp(x0, x2, y2)  # Interpolate to ensure the same x values for both distributions
-    ax_entropy_logL_zeta.plot(x0[:-1], np.diff(np.cumsum(y1_new))/np.diff(x0), label=fr'${differential_entropy(np.diff(np.cumsum(y1_new))/np.diff(x0)):.2f}$', color=my_red)
-    ax_entropy_logL_zeta.plot(x0[:-1], np.diff(np.cumsum(y2_new))/np.diff(x0), label=fr'${differential_entropy(np.diff(np.cumsum(y2_new))/np.diff(x0)):.2f}$', color=my_blue)
-    my_plot_layout(ax=ax_entropy_logL_zeta, yscale='linear', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
-    ax_entropy_logL_zeta.set_xlabel(r'$\Delta G$', fontsize=30)
-    ax_entropy_logL_zeta.set_ylabel(r'$\Omega$', fontsize=30)
-    ax_entropy_logL_zeta.set_yscale('log')
-    # ax_entropy_logL_zeta.set_xlim(left=2, right=160)
-    # ax_entropy_logL_zeta.set_ylim(bottom=-0.05, top=4)
-    ax_entropy_logL_zeta.tick_params(axis='both', labelsize=30)
-    ax_entropy_logL_zeta.legend(title_fontsize=20, fontsize=20, loc=0, title = r'$S$')
-    fig_entropy_logL_zeta.savefig(output_plot + f'/distribution_pseudoE_{ph}.pdf', bbox_inches='tight', transparent=.5)
+    y1_interp = np.interp(x0, x1, y1)  # Interpolate to ensure the same x values for both distributions
+    y2_interp = np.interp(x0, x2, y2)  # Interpolate to ensure the same x values for both distributions
+
+    y1_new = np.diff(np.cumsum(y1_interp))/np.diff(x0)
+    y2_new = np.diff(np.cumsum(y2_interp))/np.diff(x0)
+
+    if ph == 'GC':
+        params1, _    = curve_fit(my_linear_func, x0[:-1][:MAX_FIT_E], np.log(y1_new[:MAX_FIT_E]))
+        params2, _    = curve_fit(my_linear_func, x0[:-1][:MAX_FIT_E], np.log(y2_new[:MAX_FIT_E]))
+        print(f"{ph} fit params: {params1}")
+        print(f"{ph} fit params: {params2}")
+        # ax_Omega.plot(x0[:MAX_FIT_E] - x0[0], np.exp(my_linear_func(x0[:MAX_FIT_E], *params1)), ls = '', marker = 'o', ms = 5, color=my_red)
+        # ax_Omega.plot(x0[:MAX_FIT_E] - x0[0], np.exp(my_linear_func(x0[:MAX_FIT_E], *params2)), ls = '', marker = 'o', ms = 5, color=my_blue)
+
+    ax_Omega.plot(x0[:-1] - x0[0], y1_new, label=fr'${differential_entropy(y1_new):.2f}$', color=my_red, ls = '-', marker = 'o', ms = 5)
+    ax_Omega.plot(x0[:-1] - x0[0], y2_new, label=fr'${differential_entropy(y2_new):.2f}$', color=my_blue, ls = '-', marker = 'o', ms = 5)
+
+    # ax_Omega.plot(edges1[:-1] - edges1[0], counts1, color=my_red, ls = '-', marker = '', ms = 5)
+    # ax_Omega.plot(edges2[:-1] - edges1[0], counts2, color=my_blue, ls = '-', marker = '', ms = 5)
+    # 
+    my_plot_layout(ax=ax_Omega, yscale='linear', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
+    ax_Omega.set_xlabel(r'$\Delta G$', fontsize=30)
+    ax_Omega.set_ylabel(r'$\Omega$', fontsize=30)
+    ax_Omega.set_yscale('log')
+    ax_Omega.set_xlim(left=-0.3, right=5.0)
+    # ax_Omega.set_ylim(bottom=-0.05, top=4)
+    ax_Omega.tick_params(axis='both', labelsize=30)
+    ax_Omega.legend(title_fontsize=20, fontsize=20, loc=0, title = r'$S$')
+    fig_Omega.savefig(output_plot + f'/distribution_pseudoE_{ph}.pdf', bbox_inches='tight', transparent=.5)
 
 
 # ── Save zeta statistics ──────────────────────────────────────────────────────
