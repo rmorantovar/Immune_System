@@ -35,7 +35,7 @@ color_vals      = np.linspace(0, 2, 200)
 my_colors_alpha = [plt.get_cmap('autumn_r')(v) for v in color_vals]
 my_colors2      = [my_purple, my_purple, my_purple, my_cyan, my_purple, my_blue2]
 
-alpha = 1.5
+alpha = 1.4
 
 
 def model(x, m):
@@ -568,7 +568,7 @@ sns.scatterplot(data=scaling_results, x='barN', y='S', hue='phenotype', style='e
 # ax_entropy.plot(x, np.log(x), color='k', linestyle='--')  # Example line plot, replace with actual function if needed
 # ax_entropy.plot(x, np.ones_like(x)*(1.13/(0.13) - np.log(0.13)), color='k', linestyle='--')  # Example line plot, replace with actual function if needed
 my_plot_layout(ax=ax_entropy, yscale='linear', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
-ax_entropy.set_xlabel(r'$L_{act}$', fontsize=30)
+ax_entropy.set_xlabel(r'$N_{\mathrm{sample}}$', fontsize=30)
 ax_entropy.set_ylabel(r'$S$', fontsize=30)
 # ax_entropy.set_xlim(left=2, right=110)
 # ax_entropy.set_ylim(bottom=0.5, top=4.8)
@@ -606,13 +606,13 @@ N_clone = {ph: all_N[ph_clone == ph]     for ph in phenotypes}
 N_cell  = {ph: all_N_cell[ph_cell == ph] for ph in phenotypes}
 S1 = {ph: differential_entropy(N_clone[ph]) for ph in phenotypes}
 S2 = {ph: differential_entropy(N_cell[ph]) for ph in phenotypes}
-MAX_FIT_E = 60
+MAX_FIT_E = 40
 
 for ph in phenotypes:
     fig_Omega,  ax_Omega  = plt.subplots(**fig_kw)
     E1 = N_clone[ph]
     E2 = N_cell[ph]
-    bins = np.linspace(np.min(E2), np.max(E2), int((np.max(E2)-np.min(E2))/0.1))    
+    bins = np.linspace(np.min(E2), np.max(E2), int((np.max(E2)-np.min(E2))/0.4))    
     counts1, edges1 = np.histogram(E1, bins=bins, density=True)
     counts2, edges2 = np.histogram(E2, bins=bins, density=True)
     x0 = np.linspace(np.min(E2), np.max(E2), 50)
@@ -629,11 +629,13 @@ for ph in phenotypes:
         params2, _    = curve_fit(my_linear_func, x0[:-1][:MAX_FIT_E], np.log(y2_new[:MAX_FIT_E]))
         print(f"{ph} fit params: {params1}")
         print(f"{ph} fit params: {params2}")
-        # ax_Omega.plot(x0[:MAX_FIT_E] - x0[0], np.exp(my_linear_func(x0[:MAX_FIT_E], *params1)), ls = '', marker = 'o', ms = 5, color=my_red)
-        # ax_Omega.plot(x0[:MAX_FIT_E] - x0[0], np.exp(my_linear_func(x0[:MAX_FIT_E], *params2)), ls = '', marker = 'o', ms = 5, color=my_blue)
-
-    ax_Omega.plot(x0[:-1] - x0[0], y1_new, label=fr'${differential_entropy(y1_new):.2f}$', color=my_red, ls = '-', marker = 'o', ms = 5)
-    ax_Omega.plot(x0[:-1] - x0[0], y2_new, label=fr'${differential_entropy(y2_new):.2f}$', color=my_blue, ls = '-', marker = 'o', ms = 5)
+        ax_Omega.plot(x0[:MAX_FIT_E] - x0[0], np.exp(my_linear_func(x0[:MAX_FIT_E], *params1)), ls = '-', marker = '', ms = 5, color='gray')
+        ax_Omega.plot(x0[:MAX_FIT_E] - x0[0], np.exp(my_linear_func(x0[:MAX_FIT_E], *params2)), ls = '-', marker = '', ms = 5, color=my_red)
+        ax_Omega.plot(x0[:-1] - x0[0], y1_new, label=fr'${differential_entropy(y1_new):.2f}$', color='gray', ls = '-', marker = 'o', ms = 5)
+        ax_Omega.plot(x0[:-1] - x0[0], y2_new, label=fr'${differential_entropy(y2_new):.2f}$', color=my_red, ls = '-', marker = 'o', ms = 5)
+    else:
+        ax_Omega.plot(x0[:-1] - x0[0], y1_new, label=fr'${differential_entropy(y1_new):.2f}$', color=my_red, ls = '-', marker = 'o', ms = 5)
+        ax_Omega.plot(x0[:-1] - x0[0], y2_new, label=fr'${differential_entropy(y2_new):.2f}$', color=my_blue, ls = '-', marker = 'o', ms = 5)
 
     # ax_Omega.plot(edges1[:-1] - edges1[0], counts1, color=my_red, ls = '-', marker = '', ms = 5)
     # ax_Omega.plot(edges2[:-1] - edges1[0], counts2, color=my_blue, ls = '-', marker = '', ms = 5)
