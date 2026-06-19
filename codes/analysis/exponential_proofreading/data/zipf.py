@@ -35,7 +35,7 @@ color_vals      = np.linspace(0, 2, 200)
 my_colors_alpha = [plt.get_cmap('autumn_r')(v) for v in color_vals]
 my_colors2      = [my_purple, my_purple, my_purple, my_cyan, my_purple, my_blue2]
 
-alpha = 1.4
+alpha = 1.3
 
 
 def model(x, m):
@@ -607,7 +607,7 @@ N_cell  = {ph: all_N_cell[ph_cell == ph] for ph in phenotypes}
 S1 = {ph: differential_entropy(N_clone[ph]) for ph in phenotypes}
 S2 = {ph: differential_entropy(N_cell[ph]) for ph in phenotypes}
 MAX_FIT_E = 40
-
+print(alpha)
 for ph in phenotypes:
     fig_Omega,  ax_Omega  = plt.subplots(**fig_kw)
     E1 = N_clone[ph]
@@ -620,20 +620,27 @@ for ph in phenotypes:
     x2, y2 = (edges2[:-1] + edges2[1:]) / 2, counts2
     y1_interp = np.interp(x0, x1, y1)  # Interpolate to ensure the same x values for both distributions
     y2_interp = np.interp(x0, x2, y2)  # Interpolate to ensure the same x values for both distributions
-
     y1_new = np.diff(np.cumsum(y1_interp))/np.diff(x0)
     y2_new = np.diff(np.cumsum(y2_interp))/np.diff(x0)
-
+    
     if ph == 'GC':
         params1, _    = curve_fit(my_linear_func, x0[:-1][:MAX_FIT_E], np.log(y1_new[:MAX_FIT_E]))
         params2, _    = curve_fit(my_linear_func, x0[:-1][:MAX_FIT_E], np.log(y2_new[:MAX_FIT_E]))
-        print(f"{ph} fit params: {params1}")
-        print(f"{ph} fit params: {params2}")
+        # print(f"{ph} fit params: {params1}")
+        # print(f"{ph} fit params: {params2}")
+        print(params1[1]-params2[1])
         ax_Omega.plot(x0[:MAX_FIT_E] - x0[0], np.exp(my_linear_func(x0[:MAX_FIT_E], *params1)), ls = '-', marker = '', ms = 5, color='gray')
         ax_Omega.plot(x0[:MAX_FIT_E] - x0[0], np.exp(my_linear_func(x0[:MAX_FIT_E], *params2)), ls = '-', marker = '', ms = 5, color=my_red)
         ax_Omega.plot(x0[:-1] - x0[0], y1_new, label=fr'${differential_entropy(y1_new):.2f}$', color='gray', ls = '-', marker = 'o', ms = 5)
         ax_Omega.plot(x0[:-1] - x0[0], y2_new, label=fr'${differential_entropy(y2_new):.2f}$', color=my_red, ls = '-', marker = 'o', ms = 5)
     else:
+        params1, _    = curve_fit(my_linear_func, x0[:-1][:MAX_FIT_E], np.log(y1_new[:MAX_FIT_E]))
+        params2, _    = curve_fit(my_linear_func, x0[:-1][:MAX_FIT_E], np.log(y2_new[:MAX_FIT_E]))
+        # print(f"{ph} fit params: {params1}")
+        # print(f"{ph} fit params: {params2}")
+        print(params1[1]-params2[1])
+        ax_Omega.plot(x0[:MAX_FIT_E] - x0[0], np.exp(my_linear_func(x0[:MAX_FIT_E], *params1)), ls = '-', marker = '', ms = 5, color=my_red)
+        ax_Omega.plot(x0[:MAX_FIT_E] - x0[0], np.exp(my_linear_func(x0[:MAX_FIT_E], *params2)), ls = '-', marker = '', ms = 5, color=my_blue)
         ax_Omega.plot(x0[:-1] - x0[0], y1_new, label=fr'${differential_entropy(y1_new):.2f}$', color=my_red, ls = '-', marker = 'o', ms = 5)
         ax_Omega.plot(x0[:-1] - x0[0], y2_new, label=fr'${differential_entropy(y2_new):.2f}$', color=my_blue, ls = '-', marker = 'o', ms = 5)
 
