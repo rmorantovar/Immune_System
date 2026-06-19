@@ -1896,13 +1896,13 @@ Cell[BoxData[
       RowBox[{"\[Beta]", "^", "2"}], " ", 
       RowBox[{
        RowBox[{"\[Sigma]2", "^", "2"}], "/", "2"}]}]}], ";"}], 
-   "\[IndentingNewLine]", "\[IndentingNewLine]", 
+   "\[IndentingNewLine]", "\n", 
    RowBox[{"(*", 
     RowBox[{
      RowBox[{
       RowBox[{"--", 
        RowBox[{"-", "building"}]}], " ", 
-      RowBox[{"blocks", "--"}]}], "-"}], "*)"}], "\n", 
+      RowBox[{"blocks", "--"}]}], "-"}], "*)"}], "\[IndentingNewLine]", 
    RowBox[{
     RowBox[{"nd", "=", 
      RowBox[{"NormalDistribution", "[", 
@@ -1937,13 +1937,13 @@ Cell[BoxData[
      RowBox[{
       RowBox[{"(", 
        RowBox[{"a", "-", "\[Mu]02"}], ")"}], "/", "\[Sigma]2"}]}], ";"}], 
-   "\[IndentingNewLine]", "\[IndentingNewLine]", 
+   "\[IndentingNewLine]", "\n", 
    RowBox[{"(*", 
     RowBox[{
      RowBox[{"full", " ", "cost", " ", 
       RowBox[{"(", "dominance", ")"}], " ", "and", " ", "gate"}], "-", 
      RowBox[{"only", " ", "cost", " ", 
-      RowBox[{"(", "eligibility", ")"}]}]}], "*)"}], "\n", 
+      RowBox[{"(", "eligibility", ")"}]}]}], "*)"}], "\[IndentingNewLine]", 
    RowBox[{
     RowBox[{
      RowBox[{"mlog\[Phi]1", "[", "a_", "]"}], ":=", 
@@ -13978,7 +13978,7 @@ Cell[59116, 1257, 28504, 572, 431, "Output",ExpressionUUID->"97bdc972-8a73-4776-
 Cell[CellGroupData[{
 Cell[87657, 1834, 9529, 263, 957, "Input",ExpressionUUID->"f53b2c84-20ec-4019-97a9-789cda73e5f0"],
 Cell[97189, 2099, 713, 10, 66, "Output",ExpressionUUID->"eb4360da-b375-42d0-8f39-9159e36575b3"],
-Cell[97905, 2111, 75997, 1464, 461, "Output",ExpressionUUID->"663fb15b-aeba-402b-85d0-7edabdfeca09"]
+Cell[97905, 2111, 75997, 1464, 454, "Output",ExpressionUUID->"663fb15b-aeba-402b-85d0-7edabdfeca09"]
 }, Open  ]],
 Cell[CellGroupData[{
 Cell[173939, 3580, 2176, 60, 181, "Input",ExpressionUUID->"54060646-4a23-4cf6-afa8-de70c2488888"],
