@@ -112,7 +112,8 @@ def run_bootstrap(data_grouped, mice, mouse_col, ax_r=None, line_color=None, sca
                     d['N1'].append(largest/N)
                     d['L_act'].append(len(counts))
                     d['barN'].append(N)
-                    d['S'].append(S_i + (len(counts) - 1)/(2*N))
+                    d['S_corr'].append(S_i + (len(counts) - 1)/(2*N))
+                    d['S'].append(S_i)
                     d['zeta'].append(-params_m[0])
                     d['Z'].append(Z)
                     jitter = np.random.uniform(-0.5, 0.5, size=counts.shape)
@@ -569,7 +570,7 @@ fig_scaling4.savefig(output_plot + '/size_scaling_4.pdf', bbox_inches='tight', t
 
 # ─────────────────────────────────────────────────────────────────────────
 Ebeta_star = 2.3 * 10
-sns.scatterplot(data=scaling_results, x='barN', y='S', hue='phenotype', style='experiment', ax=ax_entropy, s=150, palette=palette, edgecolors='black', alpha=0.8)
+sns.scatterplot(data=scaling_results, x='barN', y='S_corr', hue='phenotype', style='experiment', ax=ax_entropy, s=150, palette=palette, edgecolors='black', alpha=0.8)
 # sns.scatterplot(data=scaling_results, x='L_act', y='S', hue='phenotype', style='experiment', ax=ax_entropy, s=150, palette=palette, edgecolors='black', alpha=0.8)
 # sns.scatterplot(data=scaling_results, x='N1', y='S', hue='phenotype', style='experiment', ax=ax_entropy, s=150, palette=palette3, edgecolors='black', alpha=0.8)
 # ax_entropy.plot(x, np.log(x), color='k', linestyle='--')  # Example line plot, replace with actual function if needed
@@ -587,7 +588,7 @@ ax_entropy.tick_params(axis='both', labelsize=30)
 fig_entropy.savefig(output_plot + '/size_scaling_entropy.pdf', bbox_inches='tight', transparent=.5)
 
 # ─────────────────────────────────────────────────────────────────────────
-sns.scatterplot(data=scaling_results, x='L_act', y='S',
+sns.scatterplot(data=scaling_results, x='L_act', y='S_corr',
                 hue='phenotype', style='experiment', ax=ax_entropy_2,
                 s=150, palette=palette, edgecolors='black', alpha=0.8)
 # ax_entropy_2.plot(x, x/(1.05+1.05/alpha-1), color = my_blue)  # Example line plot, replace with actual function if needed
@@ -672,3 +673,4 @@ for ph in phenotypes:
 # ── Save zeta statistics ──────────────────────────────────────────────────────
 
 pd.DataFrame(violin_stats).to_csv(output_plot + '/zeta_stats.csv', index=False)
+scaling_results.to_csv(root_dir + '/scaling_results.csv', index=False)
