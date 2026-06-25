@@ -5,6 +5,7 @@ plt.rcParams['text.usetex'] = True
 import pandas as pd
 import os
 import sys
+import pickle
 sys.path.append('../../../library/')
 from funcs import *
 
@@ -671,6 +672,7 @@ for ph in phenotypes:
 
 
 # ── Save zeta statistics ──────────────────────────────────────────────────────
-
+with open(root_dir + '/scaling_dict.pkl', 'wb') as f:
+    pickle.dump(scaling_dict, f)
 pd.DataFrame(violin_stats).to_csv(output_plot + '/zeta_stats.csv', index=False)
 scaling_results.to_csv(root_dir + '/scaling_results.csv', index=False)

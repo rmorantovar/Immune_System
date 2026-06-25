@@ -18,6 +18,7 @@ plt.rcParams['text.usetex'] = True
 import pandas as pd
 import os
 import sys
+import pickle
 sys.path.append('../../library/')
 from funcs import *
 
@@ -45,7 +46,7 @@ for alpha in [1.0, 1.3, 2.0, 3.0]:# EP tilt strength per round
     # PARAMETERS  (replace with your values)
     # ----------------------------------------------------------------------
 
-    zeta = 0.5     # EP proofreading strength (zeta = alpha/beta*)
+    zeta = 0.55     # EP proofreading strength (zeta = alpha/beta*)
     sigma = np.sqrt(7)     # width sigma_E
     beta_star = alpha / zeta   # beta* = 1/(k_B T) in DG units (for plotting only)
     print('beta* =', beta_star)
@@ -140,8 +141,57 @@ for alpha in [1.0, 1.3, 2.0, 3.0]:# EP tilt strength per round
     # ax.text(a2, ymax*0.78, r"$a_2$", color=c2, ha="left", va="center", fontsize=12)
 
     data = pd.read_csv(root_dir + "/scaling_results.csv")
+    with open(root_dir + '/scaling_dict.pkl', 'rb') as f:
+        scaling_dict = pickle.load(f)
     primary_data = data[data['response'] == 'naive']
     recall_data = data[data['response'] == 'recall']
+
+    all_N      = np.concatenate(scaling_dict['N'])
+    all_N_cell = np.concatenate(scaling_dict['N_cells'])
+
+    ph_clone = np.concatenate([np.full(len(a), p) for a, p in zip(scaling_dict['N'],       scaling_dict['phenotype'])])
+    ph_cell  = np.concatenate([np.full(len(a), p) for a, p in zip(scaling_dict['N_cells'], scaling_dict['phenotype'])])
+
+    phenotypes = ['GC + fm', 'PB + fm', 'GC']   # your 3
+
+    N_clone = {ph: all_N[ph_clone == ph]     for ph in phenotypes}
+    N_cell  = {ph: all_N_cell[ph_cell == ph] for ph in phenotypes}
+    S1 = {ph: differential_entropy(N_clone[ph]) for ph in phenotypes}
+    S2 = {ph: differential_entropy(N_cell[ph]) for ph in phenotypes}
+    MAX_FIT_E = 40
+
+    for ph in phenotypes:
+        fig_Omega,  ax_Omega  = plt.subplots(**fig_kw)
+        E1 = N_clone[ph]
+        E2 = N_cell[ph]
+        bins = np.linspace(np.min(E2), np.max(E2), int((np.max(E2)-np.min(E2))/0.4))    
+        counts1, edges1 = np.histogram(E1, bins=bins, density=True)
+        counts2, edges2 = np.histogram(E2, bins=bins, density=True)
+        x0 = np.linspace(np.min(E2), np.max(E2), 50)
+        x1, y1 = (edges1[:-1] + edges1[1:]) / 2, counts1
+        x2, y2 = (edges2[:-1] + edges2[1:]) / 2, counts2
+        y1_interp = np.interp(x0, x1, y1)  # Interpolate to ensure the same x values for both distributions
+        y2_interp = np.interp(x0, x2, y2)  # Interpolate to ensure the same x values for both distributions
+        y1_new = np.diff(np.cumsum(y1_interp))/np.diff(x0)
+        y2_new = np.diff(np.cumsum(y2_interp))/np.diff(x0)
+        
+        if ph == 'GC':
+            params1, _    = curve_fit(my_linear_func, x0[:-1][:MAX_FIT_E], np.log(y1_new[:MAX_FIT_E]))
+            params2, _    = curve_fit(my_linear_func, x0[:-1][:MAX_FIT_E], np.log(y2_new[:MAX_FIT_E]))
+            # ax.plot(x0[:MAX_FIT_E] - x0[0], np.exp(my_linear_func(x0[:MAX_FIT_E], *params1)), ls = '-', marker = '', ms = 5, color='gray')
+            # ax.plot(x0[:MAX_FIT_E] - x0[0], np.exp(my_linear_func(x0[:MAX_FIT_E], *params2)), ls = '-', marker = '', ms = 5, color=my_red)
+            ax.plot(x0[:-1] - x0[0], phi_min*y1_new, color='gray', ls = '-', marker = 'o', ms = 5)
+            ax.plot(x0[:-1] - x0[0], 0.5*phi_max_primary*y2_new, color=my_red, ls = '-', marker = 'o', ms = 5)
+        else:
+            params1, _    = curve_fit(my_linear_func, x0[:-1][:MAX_FIT_E], np.log(y1_new[:MAX_FIT_E]))
+            params2, _    = curve_fit(my_linear_func, x0[:-1][:MAX_FIT_E], np.log(y2_new[:MAX_FIT_E]))
+            # print(f"{ph} fit params: {params1}")
+            # print(f"{ph} fit params: {params2}")
+            print(params1[1]-params2[1])
+            # ax.plot(x0[:MAX_FIT_E] - x0[0], np.exp(my_linear_func(x0[:MAX_FIT_E], *params1)), ls = '-', marker = '', ms = 5, color=my_red)
+            # ax.plot(x0[:MAX_FIT_E] - x0[0], np.exp(my_linear_func(x0[:MAX_FIT_E], *params2)), ls = '-', marker = '', ms = 5, color=my_blue)
+            # ax.plot(x0[:-1] - x0[0], y1_new, label=fr'${differential_entropy(y1_new):.2f}$', color=my_red, ls = '-', marker = 'o', ms = 5)
+            ax.plot(x0[:-1] - x0[0], 2e-2*y2_new, color=my_blue, ls = '-', marker = 'o', ms = 5)
     
     for row in primary_data.itertuples():
         S_c_row = row.S
@@ -151,7 +201,8 @@ for alpha in [1.0, 1.3, 2.0, 3.0]:# EP tilt strength per round
         phi_row = np.exp(-D_row)
         a_inferred = a[phi1<phi_row][-1]
         mask = a > 0                       # monotone region only
-        ainv = np.interp(phi_row, phi1[mask], a[mask])   # phi1 must be increasing on mask      
+        ainv = np.interp(phi_row, phi1[mask], a[mask])   # phi1 must be increasing on mask     
+        ainv = np.log(N_sample)/alpha
         ax2.scatter(ainv, phi_row, color=c1, s=150, edgecolors='k', alpha=0.8, zorder = 20)        
         ax3.scatter(a_inferred, np.log(N_sample), color=c1, s=150, edgecolors='k', alpha=0.8)
     
@@ -167,13 +218,15 @@ for alpha in [1.0, 1.3, 2.0, 3.0]:# EP tilt strength per round
         a_inferred = a[phi2<phi_row][-1]
         mask = a > 0                       # monotone region only
         ainv = np.interp(phi_row, phi2[mask], a[mask])   # phi2 must be increasing on mask
+        ainv = np.log(N_sample)
         col = cmap(my_norm(N_sample))
         ax2.scatter(ainv, phi_row, color=col, s=150, edgecolors='k', alpha=0.8, zorder = 20)
         ax3.scatter(a_inferred, np.log(N_sample), color=c2, s=150, edgecolors='k', alpha=0.8)
 
     axin2 = ax2.inset_axes([0.08, 0.6, 0.38, 0.38], zorder=30)  # [left, bottom, width, height] in axes fraction
-    axin2.plot(10*x, np.ones_like(x)*phi_min, color='k', ls = '--', lw=3)
-    axin2.plot(10*x, np.ones_like(x)*phi_1_2_recall, color=c2, ls = '--', lw=3)
+    axin2.plot(11*x, np.ones_like(x)*phi_min, color='k', ls = '--', lw=3)
+    axin2.plot(11*x, np.ones_like(x)*phi_1_2_recall, color=c2, ls = '--', lw=3)
+    axin2.plot(np.exp(alpha*a[phi2>phi_min]), phi2[phi2>phi_min], color=c2, lw=4, label=r"$\mathrm{recall}$")
     for row in recall_data.itertuples():
         S_c_row = row.S
         N_sample = row.barN
@@ -189,7 +242,7 @@ for alpha in [1.0, 1.3, 2.0, 3.0]:# EP tilt strength per round
     # ax.spines["top"].set_visible(False)
     # ax.spines["right"].set_visible(False)
     ax.set_xlim(-0.6, xmax)
-    ax.set_ylim(bottom = 1e-3, top = ymax)
+    # ax.set_ylim(bottom = 1e-3, top = ymax)
     # ax.set_xlabel(r"Binding energy $\Delta G$", fontsize=13)
     # ax.set_ylabel(r"$\Omega(\Delta G)$", fontsize=13)
     ax.tick_params(axis='both', labelsize=30)
@@ -199,6 +252,7 @@ for alpha in [1.0, 1.3, 2.0, 3.0]:# EP tilt strength per round
     # fig.tight_layout()
     fig.savefig(output_plot + f"/ep_plot_alpha-{alpha}.pdf", transparent=.5)
     ax.set_yscale('log')
+    ax.set_ylim(L0**-1/10, 2)
     fig.savefig(output_plot + f"/ep_plot_alpha-{alpha}_log.pdf", transparent=.5)
 
 
@@ -215,6 +269,7 @@ for alpha in [1.0, 1.3, 2.0, 3.0]:# EP tilt strength per round
     leg = ax2.legend(title=r"$\mathrm{Response}$", loc=0, frameon=False, fontsize=20, title_fontsize=20)
 
     axin2.set_yscale('log')
+    axin2.set_xlim(10, 200)
     axin2.tick_params(axis='both', labelsize=24)
     axin2.set_facecolor('white')        # opaque background
     axin2.patch.set_alpha(1.0)          # ensure the patch isn't transparent
