@@ -99,8 +99,9 @@ for alpha in [1.0, 1.3, 2.0, 3.0]:# EP tilt strength per round
 
     phi_max_primary = np.exp(-zeta**2*D_max)
     phi_1_2_recall = 0.5*np.exp(-(D_max - np.sqrt(2/3.14*2*D_max)))
-    ax2.plot(x, np.ones_like(x)*phi_max_primary, color=c1, ls = '--', lw=3)
-    ax2.plot(x, np.ones_like(x)*phi_1_2_recall, color=c2, ls = '--', lw=3)
+    ax2.plot(x, np.ones_like(x)*phi_max_primary, color=c1, ls = '--', lw=3, zorder=-10)
+    ax2.plot(x, np.ones_like(x)*phi_1_2_recall, color=c2, ls = '--', lw=3, zorder=-10)
+    
     print(D_max, zeta**2*D_max, D_max - np.sqrt(2/3.14*2*D_max))
 
     omega1 = (a - mu1)/sigma
@@ -144,30 +145,44 @@ for alpha in [1.0, 1.3, 2.0, 3.0]:# EP tilt strength per round
     
     for row in primary_data.itertuples():
         S_c_row = row.S
+        N_sample = row.barN
+
         D_row = D_max - S_c_row
         phi_row = np.exp(-D_row)
         a_inferred = a[phi1<phi_row][-1]
         mask = a > 0                       # monotone region only
         ainv = np.interp(phi_row, phi1[mask], a[mask])   # phi1 must be increasing on mask      
-        ax2.scatter(ainv, phi_row, color=c1, s=150, edgecolors='k', alpha=0.8)
-
-        N_sample = row.barN
+        ax2.scatter(ainv, phi_row, color=c1, s=150, edgecolors='k', alpha=0.8, zorder = 20)        
         ax3.scatter(a_inferred, np.log(N_sample), color=c1, s=150, edgecolors='k', alpha=0.8)
-
+    
+    allN = recall_data['barN'].values
+    my_norm = mpl.colors.LogNorm(vmin=allN.min(), vmax=allN.max())   # log: N spans decades
+    cmap = plt.cm.managua
     for row in recall_data.itertuples():
         S_c_row = row.S
+        N_sample = row.barN
+
         D_row = D_max - S_c_row
         phi_row = np.exp(-D_row)
         a_inferred = a[phi2<phi_row][-1]
         mask = a > 0                       # monotone region only
-        ainv = np.interp(phi_row, phi2[mask], a[mask])   # phi2 must be increasing on mask      
-        ax2.scatter(ainv, phi_row, color=c2, s=150, edgecolors='k', alpha=0.8)
-
-        N_sample = row.barN
+        ainv = np.interp(phi_row, phi2[mask], a[mask])   # phi2 must be increasing on mask
+        col = cmap(my_norm(N_sample))
+        ax2.scatter(ainv, phi_row, color=col, s=150, edgecolors='k', alpha=0.8, zorder = 20)
         ax3.scatter(a_inferred, np.log(N_sample), color=c2, s=150, edgecolors='k', alpha=0.8)
 
-    # ax3.plot(a, a, color='k', ls = '--', lw=3)
+    axin2 = ax2.inset_axes([0.08, 0.6, 0.38, 0.38], zorder=30)  # [left, bottom, width, height] in axes fraction
+    axin2.plot(10*x, np.ones_like(x)*phi_min, color='k', ls = '--', lw=3)
+    axin2.plot(10*x, np.ones_like(x)*phi_1_2_recall, color=c2, ls = '--', lw=3)
+    for row in recall_data.itertuples():
+        S_c_row = row.S
+        N_sample = row.barN
 
+        D_row = D_max - S_c_row
+        phi_row = np.exp(-D_row)
+        col = cmap(my_norm(N_sample))
+        axin2.scatter(N_sample, phi_row, color=col, s=150, edgecolors='k', alpha=0.8)
+    
 
     # --- cosmetics: left+bottom spines only (matches your Frame->{{T,F},{T,F}}) ---
     my_plot_layout(ax=ax, yscale='linear', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
@@ -194,14 +209,20 @@ for alpha in [1.0, 1.3, 2.0, 3.0]:# EP tilt strength per round
     ax2.set_xlim(-0.6, 2*xmax/3)
     ax2.set_ylim(phi_min/5, 2)
     ax2.set_yscale('log')
+    ax2.tick_params(axis='both', labelsize=30)
     # ax2.set_xlabel(r"Binding energy $\Delta G$", fontsize=13)
     # ax2.set_ylabel(r"$\Omega(\Delta G)$", fontsize=13)
-    ax2.tick_params(axis='both', labelsize=30)
-
     leg = ax2.legend(title=r"$\mathrm{Response}$", loc=0, frameon=False, fontsize=20, title_fontsize=20)
 
+    axin2.set_yscale('log')
+    axin2.tick_params(axis='both', labelsize=24)
+    axin2.set_facecolor('white')        # opaque background
+    axin2.patch.set_alpha(1.0)          # ensure the patch isn't transparent
+    axin2.set_zorder(50)                # whole inset above main-axes lines
+    axin2.patch.set_visible(True)  
+
     # fig.tight_layout()
-    fig2.savefig(output_plot + f"/ep_plot2_alpha-{alpha}.pdf", transparent=.5)
+    fig2.savefig(output_plot + f"/ep_plot2_alpha-{alpha}.pdf")
 
     # --- cosmetics: left+bottom spines only (matches your Frame->{{T,F},{T,F}}) ---
     my_plot_layout(ax=ax3, yscale='linear', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
