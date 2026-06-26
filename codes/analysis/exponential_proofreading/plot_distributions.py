@@ -87,6 +87,7 @@ for alpha in [1.0, 1.3, 2.0, 3.0]:# EP tilt strength per round
 
     fig, ax = plt.subplots(**fig_kw)
     fig2, ax2 = plt.subplots(**fig_kw)
+    axin2 = ax2.inset_axes([0.08, 0.6, 0.38, 0.38], zorder=30)  # [left, bottom, width, height] in axes fraction
     fig3, ax3 = plt.subplots(**fig_kw)
 
     # --- curves ---
@@ -202,7 +203,7 @@ for alpha in [1.0, 1.3, 2.0, 3.0]:# EP tilt strength per round
         a_inferred = a[phi1<phi_row][-1]
         mask = a > 0                       # monotone region only
         ainv = np.interp(phi_row, phi1[mask], a[mask])   # phi1 must be increasing on mask     
-        ainv = np.log(N_sample)/alpha
+        ainv = (np.log(50*N_sample)+np.log(beta_star - alpha))/beta_star
         ax2.scatter(ainv, phi_row, color=c1, s=150, edgecolors='k', alpha=0.8, zorder = 20)        
         ax3.scatter(a_inferred, np.log(N_sample), color=c1, s=150, edgecolors='k', alpha=0.8)
     
@@ -218,23 +219,20 @@ for alpha in [1.0, 1.3, 2.0, 3.0]:# EP tilt strength per round
         a_inferred = a[phi2<phi_row][-1]
         mask = a > 0                       # monotone region only
         ainv = np.interp(phi_row, phi2[mask], a[mask])   # phi2 must be increasing on mask
-        ainv = np.log(N_sample)
+        a_sample = np.log(N_sample)/(2.0*alpha) + np.log((2.0*alpha - beta_star)/0.1)/(2.0*alpha)
+        a_th = a[phi2<phi_row][-1]
+        logf = -(a_th - a_sample)*(2.0*alpha)
+        print(logf)
         col = cmap(my_norm(N_sample))
-        ax2.scatter(ainv, phi_row, color=col, s=150, edgecolors='k', alpha=0.8, zorder = 20)
+        ax2.scatter(a_th, phi_row, color=col, s=150, edgecolors='k', alpha=0.8, zorder = 20)
+        ax2.scatter(a_sample, phi_row, color=col, s=150, edgecolors='k', alpha=0.8, zorder = 20)
+        axin2.scatter(N_sample/np.exp(logf), phi_row, color=col, s=150, edgecolors='k', alpha=0.8)
         ax3.scatter(a_inferred, np.log(N_sample), color=c2, s=150, edgecolors='k', alpha=0.8)
 
-    axin2 = ax2.inset_axes([0.08, 0.6, 0.38, 0.38], zorder=30)  # [left, bottom, width, height] in axes fraction
-    axin2.plot(11*x, np.ones_like(x)*phi_min, color='k', ls = '--', lw=3)
-    axin2.plot(11*x, np.ones_like(x)*phi_1_2_recall, color=c2, ls = '--', lw=3)
-    axin2.plot(np.exp(alpha*a[phi2>phi_min]), phi2[phi2>phi_min], color=c2, lw=4, label=r"$\mathrm{recall}$")
-    for row in recall_data.itertuples():
-        S_c_row = row.S
-        N_sample = row.barN
+    axin2.plot(1e7*x, np.ones_like(x)*phi_min, color='k', ls = '--', lw=3)
+    axin2.plot(1e7*x, np.ones_like(x)*phi_1_2_recall, color=c2, ls = '--', lw=3)
+    axin2.plot(0.1/(2*alpha - beta_star)*np.exp(2*alpha*a[phi2>phi_min]), phi2[phi2>phi_min], color=c2, lw=4, label=r"$\mathrm{recall}$")
 
-        D_row = D_max - S_c_row
-        phi_row = np.exp(-D_row)
-        col = cmap(my_norm(N_sample))
-        axin2.scatter(N_sample, phi_row, color=col, s=150, edgecolors='k', alpha=0.8)
     
 
     # --- cosmetics: left+bottom spines only (matches your Frame->{{T,F},{T,F}}) ---
@@ -269,15 +267,19 @@ for alpha in [1.0, 1.3, 2.0, 3.0]:# EP tilt strength per round
     leg = ax2.legend(title=r"$\mathrm{Response}$", loc=0, frameon=False, fontsize=20, title_fontsize=20)
 
     axin2.set_yscale('log')
-    axin2.set_xlim(10, 200)
+    axin2.set_xscale('log')
+    axin2.set_xlim(10, 1e7)
     axin2.tick_params(axis='both', labelsize=24)
     axin2.set_facecolor('white')        # opaque background
     axin2.patch.set_alpha(1.0)          # ensure the patch isn't transparent
     axin2.set_zorder(50)                # whole inset above main-axes lines
     axin2.patch.set_visible(True)  
 
-    # fig.tight_layout()
     fig2.savefig(output_plot + f"/ep_plot2_alpha-{alpha}.pdf")
+
+    ax2.set_xlim(-0.6, 6)
+    ax2.set_ylim(phi_min/2, 1e-6)
+    fig2.savefig(output_plot + f"/ep_plot2_alpha-{alpha}_zoomin.pdf")
 
     # --- cosmetics: left+bottom spines only (matches your Frame->{{T,F},{T,F}}) ---
     my_plot_layout(ax=ax3, yscale='linear', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
