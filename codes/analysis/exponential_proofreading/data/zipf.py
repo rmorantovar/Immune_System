@@ -82,7 +82,8 @@ def run_bootstrap(data_grouped, mice, mouse_col, ax_r=None, line_color=None, sca
         x_avg              = np.zeros(MAX_RANK)
         counts_per_ranking = np.zeros(MAX_RANK)
 
-        for mouse in mice_rep:
+        for i_m, mouse in enumerate(mice_rep):
+            
             counts = data_grouped[data_grouped[mouse_col] == mouse]['count'].to_numpy()
             if len(counts) == 0 or np.sum(counts) == 0:
                 continue
@@ -97,7 +98,7 @@ def run_bootstrap(data_grouped, mice, mouse_col, ax_r=None, line_color=None, sca
             pseudo_E = np.log(np.arange(1, len(counts) + 1)) / 2.5
             pseudo_E = -np.log(x/largest) / alpha
             Z       = np.sum(x * np.exp(-pseudo_E))
-
+            
             if is_last:
                 if ax_r is not None:
                     ax_r.step(range(1, n_clones + 1), x / largest,
@@ -133,6 +134,16 @@ def run_bootstrap(data_grouped, mice, mouse_col, ax_r=None, line_color=None, sca
                 if x[k] > 0:
                     counts_per_ranking[k] += 1
                     x_avg[k] += x[k] / largest
+            
+            if is_last and scaling_info["experiment"] in ['2', '3', '4a'] and scaling_info["phenotype"] == 'GC + fm':
+                fig_S_mouse, ax_S_mouse  = plt.subplots(**fig_kw)
+                ax_S_mouse.bar(range(1, len(x[:10]) + 1), x[:10], color=my_blue, alpha=1)
+                ax_S_mouse.set_xticks([])
+                # ax_S_mouse.set_yticks([])
+                ax_S_mouse.set_yscale('log')
+                ax_S_mouse.tick_params(axis='both', labelsize=40)
+                fig_S_mouse.savefig(output_plot + f'/entropy_mouse_{scaling_info["experiment"]}_{i_m+1}.pdf', transparent=.5)
+                plt.close(fig_S_mouse)
 
         max_rank_eff = len(counts_per_ranking[counts_per_ranking > 1])
         x_avg_eff    = x_avg[:max_rank_eff] / counts_per_ranking[:max_rank_eff]
@@ -153,11 +164,14 @@ def recolor_last_lines(ax, n, color):
         ax.lines[-(j + 1)].set_color(color)
 
 
-def plot_ranking_result(ax_r, x_avg, max_rank_eff, zeta_mean, color, marker, label, ms=12):
+def plot_ranking_result(ax_r, x_avg, max_rank_eff, zeta_mean, color, marker, label, ms=12, exp = '1'):
     ax_r.plot(range(1, max_rank_eff + 1), x_avg,
               color=color, markerfacecolor='None', ms=ms, alpha=1, ls='', marker=marker, label=label)
-    ax_r.plot(np.arange(1, max_rank_eff + 1), np.arange(1, max_rank_eff + 1) ** (-zeta_mean),
+    ax_r.plot(np.arange(1, max_rank_eff + 10), np.arange(1, max_rank_eff + 10) ** (-zeta_mean),
               color=color, alpha=.8, lw=3)
+    if exp == '2':
+        ax_r.plot(np.arange(1, 50), np.arange(1, 50) ** (-0.24),
+                color=my_brown, alpha=.8, lw=3)
 
 
 def plot_zeta_violin(ax_zeta, zetas, zetas_mice, position, color):
@@ -291,7 +305,7 @@ if '2' in RUN_EXPERIMENTS:
                              mice_zeta_mean=np.mean(zetas_mice), mice_zeta_std=np.std(zetas_mice)))
     recolor_last_lines(ax_r, len(mice), my_blue)
     plot_ranking_result(ax_r, x_avg, mre, np.mean(zetas), my_blue, 'o',
-                        r'$%.2f$' % np.mean(zetas) + ' ; GC + fm')
+                        r'$%.2f$' % np.mean(zetas) + ' ; GC + fm', exp='2')
     plot_zeta_violin(ax_zeta, zetas, zetas_mice, position=1, color=my_blue)
     # plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_entropy_2, ax_Omega, np.mean(zetas), np.std(zetas), my_blue)
     apply_ranking_layout(fig_r, ax_r, '2')
