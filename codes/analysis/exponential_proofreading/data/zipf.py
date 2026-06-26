@@ -256,15 +256,15 @@ if '1' in RUN_EXPERIMENTS:
     mice = data['Mouse'].unique()
 
     x_avg, mre, zetas, zetas_mice = run_bootstrap(
-        data, mice, 'Mouse', ax_r=ax_r, line_color=my_red,
+        data, mice, 'Mouse', ax_r=ax_r, line_color='limegreen',
         scaling_info=dict(experiment='1', response='naive', phenotype='GC', scaling_dict=scaling_dict),
     )
     print(np.mean(zetas), np.std(zetas))
     violin_stats.append(dict(experiment='1', response='naive', phenotype='GC',
                              violin_zeta_mean=np.mean(zetas), violin_zeta_std=np.std(zetas),
                              mice_zeta_mean=np.mean(zetas_mice), mice_zeta_std=np.std(zetas_mice)))
-    recolor_last_lines(ax_r, len(mice), my_red)
-    plot_ranking_result(ax_r, x_avg, mre, np.mean(zetas), my_red, '*',
+    recolor_last_lines(ax_r, len(mice), 'limegreen')
+    plot_ranking_result(ax_r, x_avg, mre, np.mean(zetas), 'limegreen', '*',
                         r'$%.2f$' % np.mean(zetas) + ' ; GC', ms=18)
     plot_zeta_violin(ax_zeta, zetas, zetas_mice, position=0, color=my_red)
     plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_entropy_2, np.mean(zetas), np.std(zetas), my_red)

@@ -13,24 +13,28 @@ import os
 import sys
 sys.path.append('../../library/')
 from lib_mf import*
+from funcs import *
 
 project = 'exponential_proofreading'
 model = 'meanfield'
 subproject = 'zipf'
 subsubproject = 'h0'
+fig_kw = dict(figsize=(8 * 1.62, 8), gridspec_kw={'left': .12, 'right': .95, 'bottom': .15, 'top': .94})
 
-for submodel in ['semicomplete', 'null']:
-    if __name__ == '__main__':
+
+if __name__ == '__main__':
+    fig, ax = plt.subplots(**fig_kw)
+    for submodel in ['semicomplete', 'null']:
         output_plot = f'/Users/robertomorantovar/Dropbox/_Documents/Research/Projects/Immune_System/_Repository/Figures/{project}/{model}/{submodel}/{subproject}/{subsubproject}/'
         os.makedirs(output_plot, exist_ok=True)
         # Default parameters
         base = dict(N_A0=1.0, lambda_A = 6.0, delta_A=6.0,
                     k_on=1e0*1e6*1e6*24*3600/N_Avg, delta_pi=0.1,
-                    hill=1.0, beta_star=2.5, K_T = 1e4,
+                    hill=1.0, beta_star=2.3, K_T = 1e4,
                     delta_T=0.00, Tcell_growth_factor=2.0,
                     tau_eng=0.1, b0=2.0, delta_B=0.00,
                     DG_min=0.0, DG_max=8.0, M=40,
-                    Omega_0=1.0, T_lim = True, N_T0 = 1e6
+                    omega_0=1.0, T_lim = True, N_T0 = 1e6
         )
         T = 15
         # print(compute_N_B_tot(res))
@@ -40,14 +44,25 @@ for submodel in ['semicomplete', 'null']:
         colors_sim = [my_red, my_blue2, my_purple2, my_gold, my_brown, my_blue, my_green, 'tab:orange', my_purple, my_cyan]
         colors_sim = plt.cm.viridis(np.linspace(0, 1, 50))
         N_ensemble = 1
-        fig_zipf, ax_zipf = plt.subplots(figsize=(8, 5))
+        fig_zipf, ax_zipf = plt.subplots(**fig_kw)
 
         print(f"Running simulation")
+        if submodel == 'semicomplete':
+            memories = [0, 1]
+            my_colors = ['limegreen', my_blue2]
+            my_markers = ['*', 'o']
+            my_ms = [18, 12]
+        else:
+            memories = [0]
+            my_colors = [my_brown]
+            my_markers = ['^']
+            my_ms = [12]
+
         etas = [1.0]
         for eta in etas:
             print(f"... for eta={eta:.1g}")
             
-            h0s = np.array([base['b0'], 10*base['b0']])
+            h0s = np.array([10*base['b0']])
             pi_stars = (base['b0']/h0s)**(1/base['hill'])
             initial_memory_potency = []
             final_primary_potency = []
@@ -60,10 +75,9 @@ for submodel in ['semicomplete', 'null']:
                 pi_star = (base['b0']/base['h0'])**(1/base['hill'])
                 label = f'${pi_star:.2g}$'
                 
-                for i_m, memory in enumerate([0]):
-                    # print(f"... ... for memory={memory}")
+                for i_m, memory in enumerate(memories):
+                    print(f"... ... for memory={memory}")
                     base['memory'] = memory
-                    # figs, axes = plt.subplots(3, 2, figsize=(16, 15))
 
                     p = Parameters(**base)
                     
@@ -83,20 +97,45 @@ for submodel in ['semicomplete', 'null']:
                         sizes += sizes_i[:len(ranks)]
             
 
-                    ax_zipf.loglog(ranks, sizes/N_ensemble, marker='o', ls = '', ms = 4, alpha = 0.5, markeredgecolor= 'k', markeredgewidth=0.5)
+                    ax_zipf.plot(ranks, sizes/N_ensemble, marker=my_markers[i_m], ls = '', ms = my_ms[i_m], alpha = 1.0, markerfacecolor='None',  color = my_colors[i_m])
+                    ax.plot(ranks, sizes/N_ensemble, marker=my_markers[i_m], ls = '', ms = my_ms[i_m], alpha = 1.0, markerfacecolor='None', color = my_colors[i_m])
                 
-            zeta = p.eta*(p.b0/p.lambda_A + p.b0/np.min([p.b0, p.delta_A]))/p.beta_star
-            ax_zipf.loglog(ranks, ranks**(-zeta), linestyle = '--', markersize=2, label=f'{zeta:.2g}', color = 'k')
+        zeta = p.eta*(p.b0/p.lambda_A + p.b0/np.min([p.b0, p.delta_A]))/p.beta_star
+        zeta_null = p.eta*(p.b0/p.lambda_A + p.b0/p.delta_A)/p.beta_star
 
-            zeta_null = p.eta*(p.b0/p.lambda_A + p.b0/p.delta_A)/p.beta_star
-            ax_zipf.loglog(ranks, ranks**(-zeta_null), linestyle = ':', markersize=2, label=f'{zeta_null:.2g}', color = 'grey')
+        if submodel == 'semicomplete':
+            ax_zipf.loglog(ranks, ranks**(-zeta), lw = 3, linestyle = '--', markersize=2, label=f'{zeta:.2g}', color = 'limegreen')
+            ax_zipf.loglog(ranks, ranks**(-2*zeta), lw = 3, linestyle = '--', markersize=2, label=f'{zeta:.2g}', color = my_blue)
+        else:
+            ax_zipf.loglog(ranks, ranks**(-zeta), lw = 3, linestyle = '--', markersize=2, label=f'{zeta:.2g}', color = 'limegreen')
+            ax_zipf.loglog(ranks, ranks**(-zeta_null), lw = 3, linestyle = '--', markersize=2, label=f'{zeta_null:.2g}', color = my_brown)
+
+
         # Formatting
         
         # ax_zipf.loglog(ranks, ranks**(-2*p.eta*(p.b0/p.lambda_A + 1)/p.beta_star), linestyle = '--', markersize=2, color = my_blue, label='Zipf slope')
-        ax_zipf.set_xlabel(r'Rank $k$', fontsize = 16)
-        ax_zipf.set_ylabel(r'$N_k$', fontsize = 16)
-        ax_zipf.set_ylim(bottom = 6e-2, top = 1.1e0)
-        ax_zipf.set_xlim(left = 0.8e0, right = 1.1e2)
-        ax_zipf.tick_params(labelsize=14)
-        ax_zipf.legend(fontsize=12, title=r'$\zeta$', title_fontsize=14)
-        fig_zipf.savefig(os.path.join(output_plot, f'Zipf.pdf'), dpi=150, bbox_inches='tight')
+        my_plot_layout(ax=ax, yscale='log', xscale='log', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
+        # ax_zipf.set_xlabel(r'Rank $k$', fontsize = 16)
+        # ax_zipf.set_ylabel(r'$N_k$', fontsize = 16)
+        ax_zipf.set_ylim(bottom=2e-2, top=1.1)
+        ax_zipf.set_xlim(left = 0.9, right=5e1)
+        ax_zipf.tick_params(labelsize=30)
+        ax_zipf.legend(fontsize=30, title=r'$\zeta$', title_fontsize=30)
+        fig_zipf.savefig(os.path.join(output_plot, f'Zipf.pdf'), dpi=150)
+    
+    
+    ax.loglog(ranks, ranks**(-zeta_null), lw = 3, linestyle = '-', markersize=2, label=f'{zeta_null:.2g}', color = my_brown)
+    ax.loglog(ranks, ranks**(-zeta), lw = 3, linestyle = '-', markersize=2, label=f'{zeta:.2g}', color = 'limegreen')
+    ax.loglog(ranks, ranks**(-2*zeta), lw = 3, linestyle = '-', markersize=2, label=f'{2*zeta:.2g}', color = my_blue)
+
+    # ax.loglog(ranks, ranks**(-2*p.eta*(p.b0/p.lambda_A + 1)/p.beta_star), linestyle = '--', markersize=2, color = my_blue, label='Zipf slope')
+    my_plot_layout(ax=ax, yscale='log', xscale='log', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
+    # ax.set_xlabel(r'Rank $k$', fontsize = 16)
+    # ax.set_ylabel(r'$N_k$', fontsize = 16)
+    ax.set_ylim(bottom=2e-2, top=1.1)
+    ax.set_xlim(left = 0.9, right=5e1)
+    ax.tick_params(which = 'both', labelsize=30)
+    ax.legend(fontsize=30, title=r'$\zeta$', title_fontsize=30)
+    output_plot_combined = f'/Users/robertomorantovar/Dropbox/_Documents/Research/Projects/Immune_System/_Repository/Figures/{project}/{model}/combined/{subproject}/{subsubproject}/'
+    os.makedirs(output_plot_combined, exist_ok=True)
+    fig.savefig(os.path.join(output_plot_combined, f'Zipf.pdf'), dpi=150)
