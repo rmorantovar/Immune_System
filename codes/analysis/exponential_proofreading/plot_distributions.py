@@ -98,11 +98,13 @@ for alpha in [1.0, 1.3, 2.0, 3.0]:# EP tilt strength per round
     D_max = 0.5*(sigma*beta_star)**2
     phi_min = np.exp(-D_max)
     ax2.plot(x, np.ones_like(x)*phi_min, color='k', ls = '--', lw=3)
+    ax3.plot(x*1e3, np.ones_like(x)*phi_min, color='k', ls = '--', lw=3)
 
     phi_max_primary = np.exp(-zeta**2*D_max)
     phi_1_2_recall = 0.5*np.exp(-(D_max - np.sqrt(2/3.14*2*D_max)))
     ax2.plot(x, np.ones_like(x)*phi_max_primary, color=c1, ls = '--', lw=3, zorder=-10)
     ax2.plot(x, np.ones_like(x)*phi_1_2_recall, color=c2, ls = '--', lw=3, zorder=-10)
+    ax3.plot(x*1e3, np.ones_like(x)*phi_1_2_recall, color=c2, ls = '--', lw=3, zorder=-10)
     
     print(D_max, zeta**2*D_max, D_max - np.sqrt(2/3.14*2*D_max))
 
@@ -205,7 +207,7 @@ for alpha in [1.0, 1.3, 2.0, 3.0]:# EP tilt strength per round
         ainv = np.interp(phi_row, phi1[mask], a[mask])   # phi1 must be increasing on mask     
         ainv = (np.log(50*N_sample)+np.log(beta_star - alpha))/beta_star
         ax2.scatter(ainv, phi_row, color=c1, s=150, edgecolors='k', alpha=0.8, zorder = 20)        
-        ax3.scatter(a_inferred, np.log(N_sample), color=c1, s=150, edgecolors='k', alpha=0.8)
+        # ax3.scatter(a_inferred, np.log(N_sample), color=c1, s=150, edgecolors='k', alpha=0.8)
     
     allN = recall_data['barN'].values
     my_norm = mpl.colors.LogNorm(vmin=allN.min(), vmax=allN.max())   # log: N spans decades
@@ -227,7 +229,7 @@ for alpha in [1.0, 1.3, 2.0, 3.0]:# EP tilt strength per round
         ax2.scatter(a_th, phi_row, color=col, s=150, edgecolors='k', alpha=0.8, zorder = 20)
         ax2.scatter(a_sample, phi_row, color=col, s=150, edgecolors='k', alpha=0.8, zorder = 20)
         axin2.scatter(N_sample/np.exp(logf), phi_row, color=col, s=150, edgecolors='k', alpha=0.8)
-        ax3.scatter(a_inferred, np.log(N_sample), color=c2, s=150, edgecolors='k', alpha=0.8)
+        ax3.scatter(N_sample, phi_row, color=c2, s=150, edgecolors='k', alpha=0.8)
 
     axin2.plot(1e7*x, np.ones_like(x)*phi_min, color='k', ls = '--', lw=3)
     axin2.plot(1e7*x, np.ones_like(x)*phi_1_2_recall, color=c2, ls = '--', lw=3)
@@ -282,16 +284,16 @@ for alpha in [1.0, 1.3, 2.0, 3.0]:# EP tilt strength per round
     fig2.savefig(output_plot + f"/ep_plot2_alpha-{alpha}_zoomin.pdf")
 
     # --- cosmetics: left+bottom spines only (matches your Frame->{{T,F},{T,F}}) ---
-    my_plot_layout(ax=ax3, yscale='linear', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
+    my_plot_layout(ax=ax3, yscale='log', xscale='log', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
     # ax3.spines["top"].set_visible(False)
     # ax3.spines["right"].set_visible(False)
-    ax3.set_xlim(1.5, 3.7)
+    ax3.set_xlim(20, 300)
     # ax3.set_ylim(-0.6, 2*xmax/3)
     # ax3.set_xlabel(r"Binding energy $\Delta G$", fontsize=13)
     # ax3.set_ylabel(r"$\Omega(\Delta G)$", fontsize=13)
     ax3.tick_params(axis='both', labelsize=30)
 
-    leg = ax3.legend(title=r"$\mathrm{Response}$", loc=0, frameon=False, fontsize=20, title_fontsize=20)
+    # leg = ax3.legend(title=r"$\mathrm{Response}$", loc=0, frameon=False, fontsize=20, title_fontsize=20)
 
     # fig.tight_layout()
     fig3.savefig(output_plot + f"/ep_plot3_alpha-{alpha}.pdf", transparent=.5)
