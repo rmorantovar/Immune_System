@@ -169,9 +169,9 @@ def plot_ranking_result(ax_r, x_avg, max_rank_eff, zeta_mean, color, marker, lab
               color=color, markerfacecolor='None', ms=ms, alpha=1, ls='', marker=marker, label=label)
     ax_r.plot(np.arange(1, max_rank_eff + 10), np.arange(1, max_rank_eff + 10) ** (-zeta_mean),
               color=color, alpha=.8, lw=3)
-    if exp == '2':
-        ax_r.plot(np.arange(1, 50), np.arange(1, 50) ** (-0.24),
-                color=my_brown, alpha=.8, lw=3)
+    # if exp == '2':
+    #     ax_r.plot(np.arange(1, 50), np.arange(1, 50) ** (-0.24),
+    #             color=my_brown, alpha=.8, lw=3)
 
 
 def plot_zeta_violin(ax_zeta, zetas, zetas_mice, position, color):
