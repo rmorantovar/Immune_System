@@ -100,6 +100,7 @@ def run_bootstrap(data_grouped, mice, mouse_col, ax_r=None, line_color=None, sca
             Z       = np.sum(x * np.exp(-pseudo_E))
             
             if is_last:
+                print(largest)
                 if ax_r is not None:
                     ax_r.step(range(1, n_clones + 1), x / largest,
                               color=line_color, alpha=.5, lw=0.5)
@@ -135,14 +136,14 @@ def run_bootstrap(data_grouped, mice, mouse_col, ax_r=None, line_color=None, sca
                     counts_per_ranking[k] += 1
                     x_avg[k] += x[k] / largest
             
-            if is_last and scaling_info["experiment"] in ['2', '3', '4a'] and scaling_info["phenotype"] == 'GC + fm':
+            if is_last and scaling_info["experiment"] in ['1', '2', '3', '4a']:
                 fig_S_mouse, ax_S_mouse  = plt.subplots(**fig_kw)
-                ax_S_mouse.bar(range(1, len(x[:10]) + 1), x[:10], color=my_blue, alpha=1)
+                ax_S_mouse.bar(range(1, len(x[:10]) + 1), x[:10], color=line_color, alpha=1)
                 ax_S_mouse.set_xticks([])
                 # ax_S_mouse.set_yticks([])
                 ax_S_mouse.set_yscale('log')
                 ax_S_mouse.tick_params(axis='both', labelsize=40)
-                fig_S_mouse.savefig(output_plot + f'/entropy_mouse_{scaling_info["experiment"]}_{i_m+1}.pdf', transparent=.5)
+                fig_S_mouse.savefig(output_plot + f'/entropy_mouse_{scaling_info["experiment"]}_{scaling_info["phenotype"]}_{i_m+1}.pdf', transparent=.5)
                 plt.close(fig_S_mouse)
 
         max_rank_eff = len(counts_per_ranking[counts_per_ranking > 1])
@@ -441,7 +442,7 @@ if '2-3b' in RUN_EXPERIMENTS:
 
 if '4a' in RUN_EXPERIMENTS:
     print("Experiment 4a (Figure 5)")
-    colors_ph = [my_red, my_blue, my_cyan, my_purple]
+    colors_ph = ['limegreen', my_blue, my_cyan, my_purple]
     data = load_and_group('Influenza_IGH', header=2,
                           group_cols=['Experiment / Mouse', 'Sort'] + CLONE_COLS,
                           filter_specs={'Sort': ['GC', 'GC + fm', 'PB + fm', 'M']})
