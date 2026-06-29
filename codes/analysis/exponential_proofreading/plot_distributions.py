@@ -37,7 +37,7 @@ output_plot = (
 )
 os.makedirs(output_plot, exist_ok=True)
 
-for alpha in [1.0, 1.3, 2.0, 3.0]:# EP tilt strength per round 
+for alpha in [1.3]:# EP tilt strength per round 
     # ── Figure setup ──────────────────────────────────────────────────────────────
 
     fig_kw = dict(figsize=(8 * 1.62, 8), gridspec_kw={'left': .12, 'right': .95, 'bottom': .15, 'top': .94})
@@ -57,8 +57,8 @@ for alpha in [1.0, 1.3, 2.0, 3.0]:# EP tilt strength per round
     print('mu0, mu1, mu2 =', mu0, mu1, mu2)
 
     edge  = 0.0     # EVT edge  DG*  (no clones below this)
-    a1    = 6.0     # 1EP activation threshold (upper DG cutoff)
-    a2    = 3.0     # 2EP activation threshold
+    a1    = 5.0     # 1EP activation threshold (upper DG cutoff)
+    a2    = 4.0     # 2EP activation threshold
 
     L0    = np.exp(0.5 * (mu0/sigma)**2)   # implied repertoire size (for amplitude)
     xmax  = mu0 + 0.5*sigma   # x-axis max for plotting
@@ -85,63 +85,68 @@ for alpha in [1.0, 1.3, 2.0, 3.0]:# EP tilt strength per round
     c0, c1, c2 = 'gray', my_red, my_blue   # naive, 1EP, 2EP
     colors = [c0, c1, c2]
 
-    fig, ax = plt.subplots(**fig_kw)
-    fig2, ax2 = plt.subplots(**fig_kw)
-    axin2 = ax2.inset_axes([0.08, 0.6, 0.38, 0.38], zorder=30)  # [left, bottom, width, height] in axes fraction
-    fig3, ax3 = plt.subplots(**fig_kw)
+    fig_pdfs, ax_pdfs = plt.subplots(**fig_kw)
+    fig_phi, ax_phi = plt.subplots(**fig_kw)
+    axin_phi = ax_phi.inset_axes([0.02, 0.6, 0.38, 0.38], zorder=30)  # [left, bottom, width, height] in axes fraction
+    fig_phi_2, ax_phi_2 = plt.subplots(**fig_kw)
+    # fig4, ax4 = plt.subplots(**fig_kw)
 
     # --- curves ---
-    ax.plot(x, Omega0(x), color=c0, lw=2.2, label=r"$0$")
-    ax.plot(x, q1(x),     color=c1, lw=2.2, label=r"$1$")
-    ax.plot(x, q2(x),     color=c2, lw=2.2, label=r"$2$")
+    ax_pdfs.plot(x, Omega0(x), color=c0, lw=2.2, label=r"$0$")
+    ax_pdfs.plot(x, q1(x),     color=c1, lw=2.2, label=r"$1$")
+    ax_pdfs.plot(x, q2(x),     color=c2, lw=2.2, label=r"$2$")
 
     D_max = 0.5*(sigma*beta_star)**2
     phi_min = np.exp(-D_max)
-    ax2.plot(x, np.ones_like(x)*phi_min, color='k', ls = '--', lw=3)
-    ax3.plot(x*1e3, np.ones_like(x)*phi_min, color='k', ls = '--', lw=3)
+    ax_phi.plot(x, np.ones_like(x)*phi_min, color='k', ls = '--', lw=3)
+    ax_phi_2.plot(x*1e3, np.ones_like(x)*phi_min, color='k', ls = '--', lw=3)
 
     phi_max_primary = np.exp(-zeta**2*D_max)
     phi_1_2_recall = 0.5*np.exp(-(D_max - np.sqrt(2/3.14*2*D_max)))
-    ax2.plot(x, np.ones_like(x)*phi_max_primary, color=c1, ls = '--', lw=3, zorder=-10)
-    ax2.plot(x, np.ones_like(x)*phi_1_2_recall, color=c2, ls = '--', lw=3, zorder=-10)
-    ax3.plot(x*1e3, np.ones_like(x)*phi_1_2_recall, color=c2, ls = '--', lw=3, zorder=-10)
+    S_1_2_recall = np.sqrt(2/3.14*2*D_max) - np.log(2)
+    ax_phi.plot(x, np.ones_like(x)*phi_max_primary, color=c1, ls = '--', lw=3, zorder=-10)
+    ax_phi.plot(x, np.ones_like(x)*phi_1_2_recall, color=c2, ls = '--', lw=3, zorder=-10)
+    ax_phi_2.plot(x*1e3, np.ones_like(x)*phi_1_2_recall, color=c2, ls = '--', lw=3, zorder=-10)
+    axin_phi.plot(a[a<6], np.ones_like(a[a<6])*S_1_2_recall, color=c2, ls = '--', lw=3, zorder=-10)
+    
     
     print(D_max, zeta**2*D_max, D_max - np.sqrt(2/3.14*2*D_max))
 
     omega1 = (a - mu1)/sigma
     D1 = zeta**2*D_max + alpha*sigma*varphi(omega1)/Phi(omega1) - np.log(Phi(omega1))
+    Sc1 = D_max - D1
     phi1 = np.exp(-D1)
-    ax2.plot(a[phi1>phi_min], phi1[phi1>phi_min], color=c1, lw=4, label=r"$\mathrm{primary}$")
+    ax_phi.plot(a[phi1>phi_min], phi1[phi1>phi_min], color=c1, lw=4, label=r"$\mathrm{primary}$")
+    axin_phi.plot(a[(phi1>phi_min) & (a < 6)], Sc1[(phi1>phi_min) & (a < 6)], color=c1, lw=4)
    
-    omega2 = (a - mu2)/sigma
-    D2 = D_max + np.sqrt(2*D_max)*(varphi(0) - varphi(omega2))/(Phi(omega2)-0.5) - np.log(Phi(omega2)-0.5)
-    phi2 = np.exp(-D2)
-
     zp  = (edge - mu2)/sigma          # lower (edge) standardized bound
     zpp = (a    - mu2)/sigma          # upper (gate) standardized bound
     Z2  = Phi(zpp) - Phi(zp)
     g2  = varphi(zp) - varphi(zpp)
     m1_2 = g2 / Z2
     delta2 = (mu2 - mu0)/sigma        # = -2*alpha*sigma  (note: from mu0, not edge)
-    D2 = 0.5*delta2**2 + delta2*m1_2 - np.log(Z2)
+    D2 = 0.5*delta2**2 + (delta2*m1_2 - np.log(Z2))
+    Sc2 = D_max - D2
     phi2 = np.exp(-D2)
-    ax2.plot(a[phi2>phi_min], phi2[phi2>phi_min], color=c2, lw=4, label=r"$\mathrm{recall}$")
+    ax_phi.plot(a[phi2>phi_min], phi2[phi2>phi_min], color=c2, lw=4, label=r"$\mathrm{recall}$")
+    axin_phi.plot(a[(phi2>phi_min) & (a < 6)], Sc2[(phi2>phi_min) & (a < 6)], color=c2, lw=4)
+    print(Sc2[a<3.5][-1], Sc2[a<4][-1], Sc2[a<4.5][-1])
 
     # --- filled active regions: edge -> a_n ---
     m1 = (x >= edge) & (x <= a1)
     m2 = (x >= edge) & (x <= a2)
-    ax.fill_between(x[m1], 0, q1(x[m1]), color=c1, alpha=0.22, lw=0)
-    ax.fill_between(x[m2], 0, q2(x[m2]), color=c2, alpha=0.30, lw=0)
+    ax_pdfs.fill_between(x[m1], 0, q1(x[m1]), color=c1, alpha=0.22, lw=0)
+    ax_pdfs.fill_between(x[m2], 0, q2(x[m2]), color=c2, alpha=0.30, lw=0)
 
     # --- edge and threshold markers ---
-    ax.axvline(edge, color="0.35", lw=1.2, ls="-")
-    ax.axvline(a1,   color=c1, lw=1.0, ls="--", alpha=0.8)
-    ax.axvline(a2,   color=c2, lw=1.0, ls="--", alpha=0.8)
+    ax_pdfs.axvline(edge, color="0.35", lw=1.2, ls="-")
+    ax_pdfs.axvline(a1,   color=c1, lw=1.0, ls="--", alpha=0.8)
+    ax_pdfs.axvline(a2,   color=c2, lw=1.0, ls="--", alpha=0.8)
 
     ymax = Omega0(mu0)*1.05
-    # ax.text(edge, ymax*0.98, r"$\Delta G^*$", color="0.35", ha="center", va="top", fontsize=12)
-    # ax.text(a1, ymax*0.55, r"$a_1$", color=c1, ha="left", va="center", fontsize=12)
-    # ax.text(a2, ymax*0.78, r"$a_2$", color=c2, ha="left", va="center", fontsize=12)
+    # ax_pdfs.text(edge, ymax*0.98, r"$\Delta G^*$", color="0.35", ha="center", va="top", fontsize=12)
+    # ax_pdfs.text(a1, ymax*0.55, r"$a_1$", color=c1, ha="left", va="center", fontsize=12)
+    # ax_pdfs.text(a2, ymax*0.78, r"$a_2$", color=c2, ha="left", va="center", fontsize=12)
 
     data = pd.read_csv(root_dir + "/scaling_results.csv")
     with open(root_dir + '/scaling_dict.pkl', 'rb') as f:
@@ -181,20 +186,20 @@ for alpha in [1.0, 1.3, 2.0, 3.0]:# EP tilt strength per round
         if ph == 'GC':
             params1, _    = curve_fit(my_linear_func, x0[:-1][:MAX_FIT_E], np.log(y1_new[:MAX_FIT_E]))
             params2, _    = curve_fit(my_linear_func, x0[:-1][:MAX_FIT_E], np.log(y2_new[:MAX_FIT_E]))
-            # ax.plot(x0[:MAX_FIT_E] - x0[0], np.exp(my_linear_func(x0[:MAX_FIT_E], *params1)), ls = '-', marker = '', ms = 5, color='gray')
-            # ax.plot(x0[:MAX_FIT_E] - x0[0], np.exp(my_linear_func(x0[:MAX_FIT_E], *params2)), ls = '-', marker = '', ms = 5, color=my_red)
-            ax.plot(x0[:-1] - x0[0], phi_min*y1_new, color='gray', ls = '-', marker = 'o', ms = 5)
-            ax.plot(x0[:-1] - x0[0], 0.5*phi_max_primary*y2_new, color=my_red, ls = '-', marker = 'o', ms = 5)
+            # ax_pdfs.plot(x0[:MAX_FIT_E] - x0[0], np.exp(my_linear_func(x0[:MAX_FIT_E], *params1)), ls = '-', marker = '', ms = 5, color='gray')
+            # ax_pdfs.plot(x0[:MAX_FIT_E] - x0[0], np.exp(my_linear_func(x0[:MAX_FIT_E], *params2)), ls = '-', marker = '', ms = 5, color=my_red)
+            ax_pdfs.plot(x0[:-1] - x0[0], phi_min*y1_new, color='gray', ls = '-', marker = 'o', ms = 5)
+            ax_pdfs.plot(x0[:-1] - x0[0], 0.5*phi_max_primary*y2_new, color=my_red, ls = '-', marker = 'o', ms = 5)
         else:
             params1, _    = curve_fit(my_linear_func, x0[:-1][:MAX_FIT_E], np.log(y1_new[:MAX_FIT_E]))
             params2, _    = curve_fit(my_linear_func, x0[:-1][:MAX_FIT_E], np.log(y2_new[:MAX_FIT_E]))
             # print(f"{ph} fit params: {params1}")
             # print(f"{ph} fit params: {params2}")
             print(params1[1]-params2[1])
-            # ax.plot(x0[:MAX_FIT_E] - x0[0], np.exp(my_linear_func(x0[:MAX_FIT_E], *params1)), ls = '-', marker = '', ms = 5, color=my_red)
-            # ax.plot(x0[:MAX_FIT_E] - x0[0], np.exp(my_linear_func(x0[:MAX_FIT_E], *params2)), ls = '-', marker = '', ms = 5, color=my_blue)
-            # ax.plot(x0[:-1] - x0[0], y1_new, label=fr'${differential_entropy(y1_new):.2f}$', color=my_red, ls = '-', marker = 'o', ms = 5)
-            ax.plot(x0[:-1] - x0[0], 2e-2*y2_new, color=my_blue, ls = '-', marker = 'o', ms = 5)
+            # ax_pdfs.plot(x0[:MAX_FIT_E] - x0[0], np.exp(my_linear_func(x0[:MAX_FIT_E], *params1)), ls = '-', marker = '', ms = 5, color=my_red)
+            # ax_pdfs.plot(x0[:MAX_FIT_E] - x0[0], np.exp(my_linear_func(x0[:MAX_FIT_E], *params2)), ls = '-', marker = '', ms = 5, color=my_blue)
+            # ax_pdfs.plot(x0[:-1] - x0[0], y1_new, label=fr'${differential_entropy(y1_new):.2f}$', color=my_red, ls = '-', marker = 'o', ms = 5)
+            ax_pdfs.plot(x0[:-1] - x0[0], 1.6e-2*y2_new, color=my_blue, ls = '-', marker = 'o', ms = 5)
     
     for row in primary_data.itertuples():
         S_c_row = row.S
@@ -206,8 +211,8 @@ for alpha in [1.0, 1.3, 2.0, 3.0]:# EP tilt strength per round
         mask = a > 0                       # monotone region only
         ainv = np.interp(phi_row, phi1[mask], a[mask])   # phi1 must be increasing on mask     
         ainv = (np.log(50*N_sample)+np.log(beta_star - alpha))/beta_star
-        ax2.scatter(ainv, phi_row, color=c1, s=150, edgecolors='k', alpha=0.8, zorder = 20)        
-        # ax3.scatter(a_inferred, np.log(N_sample), color=c1, s=150, edgecolors='k', alpha=0.8)
+        # ax_phi.scatter(ainv, phi_row, color=c1, s=150, edgecolors='k', alpha=0.8, zorder = 20)        
+        # ax_phi_2.scatter(a_inferred, np.log(N_sample), color=c1, s=150, edgecolors='k', alpha=0.8)
     
     allN = recall_data['barN'].values
     my_norm = mpl.colors.LogNorm(vmin=allN.min(), vmax=allN.max())   # log: N spans decades
@@ -224,78 +229,79 @@ for alpha in [1.0, 1.3, 2.0, 3.0]:# EP tilt strength per round
         a_sample = np.log(N_sample)/(2.0*alpha) + np.log((2.0*alpha - beta_star)/0.1)/(2.0*alpha)
         a_th = a[phi2<phi_row][-1]
         logf = -(a_th - a_sample)*(2.0*alpha)
-        print(logf)
         col = cmap(my_norm(N_sample))
-        ax2.scatter(a_th, phi_row, color=col, s=150, edgecolors='k', alpha=0.8, zorder = 20)
-        ax2.scatter(a_sample, phi_row, color=col, s=150, edgecolors='k', alpha=0.8, zorder = 20)
-        axin2.scatter(N_sample/np.exp(logf), phi_row, color=col, s=150, edgecolors='k', alpha=0.8)
-        ax3.scatter(N_sample, phi_row, color=c2, s=150, edgecolors='k', alpha=0.8)
+        # ax_phi.scatter(a_th, phi_row, color=col, s=150, edgecolors='k', alpha=0.8, zorder = 20)
+        # ax_phi.scatter(a_sample, phi_row, color=col, s=150, edgecolors='k', alpha=0.8, zorder = 20)
+        # axin_phi.scatter(N_sample/np.exp(logf), S_c_row, color=col, s=150, edgecolors='k', alpha=0.8)
+        ax_phi_2.scatter(N_sample, phi_row, color=c2, s=150, edgecolors='k', alpha=0.8)
 
-    axin2.plot(1e7*x, np.ones_like(x)*phi_min, color='k', ls = '--', lw=3)
-    axin2.plot(1e7*x, np.ones_like(x)*phi_1_2_recall, color=c2, ls = '--', lw=3)
-    axin2.plot(0.1/(2*alpha - beta_star)*np.exp(2*alpha*a[phi2>phi_min]), phi2[phi2>phi_min], color=c2, lw=4, label=r"$\mathrm{recall}$")
+    # axin_phi.plot(1e7*x, np.ones_like(x)*phi_min, color='k', ls = '--', lw=3)
+    # axin_phi.plot(1e7*x, np.ones_like(x)*phi_1_2_recall, color=c2, ls = '--', lw=3)
+    # axin_phi.plot(0.1/(2*alpha - beta_star)*np.exp(2*alpha*a[phi2>phi_min]), phi2[phi2>phi_min], color=c2, lw=4, label=r"$\mathrm{recall}$")
 
     
 
     # --- cosmetics: left+bottom spines only (matches your Frame->{{T,F},{T,F}}) ---
-    my_plot_layout(ax=ax, yscale='linear', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
-    # ax.spines["top"].set_visible(False)
-    # ax.spines["right"].set_visible(False)
-    ax.set_xlim(-0.6, xmax)
-    # ax.set_ylim(bottom = 1e-3, top = ymax)
-    # ax.set_xlabel(r"Binding energy $\Delta G$", fontsize=13)
-    # ax.set_ylabel(r"$\Omega(\Delta G)$", fontsize=13)
-    ax.tick_params(axis='both', labelsize=30)
+    my_plot_layout(ax=ax_pdfs, yscale='linear', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
+    # ax_pdfs.spines["top"].set_visible(False)
+    # ax_pdfs.spines["right"].set_visible(False)
+    ax_pdfs.set_xlim(-0.6, xmax)
+    # ax_pdfs.set_ylim(bottom = 1e-3, top = ymax)
+    # ax_pdfs.set_xlabel(r"Binding energy $\Delta G$", fontsize=13)
+    # ax_pdfs.set_ylabel(r"$\Omega(\Delta G)$", fontsize=13)
+    ax_pdfs.tick_params(axis='both', labelsize=30)
 
-    leg = ax.legend(title=r"$\mathrm{Response}$", loc=0, frameon=False, fontsize=20, title_fontsize=20)
+    leg = ax_pdfs.legend(title=r"$\mathrm{Response}$", loc=0, frameon=False, fontsize=20, title_fontsize=20)
 
-    # fig.tight_layout()
-    fig.savefig(output_plot + f"/ep_plot_alpha-{alpha}.pdf", transparent=.5)
-    ax.set_yscale('log')
-    ax.set_ylim(L0**-1/10, 2)
-    fig.savefig(output_plot + f"/ep_plot_alpha-{alpha}_log.pdf", transparent=.5)
+    # fig_pdfs.tight_layout()
+    fig_pdfs.savefig(output_plot + f"/ep_plot_alpha-{alpha}.pdf", transparent=.5)
+    ax_pdfs.set_yscale('log')
+    ax_pdfs.set_ylim(L0**-1/10, 2)
+    fig_pdfs.savefig(output_plot + f"/ep_plot_alpha-{alpha}_log.pdf", transparent=.5)
 
-
-    # --- cosmetics: left+bottom spines only (matches your Frame->{{T,F},{T,F}}) ---
-    my_plot_layout(ax=ax2, yscale='log', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
-    # ax2.spines["top"].set_visible(False)
-    # ax2.spines["right"].set_visible(False)
-    ax2.set_xlim(-0.6, 2*xmax/3)
-    ax2.set_ylim(phi_min/5, 2)
-    ax2.set_yscale('log')
-    ax2.tick_params(axis='both', labelsize=30)
-    # ax2.set_xlabel(r"Binding energy $\Delta G$", fontsize=13)
-    # ax2.set_ylabel(r"$\Omega(\Delta G)$", fontsize=13)
-    leg = ax2.legend(title=r"$\mathrm{Response}$", loc=0, frameon=False, fontsize=20, title_fontsize=20)
-
-    axin2.set_yscale('log')
-    axin2.set_xscale('log')
-    axin2.set_xlim(10, 1e7)
-    axin2.tick_params(axis='both', labelsize=24)
-    axin2.set_facecolor('white')        # opaque background
-    axin2.patch.set_alpha(1.0)          # ensure the patch isn't transparent
-    axin2.set_zorder(50)                # whole inset above main-axes lines
-    axin2.patch.set_visible(True)  
-
-    fig2.savefig(output_plot + f"/ep_plot2_alpha-{alpha}.pdf")
-
-    ax2.set_xlim(-0.6, 6)
-    ax2.set_ylim(phi_min/2, 1e-6)
-    fig2.savefig(output_plot + f"/ep_plot2_alpha-{alpha}_zoomin.pdf")
 
     # --- cosmetics: left+bottom spines only (matches your Frame->{{T,F},{T,F}}) ---
-    my_plot_layout(ax=ax3, yscale='log', xscale='log', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
-    # ax3.spines["top"].set_visible(False)
-    # ax3.spines["right"].set_visible(False)
-    ax3.set_xlim(20, 300)
-    # ax3.set_ylim(-0.6, 2*xmax/3)
-    # ax3.set_xlabel(r"Binding energy $\Delta G$", fontsize=13)
-    # ax3.set_ylabel(r"$\Omega(\Delta G)$", fontsize=13)
-    ax3.tick_params(axis='both', labelsize=30)
+    my_plot_layout(ax=ax_phi, yscale='log', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
+    # ax_phi.spines["top"].set_visible(False)
+    # ax_phi.spines["right"].set_visible(False)
+    ax_phi.set_xlim(-0.6, 2*xmax/3)
+    ax_phi.set_ylim(phi_min/5, 2)
+    ax_phi.set_yscale('log')
+    ax_phi.tick_params(axis='both', labelsize=30)
+    # ax_phi.set_xlabel(r"Binding energy $\Delta G$", fontsize=13)
+    # ax_phi.set_ylabel(r"$\Omega(\Delta G)$", fontsize=13)
+    leg = ax_phi.legend(title=r"$\mathrm{Response}$", loc=0, frameon=False, fontsize=20, title_fontsize=20)
 
-    # leg = ax3.legend(title=r"$\mathrm{Response}$", loc=0, frameon=False, fontsize=20, title_fontsize=20)
+    # axin_phi.set_yscale('log')
+    # axin_phi.set_xscale('log')
+    # axin_phi.set_xlim(10, 1e7)
+    axin_phi.yaxis.tick_right()
+    axin_phi.yaxis.set_label_position("right")
+    axin_phi.tick_params(axis='both', labelsize=24)
+    axin_phi.set_facecolor('white')        # opaque background
+    axin_phi.patch.set_alpha(1.0)          # ensure the patch isn't transparent
+    axin_phi.set_zorder(50)                # whole inset above main-axes lines
+    axin_phi.patch.set_visible(True)  
 
-    # fig.tight_layout()
-    fig3.savefig(output_plot + f"/ep_plot3_alpha-{alpha}.pdf", transparent=.5)
+    fig_phi.savefig(output_plot + f"/ep_plot2_alpha-{alpha}.pdf")
+
+    ax_phi.set_xlim(-0.6, 6)
+    ax_phi.set_ylim(phi_min/2, 1e-6)
+    fig_phi.savefig(output_plot + f"/ep_plot2_alpha-{alpha}_zoomin.pdf")
+
+    # --- cosmetics: left+bottom spines only (matches your Frame->{{T,F},{T,F}}) ---
+    my_plot_layout(ax=ax_phi_2, yscale='log', xscale='log', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
+    # ax_phi_2.spines["top"].set_visible(False)
+    # ax_phi_2.spines["right"].set_visible(False)
+    ax_phi_2.set_xlim(20, 300)
+    # ax_phi_2.set_ylim(-0.6, 2*xmax/3)
+    # ax_phi_2.set_xlabel(r"Binding energy $\Delta G$", fontsize=13)
+    # ax_phi_2.set_ylabel(r"$\Omega(\Delta G)$", fontsize=13)
+    ax_phi_2.tick_params(axis='both', labelsize=30)
+
+    # leg = ax_phi_2.legend(title=r"$\mathrm{Response}$", loc=0, frameon=False, fontsize=20, title_fontsize=20)
+
+    # fig_pdfs.tight_layout()
+    fig_phi_2.savefig(output_plot + f"/ep_plot3_alpha-{alpha}.pdf", transparent=.5)
    
     print("saved")
