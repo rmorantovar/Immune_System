@@ -31,7 +31,7 @@ if __name__ == '__main__':
                 delta_T=0.00, Tcell_growth_factor=2.0,
                 tau_eng=0.1, b0=2.0, delta_B=0.00,
                 DG_min=0.0, DG_max=8.0, M=30,
-                Omega_0=1.0, T_lim = True, N_T0 = 1e6
+                omega_0=1.0, T_lim = True, N_T0 = 1e6
     )
     T = 15
     # print(compute_N_B_tot(res))

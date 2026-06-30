@@ -21,17 +21,19 @@ submodel = 'semicomplete'
 subproject = 'potency'
 subsubproject = 'exploratory'
 
+fig_kw = dict(figsize=(8 * 1.62, 8), gridspec_kw={'left': .12, 'right': .95, 'bottom': .15, 'top': .94})
+fig_kw2 = dict(figsize=(8 * 1.62, 6), gridspec_kw={'left': .12, 'right': .95, 'bottom': .15, 'top': .94})
 if __name__ == '__main__':
     output_plot = f'/Users/robertomorantovar/Dropbox/_Documents/Research/Projects/Immune_System/_Repository/Figures/{project}/{model}/{submodel}/{subproject}/{subsubproject}/'
     os.makedirs(output_plot, exist_ok=True)
     # Default parameters
-    base = dict(N_A0=1.0, lambda_A = 6.0, delta_A=4.0, eta= 1.0,
+    base = dict(N_A0=1.0, lambda_A = 6.0, delta_A=3.0, eta= 1.0,
                 k_on=1e0*1e6*1e6*24*3600/N_Avg, delta_pi=0.1,
                 hill=1.0, beta_star=2.5, K_T = 1e4,
                 delta_T=0.00, Tcell_growth_factor=2.0,
                 tau_eng=0.1, b0=2.0, delta_B=0.00,
                 DG_min=0.0, DG_max=8.0, M=30,
-                Omega_0=1.0, T_lim = True, N_T0 = 1e6
+                omega_0=1.0, T_lim = True, N_T0 = 1e6
     )
     T = 15
     # print(compute_N_B_tot(res))
@@ -39,15 +41,15 @@ if __name__ == '__main__':
     # Scan N_T: move t_D relative to dynamics
     # ============================================================
 
-    fig_Z_t, ax_Z_t = plt.subplots(figsize=(8, 5))
-    fig_Z_memory_hist, ax_Z_memory_hist = plt.subplots(figsize=(8, 5))
-    fig_Z_memory_total, ax_Z_memory_total = plt.subplots(figsize=(8, 5))
-    fig_Z_memory_mean, ax_Z_memory_mean = plt.subplots(figsize=(8, 5))
-    fig_N_t, ax_N_t = plt.subplots(figsize=(8, 5))
+    fig_Z_t, ax_Z_t = plt.subplots(**fig_kw)
+    fig_Z_memory_hist, ax_Z_memory_hist = plt.subplots(**fig_kw)
+    fig_Z_memory_total, ax_Z_memory_total = plt.subplots(**fig_kw)
+    fig_Z_memory_mean, ax_Z_memory_mean = plt.subplots(**fig_kw)
+    fig_N_t, ax_N_t = plt.subplots(**fig_kw)
     colors_sim = [my_red, my_blue2, my_purple2, my_gold, my_brown, my_blue, my_green, 'tab:orange', my_purple, my_cyan]
     N_ensemble = 1
 
-    h0s = np.array([10*base['b0']])
+    h0s = np.array([0.2*base['b0']])
     pi_stars = (base['b0']/h0s)**(1/base['hill'])
     initial_memory_potency = []
     final_primary_potency = []
@@ -65,9 +67,9 @@ if __name__ == '__main__':
             print(f"... ... for memory={memory}")
             base['memory'] = memory
             figs, axes = plt.subplots(3, 2, figsize=(16, 15))
-            fig_NA, ax_NA = plt.subplots(figsize=(8 * 1.62, 6), gridspec_kw={'left': .15, 'right': .95, 'bottom': .15, 'top': .94})
-            fig_pi, ax_pi = plt.subplots(figsize=(8 * 1.62, 6), gridspec_kw={'left': .15, 'right': .95, 'bottom': .15, 'top': .94})
-            fig_NB, ax_NB = plt.subplots(figsize=(8 * 1.62, 6), gridspec_kw={'left': .15, 'right': .95, 'bottom': .15, 'top': .94})
+            fig_NA, ax_NA = plt.subplots(**fig_kw2)
+            fig_pi, ax_pi = plt.subplots(**fig_kw2)
+            fig_NB, ax_NB = plt.subplots(**fig_kw2)
 
             p = Parameters(**base)
             
@@ -110,13 +112,13 @@ if __name__ == '__main__':
             ax1 = axi.plot(t, res['pi'][0, :], label=label, linewidth = 2)
             axi.plot(t, res['pi'][10, :], label=label, linewidth = 2, alpha=0.5, color=ax1[0].get_color())
             axi.plot(t, res['pi'][-10, :], label=label, linewidth = 2, alpha=0.2, color=ax1[0].get_color())
-            axi.plot(t, 1e8*np.exp(-(p.b0)*t), label=label, linewidth = 1, linestyle='--', color='grey', alpha=0.8)
+            # axi.plot(t, 1e8*np.exp(-(p.b0)*t), label=label, linewidth = 1, linestyle='--', color='grey', alpha=0.8)
             axi.axhline(pi_star, 0, T, linewidth = 1, linestyle='--', color='grey', alpha=0.8)
 
             ax1 = ax_pi.plot(t, res['pi'][0, :], label=label, linewidth = 4, color=my_red)
             ax_pi.plot(t, res['pi'][10, :], label=label, linewidth = 3, alpha=0.5, color=ax1[0].get_color())
             ax_pi.plot(t, res['pi'][-10, :], label=label, linewidth = 2, alpha=0.2, color=ax1[0].get_color())
-            ax_pi.plot(t, 1e8*np.exp(-(p.b0)*t), label=label, linewidth = 1, linestyle='--', color='grey', alpha=0.8)
+            # ax_pi.plot(t, 1e8*np.exp(-(p.b0)*t), label=label, linewidth = 1, linestyle='--', color='grey', alpha=0.8)
             ax_pi.axhline(pi_star, 0, T, linewidth = 1, linestyle='--', color='grey', alpha=0.8)
 
             # (c) lambda_B
@@ -193,12 +195,12 @@ if __name__ == '__main__':
 
             # ax_NA.set_ylabel('$N_A$', fontsize = 16)
             ax_NA.set_xticklabels([])
-            ax_NA.set_ylim(bottom = 1e-1, top = 1e11)
+            ax_NA.set_ylim(bottom = 1e0, top = 1e11)
             ax_NA.set_xlim(0, T)
             ax_NA.set_yscale('log')
             ax_NA.tick_params(axis='y', labelsize=30)
             ax_NA.tick_params(axis='x', labelsize=30)
-            fig_NA.savefig(os.path.join(output_plot, f'N_A.pdf'), dpi=150, bbox_inches='tight')
+            fig_NA.savefig(os.path.join(output_plot, f'N_A.pdf'), dpi=150)
 
             # axes[1].set_xlabel('Time')
             axes[1, 0].set_ylabel(r'$\pi$', fontsize = 16)
@@ -209,12 +211,12 @@ if __name__ == '__main__':
 
             # ax_pi.set_ylabel(r'$\pi$', fontsize = 16)
             ax_pi.set_xticklabels([])
-            ax_pi.set_ylim(bottom = 1e-2, top = 1e3)
+            ax_pi.set_ylim(bottom = 5e-1, top = 1e3)
             ax_pi.set_xlim(0, T)
             ax_pi.set_yscale('log')
             ax_pi.tick_params(axis='y', labelsize=30)
             ax_pi.tick_params(axis='x', labelsize=30)
-            fig_pi.savefig(os.path.join(output_plot, f'pi.pdf'), dpi=150, bbox_inches='tight')
+            fig_pi.savefig(os.path.join(output_plot, f'pi.pdf'), dpi=150)
 
             axes[2, 0].set_xlabel('Time', fontsize = 16)
             axes[2, 0].set_ylabel(r'$\lambda_B/b_o$', fontsize = 16)
@@ -245,13 +247,13 @@ if __name__ == '__main__':
             ax_NB.axhline(1.0, color='k', linestyle='--', alpha=0.5)
             # ax_NB.set_xlabel('Time', fontsize = 16)
             # ax_NB.set_ylabel('B cells', fontsize = 16)
-            ax_NB.set_xticklabels([])
-            ax_NB.set_ylim(bottom = 5e-1, top = 8e6)
+            # ax_NB.set_xticklabels([])
+            ax_NB.set_ylim(bottom = 5e-1, top = 1e5)
             ax_NB.set_xlim(0, T)
             ax_NB.set_yscale('log')
             ax_NB.tick_params(axis='y', labelsize=30)
             ax_NB.tick_params(axis='x', labelsize=30)
-            fig_NB.savefig(os.path.join(output_plot, f'N_B.pdf'), dpi=150, bbox_inches='tight')
+            fig_NB.savefig(os.path.join(output_plot, f'N_B.pdf'), dpi=150)
 
             # axes[2, 0].set_xlabel('Time')
             axes[2, 1].set_ylabel('Potency, $Z$', fontsize = 16)
@@ -263,7 +265,7 @@ if __name__ == '__main__':
             axes[2, 1].tick_params(labelsize=14)
             
             plt.tight_layout()
-            figs.savefig(os.path.join(output_plot, f'summary_pi_star-{pi_star:.2g}_Mem-{int(p.memory)}.pdf'), dpi=150, bbox_inches='tight')
+            figs.savefig(os.path.join(output_plot, f'summary_pi_star-{pi_star:.2g}_Mem-{int(p.memory)}.pdf'), dpi=150)
 
 
     ax_N_t.plot(t, 1e-2*np.exp((p.b0)*t), linewidth = 1, linestyle='--', color='grey', alpha=0.8)
@@ -278,7 +280,7 @@ if __name__ == '__main__':
     ax_N_t.tick_params(labelsize=14)
     ax_N_t.legend(fontsize=14)
     plt.tight_layout()
-    fig_N_t.savefig(os.path.join(output_plot, f'yield.pdf'), dpi=150, bbox_inches='tight')
+    fig_N_t.savefig(os.path.join(output_plot, f'yield.pdf'), dpi=150)
 
     ax_Z_t.plot(t, 1e-2*np.exp((p.b0)*t), linewidth = 1, linestyle='--', color='grey', alpha=0.8)
     ax_Z_t.axhline(1.0, color='k', linestyle='--', alpha=0.5)
@@ -292,7 +294,7 @@ if __name__ == '__main__':
     ax_Z_t.tick_params(labelsize=14)
     ax_Z_t.legend(fontsize=14)
     plt.tight_layout()
-    fig_Z_t.savefig(os.path.join(output_plot, f'potency.pdf'), dpi=150, bbox_inches='tight')
+    fig_Z_t.savefig(os.path.join(output_plot, f'potency.pdf'), dpi=150)
 
     ax_Z_memory_hist.plot(res['DG'], res['weights'], marker='o', color='grey')
     # ax_Z_memory_hist.set_ylabel(r'$\mathrm{Potency, } Z_0$', fontsize = 16)
@@ -305,7 +307,7 @@ if __name__ == '__main__':
     ax_Z_memory_hist.tick_params(labelsize=14)
     ax_Z_memory_hist.legend(title = r'$\pi^*$', title_fontsize = 12, fontsize=10, loc = 4)
     plt.tight_layout()
-    fig_Z_memory_hist.savefig(os.path.join(output_plot, f'Z0_memory.pdf'), dpi=150, bbox_inches='tight')
+    fig_Z_memory_hist.savefig(os.path.join(output_plot, f'Z0_memory.pdf'), dpi=150)
 
     ax_Z_memory_total.plot(pi_stars, initial_memory_potency, marker='o', color=my_purple, alpha = .7, ms = 10, lw = 2, label=r'$\mathrm{Memory\ potency}$')
     ax_Z_memory_total.plot(pi_stars, initial_memory_yield, marker='^', color=my_purple, alpha = .7, ms = 10, lw = 2, label=r'$\mathrm{Memory\ yield}$')
@@ -318,7 +320,7 @@ if __name__ == '__main__':
     ax_Z_memory_total.tick_params(which='both', labelsize=14)
     ax_Z_memory_total.legend(fontsize=14)
     plt.tight_layout()
-    fig_Z_memory_total.savefig(os.path.join(output_plot, f'Z_memory_total.pdf'), dpi=150, bbox_inches='tight')
+    fig_Z_memory_total.savefig(os.path.join(output_plot, f'Z_memory_total.pdf'), dpi=150)
 
     ax_Z_memory_mean.plot(pi_stars, np.array(initial_memory_potency)/np.array(initial_memory_yield), marker='D', color=my_purple, alpha = .7, ms = 10, lw = 2, label=r'$\mathrm{Memory\ potency}$')
     ax_Z_memory_mean.plot(pi_stars, np.array(final_primary_potency)/np.array(final_primary_yield), marker='D', color=my_red, alpha = .7, ms = 10, lw = 2, label=r'$\mathrm{Primary\ potency}$')
@@ -329,4 +331,4 @@ if __name__ == '__main__':
     ax_Z_memory_mean.tick_params(which='both', labelsize=14)
     ax_Z_memory_mean.legend(fontsize=14)
     plt.tight_layout()
-    fig_Z_memory_mean.savefig(os.path.join(output_plot, f'Z_memory_mean.pdf'), dpi=150, bbox_inches='tight')
+    fig_Z_memory_mean.savefig(os.path.join(output_plot, f'Z_memory_mean.pdf'), dpi=150)
