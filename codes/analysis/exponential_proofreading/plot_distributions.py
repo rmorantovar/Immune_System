@@ -80,6 +80,7 @@ for alpha in [1.3]:# EP tilt strength per round
 
     x = np.linspace(-0.5, xmax, 1200)
     a = np.linspace(0.1, 3*xmax/4, 1200)
+    x2 = np.linspace(10, 200, 1200)
 
     # tab10-style colors (Mathematica ColorData[97] analog)
     c0, c1, c2 = 'gray', my_red, my_blue   # naive, 1EP, 2EP
@@ -87,7 +88,7 @@ for alpha in [1.3]:# EP tilt strength per round
 
     fig_pdfs, ax_pdfs = plt.subplots(**fig_kw)
     fig_phi, ax_phi = plt.subplots(**fig_kw)
-    axin_phi = ax_phi.inset_axes([0.02, 0.6, 0.38, 0.38], zorder=30)  # [left, bottom, width, height] in axes fraction
+    axin_phi = ax_phi.inset_axes([0.02, 0.54, 0.42, 0.44], zorder=30)  # [left, bottom, width, height] in axes fraction
     fig_phi_2, ax_phi_2 = plt.subplots(**fig_kw)
     # fig4, ax4 = plt.subplots(**fig_kw)
 
@@ -100,6 +101,7 @@ for alpha in [1.3]:# EP tilt strength per round
     phi_min = np.exp(-D_max)
     ax_phi.plot(x, np.ones_like(x)*phi_min, color='k', ls = '--', lw=3)
     ax_phi_2.plot(x*1e3, np.ones_like(x)*phi_min, color='k', ls = '--', lw=3)
+    axin_phi.plot(x2, np.ones_like(x2)*0, color='k', ls = '--', lw=3)
 
     phi_max_primary = np.exp(-zeta**2*D_max)
     phi_1_2_recall = 0.5*np.exp(-(D_max - np.sqrt(2/3.14*2*D_max)))
@@ -107,7 +109,7 @@ for alpha in [1.3]:# EP tilt strength per round
     ax_phi.plot(x, np.ones_like(x)*phi_max_primary, color=c1, ls = '--', lw=3, zorder=-10)
     ax_phi.plot(x, np.ones_like(x)*phi_1_2_recall, color=c2, ls = '--', lw=3, zorder=-10)
     ax_phi_2.plot(x*1e3, np.ones_like(x)*phi_1_2_recall, color=c2, ls = '--', lw=3, zorder=-10)
-    axin_phi.plot(a[a<6], np.ones_like(a[a<6])*S_1_2_recall, color=c2, ls = '--', lw=3, zorder=-10)
+    axin_phi.plot(x2, np.ones_like(x2)*S_1_2_recall, color=c2, ls = '--', lw=3, zorder=-10)
     
     
     print(D_max, zeta**2*D_max, D_max - np.sqrt(2/3.14*2*D_max))
@@ -117,7 +119,7 @@ for alpha in [1.3]:# EP tilt strength per round
     Sc1 = D_max - D1
     phi1 = np.exp(-D1)
     ax_phi.plot(a[phi1>phi_min], phi1[phi1>phi_min], color=c1, lw=4, label=r"$\mathrm{primary}$")
-    axin_phi.plot(a[(phi1>phi_min) & (a < 6)], Sc1[(phi1>phi_min) & (a < 6)], color=c1, lw=4)
+    # axin_phi.plot(a[(phi1>phi_min) & (a < 6)], Sc1[(phi1>phi_min) & (a < 6)], color=c1, lw=4)
    
     zp  = (edge - mu2)/sigma          # lower (edge) standardized bound
     zpp = (a    - mu2)/sigma          # upper (gate) standardized bound
@@ -129,7 +131,7 @@ for alpha in [1.3]:# EP tilt strength per round
     Sc2 = D_max - D2
     phi2 = np.exp(-D2)
     ax_phi.plot(a[phi2>phi_min], phi2[phi2>phi_min], color=c2, lw=4, label=r"$\mathrm{recall}$")
-    axin_phi.plot(a[(phi2>phi_min) & (a < 6)], Sc2[(phi2>phi_min) & (a < 6)], color=c2, lw=4)
+    # axin_phi.plot(a[(phi2>phi_min) & (a < 6)], Sc2[(phi2>phi_min) & (a < 6)], color=c2, lw=4)
     print(Sc2[a<3.5][-1], Sc2[a<4][-1], Sc2[a<4.5][-1])
 
     # --- filled active regions: edge -> a_n ---
@@ -188,8 +190,8 @@ for alpha in [1.3]:# EP tilt strength per round
             params2, _    = curve_fit(my_linear_func, x0[:-1][:MAX_FIT_E], np.log(y2_new[:MAX_FIT_E]))
             # ax_pdfs.plot(x0[:MAX_FIT_E] - x0[0], np.exp(my_linear_func(x0[:MAX_FIT_E], *params1)), ls = '-', marker = '', ms = 5, color='gray')
             # ax_pdfs.plot(x0[:MAX_FIT_E] - x0[0], np.exp(my_linear_func(x0[:MAX_FIT_E], *params2)), ls = '-', marker = '', ms = 5, color=my_red)
-            ax_pdfs.plot(x0[:-1] - x0[0], phi_min*y1_new, color='gray', ls = '-', marker = 'o', ms = 5)
-            ax_pdfs.plot(x0[:-1] - x0[0], 0.5*phi_max_primary*y2_new, color=my_red, ls = '-', marker = 'o', ms = 5)
+            # ax_pdfs.plot(x0[:-1] - x0[0], phi_min*y1_new, color='gray', ls = '-', marker = 'o', ms = 5)
+            # ax_pdfs.plot(x0[:-1] - x0[0], 0.5*phi_max_primary*y2_new, color=my_red, ls = '-', marker = 'o', ms = 5)
         else:
             params1, _    = curve_fit(my_linear_func, x0[:-1][:MAX_FIT_E], np.log(y1_new[:MAX_FIT_E]))
             params2, _    = curve_fit(my_linear_func, x0[:-1][:MAX_FIT_E], np.log(y2_new[:MAX_FIT_E]))
@@ -199,7 +201,7 @@ for alpha in [1.3]:# EP tilt strength per round
             # ax_pdfs.plot(x0[:MAX_FIT_E] - x0[0], np.exp(my_linear_func(x0[:MAX_FIT_E], *params1)), ls = '-', marker = '', ms = 5, color=my_red)
             # ax_pdfs.plot(x0[:MAX_FIT_E] - x0[0], np.exp(my_linear_func(x0[:MAX_FIT_E], *params2)), ls = '-', marker = '', ms = 5, color=my_blue)
             # ax_pdfs.plot(x0[:-1] - x0[0], y1_new, label=fr'${differential_entropy(y1_new):.2f}$', color=my_red, ls = '-', marker = 'o', ms = 5)
-            ax_pdfs.plot(x0[:-1] - x0[0], 1.6e-2*y2_new, color=my_blue, ls = '-', marker = 'o', ms = 5)
+            # ax_pdfs.plot(x0[:-1] - x0[0], 1.6e-2*y2_new, color=my_blue, ls = '-', marker = 'o', ms = 5)
     
     for row in primary_data.itertuples():
         S_c_row = row.S
@@ -233,6 +235,7 @@ for alpha in [1.3]:# EP tilt strength per round
         # ax_phi.scatter(a_th, phi_row, color=col, s=150, edgecolors='k', alpha=0.8, zorder = 20)
         # ax_phi.scatter(a_sample, phi_row, color=col, s=150, edgecolors='k', alpha=0.8, zorder = 20)
         # axin_phi.scatter(N_sample/np.exp(logf), S_c_row, color=col, s=150, edgecolors='k', alpha=0.8)
+        axin_phi.scatter(N_sample, S_c_row, color=c2, s=150, edgecolors='k', alpha=0.8)
         ax_phi_2.scatter(N_sample, phi_row, color=c2, s=150, edgecolors='k', alpha=0.8)
 
     # axin_phi.plot(1e7*x, np.ones_like(x)*phi_min, color='k', ls = '--', lw=3)
@@ -273,7 +276,7 @@ for alpha in [1.3]:# EP tilt strength per round
     leg = ax_phi.legend(title=r"$\mathrm{Response}$", loc=0, frameon=False, fontsize=20, title_fontsize=20)
 
     # axin_phi.set_yscale('log')
-    # axin_phi.set_xscale('log')
+    axin_phi.set_xscale('log')
     # axin_phi.set_xlim(10, 1e7)
     axin_phi.yaxis.tick_right()
     axin_phi.yaxis.set_label_position("right")
@@ -286,7 +289,7 @@ for alpha in [1.3]:# EP tilt strength per round
     fig_phi.savefig(output_plot + f"/ep_plot2_alpha-{alpha}.pdf")
 
     ax_phi.set_xlim(-0.6, 6)
-    ax_phi.set_ylim(phi_min/2, 1e-6)
+    ax_phi.set_ylim(phi_min/2, 1e-5)
     fig_phi.savefig(output_plot + f"/ep_plot2_alpha-{alpha}_zoomin.pdf")
 
     # --- cosmetics: left+bottom spines only (matches your Frame->{{T,F},{T,F}}) ---
