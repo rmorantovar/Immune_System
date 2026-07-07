@@ -545,7 +545,7 @@ def rhs_complete(t, y, p, M, psi_vec, weights):
     # --- Antigen ---
     # S_A = p.lambda_A * N_A if p.lambda_A > 0 else 0.0
     # dN_A = S_A - p.delta_A * N_A
-    pb = (1 + (1e-9/(1e6*24*3600*np.exp(2.0*t)/N_Avg)))**(-1)  # or whatever dependence you intend
+    pb = (1 + (1e-9/(1e6*24*3600*np.exp(p.b0*t)/N_Avg)))**(-1)  # or whatever dependence you intend
     dN_A = (p.lambda_A * (1 - pb) - p.delta_A*pb) * N_A - 0.01 * N_A
       
     # --- pMHC dynamics ---
@@ -593,7 +593,7 @@ def rhs_semicomplete(t, y, p, M, psi_vec, weights):
     # --- Antigen ---
     # S_A = p.lambda_A * N_A if p.lambda_A > 0 else 0.0
     # dN_A = S_A - p.delta_A * N_A
-    pb = (1 + (1e-9/(1e6*24*3600*np.exp(2.0*t)/N_Avg)))**(-1)  # or whatever dependence you intend
+    pb = (1 + (1e-9/(1e6*24*3600*np.exp(p.b0*t)/N_Avg)))**(-1)  # or whatever dependence you intend
     dN_A = (p.lambda_A * (1 - pb) - p.delta_A*pb) * N_A - 0.01 * N_A
       
     # --- pMHC dynamics ---
