@@ -29,7 +29,7 @@ MAX_RANK     = 100
 MAX_RANK_FIT = 20
 N_ENSEMBLE   = 400
 RUN_EXPERIMENTS = {'1', '2', '3a', '3b', '2-3a', '2-3b', '4a', '4b'}
-RUN_EXPERIMENTS = {'1', '2', '3a', '4a'}
+RUN_EXPERIMENTS = {'1', '2-3a', '4a'}
 # RUN_EXPERIMENTS = {'1', '2'}
 
 color_vals      = np.linspace(0, 2, 200)
@@ -100,7 +100,6 @@ def run_bootstrap(data_grouped, mice, mouse_col, ax_r=None, line_color=None, sca
             Z       = np.sum(x * np.exp(-pseudo_E))
             
             if is_last:
-                print(largest)
                 if ax_r is not None:
                     ax_r.step(range(1, n_clones + 1), x / largest,
                               color=line_color, alpha=.5, lw=0.5)
@@ -335,6 +334,7 @@ if '3a' in RUN_EXPERIMENTS:
             data[data['Phenotype'] == ph], mice, 'Mouse', ax_r=ax_r, line_color=colors_ph[i_ph],
             scaling_info=dict(experiment='3', response='recall', phenotype=ph, scaling_dict=scaling_dict),
         )
+        print(np.mean(zetas), np.std(zetas))
         violin_stats.append(dict(experiment='3', response='recall', phenotype=ph,
                                  violin_zeta_mean=np.mean(zetas), violin_zeta_std=np.std(zetas),
                                  mice_zeta_mean=np.mean(zetas_mice), mice_zeta_std=np.std(zetas_mice)))
@@ -404,7 +404,7 @@ if '2-3a' in RUN_EXPERIMENTS:
                              mice_zeta_mean=np.mean(zetas_mice), mice_zeta_std=np.std(zetas_mice)))
     recolor_last_lines(ax_r, len(mice_23a), my_blue)
     plot_ranking_result(ax_r, x_avg, mre, np.mean(zetas), my_blue, 's',
-                        r'$%.2f$' % np.mean(zetas) + ' ; GC + fm (pooled 2\&3)')
+                        r'$%.2f$' % np.mean(zetas) + ' ; GC + fm (pooled 2 and 3)')
     plot_zeta_violin(ax_zeta, zetas, zetas_mice, position=5, color=my_blue)
     plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_entropy_2, np.mean(zetas), np.std(zetas), my_blue)
     apply_ranking_layout(fig_r, ax_r, '23a')
@@ -434,7 +434,7 @@ if '2-3b' in RUN_EXPERIMENTS:
                              mice_zeta_mean=np.mean(zetas_mice), mice_zeta_std=np.std(zetas_mice)))
     recolor_last_lines(ax_r, len(mice_23b), my_blue2)
     plot_ranking_result(ax_r, x_avg, mre, np.mean(zetas), my_blue2, 'P',
-                        r'$%.2f$' % np.mean(zetas) + ' ; all (pooled 2\&3)')
+                        r'$%.2f$' % np.mean(zetas) + ' ; all (pooled 2 and 3)')
     plot_zeta_violin(ax_zeta, zetas, zetas_mice, position=6, color=my_blue2)
     plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_entropy_2, np.mean(zetas), np.std(zetas), my_blue2)
     apply_ranking_layout(fig_r, ax_r, '23b')
@@ -447,21 +447,19 @@ if '2-3b' in RUN_EXPERIMENTS:
 
 if '4a' in RUN_EXPERIMENTS:
     print("Experiment 4a (Figure 5)")
-    colors_ph = ['limegreen', my_blue, my_cyan, my_purple]
+    colors_ph = [my_red , my_blue, my_cyan, my_purple]
     data = load_and_group('Influenza_IGH', header=2,
                           group_cols=['Experiment / Mouse', 'Sort'] + CLONE_COLS,
                           filter_specs={'Sort': ['GC', 'GC + fm', 'PB + fm', 'M']})
     mice       = data['Experiment / Mouse'].unique()
     phenotypes = data['Sort'].unique()
-    print(mice)
-    print(phenotypes)
 
     for i_ph, ph in enumerate(phenotypes[[0, 1]]):#, 3, 2]]):
         x_avg, mre, zetas, zetas_mice = run_bootstrap(
             data[data['Sort'] == ph], mice, 'Experiment / Mouse', ax_r=ax_r, line_color=colors_ph[i_ph],
             scaling_info=dict(experiment='4a', response='recall', phenotype=ph, scaling_dict=scaling_dict),
         )
-        print(np.mean(zetas), np.std(zetas))
+        print(ph, np.mean(zetas), np.std(zetas))
         violin_stats.append(dict(experiment='4a', response='recall', phenotype=ph,
                                  violin_zeta_mean=np.mean(zetas), violin_zeta_std=np.std(zetas),
                                  mice_zeta_mean=np.mean(zetas_mice), mice_zeta_std=np.std(zetas_mice)))
@@ -633,7 +631,7 @@ all_N_cell = np.concatenate(scaling_dict['N_cells'])
 ph_clone = np.concatenate([np.full(len(a), p) for a, p in zip(scaling_dict['N'],       scaling_dict['phenotype'])])
 ph_cell  = np.concatenate([np.full(len(a), p) for a, p in zip(scaling_dict['N_cells'], scaling_dict['phenotype'])])
 
-phenotypes = ['GC + fm', 'PB + fm', 'GC']   # your 3
+phenotypes = ['GC + fm', 'GC']   # your 3
 
 N_clone = {ph: all_N[ph_clone == ph]     for ph in phenotypes}
 N_cell  = {ph: all_N_cell[ph_cell == ph] for ph in phenotypes}
