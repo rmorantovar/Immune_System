@@ -28,8 +28,8 @@ if __name__ == '__main__':
     os.makedirs(output_plot, exist_ok=True)
     # Default parameters
     base = dict(N_A0=1.0, lambda_A = 6.0, delta_A=3.0, eta= 1.0,
-                k_on=1e0*1e6*1e6*24*3600/N_Avg, delta_pi=0.1,
-                hill=1.0, beta_star=2.5, K_T = 1e4,
+                k_on=1e0*2e5*1e6*24*3600/N_Avg, delta_pi=0.1,
+                hill=2.0, beta_star=2.5, K_T = 1e4,
                 delta_T=0.00, Tcell_growth_factor=2.0,
                 tau_eng=0.1, b0=2.0, delta_B=0.00,
                 DG_min=0.0, DG_max=8.0, M=30,
