@@ -35,7 +35,7 @@ if __name__ == '__main__':
                 DG_min=0.0, DG_max=8.0, M=30,
                 omega_0=1.0, T_lim = True, N_T0 = 1e6
     )
-    T = 15
+    T = 12
     # print(compute_N_B_tot(res))
     # ============================================================
     # Scan N_T: move t_D relative to dynamics
@@ -184,7 +184,7 @@ if __name__ == '__main__':
             fig_NA.savefig(os.path.join(output_plot, f'N_A.pdf'), dpi=150)
 
             # ax_pi.set_ylabel(r'$\pi$', fontsize = 16)
-            ax_pi.set_xticklabels([])
+            # ax_pi.set_xticklabels([])
             ax_pi.set_ylim(bottom = 5e-1, top = 1e3)
             ax_pi.set_xlim(0, T)
             ax_pi.set_yscale('log')
