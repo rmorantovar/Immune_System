@@ -26,7 +26,7 @@ fig_kw2 = dict(figsize=(8 * 1.62, 5), gridspec_kw={'left': .12, 'right': .95, 'b
 if __name__ == '__main__':
     # Default parameters
     base = dict(N_A0=1.0, lambda_A = 6.0, delta_A=3.0, eta= 1.0,
-                k_on=1e0*2e5*1e6*24*3600/N_Avg, delta_pi=0.1,
+                k_on=1e1*2e5*1e6*24*3600/N_Avg, delta_pi=0.1,
                 hill=2.0, beta_star=2.5, K_T = 1e4,
                 delta_T=0.00, Tcell_growth_factor=2.0,
                 tau_eng=0.1, b0=2.0, delta_B=0.00,
@@ -158,7 +158,7 @@ if __name__ == '__main__':
             # ax_Z.semilogy(t, Z_B[0, :], label=label, linewidth = 3, alpha=0.5, color=ax1[0].get_color())
             if p.memory == 0:
                 eta = p.lambda_A*p.beta_star*(1-0.5)
-                ax_Z_shared.plot(t[t<5], 1e-17*np.exp((p.b0 + eta)*t[t<5]), linewidth = 1, linestyle='--', color='grey', alpha=0.8)
+                ax_Z_shared.plot(t[t<4.5], 1e-14*np.exp((p.b0 + eta)*t[t<4.5]), linewidth = 1, linestyle='--', color='grey', alpha=0.8)
                 # ax_Z_shared.plot(t[t<8], 2e-2*np.exp((p.b0)*t[t<8]), linewidth = 1, linestyle='--', color='grey', alpha=0.8)
             else:
                 ax_Z_shared.plot(t, 2e0*np.exp((p.b0)*t), linewidth = 1, linestyle='--', color='grey', alpha=0.8)
