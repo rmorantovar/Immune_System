@@ -30,10 +30,10 @@ if __name__ == '__main__':
                 hill=2.0, beta_star=2.5, K_T = 1e4,
                 delta_T=0.00, Tcell_growth_factor=2.0,
                 tau_eng=0.1, b0=2.0, delta_B=0.00,
-                DG_min=0.0, DG_max=8.0, M=40,
+                DG_min=0.0, DG_max=8.0, M=30,
                 omega_0=1.0, T_lim = True, N_T0 = 1e6
     )
-    T = 12
+    T = 10
     # print(compute_N_B_tot(res))
     # ============================================================
     # Scan N_T: move t_D relative to dynamics
@@ -157,21 +157,20 @@ if __name__ == '__main__':
             ax_Z_shared.plot(t, Z_B_total, linewidth = 4, color=colors_sim[i_m], label=label)
             # ax_Z.semilogy(t, Z_B[0, :], label=label, linewidth = 3, alpha=0.5, color=ax1[0].get_color())
             if p.memory == 0:
-                eta = p.lambda_A*p.beta_star*(1-0.5)
-                ax_Z_shared.plot(t[t<4.5], 1e-14*np.exp((p.b0 + eta)*t[t<4.5]), linewidth = 1, linestyle='--', color='grey', alpha=0.8)
+                lambda_prime = p.lambda_A*p.beta_star*(1-0.5)
+                ax_Z_shared.plot(t[t<4.5], 1e-14*np.exp((p.b0 + lambda_prime)*t[t<4.5]), linewidth = 1, linestyle='--', color='grey', alpha=0.8)
                 # ax_Z_shared.plot(t[t<8], 2e-2*np.exp((p.b0)*t[t<8]), linewidth = 1, linestyle='--', color='grey', alpha=0.8)
             else:
                 ax_Z_shared.plot(t, 2e0*np.exp((p.b0)*t), linewidth = 1, linestyle='--', color='grey', alpha=0.8)
             
-
-            tstar = 3.55
+            tstar = t[res['pi'][0, :]>pi_star][0]
             tpeak = 4.68
             ton = t[(t<tpeak) & (t>tstar)]
             toff = t[(t>=tpeak)]
-            DGpeak = p.lambda_A * (tpeak - tstar)
-            DG_on = p.lambda_A * (ton - tstar)
-            DG_off = p.b0 * (tpeak - toff) + DGpeak
-            DG_off_null = p.delta_A * (tpeak - toff) + DGpeak
+            DGpeak = p.lambda_A/p.eta * (tpeak - tstar)
+            DG_on = p.lambda_A/p.eta * (ton - tstar)
+            DG_off = p.b0 /p.eta * (tpeak - toff) + DGpeak
+            DG_off_null = p.delta_A/p.eta * (tpeak - toff) + DGpeak
             ax_DG.plot(ton, DG_on, linewidth = 3, color=my_green, ls = 'dotted')
             ax_DG.plot(toff[DG_off>p.DG_min], DG_off[DG_off>p.DG_min], linewidth = 3, color=my_green, ls = 'dashed')
             ax_DG.plot(toff[DG_off_null>p.DG_min], DG_off_null[DG_off_null>p.DG_min], linewidth = 3, color=my_brown, ls = 'dashed')
@@ -188,7 +187,7 @@ if __name__ == '__main__':
             fig_NA.savefig(os.path.join(output_plot, f'N_A.pdf'), dpi=150)
 
             # ax_pi.set_ylabel(r'$\pi$', fontsize = 16)
-            # ax_pi.set_xticklabels([])
+            ax_pi.set_xticklabels([])
             ax_pi.set_ylim(bottom = 5e-1, top = 1e3)
             ax_pi.set_xlim(0, T)
             ax_pi.set_yscale('log')
@@ -208,7 +207,7 @@ if __name__ == '__main__':
             # ax_NB.set_xlabel('Time', fontsize = 16)
             # ax_NB.set_ylabel('B cells', fontsize = 16)
             ax_NB.set_xticklabels([])
-            ax_NB.set_ylim(bottom = 5e-1, top = 1e5)
+            ax_NB.set_ylim(bottom = 5e-1, top = 1e6)
             ax_NB.set_xlim(0, T)
             ax_NB.set_yscale('log')
             ax_NB.tick_params(axis='y', labelsize=30)
@@ -219,7 +218,7 @@ if __name__ == '__main__':
             # ax_DG.set_xlabel('Time', fontsize = 16)
             # ax_DG.set_ylabel('B cells', fontsize = 16)
             # ax_DG.set_xticklabels([])
-            # ax_DG.set_ylim(bottom = 5e-1, top = 1e5)
+            ax_DG.set_ylim(bottom = p.DG_min-0.1, top = 9.5)
             ax_DG.set_xlim(0, T)
             # ax_DG.set_yscale('log')
             ax_DG.tick_params(axis='y', labelsize=30)
@@ -241,17 +240,17 @@ if __name__ == '__main__':
             fig_Y.savefig(os.path.join(output_plot, f'Y.pdf'), dpi=150)
 
             if p.memory == 0:
-                eta = p.lambda_A*p.beta_star*(1-0.5)
-                ax_Z.plot(t, 1e-17*np.exp((p.b0 + eta)*t), linewidth = 1, linestyle='--', color='grey', alpha=0.8)
+                lambda_prime = p.lambda_A*p.beta_star*(1-0.5)
+                ax_Z.plot(t, 1e-17*np.exp((p.b0 + lambda_prime)*t), linewidth = 1, linestyle='--', color='grey', alpha=0.8)
                 ax_Z.plot(t, 2e-2*np.exp((p.b0)*t), linewidth = 1, linestyle='--', color='grey', alpha=0.8)
             else:
                 ax_Z.plot(t, 2e0*np.exp((p.b0)*t), linewidth = 1, linestyle='--', color='grey', alpha=0.8)
-            ax_Z.axhline(1.0, color='k', linestyle='--', alpha=0.5)
+            # ax_Z.axhline(1.0, color='k', linestyle='--', alpha=0.5)
             # ax_Z.set_xlabel('Time')
             # ax_Z.set_ylabel('Potency, $Z$', fontsize = 16)
             # ax_Z.set_xticklabels([])
             ax_Z.set_xlabel('Time', fontsize = 16)
-            ax_Z.set_ylim(bottom = 5e-1, top = 1e7)
+            ax_Z.set_ylim(bottom = 5e-3, top = 1e9)
             ax_Z.set_xlim(0, T)
             ax_Z.set_yscale('log')
             ax_Z.tick_params(axis='y', labelsize=30)
@@ -262,12 +261,12 @@ if __name__ == '__main__':
         output_plot = f'/Users/robertomorantovar/Dropbox/_Documents/Research/Projects/Immune_System/_Repository/Figures/{project}/{model}/{submodel}/{subproject}/{subsubproject}/'
         os.makedirs(output_plot, exist_ok=True)
         
-        ax_Z_shared.axhline(1.0, color='k', linestyle='--', alpha=0.5)
+        # ax_Z_shared.axhline(1.0, color='k', linestyle='--', alpha=0.5)
         # ax_Z_shared.set_xlabel('Time')
         # ax_Z_shared.set_ylabel('Potency, $Z$', fontsize = 16)
         # ax_Z_shared.set_xticklabels([])
         ax_Z_shared.set_xlabel('Time', fontsize = 16)
-        ax_Z_shared.set_ylim(bottom = 5e-1, top = 1e7)
+        ax_Z_shared.set_ylim(bottom = 5e-3, top = 1e9)
         ax_Z_shared.set_xlim(0, T)
         ax_Z_shared.set_yscale('log')
         ax_Z_shared.tick_params(axis='y', labelsize=30)

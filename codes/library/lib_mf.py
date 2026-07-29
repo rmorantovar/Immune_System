@@ -266,8 +266,9 @@ def compute_lambda_T(pi_vec, N_B_vec, weights, p):
 def compute_N_B_tot(res, threshold=2.0):
     """Total number of activated B cells."""
     N_B = res['N_Bo'] + res['N_Ba']
+    threshold = N_B[:, 0] + 1
     w = res['weights']
-    activated = (N_B > threshold).astype(float)
+    activated = (N_B > threshold[:, None]).astype(float)
     return np.sum(w[:, None] * N_B * activated, axis=0)
  
  
@@ -346,8 +347,9 @@ def compute_potency_t(res, threshold=2.0):
     """Ω-weighted potency at every time point, activated cells only."""
     N_B = res['N_Bo'] + res['N_Ba']            # (M, N_t)
     w = res['weights']                          # (M,)
-    DG = res['DG']                              # (M,)
-    activated = (N_B > threshold).astype(float)
+    DG = res['DG']    
+    threshold = N_B[:, 0] + 0.05                             # (M,)
+    activated = (N_B > threshold[:, None]).astype(float)
     Z_B = w[:, None] * N_B * np.exp(-DG[:, None]) * activated
     return np.sum(Z_B, axis=0)                  # (N_t,)
 
@@ -593,7 +595,7 @@ def rhs_semicomplete(t, y, p, M, psi_vec, weights):
     # --- Antigen ---
     # S_A = p.lambda_A * N_A if p.lambda_A > 0 else 0.0
     # dN_A = S_A - p.delta_A * N_A
-    pb = (1 + (1e-9/(1e6*24*3600*np.exp(p.b0*t)/N_Avg)))**(-1)  # or whatever dependence you intend
+    pb = (1 + (1e-9/(1e6*24*3600*np.exp(2*t)/N_Avg)))**(-1)  # or whatever dependence you intend
     dN_A = (p.lambda_A * (1 - pb) - p.delta_A*pb) * N_A - 0.01 * N_A
       
     # --- pMHC dynamics ---
