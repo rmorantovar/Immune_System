@@ -604,10 +604,12 @@ def rhs_semicomplete(t, y, p, M, psi_vec, weights, neut_weights):
     # dN_A = (p.lambda_A * (1 - pb) - p.delta_A*pb) * N_A - 0.01 * N_A
 
     if p.memory == 0:
-        Ab_proxy = np.exp(2 * t)          # external, no feedback
+        Ab_proxy = np.exp(2.1 * t)          # external, no feedback
+        pb = (1.0 + p.Z_c / (2*1e6*24*3600*Ab_proxy/N_Avg + 1e-30))**(-1)
     else:
-        Ab_proxy = 1e5*np.sum(neut_weights * N_Ba_vec)  # Z(t), feedback
-    pb = (1.0 + p.Z_c / (1e6*24*3600*Ab_proxy/N_Avg + 1e-30))**(-1)
+        Ab_proxy = 1e2*np.sum(neut_weights * N_Ba_vec)  # Z(t), feedback
+        pb = (1.0 + p.Z_c / (1e6*24*3600*Ab_proxy/N_Avg + 1e-30))**(-1)
+    
     dN_A = (p.lambda_A * (1 - pb) - p.delta_A * pb) * N_A - 0.01 * N_A
    
     dpi = p.k_on * psi_vec * N_A - p.delta_pi * pi_vec - lambda_eff * pi_vec
