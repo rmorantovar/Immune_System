@@ -52,7 +52,9 @@ class Parameters:
     N_A0: float = 1.0           # initial antigen concentration
     lambda_A: float = 1.0       # antigen growth rate (>0: replication, <0: decay)
     delta_A: float = 1.0        # antigen clearance rate (set to 0 for pure exponential)
-    Z_c: float = 1e-9        # neutralization capacity threshold for feedback
+    Z_c: float = 1e4        # neutralization capacity threshold for feedback
+    lambda_innate: float = 1.8  # innate immune response rate (optional feedback on antigen)
+    threshold_innate: float = 2e3  # threshold for innate immune response activation
 
     # --- pMHC ---
     k_on: float = 1.0           # antigen encounter rate (affinity-independent)
@@ -81,6 +83,7 @@ class Parameters:
 
     # --- B cells ---
     delta_B: float = 0.0        # B cell death rate
+    n_mem: int = 1e4             # number of memory cells to sample from primary response
     
     # --- Simulation options ---
     T_lim: bool = False         # whether to include T cell limitation in the demand function
@@ -329,14 +332,21 @@ def compute_potency(res, time_index=-1, threshold=2.0):
     return potency 
 
 def compute_potency_t(res, threshold=2.0):
-    """Ω-weighted potency at every time point, activated cells only."""
-    N_B = res['N_Bo'] + res['N_Ba']            # (M, N_t)
-    w = res['weights']                          # (M,)
-    DG = res['DG']    
-    threshold = N_B[:, 0] + 0.1*N_B[:, 0]                         # (M,)
-    activated = (N_B > threshold[:, None]).astype(float)
-    Z_B = w[:, None] * N_B * np.exp(-DG[:, None]) * activated
-    return np.sum(Z_B, axis=0)                  # (N_t,)
+    # """Ω-weighted potency at every time point, activated cells only."""
+    # N_B = res['N_Bo'] + res['N_Ba']            # (M, N_t)
+    # w = res['weights']                          # (M,)
+    # DG = res['DG']    
+    # threshold = N_B[:, 0] + 0.1*N_B[:, 0]                         # (M,)
+    # activated = (N_B > threshold[:, None]).astype(float)
+    # Z_B = w[:, None] * N_B * np.exp(-DG[:, None]) * activated
+    # return np.sum(Z_B, axis=0)                  # (N_t,)
+
+    p = res['params']
+    N_tot = res['N_Bo'] + res['N_Ba']                  # (M, N_t)
+    pi_star = (p.b0/p.h0)**(1/p.hill)
+    ever_active = (np.maximum.accumulate(res['pi'] > pi_star, axis=1)).astype(float)
+    neut = (res['weights'] * np.exp(-res['DG']))[:, None]
+    return np.sum(neut * N_tot * ever_active, axis=0)
 
 def compute_yield(res, time_index=-1, threshold=2.0):
     """
@@ -397,6 +407,7 @@ def memory_seed_from_primary(res_primary, p, n_mem=int(1e4)):
     nz = w > 0
     formed_memory[nz] = drawn[nz] / w[nz]
     return expanded_cells, formed_memory
+
 # ============================================================
 # ODE system
 # ============================================================
@@ -423,15 +434,16 @@ def pack_state_complete(N_A, pi_vec, N_Bo_vec, N_BT_vec, N_Ba_vec, N_To, N_Ta, M
 
     return y
 
-def pack_state_semicomplete(N_A, pi_vec, N_Bo_vec, N_Ba_vec, N_To, N_Ta, M):
+def pack_state_semicomplete(N_A, pi_vec, N_Bo_vec, N_Ba_vec, a_vec, N_To, N_Ta, M):
     """Pack all state variables into a single vector for the integrator."""
-    y = np.zeros(4 * M + 3)
+    y = np.zeros(4 * M + 4)
     y[0] = N_A
     y[1:M+1] = pi_vec
     y[M+1:2*M+1] = N_Bo_vec
     y[2*M+1:3*M+1] = N_Ba_vec
-    y[3*M+1] = N_To
-    y[3*M+2] = N_Ta
+    y[3*M+1:4*M+1] = a_vec
+    y[4*M+1] = N_To
+    y[4*M+2] = N_Ta
 
     return y
 
@@ -469,9 +481,10 @@ def unpack_state_semicomplete(y, M):
     pi_vec = y[1:M+1]
     N_Bo_vec = y[M+1:2*M+1]
     N_Ba_vec = y[2*M+1:3*M+1]
-    N_To = y[3*M+1]
-    N_Ta = y[3*M+2]
-    return N_A, pi_vec, N_Bo_vec, N_Ba_vec, N_To, N_Ta
+    a_vec = y[3*M+1:4*M+1]
+    N_To = y[4*M+1]
+    N_Ta = y[4*M+2]
+    return N_A, pi_vec, N_Bo_vec, N_Ba_vec, a_vec, N_To, N_Ta
 
 def unpack_state_null(y, M):
     """Unpack the state vector."""
@@ -579,7 +592,7 @@ def rhs_semicomplete(t, y, p, M, psi_vec, weights, neut_weights):
         
     """Right-hand side of the coupled ODE system."""
  
-    N_A, pi_vec, N_Bo_vec, N_Ba_vec, N_To, N_Ta = unpack_state_semicomplete(y, M)
+    N_A, pi_vec, N_Bo_vec, N_Ba_vec, a_vec, N_To, N_Ta = unpack_state_semicomplete(y, M)
  
     # Ensure non-negativity
     N_A = max(N_A, 0.0)
@@ -588,6 +601,10 @@ def rhs_semicomplete(t, y, p, M, psi_vec, weights, neut_weights):
     N_Ba_vec = np.maximum(N_Ba_vec, 0.0)
     N_To = max(N_To, 0.0)
     N_Ta = max(N_Ta, 0.0)
+    pi_star = (p.b0/p.h0)**(1/p.hill)
+    g = pi_vec**p.hill / (pi_vec**p.hill + pi_star**p.hill) # same Hill as activation
+    kappa = 10.0 * p.b0
+    da = kappa * (1.0 - a_vec) * g                       # ratchet: up only
       
     # --- pMHC dynamics ---
     N_B_tot = N_Bo_vec + N_Ba_vec
@@ -597,20 +614,20 @@ def rhs_semicomplete(t, y, p, M, psi_vec, weights, neut_weights):
     # --- Antigen ---
     # S_A = p.lambda_A * N_A if p.lambda_A > 0 else 0.0
     # dN_A = S_A - p.delta_A * N_A
-    # if p.memory == 0:
-    #     pb = (1 + (1e-9/(1e6*24*3600*np.exp(2*t)/N_Avg)))**(-1)  # or whatever dependence you intend
-    # else:
-    #     pb = (1 + (1e-9/(1e6*24*3600*np.sum(N_B_tot)/N_Avg)))**(-1)  # or whatever dependence you intend
-    # dN_A = (p.lambda_A * (1 - pb) - p.delta_A*pb) * N_A - 0.01 * N_A
-
     if p.memory == 0:
-        Ab_proxy = np.exp(2.1 * t)          # external, no feedback
-        pb = (1.0 + p.Z_c / (2*1e6*24*3600*Ab_proxy/N_Avg + 1e-30))**(-1)
+        innate_proxy = np.exp(p.lambda_innate * t)          # external, no feedback
+        # pb = (1.0 + p.Z_c / (2*1e6*24*3600*Ab_proxy/N_Avg + 1e-30))**(-1)
+        innate = (1.0 + p.threshold_innate / (innate_proxy + 1e-30))**(-1)
+        dN_A = (p.lambda_A * (1 - innate) - p.delta_A * innate) * N_A - 0.01 * N_A
     else:
-        Ab_proxy = 1e2*np.sum(neut_weights * N_Ba_vec)  # Z(t), feedback
-        pb = (1.0 + p.Z_c / (1e6*24*3600*Ab_proxy/N_Avg + 1e-30))**(-1)
+        clone_mass = (N_Bo_vec + N_Ba_vec) * a_vec
+        Z = np.sum(neut_weights * clone_mass)
+        # Z = np.sum(neut_weights * N_Ba_vec)  # Z(t), feedback
+        # pb = (1.0 + p.Z_c / (1e6*24*3600*Ab_proxy/N_Avg + 1e-30))**(-1)
+        pb = (1.0 + p.Z_c / (Z + 1e-30))**(-1)
+        dN_A = (p.lambda_A * (1 - pb) - p.delta_A * pb) * N_A - 0.01 * N_A
     
-    dN_A = (p.lambda_A * (1 - pb) - p.delta_A * pb) * N_A - 0.01 * N_A
+    
    
     dpi = p.k_on * psi_vec * N_A - p.delta_pi * pi_vec - lambda_eff * pi_vec
  
@@ -630,7 +647,7 @@ def rhs_semicomplete(t, y, p, M, psi_vec, weights, neut_weights):
     # dN_Ta = p.h0 * np.sum(weights * (pi_vec**p.hill / (pi_vec**p.hill + p.pi_star**p.hill)) * N_Bo_vec) * N_To/(N_To + p.K_T) - p.b0 * N_Ta - p.delta_T * N_Ta 
     dN_Ta = p.h0 * np.sum(weights * pi_vec**p.hill * N_Bo_vec) * N_To/(N_To + p.K_T) - p.b0 * N_Ta - p.delta_T * N_Ta 
  
-    return pack_state_semicomplete(dN_A, dpi, dN_Bo, dN_Ba, dN_To, dN_Ta, M)
+    return pack_state_semicomplete(dN_A, dpi, dN_Bo, dN_Ba, da, dN_To, dN_Ta, M)
 
 def rhs_null(t, y, p, M, psi_vec, weights):
     # _call_count[0] += 1
@@ -975,8 +992,8 @@ def run_simulation_semicomplete(p=None, t_span=None, t_eval=None, mode='grid', D
     N_Ba_init = np.zeros(M)
     N_To_init = p.N_T0
     N_Ta_init = 0.0
- 
-    y0 = pack_state_semicomplete(N_A_init, pi_init, N_Bo_init, N_Ba_init, N_To_init, N_Ta_init, M)
+    a_init = np.zeros(M)
+    y0 = pack_state_semicomplete(N_A_init, pi_init, N_Bo_init, N_Ba_init, a_init, N_To_init, N_Ta_init, M)
     
     # --- Integrate ---
     #method='BDF', 'LSODA' o 'RK45', rtol=1e-6, atol=1e-8, max_step=0.1
@@ -999,7 +1016,7 @@ def run_simulation_semicomplete(p=None, t_span=None, t_eval=None, mode='grid', D
     t = sol.t
     N_steps = len(t)
  
-    N_A, pi_arr, N_Bo_arr, N_Ba_arr, N_To_arr, N_Ta_arr = unpack_state_semicomplete(sol.y, M)
+    N_A, pi_arr, N_Bo_arr, N_Ba_arr, a_arr, N_To_arr, N_Ta_arr = unpack_state_semicomplete(sol.y, M)
     
     # --- Derived quantities ---
     # h_T_arr = np.zeros((M, N_steps))
@@ -1010,6 +1027,7 @@ def run_simulation_semicomplete(p=None, t_span=None, t_eval=None, mode='grid', D
         'pi': pi_arr,
         'N_Bo': N_Bo_arr,
         'N_Ba': N_Ba_arr,
+        'a': a_arr,
         'N_To': N_To_arr,
         'N_Ta': N_Ta_arr,
         'DG': DG_arr,

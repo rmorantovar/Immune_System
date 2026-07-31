@@ -25,16 +25,18 @@ fig_kw = dict(figsize=(8 * 1.62, 8), gridspec_kw={'left': .12, 'right': .95, 'bo
 fig_kw2 = dict(figsize=(8 * 1.62, 5), gridspec_kw={'left': .12, 'right': .95, 'bottom': .15, 'top': .94})
 if __name__ == '__main__':
     # Default parameters
-    base = dict(N_A0=1.0, lambda_A = 6.0, delta_A=3.0, eta= 1.0,
+    base = dict(N_A0=1.0, lambda_innate = 2.2, threshold_innate = 5e3,
+                lambda_A = 6.2, delta_A=3.0, eta= 1.0,
                 k_on=1e2*2e5*1e6*24*3600/N_Avg, delta_pi=0.1,
-                hill=1.0, beta_star=2.5, K_T = 1e4,
+                hill=2.0, beta_star=2.3, K_T = 1e4,
                 delta_T=0.00, Tcell_growth_factor=2.0,
-                tau_eng=0.1, b0=2.0, delta_B=0.00,
-                DG_min=0.0, DG_max=8.0, M=30,
+                tau_eng=0.1, b0=1.5, delta_B=0.00,
+                DG_min=0.0, DG_max=8.0, M=32,
                 omega_0=1.0, T_lim = True, N_T0 = 1e6,
-                Z_c = 1e-10
+                Z_c = 1e3, n_mem = 1e5
     )
     T = 10
+
     # print(compute_N_B_tot(res))
     # ============================================================
     # Scan N_T: move t_D relative to dynamics
@@ -44,11 +46,11 @@ if __name__ == '__main__':
     # fig_Z_memory_total, ax_Z_memory_total = plt.subplots(**fig_kw)
     # fig_Z_memory_mean, ax_Z_memory_mean = plt.subplots(**fig_kw)
     
-    colors_sim = [my_green, my_blue2, my_purple2, my_gold, my_brown, my_blue, my_green, 'tab:orange', my_purple, my_cyan]
-    styles_sim = ['-', '--', ':', '-.', '-', '--', ':', '-.', '-', '--']
+    colors_sim = [my_green, my_blue, my_purple2, my_gold, my_brown, my_blue, my_green, 'tab:orange', my_purple, my_cyan]
+    styles_sim = ['--', '-', ':', '-.', '-', '--', ':', '-.', '-', '--']
     N_ensemble = 1
 
-    h0s = np.array([base['b0']/100.])
+    h0s = np.array([base['b0']/1000.])
     pi_stars = (base['b0']/h0s)**(1/base['hill'])
     initial_memory_potency = []
     final_primary_potency = []
@@ -59,10 +61,9 @@ if __name__ == '__main__':
     for i_h0, h0 in enumerate(h0s):
         print(f"... for h0={h0:.2g}")
         base['h0'] = h0
-        pi_star = (base['b0']/base['h0'])**(1/base['hill'])
-        label = f'${pi_star:.2g}$'
         fig_NA_shared, ax_NA_shared = plt.subplots(**fig_kw2)
         fig_Z_shared, ax_Z_shared = plt.subplots(**fig_kw2)
+        fig_pb_shared, ax_pb_shared = plt.subplots(**fig_kw2)
 
         for i_m, memory in enumerate([0, 1]):
             output_plot = f'/Users/robertomorantovar/Dropbox/_Documents/Research/Projects/Immune_System/_Repository/Figures/{project}/{model}/{submodel}/{subproject}/{subsubproject}/memory_{memory}/'
@@ -71,6 +72,12 @@ if __name__ == '__main__':
             base['memory'] = memory
             if memory == 1:
                 base['h0'] = base['b0']
+                alpha = p.eta*(1+p.b0/p.lambda_A)
+                print('alpha=', alpha)
+            pi_star = (base['b0']/base['h0'])**(1/base['hill'])
+            label = f'${pi_star:.2g}$'
+            p = Parameters(**base)
+
             figs, axes = plt.subplots(3, 2, figsize=(16, 15))
             fig_NA, ax_NA = plt.subplots(**fig_kw2)
             fig_pi, ax_pi = plt.subplots(**fig_kw2)
@@ -81,18 +88,12 @@ if __name__ == '__main__':
             fig_Y, ax_Y = plt.subplots(**fig_kw2)
             fig_Z, ax_Z = plt.subplots(**fig_kw2)
 
-            p = Parameters(**base)
-            
-            initial_memory_potencies_pi_star = []
-            final_primary_potencies_pi_star = []
-            initial_memory_yield_pi_star = []
-            final_primary_yield_pi_star = []
 
             for i_ensemble in range(N_ensemble):
                 # res = run_simulation_semicomplete(p=p, t_span=(0, T), mode='stochastic', seed=None)
                 if p.memory == 0:
                     res = run_simulation_semicomplete(p=p, t_span=(0, T), mode='grid')
-                    expanded_cells, formed_memory = memory_seed_from_primary(res, p=p, n_mem=int(1e3))
+                    expanded_cells, formed_memory = memory_seed_from_primary(res, p=p, n_mem=int(p.n_mem))
                 else:
                     res = run_simulation_semicomplete(p=p, t_span=(0, T), mode='grid', memory_seed=formed_memory)
                 # print(res['M'])
@@ -101,17 +102,22 @@ if __name__ == '__main__':
                 # N_B[N_B<2.0] = 0
                 N_T = res['N_To'] + res['N_Ta']
 
-
             # N_A
             ax_NA.plot(t, res['N_A'], label=label, linewidth = 4, color = antigen_color)
-            ax_NA_shared.plot(t, res['N_A'], label=label, linewidth = 4, color = antigen_color, ls = styles_sim[i_m])
+            if p.memory == 0:
+                ax_NA_shared.plot(t, res['N_A'], label=label, linewidth = 4, color = antigen_color, ls = styles_sim[i_m])
+            else:
+                ax_NA_shared.plot(t, res['N_A'], label=label, linewidth = 4, color = colors_sim[i_m], ls = styles_sim[i_m])
 
             # pi
             ax1 = ax_pi.plot(t, res['pi'][0, :], label=label, linewidth = 4, color=colors_sim[i_m])
             ax_pi.plot(t, res['pi'][10, :], label=label, linewidth = 3, alpha=0.5, color=ax1[0].get_color())
             ax_pi.plot(t, res['pi'][-10, :], label=label, linewidth = 2, alpha=0.2, color=ax1[0].get_color())
             # ax_pi.plot(t, 1e8*np.exp(-(p.b0)*t), label=label, linewidth = 1, linestyle='--', color='grey', alpha=0.8)
-            ax_pi.axhline(pi_star, 0, T, linewidth = 1, linestyle='--', color='grey', alpha=0.8)
+            if p.memory == 0:
+                ax_pi.axhline(pi_star, 0, T, linewidth = 1, linestyle='--', color='grey', alpha=0.8)
+            else:
+                ax_pi.axhline(pi_star, 0, T, linewidth = 1, linestyle='--', color='grey', alpha=0.8)
 
             # lambda_B
             ax1 = ax_lamB.plot(t, p.b0*res['N_Ba'][0, :]/(N_B[0, :])/p.b0, label=label, linewidth = 2, color = colors_sim[i_m])
@@ -160,17 +166,40 @@ if __name__ == '__main__':
                 # ax_Z_shared.plot(t, 5e1*np.exp((p.b0)*t), linewidth = 1, linestyle='--', color='grey', alpha=0.8)
 
             best_DG_mem = np.argmax(N_B[:, 0]>0)
-            tstar = t[N_B[best_DG_mem, :]>N_B[best_DG_mem, 0]+0.1*N_B[best_DG_mem, 0]][0]
-            tpeak = t[res['N_A']==np.max(res['N_A'])][0]
+            if p.memory ==0:
+                tstar = t[N_B[best_DG_mem, :]>N_B[best_DG_mem, 0]+0.06*N_B[best_DG_mem, 0]][0]
+            else:
+                tstar = t[N_B[best_DG_mem, :]>N_B[best_DG_mem, 0]+0.01*N_B[best_DG_mem, 0]][0]
+            tpeak_pi = t[res['pi'][0, :]==np.max(res['pi'][0, :])][0]
+            tpeak_NA = t[res['N_A']==np.max(res['N_A'])][0]
+            tpeak = tpeak_NA + (tpeak_pi - tpeak_NA)/2
+            print(tpeak)
             ton = t[(t<tpeak) & (t>tstar)]
             toff = t[(t>=tpeak)]
-            DGpeak = p.lambda_A/p.eta * (tpeak - tstar)
-            DG_on = p.lambda_A/p.eta * (ton - tstar)
+            # pioff = res['pi'][0, :][(t>=tpeak)]
+            # tend = toff[pioff<pi_star][0]
+            DGpeak = 0.78*p.lambda_A/p.eta * (tpeak - tstar)
+            DG_on = 0.78*p.lambda_A/p.eta * (ton - tstar)
             DG_off = p.b0 /p.eta * (tpeak - toff) + DGpeak
+            # DG_off2 = p.b0/p.eta * (tend - toff)
             DG_off_null = p.delta_A/p.eta * (tpeak - toff) + DGpeak
-            ax_DG.plot(ton, DG_on, linewidth = 3, color=my_green, ls = 'dotted')
-            ax_DG.plot(toff[DG_off>p.DG_min], DG_off[DG_off>p.DG_min], linewidth = 3, color=my_green, ls = 'dashed')
+            ax_DG.plot(ton, DG_on, linewidth = 3, color=colors_sim[i_m], ls = 'dotted')
+            ax_DG.plot(toff[DG_off>p.DG_min], DG_off[DG_off>p.DG_min], linewidth = 3, color=colors_sim[i_m], ls = 'dashed')
+            # ax_DG.plot(toff[DG_off>p.DG_min], DG_off2[DG_off>p.DG_min], linewidth = 3, color=colors_sim[i_m], ls = 'dashed')
             ax_DG.plot(toff[DG_off_null>p.DG_min], DG_off_null[DG_off_null>p.DG_min], linewidth = 3, color=my_brown, ls = 'dashed')
+
+            if memory == 0:
+                innate_proxy = np.exp(p.lambda_innate * t)          # external, no feedback
+                innate = (1.0 + p.threshold_innate / (innate_proxy + 1e-30))**(-1)
+                ax_pb_shared.plot(t, innate, label=label, linewidth = 4, color=colors_sim[i_m], ls = '--')
+
+            # active = (res['pi']> pi_star)                      # pi_c = b0/h0, see below
+            # clone_mass = (res['N_Bo'] + res['N_Ba']) * active
+            # Ab_proxy = np.sum(res['weights'][:, None] * clone_mass)
+            # pb = (1.0 + p.Z_c / (Ab_proxy + 1e-30))**(-1)
+            # ax_pb_shared.plot(t, pb, label=label, linewidth = 2, color=colors_sim[i_m])
+            pb = (1.0 + p.Z_c / (Z_B_total + 1e-30))**(-1)
+            ax_pb_shared.plot(t, pb, label=label, linewidth = 4, color=colors_sim[i_m])
 
             
             # Formatting
@@ -204,7 +233,7 @@ if __name__ == '__main__':
             # ax_NB.set_xlabel('Time', fontsize = 16)
             # ax_NB.set_ylabel('B cells', fontsize = 16)
             ax_NB.set_xticklabels([])
-            ax_NB.set_ylim(bottom = 5e-1, top = 1e8)
+            ax_NB.set_ylim(bottom = 5e-1, top = 1e6)
             ax_NB.set_xlim(0, T)
             ax_NB.set_yscale('log')
             ax_NB.tick_params(axis='y', labelsize=30)
@@ -236,18 +265,19 @@ if __name__ == '__main__':
             # ax_Y.legend(fontsize=14)
             fig_Y.savefig(os.path.join(output_plot, f'Y.pdf'), dpi=150)
 
-            if p.memory == 0:
-                lambda_prime = p.lambda_A*p.eta*p.beta_star*(1-0.5)
-                ax_Z.plot(t, 1e-17*np.exp((p.b0 + lambda_prime)*t), linewidth = 1, linestyle='--', color='grey', alpha=0.8)
-                ax_Z.plot(t, 2e-2*np.exp((p.b0)*t), linewidth = 1, linestyle='--', color='grey', alpha=0.8)
-            else:
-                ax_Z.plot(t, 2e0*np.exp((p.b0)*t), linewidth = 1, linestyle='--', color='grey', alpha=0.8)
-            ax_Z.axhline(1.0, color='k', linestyle='--', alpha=0.5)
+            # if p.memory == 0:
+                # lambda_prime = p.lambda_A*p.eta*p.beta_star*(1-0.5)
+                # ax_Z.plot(t, 1e-17*np.exp((p.b0 + lambda_prime)*t), linewidth = 1, linestyle='--', color='grey', alpha=0.8)
+                # ax_Z.plot(t, 2e-2*np.exp((p.b0)*t), linewidth = 1, linestyle='--', color='grey', alpha=0.8)
+            # else:
+                # ax_Z.plot(t, 2e0*np.exp((p.b0)*t), linewidth = 1, linestyle='--', color='grey', alpha=0.8)
+            ax_Z.axhline(1.0, linewidth = 1, linestyle='--', color='k', alpha=1.0)
+            ax_Z.axhline(p.Z_c, linewidth = 1, linestyle='--', color='k', alpha=1.0)
             # ax_Z.set_xlabel('Time')
             # ax_Z.set_ylabel('Potency, $Z$', fontsize = 16)
             # ax_Z.set_xticklabels([])
             ax_Z.set_xlabel('Time', fontsize = 16)
-            ax_Z.set_ylim(bottom = 5e-3, top = 1e9)
+            ax_Z.set_ylim(bottom = 5e-3, top = 1e7)
             ax_Z.set_xlim(0, T)
             ax_Z.set_yscale('log')
             ax_Z.tick_params(axis='y', labelsize=30)
@@ -258,26 +288,38 @@ if __name__ == '__main__':
         output_plot = f'/Users/robertomorantovar/Dropbox/_Documents/Research/Projects/Immune_System/_Repository/Figures/{project}/{model}/{submodel}/{subproject}/{subsubproject}/'
         os.makedirs(output_plot, exist_ok=True)
 
-
         # Formatting
         # ax_NA_shared.set_ylabel('$N_A$', fontsize = 16)
         ax_NA_shared.set_xticklabels([])
         ax_NA_shared.set_ylim(bottom = 1e0, top = 1e11)
-        ax_NA_shared.set_xlim(0, T)
+        ax_NA_shared.set_xlim(0+0.5, T-3)
         ax_NA_shared.set_yscale('log')
         ax_NA_shared.tick_params(axis='y', labelsize=30)
         ax_NA_shared.tick_params(axis='x', labelsize=30)
         fig_NA_shared.savefig(os.path.join(output_plot, f'N_A_shared.pdf'), dpi=150)
         
-        # ax_Z_shared.axhline(1.0, color='k', linestyle='--', alpha=0.5)
+        ax_Z_shared.axhline(p.Z_c, linewidth = 1, linestyle='--', color='k', alpha=1.0)
         # ax_Z_shared.set_xlabel('Time')
         # ax_Z_shared.set_ylabel('Potency, $Z$', fontsize = 16)
         # ax_Z_shared.set_xticklabels([])
         # ax_Z_shared.set_xlabel('Time', fontsize = 16)
-        ax_Z_shared.set_ylim(bottom = 5e-1)
-        ax_Z_shared.set_xlim(0, T)
+        ax_Z_shared.set_ylim(bottom = 5e-1, top = 1e6)
+        ax_Z_shared.set_xlim(0+0.5, T-3)
         ax_Z_shared.set_yscale('log')
         ax_Z_shared.tick_params(axis='y', labelsize=30)
         ax_Z_shared.tick_params(axis='x', labelsize=30)
         # ax_Z_shared.legend(fontsize=14)
         fig_Z_shared.savefig(os.path.join(output_plot, f'Z_shared.pdf'), dpi=150)
+
+        # ax_pb_shared.axhline(p.Z_c, linewidth = 1, linestyle='--', color='k', alpha=1.0)
+        # ax_pb_shared.set_xlabel('Time')
+        # ax_pb_shared.set_ylabel('Potency, $Z$', fontsize = 16)
+        # ax_pb_shared.set_xticklabels([])
+        # ax_pb_shared.set_xlabel('Time', fontsize = 16)
+        # ax_pb_shared.set_ylim(bottom = 5e-1, top = 1e6)
+        ax_pb_shared.set_xlim(0+0.5, T-3)
+        # ax_pb_shared.set_yscale('log')
+        ax_pb_shared.tick_params(axis='y', labelsize=30)
+        ax_pb_shared.tick_params(axis='x', labelsize=30)
+        # ax_pb_shared.legend(fontsize=14)
+        fig_pb_shared.savefig(os.path.join(output_plot, f'pb_shared.pdf'), dpi=150)
