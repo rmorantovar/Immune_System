@@ -37,12 +37,14 @@ if __name__ == '__main__':
     )
     T = 8
 
-    colors_mem = [my_green, my_blue2]
-    colors_h0 = [my_cyan, my_blue2, my_blue, my_purple2, my_purple, my_red]
-    styles_sim = ['--', '-', ':', '-.', '-', '--', ':', '-.', '-', '--']
     N_ensemble = 1
     N_h0 = 6
+
+    colors_mem = [my_green, my_blue2]
+    colors_h0 = [my_red, my_purple, my_purple2, my_blue, my_blue2, my_cyan]
+    colors_h0 = plt.cm.summer(np.linspace(0, 0.8, N_h0))
     # colors_h0 = plt.cm.plasma(np.linspace(0, .7, N_h0))
+    styles_sim = [':', '-', ':', '-.', '-', '--', ':', '-.', '-', '--']
     widths_h0 = [4, 3, 2, 1, 4, 3, 2, 1, 4, 3]
     h0s = np.flip(np.logspace(np.log10(base['b0']/1e5), np.log10(base['b0']/1e0), N_h0))
     pi_stars = (base['b0']/h0s)**(1/base['hill'])
@@ -53,8 +55,10 @@ if __name__ == '__main__':
 
     fig_NA_shared, ax_NA_shared = plt.subplots(**fig_kw2)
     fig_DG_shared, ax_DG_shared = plt.subplots(**fig_kw2)
-    fig_Z_shared, ax_Z_shared = plt.subplots(**fig_kw2)
+    fig_Z_shared, ax_Z_shared = plt.subplots(**fig_kw)
     fig_n0_shared, ax_n0_shared = plt.subplots(**fig_kw)
+    fig_n0_shared2, ax_n0_shared2 = plt.subplots(**fig_kw)
+    fig_P_shared, ax_P_shared = plt.subplots(**fig_kw)
 
     # ============================================================
     # Scan h0
@@ -64,7 +68,7 @@ if __name__ == '__main__':
         print(f"... for h0={h0:.2g}")
         base['h0'] = h0
         pi_star = (base['b0']/base['h0'])**(1/base['hill'])
-        label = f'${pi_star:.2g}$'
+        label = r'${%.1f \cdot 10^{%d}}$' % (pi_star/10**np.floor(np.log10(pi_star)), np.floor(np.log10(pi_star)))
 
         for i_m, memory in enumerate([0, 1]):
             print(f"... ... for memory={memory}")
@@ -80,10 +84,18 @@ if __name__ == '__main__':
                 if p.memory == 0:
                     res = run_simulation_semicomplete(p=p, t_span=(0, T), mode='grid')
                     expanded_cells, formed_memory = memory_seed_from_primary(res, p=p, n_mem=int(p.n_mem))
-                    ax_n0_shared.plot(res['DG'], expanded_cells, color=colors_h0[i_h0], alpha=0.8, ls = styles_sim[i_m], lw = 1)
+                    ax_n0_shared.plot(res['DG'], expanded_cells, color=colors_h0[i_h0], alpha=1.0, ls = styles_sim[i_m], lw = 2)
+                    # ax_n0_shared2.plot(res['DG'], expanded_cells, color=colors_h0[i_h0], alpha=0.8, ls = styles_sim[i_m], lw = 2)
                 else:
-                    ax_n0_shared.plot(res['DG'], formed_memory*res['weights'], color=colors_h0[i_h0], alpha=0.8, label=label, lw = 3)
+                    ax_n0_shared.plot(res['DG'], formed_memory*res['weights'], color=colors_h0[i_h0], alpha=1.0, label=label, lw = 3)
                     res = run_simulation_semicomplete(p=p, t_span=(0, T), mode='grid', memory_seed=formed_memory)
+                    per_clone = res['N_Bo'][:, -1] + res['N_Ba'][:, -1]
+                    w = res['weights']
+                    threshold = 2.0
+                    activated = per_clone > threshold
+                    expanded_cells = (per_clone * w) * activated
+                    ax_n0_shared2.plot(res['DG'], expanded_cells, color=colors_h0[i_h0], alpha=1.0, ls = styles_sim[i_m], lw = 3)
+
                 t = res['t']
                 N_B = res['N_Bo'] + res['N_Ba']
                 # N_B[N_B<2.0] = 0
@@ -110,12 +122,14 @@ if __name__ == '__main__':
             Z_B[N_B <= 2.0] = np.nan
 
             if p.memory == 0:
-                ax_Z_shared.plot(t[Z_B_total>0], Z_B_total[Z_B_total>0], color=colors_h0[i_h0], ls = styles_sim[i_m], lw = 2)
+                ax_Z_shared.plot(t[Z_B_total>0], Z_B_total[Z_B_total>0], color=colors_h0[i_h0], ls = styles_sim[i_m], lw = 4)
                 # lambda_prime = p.lambda_A*p.eta*p.beta_star*(1-0.5)
                 # ax_Z_shared.plot(t[t<4.5], 1e-12*np.exp((p.b0 + lambda_prime)*t[t<4.5]), linewidth = 1, linestyle='--', color='grey', alpha=0.8)
                 # ax_Z_shared.plot(t[t<8], 2e-2*np.exp((p.b0)*t[t<8]), linewidth = 1, linestyle='--', color='grey', alpha=0.8)
             else:
-                ax_Z_shared.plot(t[Z_B_total>0], Z_B_total[Z_B_total>0], color=colors_h0[i_h0], label=label, ls = styles_sim[i_m], lw = 4)
+                ax_Z_shared.plot(t[Z_B_total>0], Z_B_total[Z_B_total>0], color=colors_h0[i_h0], ls = styles_sim[i_m], lw = 4)
+                ax_Z_shared.scatter(t[Z_B_total>=p.Z_c][0], Z_B_total[Z_B_total>=p.Z_c][0], facecolor=colors_h0[i_h0], edgecolor = 'k', linewidth = 2, s=250, zorder=10, label=label)
+                # ax_P_shared.scatter(-t[Z_B_total>0], color=colors_h0[i_h0], ls = styles_sim[i_m], lw = 4)
                 # ax_Z_shared.plot(t, 5e1*np.exp((p.b0)*t), linewidth = 1, linestyle='--', color='grey', alpha=0.8)
             
             if p.memory ==0:
@@ -146,14 +160,34 @@ if __name__ == '__main__':
     ax_NA_shared.tick_params(axis='x', labelsize=30)
     fig_NA_shared.savefig(os.path.join(output_plot, f'N_A_shared.pdf'), dpi=150)
 
+    Emax = 12
+    E = np.linspace(0, Emax, 10000)
+    Ef = 5
+    Efm = 4.5
+    step = 70
+    ax_n0_shared.plot(E, 2e9*np.exp(-(E-16)**2/(2*6)), color='grey', alpha = 0.5, lw = 8)
+    ax_n0_shared.plot(np.linspace(0, 8, 100), 1e3*np.exp((p.beta_star - alpha)*np.linspace(0, 8, 100)), color='grey', ls = 'dashed', lw = 2, alpha=1.0)
     # ax_n0_shared.set_ylabel(r'$N_0$', fontsize = 16)
-    ax_n0_shared.set_xlabel(r'$\mathrm{Energy}, \Delta G$', fontsize = 30)
-    ax_n0_shared.plot(np.linspace(0, 8, 100), 1e3*np.exp((p.beta_star - alpha)*np.linspace(0, 8, 100)), color='k', ls = 'dashed', lw = 2, alpha=0.5)
-    ax_n0_shared.tick_params(axis='y', labelsize=30)
-    ax_n0_shared.tick_params(axis='x', labelsize=30)
-    ax_n0_shared.legend(fontsize=14)
+    # ax_n0_shared.set_xlabel(r'$\mathrm{Energy}, \Delta G$', fontsize = 30)
+    ax_n0_shared.tick_params(axis='y', which='both', labelsize=44, labelleft=True)
+    ax_n0_shared.tick_params(axis='x', labelsize=44, labelbottom=True)
+    ax_n0_shared.set_ylim(top=2.5e9, bottom=1)
+    ax_n0_shared.set_xlim(left=-0.5, right=Emax)
+    ax_n0_shared.legend(fontsize=24, title=r'$\pi_c$', title_fontsize=26)
     ax_n0_shared.set_yscale('log')
-    fig_n0_shared.savefig(os.path.join(output_plot, f'n0_shared.pdf'), dpi=150)
+    fig_n0_shared.savefig(os.path.join(output_plot, f'n0_shared.pdf'), dpi=200, transparent=True)
+
+    ax_n0_shared2.plot(E, 2e9*np.exp(-(E-16)**2/(2*6)), color='grey', alpha = 0.5, lw = 8)
+    ax_n0_shared2.plot(np.linspace(0, 8, 100), 1e5*np.exp((p.beta_star - 2*alpha)*np.linspace(0, 8, 100)), color='k', ls = 'dashed', lw = 2, alpha=1.0)
+    # ax_n0_shared2.set_ylabel(r'$N_0$', fontsize = 16)
+    # ax_n0_shared2.set_xlabel(r'$\mathrm{Energy}, \Delta G$', fontsize = 30)
+    ax_n0_shared2.tick_params(axis='y', which='both', labelsize=44, labelleft=False)
+    ax_n0_shared2.tick_params(axis='x', labelsize=44, labelbottom=True)
+    ax_n0_shared2.set_ylim(top=2.5e9, bottom=1)
+    ax_n0_shared2.set_xlim(left=-0.5, right=Emax)
+    ax_n0_shared2.legend(fontsize=14)
+    ax_n0_shared2.set_yscale('log')
+    fig_n0_shared2.savefig(os.path.join(output_plot, f'n0_shared2.pdf'), dpi=200, transparent=True)
 
     # ax_DG_shared.axhline(p.DG_min, tstar, toff[DG_off>p.DG_min][-1], linewidth = 1, linestyle='--', color='grey', alpha=0.8)
     # ax_DG_shared.set_xlabel(r'$\mathrm{Time}, t$', fontsize = 30)
@@ -175,10 +209,10 @@ if __name__ == '__main__':
     # ax_Z_shared.set_ylabel('Potency, $Z$', fontsize = 16)
     # ax_Z_shared.set_xticklabels([])
     # ax_Z_shared.set_xlabel('Time', fontsize = 16)
-    ax_Z_shared.set_ylim(bottom = 5e-1, top = 1e6)
-    ax_Z_shared.set_xlim(0, T)
+    ax_Z_shared.set_ylim(bottom = 5e-1, top = 1e5)
+    ax_Z_shared.set_xlim(2.0, T-3.5)
     ax_Z_shared.set_yscale('log')
     ax_Z_shared.tick_params(axis='y', labelsize=30)
     ax_Z_shared.tick_params(axis='x', labelsize=30)
-    ax_Z_shared.legend(fontsize=20, title=r'$\pi_c$', title_fontsize=24)
-    fig_Z_shared.savefig(os.path.join(output_plot, f'Z_shared.pdf'), dpi=150)
+    ax_Z_shared.legend(fontsize=20, title=r'$\pi_c$', title_fontsize=22)
+    fig_Z_shared.savefig(os.path.join(output_plot, f'Z_shared.pdf'), dpi=150, transparent=True)

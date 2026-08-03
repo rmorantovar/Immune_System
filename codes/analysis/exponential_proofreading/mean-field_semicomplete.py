@@ -46,8 +46,8 @@ if __name__ == '__main__':
     # fig_Z_memory_total, ax_Z_memory_total = plt.subplots(**fig_kw)
     # fig_Z_memory_mean, ax_Z_memory_mean = plt.subplots(**fig_kw)
     
-    colors_sim = [my_green, my_blue, my_purple2, my_gold, my_brown, my_blue, my_green, 'tab:orange', my_purple, my_cyan]
-    styles_sim = ['--', '-', ':', '-.', '-', '--', ':', '-.', '-', '--']
+    colors_sim = [my_green, my_green, my_purple2, my_gold, my_brown, my_blue, my_green, 'tab:orange', my_purple, my_cyan]
+    styles_sim = [':', '-', ':', '-.', '-', '--', ':', '-.', '-', '--']
     N_ensemble = 1
 
     h0s = np.array([base['b0']/1000.])
@@ -62,7 +62,7 @@ if __name__ == '__main__':
         print(f"... for h0={h0:.2g}")
         base['h0'] = h0
         fig_NA_shared, ax_NA_shared = plt.subplots(**fig_kw2)
-        fig_Z_shared, ax_Z_shared = plt.subplots(**fig_kw2)
+        fig_Z_shared, ax_Z_shared = plt.subplots(**fig_kw)
         fig_pb_shared, ax_pb_shared = plt.subplots(**fig_kw2)
 
         for i_m, memory in enumerate([0, 1]):
@@ -75,7 +75,7 @@ if __name__ == '__main__':
                 alpha = p.eta*(1+p.b0/p.lambda_A)
                 print('alpha=', alpha)
             pi_star = (base['b0']/base['h0'])**(1/base['hill'])
-            label = f'${pi_star:.2g}$'
+            label = r'${%.1f \cdot 10^{%d}}$' % (pi_star/10**np.floor(np.log10(pi_star)), np.floor(np.log10(pi_star)))
             p = Parameters(**base)
 
             figs, axes = plt.subplots(3, 2, figsize=(16, 15))
@@ -156,10 +156,14 @@ if __name__ == '__main__':
             Z_B[N_B <= 2.0] = np.nan
 
             ax1 = ax_Z.plot(t, Z_B_total, linewidth = 4, color=colors_sim[i_m], label=label)
-            ax_Z_shared.plot(t[Z_B_total>0], Z_B_total[Z_B_total>0], linewidth = 4, color=colors_sim[i_m], label=label)
+            ax_Z_shared.plot(t[Z_B_total>0], Z_B_total[Z_B_total>0], linewidth = 5, color=colors_sim[i_m], label=label, ls = styles_sim[i_m])
+            if p.memory==0:
+                ax_Z_shared.scatter(t[Z_B_total>=p.Z_c][0], Z_B_total[Z_B_total>=p.Z_c][0], facecolor='white', edgecolor = 'k', linewidth = 2, s=250, zorder=10)
+            else:
+                ax_Z_shared.scatter(t[Z_B_total>=p.Z_c][0], Z_B_total[Z_B_total>=p.Z_c][0], facecolor=colors_sim[i_m], edgecolor = 'k', linewidth = 2, s=250, zorder=10)
             # ax_Z.semilogy(t, Z_B[0, :], label=label, linewidth = 3, alpha=0.5, color=ax1[0].get_color())
-            if p.memory == 0:
-                lambda_prime = p.lambda_A*p.eta*p.beta_star*(1-0.5)
+            # if p.memory == 0:
+            #     lambda_prime = p.lambda_A*p.eta*p.beta_star*(1-0.5)
                 # ax_Z_shared.plot(t[t<4.5], 1e-12*np.exp((p.b0 + lambda_prime)*t[t<4.5]), linewidth = 1, linestyle='--', color='grey', alpha=0.8)
                 # ax_Z_shared.plot(t[t<8], 2e-2*np.exp((p.b0)*t[t<8]), linewidth = 1, linestyle='--', color='grey', alpha=0.8)
             # else:
@@ -303,13 +307,13 @@ if __name__ == '__main__':
         # ax_Z_shared.set_ylabel('Potency, $Z$', fontsize = 16)
         # ax_Z_shared.set_xticklabels([])
         # ax_Z_shared.set_xlabel('Time', fontsize = 16)
-        ax_Z_shared.set_ylim(bottom = 5e-1, top = 1e6)
-        ax_Z_shared.set_xlim(0+0.5, T-3)
+        ax_Z_shared.set_ylim(bottom = 5e-1, top = 1e5)
+        ax_Z_shared.set_xlim(1.5, T-3)
         ax_Z_shared.set_yscale('log')
         ax_Z_shared.tick_params(axis='y', labelsize=30)
         ax_Z_shared.tick_params(axis='x', labelsize=30)
         # ax_Z_shared.legend(fontsize=14)
-        fig_Z_shared.savefig(os.path.join(output_plot, f'Z_shared.pdf'), dpi=150)
+        fig_Z_shared.savefig(os.path.join(output_plot, f'Z_shared.pdf'), dpi=150, transparent=True)
 
         # ax_pb_shared.axhline(p.Z_c, linewidth = 1, linestyle='--', color='k', alpha=1.0)
         # ax_pb_shared.set_xlabel('Time')
@@ -322,4 +326,4 @@ if __name__ == '__main__':
         ax_pb_shared.tick_params(axis='y', labelsize=30)
         ax_pb_shared.tick_params(axis='x', labelsize=30)
         # ax_pb_shared.legend(fontsize=14)
-        fig_pb_shared.savefig(os.path.join(output_plot, f'pb_shared.pdf'), dpi=150)
+        fig_pb_shared.savefig(os.path.join(output_plot, f'pb_shared.pdf'), dpi=150, transparent=True)
