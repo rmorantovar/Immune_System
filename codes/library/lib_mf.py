@@ -350,6 +350,13 @@ def compute_potency_t(res, threshold=2.0):
     neut = (res['weights'] * np.exp(-res['DG']))[:, None]
     return np.sum(neut * N_tot * ever_active, axis=0)
 
+def compute_potency_null_t(res, threshold=2.0):
+
+    N_tot = res['N_Bo'] + res['N_Ba']              # (M, N_t)
+    a     = res['a']                                # (M, N_t), integrated latch
+    neut  = (res['weights'] * np.exp(-res['DG']))[:, None]
+    return np.sum(neut * N_tot * a, axis=0)
+
 def compute_yield(res, time_index=-1, threshold=2.0):
     """
     Compute the yield (sum of the clone size) at a given time.
@@ -449,12 +456,13 @@ def pack_state_semicomplete(N_A, pi_vec, N_Bo_vec, N_Ba_vec, a_vec, N_To, N_Ta, 
 
     return y
 
-def pack_state_null(N_A, N_Bo_vec, N_Ba_vec, M):
+def pack_state_null(N_A, N_Bo_vec, N_Ba_vec, a_vec, M):
     """Pack all state variables into a single vector for the integrator."""
-    y = np.zeros(4 * M + 3)
+    y = np.zeros(4 * M + 4)
     y[0] = N_A
     y[1:M+1] = N_Bo_vec
     y[M+1:2*M+1] = N_Ba_vec
+    y[2*M+1:3*M+1] = a_vec
 
     return y
 
@@ -493,7 +501,8 @@ def unpack_state_null(y, M):
     N_A = y[0]
     N_Bo_vec = y[1:M+1]
     N_Ba_vec = y[M+1:2*M+1]
-    return N_A, N_Bo_vec, N_Ba_vec
+    a_vec = y[2*M+1:3*M+1]
+    return N_A, N_Bo_vec, N_Ba_vec, a_vec
 
 def rhs_approx(t, y, p, M, psi_vec, weights):
     """Right-hand side of the coupled ODE system."""
@@ -623,14 +632,12 @@ def rhs_semicomplete(t, y, p, M, psi_vec, weights, neut_weights):
         dN_A = (p.lambda_A * (1 - innate) - p.delta_A * innate) * N_A - 0.01 * N_A
     else:
         clone_mass = (N_Bo_vec + N_Ba_vec) * a_vec
-        Z = np.sum(neut_weights * clone_mass)
+        Z = max(np.sum(neut_weights * clone_mass), 0.0)
         # Z = np.sum(neut_weights * N_Ba_vec)  # Z(t), feedback
         # pb = (1.0 + p.Z_c / (1e6*24*3600*Ab_proxy/N_Avg + 1e-30))**(-1)
         pb = (1.0 + p.Z_c / (Z + 1e-30))**(-1)
         dN_A = (p.lambda_A * (1 - pb) - p.delta_A * pb) * N_A - 0.01 * N_A
     
-    
-   
     dpi = p.k_on * psi_vec * N_A - p.delta_pi * pi_vec - lambda_eff * pi_vec
  
     # --- Free B-cell clones ---
@@ -651,28 +658,48 @@ def rhs_semicomplete(t, y, p, M, psi_vec, weights, neut_weights):
  
     return pack_state_semicomplete(dN_A, dpi, dN_Bo, dN_Ba, da, dN_To, dN_Ta, M)
 
-def rhs_null(t, y, p, M, psi_vec, weights):
+def rhs_null(t, y, p, M, psi_vec, weights, neut_weights):
     # _call_count[0] += 1
     # if _call_count[0] % 1000 == 0:
     #     print(f"  t = {t:.4f}, calls = {_call_count[0]}")
         
     """Right-hand side of the coupled ODE system."""
  
-    N_A, N_Bo_vec, N_Ba_vec = unpack_state_null(y, M)
+    N_A, N_Bo_vec, N_Ba_vec, a_vec = unpack_state_null(y, M)
  
     # Ensure non-negativity
     N_A = max(N_A, 0.0)
     N_Bo_vec = np.maximum(N_Bo_vec, 0.0)
     N_Ba_vec = np.maximum(N_Ba_vec, 0.0)
+    a_vec    = np.clip(a_vec, 0.0, 1.0)
+
+    # --- antigen processing (drives activation directly; no pMHC intermediary) ---
+    u_p = p.k_on * psi_vec * N_A
+
+    # --- activation latch: fires when help rate h0*u_p exceeds division rate b0 ---
+    u_p_c = p.b0 / p.h0   
+    u_p_c = 1.                                # analog of pi_c = b0/h0
+    g = u_p**p.hill / (u_p**p.hill + u_p_c**p.hill)       # same Hill sharpness
+    kappa = 1.0 * p.b0
+    kappa = 1.0
+    da = kappa * (1.0 - a_vec) * g
  
     # --- Antigen ---
     # S_A = p.lambda_A * N_A if p.lambda_A > 0 else 0.0
     # dN_A = S_A - p.delta_A * N_A
-    pb = (1 + (1e-9/(1e6*24*3600*np.exp(2.0*t)/N_Avg)))**(-1)  # or whatever dependence you intend
-    dN_A = (p.lambda_A * (1 - pb) - p.delta_A*pb) * N_A - 0.01 * N_A
+    if p.memory == 0:
+        innate_proxy = np.exp(p.lambda_innate * t)          # external, no feedback
+        # pb = (1.0 + p.Z_c / (2*1e6*24*3600*Ab_proxy/N_Avg + 1e-30))**(-1)
+        innate = (1.0 + p.threshold_innate / (innate_proxy + 1e-30))**(-1)
+        dN_A = (p.lambda_A * (1 - innate) - p.delta_A * innate) * N_A - 0.01 * N_A
+    else:
+        clone_mass = (N_Bo_vec + N_Ba_vec) * a_vec
+        Z = max(np.sum(neut_weights * clone_mass), 0.0)
+        # Z = np.sum(neut_weights * N_Ba_vec)  # Z(t), feedback
+        # pb = (1.0 + p.Z_c / (1e6*24*3600*Ab_proxy/N_Avg + 1e-30))**(-1)
+        pb = (1.0 + p.Z_c / (Z + 1e-30))**(-1)
+        dN_A = (p.lambda_A * (1 - pb) - p.delta_A * pb) * N_A - 0.01 * N_A
       
-    # --- antigen processing ---
-    u_p = p.k_on * psi_vec * N_A
  
     # --- Free B-cell clones ---
     # dN_Bo = - p.h0 * (pi_vec**p.hill / (pi_vec**p.hill + p.pi_star**p.hill)) * N_Bo_vec * N_To/(N_To + p.K_T) + 2 * p.b0 * N_Ba_vec - p.delta_B * N_Bo_vec
@@ -682,7 +709,7 @@ def rhs_null(t, y, p, M, psi_vec, weights):
     # dN_Ba = p.h0 * (pi_vec**p.hill / (pi_vec**p.hill + p.pi_star**p.hill)) * N_Bo_vec * N_To/(N_To + p.K_T) - p.b0 * N_Ba_vec  - p.delta_B * N_Ba_vec
     dN_Ba = p.h0 * u_p * N_Bo_vec - p.b0 * N_Ba_vec  - p.delta_B * N_Ba_vec
  
-    return pack_state_null(dN_A, dN_Bo, dN_Ba, M)
+    return pack_state_null(dN_A, dN_Bo, dN_Ba, da, M)
 
 # ============================================================
 # Simulation
@@ -990,7 +1017,6 @@ def run_simulation_semicomplete(p=None, t_span=None, t_eval=None, mode='grid', D
             print("Using analytic fallback for initial B-cell clone sizes.")
     else:
         N_Bo_init = np.ones(M) # naive
-
     N_Ba_init = np.zeros(M)
     N_To_init = p.N_T0
     N_Ta_init = 0.0
@@ -1039,7 +1065,7 @@ def run_simulation_semicomplete(p=None, t_span=None, t_eval=None, mode='grid', D
         'M': M,
     }
 
-def run_simulation_null(p=None, t_span=None, t_eval=None, mode='grid', DG_max_sim=None, seed=None):      
+def run_simulation_null(p=None, t_span=None, t_eval=None, mode='grid', DG_max_sim=None, seed=None, memory_seed=None):      
     """
     Run the mean-field simulation.
  
@@ -1083,22 +1109,31 @@ def run_simulation_null(p=None, t_span=None, t_eval=None, mode='grid', DG_max_si
         )
     else:
         raise ValueError(f"Unknown mode: {mode}. Use 'grid' or 'stochastic'.")
- 
+
+    neut_weights = weights * np.exp(-DG_arr)
+
     # --- Initial conditions ---
     N_A_init = p.N_A0
+    a_init = np.zeros(M)
     if p.memory:
-        N_Bo_init = 1e3*np.exp(-p.eta * (p.b0 / p.lambda_A + 1) * DG_arr)  # memory
-    else:
-        N_Bo_init = np.ones(M)  # naive
+        if memory_seed is not None:
+            N_Bo_init = memory_seed.copy()
+            print("Using provided memory seed for initial B-cell clone sizes.")
+        else:
+            alpha = p.eta * (p.b0 / p.lambda_A + 1)
+            N_Bo_init = 1e4 * np.exp(-alpha * DG_arr)   # analytic fallback
+            print("Using analytic fallback for initial B-cell clone sizes.")
+    else: 
+        N_Bo_init = np.ones(M) # naive
     N_Ba_init = np.zeros(M)
  
-    y0 = pack_state_null(N_A_init, N_Bo_init, N_Ba_init, M)
+    y0 = pack_state_null(N_A_init, N_Bo_init, N_Ba_init, a_init, M)
     
     # --- Integrate ---
     #method='BDF', 'LSODA' o 'RK45', rtol=1e-6, atol=1e-8, max_step=0.1
     # _call_count[0] = 0
     sol = solve_ivp(
-        fun=lambda t, y: rhs_null(t, y, p, M, psi_arr, weights),
+        fun=lambda t, y: rhs_null(t, y, p, M, psi_arr, weights, neut_weights),
         t_span=t_span,
         y0=y0,
         t_eval=t_eval,
@@ -1114,13 +1149,14 @@ def run_simulation_null(p=None, t_span=None, t_eval=None, mode='grid', DG_max_si
     t = sol.t
     N_steps = len(t)
  
-    N_A, N_Bo_arr, N_Ba_arr = unpack_state_null(sol.y, M)
+    N_A, N_Bo_arr, N_Ba_arr, a_arr = unpack_state_null(sol.y, M)
     
     return {
         't': t,
         'N_A': N_A,
         'N_Bo': N_Bo_arr,
         'N_Ba': N_Ba_arr,
+        'a': a_arr,
         'DG': DG_arr,
         'weights': weights,
         'params': p,

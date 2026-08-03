@@ -52,10 +52,6 @@ if __name__ == '__main__':
 
     h0s = np.array([base['b0']/1000.])
     pi_stars = (base['b0']/h0s)**(1/base['hill'])
-    initial_memory_potency = []
-    final_primary_potency = []
-    initial_memory_yield = []
-    final_primary_yield = []
 
     print(f"Running simulation")
     for i_h0, h0 in enumerate(h0s):
