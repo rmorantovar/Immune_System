@@ -203,7 +203,7 @@ if __name__ == '__main__':
 
     # ax_Z_shared.plot(t, np.exp(p.lambda_innate * t), linewidth = 1, linestyle='--', color='grey', alpha=0.5)
     # ax_Z_shared.axhline(p.threshold_innate, linewidth = 1, linestyle='--', color='grey', alpha=0.5)
-    ax_Z_shared.axhline(1.0, linewidth = 1, linestyle='--', color='k', alpha=1.0)
+    # ax_Z_shared.axhline(1.0, linewidth = 1, linestyle='--', color='k', alpha=1.0)
     ax_Z_shared.axhline(p.Z_c, linewidth = 1, linestyle='--', color='k', alpha=1.0)
     # ax_Z_shared.set_xlabel(r'$\mathrm{Time}, t$', fontsize = 30)
     # ax_Z_shared.set_ylabel('Potency, $Z$', fontsize = 16)

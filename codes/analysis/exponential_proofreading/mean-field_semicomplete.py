@@ -199,7 +199,7 @@ if __name__ == '__main__':
             # pb = (1.0 + p.Z_c / (Ab_proxy + 1e-30))**(-1)
             # ax_pb_shared.plot(t, pb, label=label, linewidth = 2, color=colors_sim[i_m])
             pb = (1.0 + p.Z_c / (Z_B_total + 1e-30))**(-1)
-            ax_pb_shared.plot(t, pb, label=label, linewidth = 4, color=colors_sim[i_m])
+            ax_pb_shared.plot(t, pb, label=label, linewidth = 4, color=colors_sim[i_m], ls = styles_sim[i_m])
 
             
             # Formatting
