@@ -25,10 +25,12 @@ Reproducing the three original scripts:
 """
 
 import os, sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../lib'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../library'))
 
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
+from matplotlib.legend_handler import HandlerTuple
 
 import mf_lib as mf
 import mf_plotting as mfp
@@ -55,8 +57,8 @@ CONFIG = dict(
     # --- what to run ---
     models=['semicomplete'],            # subset of mf.MODELS
     memory_phases=[0, 1],               # 0 = primary, 1 = memory (seeded from 0)
-    sweep=('h0', np.flip(np.logspace(np.log10(_b0/1e3), np.log10(_b0/1e2), 2))),                         # None -> no sweep (use BASE params as-is).
-    # sweep = None,
+    # sweep=('h0', np.flip(np.logspace(np.log10(_b0/1e5), np.log10(_b0/1e0), 6))),                         # None -> no sweep (use BASE params as-is).
+    sweep = None,
                                         # To sweep: ('h0', [v1, v2, ...]) or any
                                         # Parameter name with a list/array of values.
     sweep_cmap='summer',                # colormap for multi-value sweeps
@@ -69,7 +71,7 @@ CONFIG = dict(
     memory_h0_equals_b0=True,           # memory phase forces h0 = b0 (original behaviour)
 
     # --- output / figures ---
-    figures=['NA_shared', 'Z_shared', 'pb_shared', 'per_run'],
+    figures=['NA_shared', 'Z_shared', 'pb_shared', 'per_run', 'h0_extras'],
     #   available: 'NA_shared', 'Z_shared', 'pb_shared', 'per_run', 'h0_extras'
     outroot='/Users/robertomorantovar/Library/CloudStorage/Dropbox/_Documents/Research/Projects/Immune_System/_Repository/Figures/exponential_proofreading/meanfield/figures',                  # base directory for saved PDFs
     usetex=True,                       # set True if you have a LaTeX toolchain
@@ -215,20 +217,29 @@ def make_shared_figures(cfg, results):
     T = cfg['T']
     figs = cfg['figures']
 
-    fig_NA, ax_NA = mfp.new_fig(wide=True)
+    fig_NA, ax_NA = mfp.new_fig(wide=False)
     fig_Z, ax_Z = mfp.new_fig()
-    fig_pb, ax_pb = mfp.new_fig(wide=True)
+    fig_pb, ax_pb = mfp.new_fig()
 
     # colour scale across the sweep (e.g. the green 'summer' scale for an h0 sweep)
-    sweep_cols = mfp.sweep_colors(len(sweep_values), cfg.get('sweep_cmap', 'summer'))
+    sweep_cols_primary = mfp.sweep_colors(len(sweep_values), 'summer')   # memory 0
+    sweep_cols_memory  = mfp.sweep_colors(len(sweep_values), 'winter')   # memory 1
 
     for (model, sval, memory), res in results.items():
         i_s = sweep_values.index(sval)
         i_model = cfg['models'].index(model)
         # multi-value sweep -> colour by sweep value; single value -> by model
-        color = (sweep_cols[i_s] if len(sweep_values) > 1
-                 else mfp.colors_sim[i_model])
-        ls = mfp.styles_sim[memory]
+        # color = (sweep_cols_primary[i_s] if len(sweep_values) > 1 and memory == 0 else sweep_cols_memory[i_s] if len(sweep_values) > 1 and memory == 1
+        #          else mfp.colors_sim[i_model])
+        if len(sweep_values) > 1:
+            color = sweep_cols_primary[i_s] if memory == 0 else sweep_cols_memory[i_s]   # sweeping -> keep the summer/winter scale
+            ls = '-'
+        elif model == 'null':
+            color = mfp.my_brown               # null: always brown
+            ls = mfp.styles_sim[memory]
+        else:
+            color = mfp.my_blue if memory == 1 else mfp.my_green   # naive=blue, memory=green
+            ls = '-'
         label = label_pi_star(res)
         if memory == 1:
             print(label)
@@ -244,7 +255,7 @@ def make_shared_figures(cfg, results):
 
         # neutralization probability (and the external innate drive for primary)
         if memory == 0:
-            mfp.plot_innate(ax_pb, res, color=color, ls='--')
+            mfp.plot_innate(ax_pb, res, color='grey', ls='--')
         mfp.plot_pb_from_potency(ax_pb, res, color=color, ls=ls, label=label)
 
     out = _outdir(cfg, 'shared')
@@ -259,9 +270,21 @@ def make_shared_figures(cfg, results):
         
         if sweep_name == 'h0':
             mfp.style_log_axis(ax_Z, T, ylim=(5e-1, 1e5), xlim=(2.0, T - 5.5), hide_xticklabels=False)
-            ax_Z.legend(fontsize=22, title=r'$\pi_c$', loc=0, title_fontsize=24)
+            # one legend entry per pi_c: a two-tone key (summer half + winter half)
+            model0 = cfg['models'][0]
+            handles, labels = [], []
+            for i_s, sval in enumerate(sweep_values):
+                h_naive = Line2D([], [], color=sweep_cols_primary[i_s], lw=4)
+                h_mem   = Line2D([], [], color=sweep_cols_memory[i_s], lw=4)
+                handles.append((h_naive, h_mem))                       # pair -> one entry
+                labels.append(label_pi_star(results[(model0, sval, 0)]))
+            ax_Z.legend(handles, labels,
+                        handler_map={tuple: HandlerTuple(ndivide=2)},
+                        handlelength=3, fontsize=20,
+                        title=r'$\pi_c$', title_fontsize=22)
         else:
             mfp.style_log_axis(ax_Z, T, ylim=(5e-1, 1e5), xlim=(1.5, T - 3))
+
 
         fig_Z.savefig(os.path.join(out, 'Z_shared.pdf'), dpi=200, transparent=True)
 
@@ -278,8 +301,18 @@ def make_shared_figures(cfg, results):
 def make_per_run_figures(cfg, results):
     """Standard per-run panels (antigen, pi, N_B, potency)."""
     T = cfg['T']
+    sweep_name, sweep_values = cfg['sweep']
     for (model, sval, memory), res in results.items():
-        color = mfp.colors_sim[cfg['memory_phases'].index(memory)]
+        if len(sweep_values) > 1:
+            color = sweep_cols_primary[i_s] if memory == 0 else sweep_cols_memory[i_s]   # sweeping -> keep the summer/winter scale
+            ls = '-'
+        elif model == 'null':
+            color = mfp.my_brown               # null: always brown
+            ls = mfp.styles_sim[memory]
+        else:
+            color = mfp.my_blue if memory == 1 else mfp.my_green   # naive=blue, memory=green
+            ls = '-'
+
         label = label_pi_star(res)
         out = _outdir(cfg, model, _sweep_tag(cfg, sval), f'memory_{memory}')
 
@@ -305,9 +338,29 @@ def make_per_run_figures(cfg, results):
         fig_Z, ax_Z = mfp.new_fig(wide=True)
         mfp.plot_potency(ax_Z, res, color=color, label=label)
         ax_Z.axhline(res['params'].Z_c, lw=1, ls='--', color='k')
-        mfp.style_log_axis(ax_Z, T, ylim=(5e-3, 1e7))
-        ax_Z.set_xlabel('Time', fontsize=16)
+        mfp.style_log_axis(ax_Z, T, ylim=(5e-3, 1e7), hide_xticklabels=False)
+        # ax_Z.set_xlabel('Time', fontsize=16)
         fig_Z.savefig(os.path.join(out, 'Z.pdf'), dpi=150)
+
+        # DG: analytic on/off affinity front (skipped if the run never activates)
+        try:
+            fr = mfp.compute_affinity_front(res, on_slope=0.78)
+            p = res['params']
+            fig_DG, ax_DG = mfp.new_fig(wide=True)
+            ax_DG.plot(fr['ton'], fr['DG_on'], lw=3, color=color, ls='dotted')
+            off = fr['DG_off'] > p.DG_min
+            ax_DG.plot(fr['toff'][off], fr['DG_off'][off], lw=3, color=color, ls='dashed')
+            offn = fr['DG_off_null'] > p.DG_min
+            ax_DG.plot(fr['toff'][offn], fr['DG_off_null'][offn], lw=3,
+                       color=mfp.my_brown, ls='dashed')
+            ax_DG.axhline(p.DG_min, lw=1, ls='--', color='grey', alpha=0.8)
+            ax_DG.set_ylim(p.DG_min - 0.1, 6)
+            ax_DG.set_xlim(0, T)
+            ax_DG.tick_params(axis='both', labelsize=30)
+            fig_DG.savefig(os.path.join(out, 'DG.pdf'), dpi=150)
+        except (IndexError, ValueError):
+            print(f"      [warn] no DG front for {model} "
+                  f"{_sweep_tag(cfg, sval)} memory_{memory} (never activated)")
 
         if not cfg['show']:
             plt.close('all')
@@ -326,7 +379,7 @@ def make_h0_extra_figures(cfg, results):
     colors_h0 = mfp.sweep_colors(len(sweep_values), cfg.get('sweep_cmap', 'summer'))
     for (model, sval, memory), res in results.items():
         i_s = sweep_values.index(sval)
-        label = mfp.pi_star_label(pi_star_of(res['params']))
+        label = label_pi_star(res)
 
         if memory == 0:
             # affinity front (growth-phase slope 1.0 as in the h0 script)

@@ -1,0 +1,1011 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
+import scipy.special as sc
+
+import pickle
+import json
+import warnings
+
+from io import StringIO
+from matplotlib.lines import Line2D
+from datetime import datetime, timedelta
+from tqdm import tqdm
+from scipy.optimize import curve_fit
+from matplotlib import style
+from matplotlib.collections import LineCollection
+
+N_A = 6.02214076e23
+k_BT = 1.380649e-23*293
+
+#----------------- Classes -----------------
+class Sequence():
+	"""docstring for Sequence"""
+	def __init__(self, seq_id, master_sequence, energy_parent, complementary_sequence, Energy_Matrix, parent,  parent_id = 0, Master_Seq = False):
+		super(Sequence, self).__init__()
+
+		#A given Sequence object has the following attributes
+		self.id = seq_id
+		self.Alphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't']
+		self.parent = parent
+		self.parent_id = parent_id
+		self.master_sequence = master_sequence
+		self.complementary_sequence = complementary_sequence
+		self.active = False
+		self.clone_size = 1
+		self.energy = 0
+		self.energy_parent = energy_parent
+		self.delta_energy = 0
+		self.sequence = parent
+		self.pos_mut = 0
+		self.tree_position = 1 # 0 = internal ; 1 = external
+		self.hamming_distance = 0
+		if not(Master_Seq):
+
+			self.mutate_sequence(Energy_Matrix = Energy_Matrix)
+		if (Master_Seq):
+			self.energy = self.energy_parent
+
+	def calculate_delta_energy(self, Energy_Matrix, old_letter, new_letter):
+
+		M = Energy_Matrix
+
+		list_comp_seq = list(self.complementary_sequence)
+
+		pos_new_letter = np.where(np.isin(self.Alphabet,new_letter))[0][0]
+		pos_old_letter = np.where(np.isin(self.Alphabet,old_letter))[0][0]
+
+		pos_comp_seq = np.where(np.isin(self.Alphabet,list_comp_seq[self.pos_mut]))[0][0]
+
+		self.delta_energy = M[pos_comp_seq][pos_new_letter]-M[pos_comp_seq][pos_old_letter]
+		self.energy = self.energy_parent + self.delta_energy
+
+
+	def mutate_sequence(self, Energy_Matrix):
+		""" This function will create a new mutations and give an energy value to the new sequence according to the Energy_Matrix. """
+		self.pos_mut = np.random.randint(9)
+		list_seq = list(self.sequence)
+		old_letter = self.sequence[self.pos_mut]
+		self.Alphabet.remove(old_letter)
+		new_letter = np.random.choice(self.Alphabet)
+		list_seq[self.pos_mut] = new_letter
+		self.sequence = "".join(list_seq)
+		self.hamming_distance = hamming_distance(self.master_sequence, self.sequence)
+		self.Alphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't']
+		self.calculate_delta_energy(Energy_Matrix = Energy_Matrix, old_letter = old_letter, new_letter = new_letter)
+
+class Immune_response():
+	"""docstring for Immune_response
+	=============================================
+	Params : N	Number of B cells that I produce
+			 L	Lenght of sequences
+
+	"""
+	def __init__(self, L, N, alpha, beta, text_files_path, energy_model = 'MJ', d=1, e0=1, antigen_str='', growth_model = 'exponential', bcells_filter = False):
+		super(Immune_response, self).__init__()
+		self.N_A = 6.02214076e23
+		self.L = L
+		self.e0 = e0
+		self.E0 = self.e0*self.L - np.log(self.N_A)-25 #be careful
+		self.E0 = 25
+		#print(self.E0)
+		self.energy_bar = 0
+		self.N = N
+		self.NN = N
+		self.alpha = alpha
+		self.beta = beta
+		self.antigen_str = antigen_str
+		self.energy_model = energy_model
+		self.growth_model = growth_model
+		self.text_files_path = text_files_path
+		self.Bcells_to_delete = np.array([], dtype = int)
+		self.Alphabet = np.loadtxt('../Input_files/Alphabet.txt', dtype=bytes, delimiter='\t').astype(str)
+		if(self.energy_model=='MM'):
+			self.d = d #If the model is MM, we can choose the size of the alphabet d
+		else:
+			self.d = np.size(self.Alphabet) #If the model is MJ or random, d is the number of aa (d=20)
+		self.B_cells_seqs = np.random.randint(low = 0, high=self.d, size=self.N*self.L).reshape(self.N, self.L) 
+
+		self.hamming_distances = np.zeros(self.N)
+		self.energies = np.zeros(self.N)
+		self.activation_status = np.zeros(self.N)
+
+		if(self.growth_model=='exponential'):
+			self.exponential=True
+			self.linear=False
+		if(self.growth_model=='linear'):
+			self.exponential=False
+			self.linear=True
+
+
+		#--- Initialize functions ---
+
+		self.antigen = np.random.randint(low = 0, high=self.d, size=self.L) #create a random antigen. In the case of MM, it does not matter.
+		self.load_matrix()
+
+		if(self.antigen_str!=''): #in case the input is a seq of aa, then we look for the numerical seq.
+			self.antigen_seq()
+
+		self.master_sequence = np.zeros_like(self.antigen)
+		self.find_master_seq()
+
+		if(self.energy_model=='MM'):
+			self.energy_bar = -self.e0*self.L/self.d
+		if(self.energy_model=="MJ"):
+			contributions = np.zeros(shape = (1,20))
+			for i in self.antigen:
+				contributions = np.vstack((contributions, self.E_matrix[i]))
+			self.energy_bar = np.sum(np.mean(contributions, axis=1))
+
+		self.calculate_hamming_distances()
+		self.calculate_energies(filter = bcells_filter)
+		
+
+	#----- Functions of the class
+	def antigen_seq(self):
+		assert(np.char.str_len(self.antigen_str) == self.L), "The antigen provided has no lenght %d."%(self.L)
+		self.dict_Alphabet = {s:i for i, s in enumerate(self.Alphabet)}
+		self.antigen = np.array([self.dict_Alphabet[s] for s in self.antigen_str])
+
+	def load_matrix(self):
+		if(self.energy_model=='MJ'):
+			self.E_matrix = np.loadtxt("../Input_files/MJ2.txt")
+		if(self.energy_model=='MM'):
+			self.E_matrix = np.diag(-self.e0*np.ones(self.d))
+
+	def find_master_seq(self):
+
+		for i, letter in enumerate(self.antigen):
+			self.master_sequence[i] = np.where(np.isin(self.E_matrix[letter],np.min(self.E_matrix[letter])))[0]
+
+
+	def hamming_distance(self, nseq):
+		self.hamming_distances[nseq] = np.sum(c1 != c2 for c1, c2 in zip(self.master_sequence, self.B_cells_seqs[nseq]))
+
+	def energy(self, nseq):
+		if(self.energy_model == 'MJ' or self.energy_model == 'MM'):
+			self.energies[nseq] = np.sum(self.E_matrix[self.antigen, self.B_cells_seqs[nseq,:]])
+		if(self.energy_model == 'Random'):
+			self.energies[nseq] = np.random.normal(loc = -56.0, scale = 1.17, size = 1)
+
+	def calculate_hamming_distances(self, filter=False):
+		for nseq in np.arange(self.N):
+			self.hamming_distance(nseq)
+
+	def calculate_energies(self, filter=False):
+		if(filter):
+			for nseq in np.arange(self.N):
+				self.energy(nseq)
+				#if self.energies[nseq] > (self.energy_bar-5):
+				if self.energies[nseq] > (np.min(self.energies)+10):	
+					self.Bcells_to_delete = np.append(self.Bcells_to_delete, int(nseq))
+
+			self.B_cells_seqs = np.delete(self.B_cells_seqs, self.Bcells_to_delete, 0)
+			self.energies = np.delete(self.energies, self.Bcells_to_delete, 0)
+			self.hamming_distances = np.delete(self.hamming_distances, self.Bcells_to_delete, 0)
+			self.NN = self.N - np.size(self.Bcells_to_delete)
+
+
+		if not(filter):
+			for nseq in np.arange(self.N):
+				self.energy(nseq)
+
+	def step(self):
+		self.antigen_Tseries[self.idt] = self.antigen_Tseries[self.idt-1] + self.exponential*self.alpha*self.antigen_Tseries[self.idt-1]*self.dT + self.linear*2000*self.alpha*self.dT
+		p_b = (self.antigen_Tseries[self.idt]/self.N_A)/((self.antigen_Tseries[self.idt]/self.N_A)+(np.exp(self.energies+self.E0)))
+		self.activation_status = np.greater(p_b, 0.5)
+		self.B_cells_Tseries[:,self.idt] = self.B_cells_Tseries[:,self.idt-1] + self.B_cells_Tseries[:,self.idt-1]*self.beta*self.activation_status*self.dT
+
+	def run(self,T, dT = 0.005, T0 = 0):
+
+		self.T = T
+		self.T0 = T0
+		self.dT = dT
+		self.time = np.linspace(self.T0, self.T, int((self.T-self.T0)/self.dT))
+		self.antigen_Tseries = np.zeros(np.size(self.time))
+		self.antigen_Tseries[0] = np.exp(self.alpha*self.T0)*self.exponential + 1e3*self.linear
+		self.B_cells_Tseries = np.zeros((self.NN, np.size(self.time)))
+		self.B_cells_Tseries[:,0] = np.ones(self.NN)
+		self.idt = 1
+		#while((self.time[self.idt-1]<self.T) & (np.sum(self.activation_status)<=10)):
+		while((self.time[self.idt-1]<self.T)):
+			self.step()
+			self.idt+=1
+		#print(np.sum(self.activation_status))
+
+	#@staticmethod
+	#def create_b_cells(self):
+
+class Immune_response2():
+	"""docstring for Immune_response
+	=============================================
+	Params : N	Number of B cells that I produce
+			 L	Lenght of sequences
+
+	"""
+	def __init__(self, L, L_seq, N, alpha, beta, text_files_path, energy_model = 'MJ', d=1, e0=1, antigen_str='', growth_model = 'exponential', bcells_filter = False):
+		super(Immune_response, self).__init__()
+		self.N_A = 6.02214076e23
+		self.L_seq = L_seq
+		self.e0 = e0
+		self.E0 = self.e0*self.L - np.log(self.N_A)-25 #be careful
+		self.E0 = 25
+		#print(self.E0)
+		self.energy_bar = 0
+		self.N = N
+		self.NN = N
+		self.alpha = alpha
+		self.beta = beta
+		self.antigen_str = antigen_str
+		self.energy_model = energy_model
+		self.growth_model = growth_model
+		self.text_files_path = text_files_path
+		self.Bcells_to_delete = np.array([], dtype = int)
+		self.Alphabet = np.loadtxt('../Input_files/Alphabet.txt', dtype=bytes, delimiter='\t').astype(str)
+		if(self.energy_model=='MM'):
+			self.d = d #If the model is MM, we can choose the size of the alphabet d
+		else:
+			self.d = np.size(self.Alphabet) #If the model is MJ or random, d is the number of aa (d=20)
+		self.B_cells_seqs = np.random.randint(low = 0, high=self.d, size=self.N*self.L).reshape(self.N, self.L_seq) 
+
+		self.hamming_distances = np.zeros(self.N)
+		self.energies = np.zeros(self.N)
+		self.activation_status = np.zeros(self.N)
+
+		if(self.growth_model=='exponential'):
+			self.exponential=True
+			self.linear=False
+		if(self.growth_model=='linear'):
+			self.exponential=False
+			self.linear=True
+
+
+		#--- Initialize functions ---
+
+		self.antigen = np.random.randint(low = 0, high=self.d, size=self.L) #create a random antigen. In the case of MM, it does not matter.
+		self.load_matrix()
+
+		if(self.antigen_str!=''): #in case the input is a seq of aa, then we look for the numerical seq.
+			self.antigen_seq()
+
+		self.master_sequence = np.zeros_like(self.antigen)
+		self.find_master_seq()
+
+		if(self.energy_model=='MM'):
+			self.energy_bar = -self.e0*self.L/self.d
+		if(self.energy_model=="MJ"):
+			contributions = np.zeros(shape = (1,20))
+			for i in self.antigen:
+				contributions = np.vstack((contributions, self.E_matrix[i]))
+			self.energy_bar = np.sum(np.mean(contributions, axis=1))
+
+		self.calculate_hamming_distances()
+		self.calculate_energies(filter = bcells_filter)
+		
+
+	#----- Functions of the class
+	def antigen_seq(self):
+		assert(np.char.str_len(self.antigen_str) == self.L), "The antigen provided has no lenght %d."%(self.L)
+		self.dict_Alphabet = {s:i for i, s in enumerate(self.Alphabet)}
+		self.antigen = np.array([self.dict_Alphabet[s] for s in self.antigen_str])
+
+	def load_matrix(self):
+		if(self.energy_model=='MJ'):
+			self.E_matrix = np.loadtxt("../Input_files/MJ2.txt")
+		if(self.energy_model=='MM'):
+			self.E_matrix = np.diag(-self.e0*np.ones(self.d))
+
+	def find_master_seq(self):
+
+		for i, letter in enumerate(self.antigen):
+			self.master_sequence[i] = np.where(np.isin(self.E_matrix[letter],np.min(self.E_matrix[letter])))[0]
+
+
+	def hamming_distance(self, nseq):
+		self.hamming_distances[nseq] = np.sum(c1 != c2 for c1, c2 in zip(self.master_sequence, self.B_cells_seqs[nseq]))
+
+	def energy(self, nseq):
+		if(self.energy_model == 'MJ' or self.energy_model == 'MM'):
+			self.energies[nseq] = np.sum(self.E_matrix[self.antigen, self.B_cells_seqs[nseq,:]])
+		if(self.energy_model == 'Random'):
+			self.energies[nseq] = np.random.normal(loc = -56.0, scale = 1.17, size = 1)
+
+	def calculate_hamming_distances(self, filter=False):
+		for nseq in np.arange(self.N):
+			self.hamming_distance(nseq)
+
+	def calculate_energies(self, filter=False):
+		if(filter):
+			for nseq in np.arange(self.N):
+				self.energy(nseq)
+				#if self.energies[nseq] > (self.energy_bar-5):
+				if self.energies[nseq] > (np.min(self.energies)+10):	
+					self.Bcells_to_delete = np.append(self.Bcells_to_delete, int(nseq))
+
+			self.B_cells_seqs = np.delete(self.B_cells_seqs, self.Bcells_to_delete, 0)
+			self.energies = np.delete(self.energies, self.Bcells_to_delete, 0)
+			self.hamming_distances = np.delete(self.hamming_distances, self.Bcells_to_delete, 0)
+			self.NN = self.N - np.size(self.Bcells_to_delete)
+
+
+		if not(filter):
+			for nseq in np.arange(self.N):
+				self.energy(nseq)
+
+	def step(self):
+		self.antigen_Tseries[self.idt] = self.antigen_Tseries[self.idt-1] + self.exponential*self.alpha*self.antigen_Tseries[self.idt-1]*self.dT + self.linear*2000*self.alpha*self.dT
+		p_b = (self.antigen_Tseries[self.idt]/self.N_A)/((self.antigen_Tseries[self.idt]/self.N_A)+(np.exp(self.energies+self.E0)))
+		self.activation_status = np.greater(p_b, 0.5)
+		self.B_cells_Tseries[:,self.idt] = self.B_cells_Tseries[:,self.idt-1] + self.B_cells_Tseries[:,self.idt-1]*self.beta*self.activation_status*self.dT
+
+	def run(self,T, dT = 0.005, T0 = 0):
+
+		self.T = T
+		self.T0 = T0
+		self.dT = dT
+		self.time = np.linspace(self.T0, self.T, int((self.T-self.T0)/self.dT))
+		self.antigen_Tseries = np.zeros(np.size(self.time))
+		self.antigen_Tseries[0] = np.exp(self.alpha*self.T0)*self.exponential + 1e3*self.linear
+		self.B_cells_Tseries = np.zeros((self.NN, np.size(self.time)))
+		self.B_cells_Tseries[:,0] = np.ones(self.NN)
+		self.idt = 1
+		#while((self.time[self.idt-1]<self.T) & (np.sum(self.activation_status)<=10)):
+		while((self.time[self.idt-1]<self.T)):
+			self.step()
+			self.idt+=1
+		#print(np.sum(self.activation_status))
+
+	#@staticmethod
+	#def create_b_cells(self):
+
+#----------------- Models -----------------
+
+#Inside the classes for models, there are some built-in functions for generating plots of individual simulations.
+
+class Deterministic_simulation():
+	"""docstring for Deterministic_simulation"""
+	def __init__(self, Sequences, n_linages, T, U, nu, beta, gamma, energy_translation, initial_time, dt):
+		super(Deterministic_simulation, self).__init__()
+		self.n_linages = n_linages
+		self.Sequences = Sequences
+		self.T = T
+		self.U = U
+		self.nu = nu #Linages growth rate
+		self.beta = beta #Antigen growth rate
+		self.gamma = gamma #Antigen clearance rate
+		self.energy_translation = energy_translation
+		self.dt = dt
+		self.N_A = 6.02214076e23
+
+		self.initial_time  = initial_time
+		self.linages_time_series = np.ones(shape =(n_linages, int((self.T-self.initial_time)/self.dt)))
+		self.activation_time_series = np.zeros(shape=(n_linages, int((self.T-self.initial_time)/self.dt)))
+		self.active_linages = 0
+		self.antigen_time_series = np.ones(int((self.T-self.initial_time)/self.dt)) 
+		self.time_series = np.linspace(self.initial_time, self.T, int((self.T-self.initial_time)/self.dt))
+
+	def ODE(self):
+		#ANTIGEN
+		self.antigen_time_series[0] = np.exp(self.beta*self.initial_time)
+		for t in range(1,int((self.T-self.initial_time)/self.dt)):
+			N_t_active = np.sum(self.linages_time_series[(np.sum(self.activation_time_series, axis=1)!=0),:], axis = 0) - np.sum(self.linages_time_series[(np.sum(self.activation_time_series, axis=1)!=0),:], axis = 0)[0]
+			self.antigen_time_series[t] = self.antigen_time_series[t-1] + (self.beta*self.antigen_time_series[t-1] - self.gamma*self.antigen_time_series[t-1]*N_t_active[t-1])*self.dt
+			if(self.antigen_time_series[t]<(1)):
+				self.antigen_time_series[t] = 0
+			#BCELL LINAGES 
+			for i in range(self.n_linages):
+				self.linages_time_series[i,t] = self.linages_time_series[i,t-1] + self.nu*self.linages_time_series[i,t-1]*self.Sequences[i].active*self.dt
+				f = (self.antigen_time_series[t]/self.N_A)/((self.antigen_time_series[t]/self.N_A)+np.exp(self.energy_translation+self.Sequences[i].energy)) 
+				if(f > 0.5):
+					self.Sequences[i].active = 1
+				if(self.Sequences[i].active == 1):
+					self.activation_time_series[i, t] = 1
+
+	def plot_antigen_time(self, color, ax):
+
+		ax.plot(self.time_series, self.antigen_time_series/self.N_A, linewidth  = 4, color = color)
+		ax.set_yscale('log')
+		ax.set_xlabel(r'Time $t$', fontsize = 20)
+		ax.set_ylabel(r'Antigen $\rho$ [M]', fontsize = 20)
+		ax.tick_params(labelsize = 20)
+		ax.set_ylim(np.exp(self.beta*self.initial_time)/self.N_A, (np.max(self.antigen_time_series)/self.N_A)*5)
+		#handles, labels = ax.get_legend_handles_labels()
+		#ax.legend(np.concatenate(([Line2D([0], [0], color='tab:red', linewidth=4, linestyle='solid', ms = 8)],handles)),np.concatenate(([r'$n_b(r, \rho)$'],labels)), loc = 0, fontsize = 20)
+
+	def plot_prob_binding(self, ax):
+		rho_array = np.logspace(int(np.log10(max(self.antigen_time_series)/self.N_A)) - 4, np.log10(max(self.antigen_time_series)/self.N_A)	, 5)
+		colors = plt.cm.Reds(np.linspace(0,1,len(rho_array)))
+		energies  = np.array([self.Sequences[i].energy for i in range(int(len(self.Sequences)))])
+		energies_array = np.linspace(np.min(energies),np.max(energies),100)
+		for i, rho in enumerate(rho_array): 
+			ax.plot(energies_array, (1/(1+np.exp(self.energy_translation + energies_array - np.log(rho)))), linewidth  = 4, color = colors[i], label = r'$\rho \approx 10^{%.0d}$'%(np.log10(rho)))
+		ax.set_yscale('log')
+		ax.set_xlabel(r'Energy $\epsilon$', fontsize = 20)
+		ax.set_ylabel(r'Probability of binding $p_b$', fontsize = 20)
+		ax.tick_params(labelsize = 20)
+		ax.legend(loc = 0, fontsize = 20)
+
+	def stackplot_linages_time(self, ax, antigen = False, time = True):
+		colors = []
+		for i in self.Sequences:
+			if(i.active==True):
+				colors.append('indianred')
+			else:
+				colors.append('indigo')
+		if(time):
+			ax.stackplot(self.time_series, self.linages_time_series/np.sum(self.linages_time_series, axis = 0), colors=colors, alpha = 0.9);
+			ax.set_xlabel(r'Time $t$', fontsize = 20)
+		if(antigen):
+			ax.stackplot(self.antigen_time_series, self.linages_time_series/np.sum(self.linages_time_series, axis = 0), colors=colors, alpha = 0.9);
+			ax.set_xlabel(r'Antigen $\rho$ [M]', fontsize = 20)
+			ax.set_xscale('log')
+		#ax.set_xscale('log')
+		#ax.set_yscale('log')
+		ax.set_xlabel(r'Time $t$', fontsize = 20)
+		ax.set_ylabel(r'B cell Linages', fontsize = 20)
+		ax.tick_params(labelsize = 20)
+		#ax.legend(loc = 0, fontsize = 20)
+
+	def hist_sequences_hamming_distance(self, Sequences, ax):
+
+		rho_array = np.logspace(np.log10(1/self.N_A), np.log10(max(self.antigen_time_series)/self.N_A), 5)
+		colors = plt.cm.Reds(np.linspace(0,1,len(rho_array)))
+		data_distances = ax.hist([Sequences[i].hamming_distance for i in range(int(len(Sequences)))], bins = range(10), align = 'left', label = r'$S(d)$', color = 'olive', alpha = 0.4)
+		#ax.plot(data_distances[1][0:-1], sc.comb(9, data_distances[1][0:-1])*((20-1)**data_distances[1][0:-1]), linewidth = 4 , color = 'lightsteelblue', alpha = 0.6)
+
+		ax.hist([self.Sequences[i].hamming_distance for i in range(int(len(self.Sequences)))], bins = range(10), align = 'left', label = r'$US(d)$', color = 'indigo', alpha = 0.6)
+		#ax.plot(data_distances[1][0:-1], self.U*sc.comb(9, data_distances[1][0:-1])*((20-1)**data_distances[1][0:-1]), linewidth = 4 , color = 'indigo', alpha = 0.6)
+
+		ax.hist([self.Sequences[i].hamming_distance for i in range(int(len(self.Sequences))) if self.Sequences[i].active], bins = range(10), align = 'left', label = r'Activated Linages', color = 'indianred', alpha = 0.8)
+		#for i, rho in enumerate(rho_array):
+		#	ax.plot(data_distances[1][0:-1], self.U*sc.comb(9, data_distances[1][0:-1].astype(int))*((20-1)**data_distances[1][0:-1])*(1/(1+np.exp(self.master_Sequence_energy + data_distances[1][0:-1] - np.log(rho)))) , color = colors[i], linestyle = 'dashed', linewidth = 3)
+
+		ax.set_ylim(0.1, 2e5)    
+		ax.set_yscale('log')
+		ax.set_xlabel(r'Hamming Distance $d$', fontsize = 20)
+		ax.set_ylabel(r'Number of linages', fontsize = 20)
+		ax.tick_params(labelsize = 20)
+		ax.legend(loc = 0, fontsize = 20)
+
+	def hist_sequences_energy(self, Sequences, n_bins, ax):
+
+		rho_array = np.logspace(np.log10(1/self.N_A), np.log10(max(self.antigen_time_series)/self.N_A), 5)
+		colors = plt.cm.Reds(np.linspace(0,1,len(rho_array)))
+		energies = np.array([Sequences[i].energy for i in range(int(len(Sequences)))])
+		data_energies = ax.hist(energies, bins = np.linspace(np.min(energies), np.max(energies), n_bins), align = 'left', label = r'$S(\epsilon)$', color = 'lightsteelblue', alpha = 0.5)
+
+		sub_energies = np.array([self.Sequences[i].energy for i in range(int(len(self.Sequences)))])
+		ax.hist(sub_energies , bins = np.linspace(np.min(energies), np.max(energies), n_bins), align = 'left', label = r'$US(\epsilon)$', color = 'indigo', alpha = 0.6)
+
+		sub_energies_activated = np.array([self.Sequences[i].energy for i in range(int(len(self.Sequences))) if self.Sequences[i].active])
+		ax.hist(sub_energies_activated, bins = np.linspace(np.min(energies), np.max(energies), n_bins), align = 'left', label = r'Activated Linages', color = 'indianred', alpha = 0.8)
+  
+		ax.set_yscale('log')
+		ax.set_xlabel(r'Energy $\epsilon$', fontsize = 20)
+		ax.set_ylabel(r'Number of linages', fontsize = 20)
+		ax.tick_params(labelsize = 20)
+		ax.legend(loc = 0, fontsize = 20)
+
+	def hist_sequences_k_D(self, Sequences, n_bins, ax):
+
+		rho_array = np.logspace(np.log10(1/self.N_A), np.log10(max(self.antigen_time_series)/self.N_A), 5)
+		colors = plt.cm.Reds(np.linspace(0,1,len(rho_array)))
+		energies = np.array([Sequences[i].energy for i in range(int(len(Sequences)))])
+		data_energies = ax.hist(np.exp(energies), bins = np.logspace(np.log10(np.exp(np.min(energies))), np.log10(np.exp(np.max(energies))), n_bins), align = 'mid', label = r'$S(\epsilon)$', color = 'olivedrab', alpha = 0.5)
+
+		sub_energies = np.array([self.Sequences[i].energy for i in range(int(len(self.Sequences)))])
+		ax.hist(np.exp(sub_energies), bins = np.logspace(np.log10(np.exp(np.min(energies))), np.log10(np.exp(np.max(energies))), n_bins), align = 'mid', label = r'$US(\epsilon)$', color = 'indigo', alpha = 0.6)
+
+		sub_energies_activated = np.array([self.Sequences[i].energy for i in range(int(len(self.Sequences))) if self.Sequences[i].active])
+		ax.hist(np.exp(sub_energies_activated), bins = np.logspace(np.log10(np.exp(np.min(energies))), np.log10(np.exp(np.max(energies))), n_bins), align = 'mid', label = r'Activated Linages', color = 'indianred', alpha = 0.8)
+		
+		ax.set_yscale('log')
+		ax.set_xlabel(r'$k_D$', fontsize = 20)
+		ax.set_ylabel(r'Number of linages', fontsize = 20)
+		ax.tick_params(labelsize = 20)
+		ax.legend(loc = 0, fontsize = 20)
+
+	def plot_k_largest_linages(self, k, ax):
+
+		#Calculate array of the frequencies of the largest k linages
+		Seq_sizes = self.linages_time_series[:,-1]
+		k = k
+		biggest_k_linages_sizes = np.sort(Seq_sizes)[-k:]
+		Pos = np.array([i for i, j in enumerate(Seq_sizes) if np.isin(j,biggest_k_linages_sizes)])
+		biggest_k_linages = self.linages_time_series[Pos,:]
+		biggest_k_linages_freq = biggest_k_linages/np.sum(biggest_k_linages, axis = 0)
+
+		ax.stackplot(self.time_series, biggest_k_linages_freq, alpha = 0.9);
+		#ax[0].set_yscale('log')
+		ax.set_xlabel(r'Time $t$', fontsize = 20)
+		ax.set_ylabel(r'k largest linages', fontsize = 20)
+		ax.tick_params(labelsize = 20)
+
+		return biggest_k_linages_freq
+
+	def plot_entropy_k_largest_linages(self, k, biggest_k_linages_freq, ax):
+
+		#Calculate entropy
+		entropy = np.array([np.sum(-1*biggest_k_linages_freq[:,t]*np.log(biggest_k_linages_freq[:,t])) for t in range(int(len(self.time_series)))])
+		ax.plot(self.time_series[::50], entropy[::50], marker = 'o', ms = 8, linestyle = '', linewidth = '4', color = 'olive', label = 'Simulation')
+		#ax[1].set_yscale('log')
+		ax.set_xlabel(r'Time $t$', fontsize = 20)
+		ax.set_ylabel(r'Entropy', fontsize = 20)
+		ax.tick_params(labelsize = 20)
+
+	def plot_normalized_entropy_k_largest_linages(self, k, biggest_k_linages_freq, ax):
+
+		#Calculate entropy
+		entropy = np.array([np.sum(-1*biggest_k_linages_freq[:,t]*np.log(biggest_k_linages_freq[:,t])) for t in range(int(len(self.time_series)))])
+		normalized_entropy = entropy/np.log(len(biggest_k_linages_freq))
+		ax.plot(self.time_series[::50], normalized_entropy[::50], marker = 'o', ms = 8, linestyle = '', linewidth = '4', color = 'olive', label = 'Simulation')
+		#ax[1].set_yscale('log')
+		ax.set_xlabel(r'Time $t$', fontsize = 20)
+		ax.set_ylabel(r'Entropy', fontsize = 20)
+		ax.tick_params(labelsize = 20)
+
+		return normalized_entropy
+
+	def plot_entropy_drop(self, k_array, ax1, ax2):
+
+		#____________ Create array for entropy drop. The entropy is always normalized by the maximum
+
+		entropy_drop = np.array([0])
+
+		for i, k in enumerate(k_array[1:]):
+
+		    biggest_k_linages_freq = self.plot_k_largest_linages(k=k, ax=ax1[i,0])
+		    normalized_entropy = self.plot_normalized_entropy_k_largest_linages(k=k, biggest_k_linages_freq = biggest_k_linages_freq, ax=ax1[i,1])
+		    entropy_drop = np.append(entropy_drop, normalized_entropy[-1] - normalized_entropy[0])
+
+		
+		#____________ Plot entropy drop as a fucntion of k
+		ax2.plot(k_array[1:], abs(entropy_drop)[1:], linestyle = '--', marker = '^', ms = 20, linewidth = 4, color = 'indianred', alpha = 0.8, label = 'Simulation')
+		ax2.set_xlabel(r'$k$', fontsize = 20)
+		ax2.set_ylabel(r'$\Delta S$', fontsize = 20)
+		ax2.tick_params(labelsize = 22)
+		ax2.set_xscale('log')
+		ax2.legend(loc = 0, fontsize = 20)
+		
+class Stochastic_simulation():
+	"""docstring for Stochastic_simulation"""
+	def __init__(self, Sequences, n_linages, T, U, gamma, nu, R, beta, master_Sequence_energy):
+		super(Stochastic_simulation, self).__init__()
+		self.n_linages = n_linages
+		self.Sequences = Sequences
+		self.T = T
+		self.U = U
+		self.gamma = gamma
+		self.nu = nu
+		self.R = R
+		self.beta = beta
+		self.master_Sequence_energy = master_Sequence_energy
+		self.N_A = 6.02214076e23
+
+		self.linages_time_series = np.ones(shape =(n_linages, 1))
+		self.activation_time_series = np.zeros(shape=(n_linages, 1))
+		self.active_linages = 0
+		self.antigen_time_series = np.array([20])
+		self.time_series = np.array([0])
+		self.probabilities = np.zeros((2*n_linages)+1)
+
+	def calculate_probabilities(self):
+
+		# Initialize with the event of antigen growth.
+		self.probabilities[0] = self.beta*self.antigen_time_series[-1]
+
+		# fill with Bcell activation and proliferation
+		for i in range(1, self.n_linages+1):
+			#Activation
+			rho = self.antigen_time_series[-1]/self.N_A
+			self.probabilities[(2*i)-1] = (rho/(rho+np.exp(self.master_Sequence_energy + self.Sequences[i-1].energy)))*(1-self.Sequences[i-1].active)
+			#Proliferation
+			self.probabilities[(2*i)] = self.nu*(self.linages_time_series[i-1,-1])*(self.Sequences[i-1].active)
+
+	def gillespie_step(self):
+
+		#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		# 1. Generate 2 random numbers uniformly distributed in (0,1)
+		#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		r1 = np.random.rand()
+		r2 = np.random.rand()
+
+		#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		# 2. Calculate probabilities
+		#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+		self.calculate_probabilities()
+
+		#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		# 3. Calculate alpha
+		#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+		probabilities_cumsum = np.cumsum(self.probabilities)
+		alpha = sum(self.probabilities)
+
+		#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		# 4. Compute the time until the next event takes place
+		#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		tau = (1/alpha)*np.log(float(1/r1))
+		self.time_series = np.append(self.time_series, self.time_series[-1]+tau)
+
+		#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		# 5. Compute which event takes place
+		#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		transitionIdx   = np.searchsorted(probabilities_cumsum,r2*alpha)
+		transition_Type  = transitionIdx % 2
+		transition_Agent  = int((transitionIdx+1)/2)
+
+		#antigen profileration event
+		if(transition_Agent == 0):
+			self.antigen_time_series = np.append(self.antigen_time_series, self.antigen_time_series[-1]+100)
+			self.linages_time_series = np.hstack((self.linages_time_series, self.linages_time_series[:,-1].reshape(self.n_linages, 1)))
+			self.activation_time_series = np.hstack((self.activation_time_series, self.activation_time_series[:,-1].reshape(self.n_linages, 1)))
+		else:
+			#Activation event
+			if(transition_Type==1):
+				self.Sequences[transition_Agent-1].active = True
+				self.antigen_time_series = np.append(self.antigen_time_series, self.antigen_time_series[-1])
+				temp_array = np.copy(self.activation_time_series[:,-1]).reshape(self.n_linages, 1)
+				temp_array[transition_Agent-1] =  1
+				self.linages_time_series = np.hstack((self.linages_time_series, self.linages_time_series[:,-1].reshape(self.n_linages, 1)))
+				self.activation_time_series = np.hstack((self.activation_time_series, temp_array))
+				self.active_linages +=1
+			#B cell prolifration event
+			else:
+				self.antigen_time_series = np.append(self.antigen_time_series, self.antigen_time_series[-1])
+				temp_array = np.copy(self.linages_time_series[:,-1]).reshape(self.n_linages, 1)
+				temp_array[transition_Agent-1] = temp_array[transition_Agent-1] + 1
+				self.linages_time_series = np.hstack((self.linages_time_series, temp_array))
+				self.activation_time_series = np.hstack((self.activation_time_series, self.activation_time_series[:,-1].reshape(self.n_linages, 1)))
+
+	def Gillespie(self):
+
+		while((self.time_series[-1] < self.T)):
+		#while((self.antigen_time_series[-1]<9e2) and (self.active_linages < 15)):
+			self.gillespie_step()
+
+	def plot_antigen_time(self, ax):
+
+		ax.plot(self.time_series, self.antigen_time_series/self.N_A, linewidth  = 4)
+		ax.set_yscale('log')
+		ax.set_xlabel(r'Time $t$', fontsize = 20)
+		ax.set_ylabel(r'Antigen $\rho$', fontsize = 20)
+		ax.tick_params(labelsize = 20)
+		#handles, labels = ax.get_legend_handles_labels()
+		#ax.legend(np.concatenate(([Line2D([0], [0], color='tab:red', linewidth=4, linestyle='solid', ms = 8)],handles)),np.concatenate(([r'$n_b(r, \rho)$'],labels)), loc = 0, fontsize = 20)
+
+	def plot_prob_binding(self, ax):
+		rho_array = np.logspace(0, np.log10(max(self.antigen_time_series)/self.N_A), 5)
+		colors = plt.cm.Reds(np.linspace(0,1,len(rho_array)))
+		for i, rho in enumerate(rho_array): 
+			ax.plot(np.linspace(-6,8,10), (1/(1+np.exp(self.master_Sequence_energy + np.linspace(-6,8,10) - np.log(rho)))), linewidth  = 4, color = colors[i], label = r'$\rho = %.0e$'%(rho))
+		ax.set_yscale('log')
+		ax.set_xlabel(r'Energy $\epsilon$', fontsize = 20)
+		ax.set_ylabel(r'Probability of binding $p_b$', fontsize = 20)
+		ax.tick_params(labelsize = 20)
+		ax.legend(loc = 0, fontsize = 20)
+
+	def stackplot_linages_time(self, ax, antigen = False, time = True):
+		colors = []
+		for i in self.Sequences:
+			if(i.active==True):
+				colors.append('tab:red')
+			else:
+				colors.append('indigo')
+		if(time):
+			ax.stackplot(self.time_series, self.linages_time_series/np.sum(self.linages_time_series, axis = 0), colors=colors, alpha = 0.9);
+			ax.set_xlabel(r'Time $t$', fontsize = 20)
+		if(antigen):
+			ax.stackplot(self.antigen_time_series, self.linages_time_series/np.sum(self.linages_time_series, axis = 0), colors=colors, alpha = 0.9);
+			ax.set_xlabel(r'Antigen $\rho$', fontsize = 20)
+		#ax.set_xscale('log')
+		#ax.set_yscale('log')
+		ax.set_xlabel(r'Time $t$', fontsize = 20)
+		ax.set_ylabel(r'B cell Linages', fontsize = 20)
+		ax.tick_params(labelsize = 20)
+		#ax.legend(loc = 0, fontsize = 20)
+
+	def hist_sequences_hamming_distance(self, Sequences, ax):
+
+		rho_array = np.logspace(0, np.log10(max(self.antigen_time_series)/self.N_A), 5)
+		colors = plt.cm.Reds(np.linspace(0,1,len(rho_array)))
+		data_distances = ax.hist([Sequences[i].hamming_distance for i in range(int(len(Sequences)))], bins = range(10), align = 'left', label = r'$S(d)$', color = 'lightsteelblue', alpha = 0.5)
+		ax.plot(data_distances[1][0:-1], sc.comb(9, data_distances[1][0:-1])*((20-1)**data_distances[1][0:-1]), linewidth = 4 , color = 'lightsteelblue', alpha = 0.6)
+
+		ax.hist([self.Sequences[i].hamming_distance for i in range(int(len(self.Sequences)))], bins = range(10), align = 'left', label = r'$US(d)$', color = 'indigo', alpha = 0.6)
+		ax.plot(data_distances[1][0:-1], self.U*sc.comb(9, data_distances[1][0:-1])*((20-1)**data_distances[1][0:-1]), linewidth = 4 , color = 'indigo', alpha = 0.6)
+
+		ax.hist([self.Sequences[i].hamming_distance for i in range(int(len(self.Sequences))) if self.Sequences[i].active], bins = range(10), align = 'left', label = r'Activated Linages', color = 'tab:red', alpha = 0.8)
+		for i, rho in enumerate(rho_array):
+			ax.plot(data_distances[1][0:-1], self.U*sc.comb(9, data_distances[1][0:-1].astype(int))*((20-1)**data_distances[1][0:-1])*(1/(1+np.exp(self.master_Sequence_energy + data_distances[1][0:-1] - np.log(rho)))) , color = colors[i], linestyle = 'dashed', linewidth = 3)
+
+		ax.set_ylim(0.1, 2e5)    
+		ax.set_yscale('log')
+		ax.set_xlabel(r'Hamming Distance $d$', fontsize = 20)
+		ax.set_ylabel(r'Number of linages', fontsize = 20)
+		ax.tick_params(labelsize = 20)
+		ax.legend(loc = 0, fontsize = 20)
+
+	def hist_sequences_energy(self, Sequences, bins, ax):
+
+		rho_array = np.logspace(0, np.log10(max(self.antigen_time_series)/self.N_A), 5)
+		colors = plt.cm.Reds(np.linspace(0,1,len(rho_array)))
+		data_energies = ax.hist([Sequences[i].energy for i in range(int(len(Sequences)))], bins = bins, align = 'left', label = r'$S(\epsilon)$', color = 'lightsteelblue', alpha = 0.5)
+		#ax.plot(data_energies[1][0:-1], sc.comb(9, data_energies[1][0:-1])*((20-1)**data_energies[1][0:-1]), linewidth = 4 , color = 'lightsteelblue', alpha = 0.6)
+
+		ax.hist([self.Sequences[i].energy for i in range(int(len(self.Sequences)))], bins = bins, align = 'left', label = r'$US(\epsilon)$', color = 'indigo', alpha = 0.6)
+		#ax.plot(data_energies[1][0:-1], self.U*sc.comb(9, data_energies[1][0:-1])*((20-1)**data_energies[1][0:-1]), linewidth = 4 , color = 'indigo', alpha = 0.6)
+
+		ax.hist([self.Sequences[i].energy for i in range(int(len(self.Sequences))) if self.Sequences[i].active], bins = bins, align = 'left', label = r'Activated Linages', color = 'tab:red', alpha = 0.8)
+		#for i, rho in enumerate(rho_array):
+		#	ax.plot(data_energies[1][0:-1], self.U*sc.comb(9, data_energies[1][0:-1].astype(int))*((20-1)**data_energies[1][0:-1])*(1/(1+np.exp(self.master_Sequence_energy + data_energies[1][0:-1] - np.log(rho)))) , color = colors[i], linestyle = 'dashed', linewidth = 3)
+
+		#ax.set_ylim(0.1, 2e5)    
+		ax.set_yscale('log')
+		ax.set_xlabel(r'Energy $\epsilon$', fontsize = 20)
+		ax.set_ylabel(r'Number of linages', fontsize = 20)
+		ax.tick_params(labelsize = 20)
+		ax.legend(loc = 0, fontsize = 20)
+
+	def plot_k_largest_linages(self, k, ax):
+
+		#Calculate array of the frequencies of the largest k linages
+		Seq_states = [i.active for i in self.Sequences]
+		Seq_sizes = self.linages_time_series[:,-1]
+		k = k
+		biggest_k_linages_sizes = np.sort(Seq_sizes)[-k:]
+		Pos = np.array([i for i, j in enumerate(Seq_sizes) if np.isin(j,biggest_k_linages_sizes)])
+		biggest_k_linages = self.linages_time_series[Pos,:]
+		#for i in range(1,int(len(self.linages_time_series[0,:]))):
+		#    biggest_k_linages = np.vstack((biggest_k_linages, self.linages_time_series[Pos,i]))
+		#biggest_k_linages_freq = np.transpose(biggest_k_linages)/np.sum(np.transpose(biggest_k_linages), axis = 0)
+		biggest_k_linages_freq = biggest_k_linages/np.sum(biggest_k_linages, axis = 0)
+
+		ax.stackplot(self.time_series, biggest_k_linages_freq, alpha = 0.9);
+		#ax[0].set_yscale('log')
+		ax.set_xlabel(r'Time $t$', fontsize = 20)
+		ax.set_ylabel(r'k largest linages', fontsize = 20)
+		ax.tick_params(labelsize = 20)
+
+		return biggest_k_linages_freq
+
+	def plot_entropy_k_largest_linages(self, k, biggest_k_linages_freq, ax):
+
+		#Calculate entropy
+		entropy = [np.sum(-1*biggest_k_linages_freq[:,t]*np.log(biggest_k_linages_freq[:,t])) for t in range(int(len(self.time_series)))]
+		ax.plot(self.time_series, entropy, linewidth = '4', color = 'indigo')
+		#ax[1].set_yscale('log')
+		ax.set_xlabel(r'Time $t$', fontsize = 20)
+		ax.set_ylabel(r'Entropy', fontsize = 20)
+		ax.tick_params(labelsize = 20)
+
+#----------------------------------------------------------------
+
+def generate_Sequences(n_seq, Energy_Matrix, antigen_sequence, L, new_antigen = False):
+
+	M = Energy_Matrix
+	L = L
+
+	Alphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't']
+
+	antigen_sequence = antigen_sequence
+
+	if (new_antigen):
+		antigen_sequence = "".join(np.random.choice(Alphabet, L))
+
+	print('Antigen Seq: ' + antigen_sequence + '\n')
+
+	master_sequence = find_complementary_seq(sequence = antigen_sequence , Energy_Matrix =  M)
+	print('Master Seq: ' + master_sequence + '\n')
+
+	master_sequence_energy = calculate_energy(Energy_Matrix = M, seq1 = master_sequence, seq2 = antigen_sequence)
+
+	print('Master Seq energy: ', master_sequence_energy, '\n')
+
+	Master_Sequence = Sequence(seq_id = 0, parent = master_sequence, energy_parent = master_sequence_energy, Master_Seq=True, master_sequence = master_sequence, complementary_sequence = antigen_sequence, Energy_Matrix = M)
+	Sequences = np.array([Master_Sequence])
+	sequences = np.array([master_sequence])
+	zero_date = datetime(2020, 1, 1)
+
+	#----------UNCOMMENT TO WRITE OUTPUT FILES-----------
+	#file = open('../../../../Dropbox/Research/Evolution_Immune_System/Text_files/file_parent_daughter2.txt', 'w+')
+	#file_1 = open('../../../../Dropbox/Research/Evolution_Immune_System/Text_files/timedNodeFile2.txt', 'w+')
+	#file_2 = open('../../../../Dropbox/Research/Evolution_Immune_System/Text_files/strainFile2.txt', 'w+')
+	#np.savetxt(file_1, np.array(['Node', 'Parent', 'Time', 'SigClade']), fmt='%d')
+	#file.write("\n")
+
+	#np.savetxt(file, np.array([str(Master_Sequence.id)+'\t', str(Master_Sequence.parent_id)]), fmt='%s', delimiter='', newline='', header = 'node\t parent\n', comments='')
+	#file.write("\n")
+	#np.savetxt(file_1, np.array([str(Master_Sequence.id)+'\t', str(Master_Sequence.parent_id)+'\t', str(43830)+'\t' , str(0)]), fmt='%s', delimiter='', newline='', header = 'Node\tParent\tTime\tSigClade\n', comments='')
+	#file_1.write("\n")
+
+	n_seq = n_seq
+	Energy = {'energy': {'0': Master_Sequence.energy}}
+	Hamming = {'hamming': {'0': 0}}
+	repeated = 0
+	for i in range(1, n_seq):
+	    succ = False 
+	    while(succ == False):
+	        parent = np.random.choice(Sequences)
+	        new_seq = Sequence(seq_id = i, parent = parent.sequence, energy_parent = parent.energy,  parent_id = parent.id, master_sequence = master_sequence, complementary_sequence = antigen_sequence, Energy_Matrix = M)
+	        if (np.isin(new_seq.sequence, sequences)):
+	        	repeated +=1
+	        #check if the new sequence is already in the tree. Here we can check for other conditions like that the energy is higher than the parent.
+	        if not(np.isin(new_seq.sequence, sequences)):
+	            parent.tree_position = 0    
+	            Sequences = np.append(Sequences, new_seq)
+	            sequences = np.append(sequences, new_seq.sequence)
+	            Energy['energy'][str(new_seq.id)] = new_seq.energy
+	            Hamming['hamming'][str(new_seq.id)] = new_seq.hamming_distance
+	            succ = True
+
+	    #----------UNCOMMENT TO WRITE OUTPUT FILES-----------
+	    #np.savetxt(file, np.array([str(new_seq.id)+'\t', str(new_seq.parent_id)]), fmt='%s', delimiter='', newline='')
+	    #file.write("\n")
+	    #np.savetxt(file_1, np.array([str(new_seq.id)+'\t', str(new_seq.parent_id)+'\t', str(43830 + i)+'\t', str(0)]), fmt='%s', delimiter='', newline='')
+	    #file_1.write("\n")
+
+	print('Found %d repeatead sequences. \n'%(repeated))
+	#----------UNCOMMENT TO WRITE OUTPUT FILES-----------
+	#for i in range(1, n_seq):
+	    #if(Sequences[i].tree_position==1):
+	        #new_date = zero_date + timedelta(i)
+	        #np.savetxt(file_2, np.array([str(Sequences[i].id)+'\t', 'A/Germany/'+str(i)+'/2020'+'\t', 'Germany'+'\t', 'EPI_ISL_'+str(i)+'\t', str(new_date.year)+'-'+str(new_date.month)+'-'+str(new_date.day)+'\t', '0']),fmt='%s', delimiter='', newline='')
+	        #file_2.write("\n")
+	#----------UNCOMMENT TO WRITE OUTPUT FILES-----------
+	#with open("../../../../Dropbox/Research/Evolution_Immune_System/Text_files/energy.json", 'w') as of:
+	#	json.dump(Energy, of, indent=True)
+	#with open("../../../../Dropbox/Research/Evolution_Immune_System/Text_files/hamming.json", 'w') as of:
+	#	json.dump(Hamming, of, indent=True)
+
+	#file.close()
+	#file_1.close()
+	#file_2.close()
+
+	return Sequences
+
+def generate_Sequences_randomly(n_seq, Energy_Matrix, antigen_sequence, L, new_antigen = False):
+
+	M = Energy_Matrix
+	L = L
+	n_seq = n_seq
+
+	Alphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't']
+
+	antigen_sequence = antigen_sequence
+
+	if (new_antigen):
+		antigen_sequence = "".join(np.random.choice(Alphabet, L))
+	print('Antigen Seq: ' + antigen_sequence + '\n')
+
+	master_sequence = find_complementary_seq(sequence = antigen_sequence , Energy_Matrix =  M)
+	print('Master Seq: ' + master_sequence + '\n')
+
+	master_sequence_energy = calculate_energy(Energy_Matrix = M, seq1 = master_sequence, seq2 = antigen_sequence)
+	print('Master Seq energy: ', master_sequence_energy, '\n')
+
+	Master_Sequence = Sequence(seq_id = 0, parent = master_sequence, energy_parent = master_sequence_energy, Master_Seq=True, master_sequence = master_sequence, complementary_sequence = antigen_sequence, Energy_Matrix = M)
+	
+	Sequences = np.array([Master_Sequence])
+
+	#Create n_seq random sequences and calculate the energy with respect to the given antigen.
+	for i in range(1, n_seq):
+
+		new_sequence = "".join(np.random.choice(Alphabet, L))
+		new_sequence_energy = calculate_energy(Energy_Matrix = M, seq1 = new_sequence, seq2 = antigen_sequence)
+		new_Sequence = Sequence(seq_id = i, parent = new_sequence, energy_parent = new_sequence_energy,  parent_id = i, master_sequence = master_sequence, complementary_sequence = antigen_sequence, Energy_Matrix = M, Master_Seq = True)
+
+		Sequences = np.append(Sequences, new_Sequence)
+
+	return Sequences
+
+def run_ensemble_linage_size_distribution(Sequences, n_linages, n_seq, nu, beta, T, master_Sequence_energy, n_sim, new = False):
+	n_linages = n_linages
+	n_seq = n_seq
+	U = n_linages/n_seq
+	nu = nu
+	R=6
+	beta = beta
+	gamma = 1
+	T = T
+	master_Sequence_energy = master_Sequence_energy
+
+	#_____ Choose one of the following____________________________________
+	if(new):
+		activated_linages_size_t = []
+		final_antigen_concentration = []
+	else:
+		activated_linages_size_t = pickle.load( open( "../../../../Dropbox/Research/Evolution_Immune_System/Text_files/activated_linages_size_t.pkl", "rb" ) )
+		final_antigen_concentration = pickle.load( open( "../../../../Dropbox/Research/Evolution_Immune_System/Text_files/final_antigen_concentration.pkl", "rb" ) )
+	#_____________________________________________________________________
+
+	for i in range(n_sim):
+		if(i%int((n_sim/5))==0):
+			print(i, '...')
+		Sub_Sequences = np.random.choice(Sequences, n_linages)
+		Model = Stochastic_simulation(Sequences = Sub_Sequences, n_linages=n_linages, T = T, U = U, gamma = gamma, nu = nu, R = R, beta = beta, master_Sequence_energy = master_Sequence_energy)
+		Model.Gillespie()
+		activated_linages_size_t = np.append(activated_linages_size_t, [Model.linages_time_series[i,-1] for i in range(n_linages) if Model.Sequences[i].active])
+		final_antigen_concentration = np.append(final_antigen_concentration, Model.antigen_time_series[-1])
+
+	pickle.dump(activated_linages_size_t, open( "../../../../Dropbox/Research/Evolution_Immune_System/Text_files/activated_linages_size_t.pkl", "wb" ) )
+	pickle.dump(final_antigen_concentration, open( "../../../../Dropbox/Research/Evolution_Immune_System/Text_files/final_antigen_concentration.pkl", "wb" ) )
+
+	print('Ensemble size:', len(activated_linages_size_t))
+
+def run_ensemble_deterministic_model(Sequences, n_linages, n_seq, nu, beta, gamma, T, energy_translation, initial_time, dt, n_sim, comment = "", new = False):
+
+	n_linages = n_linages
+	n_seq = n_seq
+	U = n_linages/n_seq
+	nu = nu
+	beta = beta
+	gamma = gamma
+	T = T
+	initial_time = initial_time
+	dt = dt
+	energy_translation = energy_translation
+
+	#_____ Choose one of the following____________________________________
+	if(new):
+		activated_linages_size = np.array([])
+		m_bar = np.array([])
+		activated_energies = np.array([])
+	else:
+		activated_linages_size = pickle.load( open( "../../../../Dropbox/Research/Evolution_Immune_System/Text_files/ensemble_deterministic_model_linage_sizes_"+comment+".pkl", "rb" ) )
+		m_bar = pickle.load( open("../../../../Dropbox/Research/Evolution_Immune_System/Text_files/ensemble_deterministic_model_m_bar_"+comment+".pkl", "rb" ) )
+		activated_energies = pickle.load( open("../../../../Dropbox/Research/Evolution_Immune_System/Text_files/ensemble_deterministic_model_activated_energies_"+comment+".pkl", "rb" ) )
+	#_____________________________________________________________________
+
+	N_total = np.zeros(int((T-initial_time)/dt))
+	activation_time_series = np.zeros(int((T-initial_time)/dt))
+	activation_time_series_2 = np.zeros(int((T-initial_time)/dt))
+	entropy = np.zeros(int((T-initial_time)/dt))
+
+
+	for i in range(n_sim):
+		if(i%int((n_sim/5))==0):
+			print(i, '...')
+		Sub_Sequences = np.random.choice(Sequences, n_linages)
+		for i in range(n_linages):
+			Sub_Sequences[i].active = False
+		Model = Deterministic_simulation(Sequences = Sub_Sequences, n_linages=n_linages, T = T, U = U, nu = nu, beta = beta, gamma = gamma, energy_translation = energy_translation, initial_time = initial_time, dt = dt)
+		Model.ODE()
+		# Add the linage sizes to the statistics
+		activated_linages_size = np.append(activated_linages_size, [Model.linages_time_series[i,-1] for i in range(n_linages) if Model.Sequences[i].active])
+		# Add m_bar to the statistics
+		m_bar = np.append(m_bar, np.sum(Model.activation_time_series, axis = 0)[-1])
+		# Sum up total population size
+		N_total_i = np.sum(Model.linages_time_series, axis=0)
+		# Calculate linage frequencies and entropy
+		linage_freqs = Model.linages_time_series/N_total_i
+		entropy_i = np.array([np.sum(-1*linage_freqs[:,t]*np.log(linage_freqs[:,t])) for t in range(int(len(Model.time_series)))])
+		# Sum up columns in array Model.activation_time_series for the activated linages
+		activation_time_series_i = np.array([np.sum(Model.activation_time_series[:,i]) for i in range(int(len(Model.activation_time_series[0,:])))])
+		# Add the energies of the activated linages
+		activated_energies = np.append(activated_energies, [i.energy for i in Model.Sequences[np.where(np.sum(Model.activation_time_series, axis=1)!=0)]])
+		# Sum the last arrays to the main arrays
+		activation_time_series = activation_time_series + activation_time_series_i
+		activation_time_series_2 = activation_time_series_2 + (activation_time_series_i)**2
+		N_total = N_total + N_total_i
+		entropy = entropy + entropy_i
+
+
+	activation_time_series = activation_time_series/(n_sim)
+	activation_time_series_2 = (activation_time_series_2)/(n_sim)
+	activation_time_series_var = activation_time_series_2-activation_time_series**2
+	N_total = N_total/(n_sim)
+	entropy = entropy/(n_sim)
+    
+	pickle.dump(activated_linages_size, open( "../../../../Dropbox/Research/Evolution_Immune_System/Text_files/ensemble_deterministic_model_linage_sizes_"+comment+".pkl", "wb" ) )
+	pickle.dump(activation_time_series, open( "../../../../Dropbox/Research/Evolution_Immune_System/Text_files/ensemble_deterministic_model_activation_time_series_"+comment+".pkl", "wb" ) )
+	pickle.dump(activation_time_series_var, open( "../../../../Dropbox/Research/Evolution_Immune_System/Text_files/ensemble_deterministic_model_activation_time_series_var_"+comment+".pkl", "wb" ) )
+	pickle.dump(N_total, open( "../../../../Dropbox/Research/Evolution_Immune_System/Text_files/ensemble_deterministic_model_N_total_"+comment+".pkl", "wb" ) )
+	pickle.dump(entropy, open( "../../../../Dropbox/Research/Evolution_Immune_System/Text_files/ensemble_deterministic_model_entropy_"+comment+".pkl", "wb" ) )
+	pickle.dump(m_bar, open( "../../../../Dropbox/Research/Evolution_Immune_System/Text_files/ensemble_deterministic_model_m_bar_"+comment+".pkl", "wb" ) )
+	pickle.dump(activated_energies, open( "../../../../Dropbox/Research/Evolution_Immune_System/Text_files/ensemble_deterministic_model_activated_energies_"+comment+".pkl", "wb" ) )
+
+
+	print('Ensemble size:', len(activated_linages_size))
