@@ -601,6 +601,55 @@ def compute_yield(res, time_index=-1, threshold=2.0):
     return np.sum(w[activated] * N_B[activated])
 
 
+def find_t_c(res, Z_c=None):
+    """Index/time when potency Z(t) first crosses Z_c. idx=None if never."""
+    Z = compute_potency_t(res)
+    if Z_c is None:
+        Z_c = res['params'].Z_c
+    hit = np.where(Z >= Z_c)[0]
+    if len(hit) == 0:
+        return None, np.inf
+    return hit[0], res['t'][hit[0]]
+
+
+def compute_potency_P(res, Z_c=None):
+    """Potency P = -log[N_A(t_c)]/lambda_A (natural log). nan if Z_c unreached."""
+    idx, _ = find_t_c(res, Z_c)
+    if idx is None:
+        return np.nan
+    return -np.log(res['N_A'][idx]) / res['params'].lambda_A
+
+
+def compute_specificity(res, threshold=2.0):
+    r"""
+    D_KL(Omega || Omega_0): responding density vs naive density (nats).
+
+    Omega(DG) = weights * final N_B, restricted to the ACTIVATED population using
+    the SAME indicator as the potency:
+        null model : the integrated activation latch a(t_end)
+        pMHC models: clones that ever crossed pi > pi_star
+    This keeps specificity and potency consistent and removes the artefact where a
+    weakly-proliferating null response (few clones above a fixed N_B cutoff) looks
+    spuriously narrow/specific. `threshold` is kept for signature compatibility.
+    """
+    N_B = _N_B(res)[:, -1]
+    w = res['weights']
+    if res.get('model') == 'null':
+        active = np.clip(res['a'][:, -1], 0.0, 1.0)
+    else:
+        p = res['params']
+        pi_star = (p.b0 / p.h0) ** (1 / p.hill)
+        active = np.maximum.accumulate(res['pi'] > pi_star, axis=1)[:, -1].astype(float)
+    Omega = w * N_B * active
+    total = Omega.sum()
+    if total <= 0:
+        return np.nan
+    p_ = Omega / total
+    q = w / w.sum()
+    mask = p_ > 0
+    return float(np.sum(p_[mask] * np.log(p_[mask] / q[mask])))
+
+
 def find_t_D(res, D_threshold=1.0):
     """Time at which the demand D(t) first crosses D_threshold (approx model)."""
     idx = np.where(res['D'] >= D_threshold)[0]

@@ -55,12 +55,13 @@ BASE = dict(
 
 CONFIG = dict(
     # --- what to run ---
-    models=['semicomplete'],            # subset of mf.MODELS
+    models=['semicomplete', 'null'],            # subset of mf.MODELS
     memory_phases=[0, 1],               # 0 = primary, 1 = memory (seeded from 0)
-    # sweep=('h0', np.flip(np.logspace(np.log10(_b0/1e5), np.log10(_b0/1e0), 6))),                         # None -> no sweep (use BASE params as-is).
-    sweep = None,
+    sweep=('h0', np.flip(np.logspace(np.log10(_b0/1e5), np.log10(_b0/1e0), 6))),                         # None -> no sweep (use BASE params as-is).
+    # sweep = None,
                                         # To sweep: ('h0', [v1, v2, ...]) or any
                                         # Parameter name with a list/array of values.
+    null_sval=_b0 / 1000.,      # single value: used to RUN null and to PLOT the null point                               
     sweep_cmap='summer',                # colormap for multi-value sweeps
                                         #   ('summer' = your green scale; None = discrete)
     T=10.0,
@@ -71,7 +72,7 @@ CONFIG = dict(
     memory_h0_equals_b0=True,           # memory phase forces h0 = b0 (original behaviour)
 
     # --- output / figures ---
-    figures=['NA_shared', 'Z_shared', 'pb_shared', 'per_run', 'h0_extras'],
+    figures=['NA_shared', 'Z_shared', 'pb_shared', 'per_run', 'h0_extras', 'fig4d'],
     #   available: 'NA_shared', 'Z_shared', 'pb_shared', 'per_run', 'h0_extras'
     outroot='/Users/robertomorantovar/Library/CloudStorage/Dropbox/_Documents/Research/Projects/Immune_System/_Repository/Figures/exponential_proofreading/meanfield/figures',                  # base directory for saved PDFs
     usetex=True,                       # set True if you have a LaTeX toolchain
@@ -85,7 +86,7 @@ CONFIG = dict(
 # Defaults filled in for any key omitted from a user config.
 CONFIG_DEFAULTS = dict(
     models=['semicomplete'], memory_phases=[0], sweep=None, sweep_cmap='summer',
-    T=10.0, mode='grid', base=BASE, memory_h0_equals_b0=True,
+    T=12.0, mode='grid', base=BASE, memory_h0_equals_b0=True,
     figures=['NA_shared', 'Z_shared', 'pb_shared', 'per_run'],
     outroot='figures', usetex=True, show=False,
 )
@@ -129,6 +130,7 @@ def build_params(cfg, sweep_value, memory):
 def pi_star_of(p):
     return (p.b0 / p.h0) ** (1 / p.hill)
 
+
 def label_pi_star(res):
     """pi_c label for a run. For memory runs this uses the *naive* run's params
     (stored in res['params_primary']), so the label reports the primary pi_c
@@ -156,7 +158,12 @@ def run_experiment(cfg):
     print("Running experiment")
     for model in cfg['models']:
         print(f"  model = {model}")
-        for sval in sweep_values:
+        if model == 'null' and cfg.get('null_sval') is not None:
+            model_vals = [cfg['null_sval']]                       # run null only here
+        else:
+            model_vals = cfg.get('model_sweep_values', {}).get(model, sweep_values)
+
+        for sval in model_vals:
             if sweep_name is None:
                 print("    (fixed parameters, no sweep)")
             else:
@@ -220,18 +227,24 @@ def make_shared_figures(cfg, results):
     fig_NA, ax_NA = mfp.new_fig(wide=False)
     fig_Z, ax_Z = mfp.new_fig()
     fig_pb, ax_pb = mfp.new_fig()
+    fig_4d, ax_4d = mfp.new_fig()
+
 
     # colour scale across the sweep (e.g. the green 'summer' scale for an h0 sweep)
     sweep_cols_primary = mfp.sweep_colors(len(sweep_values), 'summer')   # memory 0
     sweep_cols_memory  = mfp.sweep_colors(len(sweep_values), 'winter')   # memory 1
 
+    fig4d_pts = {'primary': [], 'recall': []}
+    fig4d_map = {('semicomplete', 0): 'primary', ('semicomplete', 1): 'recall'}
+
     for (model, sval, memory), res in results.items():
-        i_s = sweep_values.index(sval)
+        # i_s = sweep_values.index(sval)
         i_model = cfg['models'].index(model)
         # multi-value sweep -> colour by sweep value; single value -> by model
         # color = (sweep_cols_primary[i_s] if len(sweep_values) > 1 and memory == 0 else sweep_cols_memory[i_s] if len(sweep_values) > 1 and memory == 1
         #          else mfp.colors_sim[i_model])
-        if len(sweep_values) > 1:
+        if len(sweep_values) > 1 and sval in sweep_values:
+            i_s = sweep_values.index(sval)
             color = sweep_cols_primary[i_s] if memory == 0 else sweep_cols_memory[i_s]   # sweeping -> keep the summer/winter scale
             ls = '-'
         elif model == 'null':
@@ -241,8 +254,6 @@ def make_shared_figures(cfg, results):
             color = mfp.my_blue if memory == 1 else mfp.my_green   # naive=blue, memory=green
             ls = '-'
         label = label_pi_star(res)
-        if memory == 1:
-            print(label)
         # antigen
         na_color = mfp.antigen_color if memory == 0 else color
         mfp.plot_NA(ax_NA, res, color=na_color, ls=ls, label=label)
@@ -258,10 +269,16 @@ def make_shared_figures(cfg, results):
             mfp.plot_innate(ax_pb, res, color='grey', ls='--')
         mfp.plot_pb_from_potency(ax_pb, res, color=color, ls=ls, label=label)
 
+        if (model, memory) in fig4d_map:
+            D = mf.compute_specificity(res)
+            P = mf.compute_potency_P(res)
+            if not (np.isnan(D) or np.isnan(P)):
+                fig4d_pts[fig4d_map[(model, memory)]].append((D, P, color))
+
     out = _outdir(cfg, 'shared')
 
     if 'NA_shared' in figs:
-        mfp.style_log_axis(ax_NA, T, ylim=(1e0, 1e11), xlim=(0.5, T - 3))
+        mfp.style_log_axis(ax_NA, T, ylim=(1e0, 1e11), xlim=(0.5, 7.0), hide_xticklabels=False)
         fig_NA.savefig(os.path.join(out, 'N_A_shared.pdf'), dpi=200)
 
     if 'Z_shared' in figs:
@@ -269,7 +286,7 @@ def make_shared_figures(cfg, results):
         ax_Z.axhline(Z_c, lw=1, ls='--', color='k')
         
         if sweep_name == 'h0':
-            mfp.style_log_axis(ax_Z, T, ylim=(5e-1, 1e5), xlim=(2.0, T - 5.5), hide_xticklabels=False)
+            mfp.style_log_axis(ax_Z, T, ylim=(5e-1, 1e5), xlim=(2.0, 4.5), hide_xticklabels=False)
             # one legend entry per pi_c: a two-tone key (summer half + winter half)
             model0 = cfg['models'][0]
             handles, labels = [], []
@@ -283,7 +300,7 @@ def make_shared_figures(cfg, results):
                         handlelength=3, fontsize=20,
                         title=r'$\pi_c$', title_fontsize=22)
         else:
-            mfp.style_log_axis(ax_Z, T, ylim=(5e-1, 1e5), xlim=(1.5, T - 3))
+            mfp.style_log_axis(ax_Z, T, ylim=(5e-1, 1e5), xlim=(1.5, 7.0), hide_xticklabels=False)
 
 
         fig_Z.savefig(os.path.join(out, 'Z_shared.pdf'), dpi=200, transparent=True)
@@ -294,16 +311,46 @@ def make_shared_figures(cfg, results):
         ax_pb.tick_params(axis='x', labelsize=30)
         fig_pb.savefig(os.path.join(out, 'pb_shared.pdf'), dpi=200, transparent=True)
 
+    if 'fig4d' in figs:
+        for name, marker in [('primary', 'o'), ('recall', 's')]:
+            pts = fig4d_pts[name]
+            if not pts:
+                continue
+            xs = [d for d, _, _ in pts]; ys = [p for _, p, _ in pts]
+            cs = [c for _, _, c in pts]
+            ax_4d.plot(xs, ys, color='grey', lw=1.5, zorder=1)
+            ax_4d.scatter(xs, ys, c=cs, marker=marker, s=130, edgecolor='k',
+                          linewidth=0.6, zorder=2, label=r'$\mathrm{%s}$' %name)
+        null_sval = cfg.get('null_sval')
+        rn = results.get(('null', null_sval, 0)) if null_sval is not None else None
+        if rn is not None:
+            D = mf.compute_specificity(rn); P = mf.compute_potency_P(rn)
+            if not (np.isnan(D) or np.isnan(P)):
+                ax_4d.scatter([D], [P], c=[mfp.my_brown], marker='^', s=170,
+                              edgecolor='k', linewidth=0.8, zorder=3, label=r'$\mathrm{null}$')
+        # ax_4d.set_xlabel(r'Specificity, $D_{\mathrm{KL}}(\Omega\,|\,\Omega_0)$', fontsize=22)
+        # ax_4d.set_ylabel(r'Response potency, $P$', fontsize=22)
+        ax_4d.set_xlim(right = 15)
+        ax_4d.tick_params(axis='both', labelsize=30)
+        ax_4d.legend(fontsize=24, loc = 0)
+        fig_4d.savefig(os.path.join(out, 'potency_specificity_D.pdf'),
+                       dpi=200, transparent=True)
+
     if not cfg['show']:
-        plt.close(fig_NA); plt.close(fig_Z); plt.close(fig_pb)
+        plt.close(fig_NA); plt.close(fig_Z); plt.close(fig_pb); plt.close(fig_4d)   
 
 
 def make_per_run_figures(cfg, results):
     """Standard per-run panels (antigen, pi, N_B, potency)."""
     T = cfg['T']
     sweep_name, sweep_values = cfg['sweep']
+    # colour scale across the sweep (e.g. the green 'summer' scale for an h0 sweep)
+    sweep_cols_primary = mfp.sweep_colors(len(sweep_values), 'summer')   # memory 0
+    sweep_cols_memory  = mfp.sweep_colors(len(sweep_values), 'winter')   # memory 1
     for (model, sval, memory), res in results.items():
-        if len(sweep_values) > 1:
+        
+        if len(sweep_values) > 1 and sval in sweep_values:
+            i_s = sweep_values.index(sval)
             color = sweep_cols_primary[i_s] if memory == 0 else sweep_cols_memory[i_s]   # sweeping -> keep the summer/winter scale
             ls = '-'
         elif model == 'null':
@@ -378,6 +425,8 @@ def make_h0_extra_figures(cfg, results):
 
     colors_h0 = mfp.sweep_colors(len(sweep_values), cfg.get('sweep_cmap', 'summer'))
     for (model, sval, memory), res in results.items():
+        if sval not in sweep_values:      # skip runs outside the sweep (restricted models)
+            continue
         i_s = sweep_values.index(sval)
         label = label_pi_star(res)
 
@@ -409,6 +458,7 @@ def make_h0_extra_figures(cfg, results):
         plt.close(fig_n0); plt.close(fig_DG)
 
 
+
 # ============================================================
 # Entry point
 # ============================================================
@@ -418,7 +468,7 @@ def main(cfg=CONFIG):
     results = run_experiment(cfg)
 
     figs = cfg['figures']
-    if any(f in figs for f in ('NA_shared', 'Z_shared', 'pb_shared')):
+    if any(f in figs for f in ('NA_shared', 'Z_shared', 'pb_shared', 'fig4d')):
         make_shared_figures(cfg, results)
     if 'per_run' in figs:
         make_per_run_figures(cfg, results)
