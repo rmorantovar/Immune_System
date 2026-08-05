@@ -42,9 +42,9 @@ my_green_b = np.array((79, 173, 91)) / 256.
 my_green_c = np.array((94, 129, 63)) / 256.
 
 # Default per-series colours / linestyles (index by loop counter).
-colors_sim = [my_green, my_brown, my_purple2, my_gold, my_brown,
+colors_sim = [my_green, my_blue, my_purple2, my_gold, my_brown,
               my_blue, my_green, 'tab:orange', my_purple, my_cyan]
-styles_sim = [':', '-', ':', '-.', '-', '--', ':', '-.', '-', '--']
+styles_sim = ['--', '-', ':', '-.', '-', '--', ':', '-.', '-', '--']
 
 # Standard figure geometries.
 FIG_KW = dict(figsize=(8 * 1.62, 8),
@@ -133,7 +133,7 @@ def plot_yield(ax, res, color, label=None):
 
 
 def plot_potency(ax, res, color, ls='-', label=None, mark_Zc=True,
-                 marker_face=None, marker_edge='k'):
+                 marker='o', marker_face=None, marker_edge='k'):
     """Potency Z(t); optionally mark the first crossing of Z_c."""
     t = res['t']
     Z = compute_potency_t(res)
@@ -142,7 +142,7 @@ def plot_potency(ax, res, color, ls='-', label=None, mark_Zc=True,
         Z_c = res['params'].Z_c
         hit = np.where(Z >= Z_c)[0]
         if len(hit):
-            ax.scatter(t[hit[0]], Z_c,
+            ax.scatter(t[hit[0]], Z_c, marker = marker,
                        facecolor=color if marker_face is None else marker_face,
                        edgecolor=marker_edge, linewidth=2, s=250, zorder=100, label=label)
     return Z

@@ -26,6 +26,7 @@ from typing import Callable, List, Tuple, Optional
 
 import numpy as np
 from scipy.integrate import solve_ivp
+from scipy.stats import norm   # add near the top imports
 
 # Physical constants (kept for parameter expressions in the driver).
 N_Avg = 6.02214076e23          # Avogadro's number (molecules per mole)
@@ -614,10 +615,10 @@ def find_t_c(res, Z_c=None):
 
 def compute_potency_P(res, Z_c=None):
     """Potency P = -log[N_A(t_c)]/lambda_A (natural log). nan if Z_c unreached."""
-    idx, _ = find_t_c(res, Z_c)
+    idx, t_c = find_t_c(res, Z_c)
     if idx is None:
-        return np.nan
-    return -np.log(res['N_A'][idx]) / res['params'].lambda_A
+        return np.nan, -t_c
+    return -np.log(res['N_A'][idx]) / res['params'].lambda_A, -t_c
 
 
 def compute_specificity(res, threshold=2.0):
@@ -650,6 +651,29 @@ def compute_specificity(res, threshold=2.0):
     return float(np.sum(p_[mask] * np.log(p_[mask] / q[mask])))
 
 
+def dkl_analytic(mu, DG_mf, DG_star=-16.0, sigma2=7.0):
+    """
+    Analytic D_KL of a double-truncated, tilted Gaussian responding distribution
+    vs a naive N(0, sigma2). Truncation to [DG_star, DG_mf]:
+        DG_star : high-affinity edge (negative here, = -beta* sigma2)
+        DG_mf   : front position (absolute) = DG_star + front_DG_mf(res)
+        mu      : tilt of the responding Gaussian
+    D = delta^2/2 + delta*m1 - log Z,  delta=mu/sigma, m1=g/Z,
+    g = phi(z') - phi(z''),  Z = Phi(z'') - Phi(z'),
+    z' = (DG_star - mu)/sigma,  z'' = (DG_mf - mu)/sigma.
+    """
+    sigma = np.sqrt(sigma2)
+    zp  = (DG_star - mu) / sigma
+    zpp = (DG_mf   - mu) / sigma
+    Z = norm.cdf(zpp) - norm.cdf(zp)
+    if Z <= 0:
+        return np.nan
+    g  = norm.pdf(zp) - norm.pdf(zpp)
+    m1 = g / Z
+    delta = mu / sigma
+    return delta ** 2 / 2 + delta * m1 - np.log(Z)
+
+
 def find_t_D(res, D_threshold=1.0):
     """Time at which the demand D(t) first crosses D_threshold (approx model)."""
     idx = np.where(res['D'] >= D_threshold)[0]
@@ -670,6 +694,22 @@ def compute_zipf(res, time_index=-1, threshold=2.0):
         sizes = np.array(sorted(expanded, reverse=True))
     ranks = np.arange(1, len(sizes) + 1)
     return ranks, sizes / sizes[0]
+
+
+def DG_mf(res, threshold=2.0):
+    """Front position from the sim: the largest activated DG (max DG whose final
+    N_B exceeds threshold), in the sim frame == Fig.4C's (DG - DG*)."""
+    NB = _N_B(res)[:, -1]
+    act = NB > threshold
+    return res['DG'][act].max() if act.any() else np.nan
+
+
+def DG_min(res, threshold=2.0):
+    """Minimum DG from the sim: the smallest activated DG (min DG whose final
+    N_B exceeds threshold), in the sim frame == Fig.4C's (DG - DG*)."""
+    NB = _N_B(res)[:, -1]
+    act = NB > threshold
+    return res['DG'][act].min() if act.any() else np.nan
 
 
 # ============================================================

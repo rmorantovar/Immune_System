@@ -40,6 +40,9 @@ import mf_plotting as mfp
 # CONFIG  -- edit this block, then run `python run_meanfield.py`
 # ============================================================
 _b0 = 1.5
+# Fig 4D analytic-D parameters (naive N(0, sigma2); edge DG_star = -beta* sigma2)
+DG4D_STAR = -16.0        # high-affinity edge (negative)
+DG4D_SIG2 = 7.0          # naive variance sigma^2
 
 BASE = dict(
     N_A0=1.0, lambda_innate=2.2, threshold_innate=5e3,
@@ -53,15 +56,22 @@ BASE = dict(
     Z_c=1e3, n_mem=1e5,
 )
 
+_alpha_o = BASE['b0'] / BASE['lambda_A'] + BASE['b0'] / BASE['delta_A']   # null EP exponent
+FIG4D_MU  = {'primary': -8.0,    # mu = -zeta*|DG*|,  zeta ~ 0.5  (tilted once)
+             'recall':  -16.0,   # mu ~ DG*,          zeta ~ 1    (tilted twice)
+             'null': -5.16
+            # 'null':    -(_alpha_o / BASE['beta_star']) * abs(DG4D_STAR),          # ~ -5.16
+            }
+
 CONFIG = dict(
     # --- what to run ---
     models=['semicomplete', 'null'],            # subset of mf.MODELS
     memory_phases=[0, 1],               # 0 = primary, 1 = memory (seeded from 0)
-    sweep=('h0', np.flip(np.logspace(np.log10(_b0/1e5), np.log10(_b0/1e0), 6))),                         # None -> no sweep (use BASE params as-is).
-    # sweep = None,
+    # sweep=('h0', np.flip(np.logspace(np.log10(_b0/1e5), np.log10(_b0/1e0), 6))),                         # None -> no sweep (use BASE params as-is).
+    sweep = None,
                                         # To sweep: ('h0', [v1, v2, ...]) or any
                                         # Parameter name with a list/array of values.
-    null_sval=_b0 / 1000.,      # single value: used to RUN null and to PLOT the null point                               
+    null_sval=_b0 / 1.,      # single value: used to RUN null and to PLOT the null point                               
     sweep_cmap='summer',                # colormap for multi-value sweeps
                                         #   ('summer' = your green scale; None = discrete)
     T=10.0,
@@ -72,7 +82,7 @@ CONFIG = dict(
     memory_h0_equals_b0=True,           # memory phase forces h0 = b0 (original behaviour)
 
     # --- output / figures ---
-    figures=['NA_shared', 'Z_shared', 'pb_shared', 'per_run', 'h0_extras', 'fig4d'],
+    figures=['NA_shared', 'Z_shared', 'pb_shared', 'DG_shared', 'n0_shared', 'fig4d', 'P_pi'],
     #   available: 'NA_shared', 'Z_shared', 'pb_shared', 'per_run', 'h0_extras'
     outroot='/Users/robertomorantovar/Library/CloudStorage/Dropbox/_Documents/Research/Projects/Immune_System/_Repository/Figures/exponential_proofreading/meanfield/figures',                  # base directory for saved PDFs
     usetex=True,                       # set True if you have a LaTeX toolchain
@@ -219,18 +229,21 @@ def _sweep_tag(cfg, sval):
 
 
 def make_shared_figures(cfg, results):
-    """Overlay figures across all runs: antigen, potency, neutralization pb."""
+    """Overlay figures across all runs: antigen, potency, pb, Fig4D, DG front, n0."""
     sweep_name, sweep_values = cfg['sweep']
     T = cfg['T']
     figs = cfg['figures']
 
-    fig_NA, ax_NA = mfp.new_fig(wide=False)
-    fig_Z, ax_Z = mfp.new_fig()
+    fig_NA, ax_NA = mfp.new_fig()
+    fig_Z,  ax_Z  = mfp.new_fig()
     fig_pb, ax_pb = mfp.new_fig()
     fig_4d, ax_4d = mfp.new_fig()
+    fig_DG, ax_DG = mfp.new_fig()
+    fig_n0, ax_n0 = mfp.new_fig()
+    fig_P_pi, ax_P_pi = mfp.new_fig()
 
+    all_figs = [fig_NA, fig_Z, fig_pb, fig_4d, fig_DG, fig_n0, fig_P_pi]
 
-    # colour scale across the sweep (e.g. the green 'summer' scale for an h0 sweep)
     sweep_cols_primary = mfp.sweep_colors(len(sweep_values), 'summer')   # memory 0
     sweep_cols_memory  = mfp.sweep_colors(len(sweep_values), 'winter')   # memory 1
 
@@ -238,42 +251,54 @@ def make_shared_figures(cfg, results):
     fig4d_map = {('semicomplete', 0): 'primary', ('semicomplete', 1): 'recall'}
 
     for (model, sval, memory), res in results.items():
-        # i_s = sweep_values.index(sval)
-        i_model = cfg['models'].index(model)
-        # multi-value sweep -> colour by sweep value; single value -> by model
-        # color = (sweep_cols_primary[i_s] if len(sweep_values) > 1 and memory == 0 else sweep_cols_memory[i_s] if len(sweep_values) > 1 and memory == 1
-        #          else mfp.colors_sim[i_model])
+        # colour: by pi_c when sweeping; else brown (null) / green-blue (single run)
         if len(sweep_values) > 1 and sval in sweep_values:
-            i_s = sweep_values.index(sval)
-            color = sweep_cols_primary[i_s] if memory == 0 else sweep_cols_memory[i_s]   # sweeping -> keep the summer/winter scale
-            ls = '-'
-        elif model == 'null':
-            color = mfp.my_brown               # null: always brown
-            ls = mfp.styles_sim[memory]
+            pi_c = (_b0 / sval) ** (1 / res['params'].hill)  # for debugging: check that the label matches the run's pi_c
+            if model == 'null':
+                color, ls = mfp.colors_sim[memory], mfp.styles_sim[0]
+            else:
+                i_s = sweep_values.index(sval)
+                color = sweep_cols_primary[i_s] if memory == 0 else sweep_cols_memory[i_s]
+                ls = '-'
         else:
-            color = mfp.my_blue if memory == 1 else mfp.my_green   # naive=blue, memory=green
-            ls = '-'
+            pi_c = (_b0 / res['params'].h0) ** (1 / res['params'].hill)
+            if model == 'null':
+                color, ls = mfp.colors_sim[memory], mfp.styles_sim[0]
+            else:
+                color, ls = (mfp.my_blue if memory == 1 else mfp.my_green), '-'
         label = label_pi_star(res)
-        # antigen
+
         na_color = mfp.antigen_color if memory == 0 else color
         mfp.plot_NA(ax_NA, res, color=na_color, ls=ls, label=label)
 
-        # potency + Z_c crossing
-        Z = mfp.plot_potency(
-            ax_Z, res, color=color, ls=ls, label=(label if memory == 1 else None),
-            marker_face=('white' if memory == 0 else color),
-            marker_edge=(color if memory == 0 else 'k'))
+        mfp.plot_potency(ax_Z, res, color=color, ls=ls,
+                         label=(label if memory == 1 else None),
+                         marker_face=color,
+                         marker_edge='k',
+                         marker = ('s' if memory == 1 else 'o'))
 
-        # neutralization probability (and the external innate drive for primary)
         if memory == 0:
             mfp.plot_innate(ax_pb, res, color='grey', ls='--')
         mfp.plot_pb_from_potency(ax_pb, res, color=color, ls=ls, label=label)
 
         if (model, memory) in fig4d_map:
-            D = mf.compute_specificity(res)
-            P = mf.compute_potency_P(res)
+            name = fig4d_map[(model, memory)]
+            D, (_, P)  = mf.compute_specificity(res), mf.compute_potency_P(res)
+            D_ana = mf.dkl_analytic(FIG4D_MU[name], DG4D_STAR + mf.DG_mf(res),
+                                    DG_star=DG4D_STAR + mf.DG_min(res), sigma2=DG4D_SIG2)
             if not (np.isnan(D) or np.isnan(P)):
-                fig4d_pts[fig4d_map[(model, memory)]].append((D, P, color))
+                fig4d_pts[name].append((D, P, color, D_ana, pi_c))
+            ax_P_pi.scatter(pi_c, -P, color=color, ls=ls, marker='o', s=64, label=label)
+
+        if memory == 0 and model == 'semicomplete' and sval in sweep_values:
+            fr = mfp.compute_affinity_front(res, on_slope=1.0)
+            ax_DG.plot(fr['ton'], fr['DG_on'], color=color, ls='dotted', label=label)
+            off = fr['DG_off'] > res['params'].DG_min
+            ax_DG.plot(fr['toff'][off], fr['DG_off'][off], color=color, ls='dashed', lw=3)
+            expanded, produced = mf.memory_seed_from_primary(res, p=res['params'],
+                                                      n_mem=int(res['params'].n_mem))
+            ax_n0.plot(res['DG'], expanded, color=color, lw=2, label=label)
+            ax_n0.plot(res['DG'], produced * res['weights'], color=color, lw=2, label=label)
 
     out = _outdir(cfg, 'shared')
 
@@ -282,33 +307,23 @@ def make_shared_figures(cfg, results):
         fig_NA.savefig(os.path.join(out, 'N_A_shared.pdf'), dpi=200)
 
     if 'Z_shared' in figs:
-        Z_c = cfg['base']['Z_c']
-        ax_Z.axhline(Z_c, lw=1, ls='--', color='k')
-        
+        ax_Z.axhline(cfg['base']['Z_c'], lw=1, ls='--', color='k')
         if sweep_name == 'h0':
-            mfp.style_log_axis(ax_Z, T, ylim=(5e-1, 1e5), xlim=(2.0, 4.5), hide_xticklabels=False)
-            # one legend entry per pi_c: a two-tone key (summer half + winter half)
+            mfp.style_log_axis(ax_Z, T, ylim=(5e-1, 1e5), xlim=(2.2, 4.5), hide_xticklabels=False)
             model0 = cfg['models'][0]
-            handles, labels = [], []
-            for i_s, sval in enumerate(sweep_values):
-                h_naive = Line2D([], [], color=sweep_cols_primary[i_s], lw=4)
-                h_mem   = Line2D([], [], color=sweep_cols_memory[i_s], lw=4)
-                handles.append((h_naive, h_mem))                       # pair -> one entry
-                labels.append(label_pi_star(results[(model0, sval, 0)]))
-            ax_Z.legend(handles, labels,
-                        handler_map={tuple: HandlerTuple(ndivide=2)},
-                        handlelength=3, fontsize=20,
-                        title=r'$\pi_c$', title_fontsize=22)
+            handles = [(Line2D([], [], color=sweep_cols_primary[i], lw=4),
+                        Line2D([], [], color=sweep_cols_memory[i], lw=4))
+                       for i in range(len(sweep_values))]
+            labels = [label_pi_star(results[(model0, sv, 0)]) for sv in sweep_values]
+            ax_Z.legend(handles, labels, handler_map={tuple: HandlerTuple(ndivide=2)},
+                        handlelength=3, fontsize=18, title=r'$\pi_c$', title_fontsize=22)
         else:
-            mfp.style_log_axis(ax_Z, T, ylim=(5e-1, 1e5), xlim=(1.5, 7.0), hide_xticklabels=False)
-
-
+            mfp.style_log_axis(ax_Z, T, ylim=(5e-1, 1e5), xlim=(2.0, 7.0), hide_xticklabels=False)
         fig_Z.savefig(os.path.join(out, 'Z_shared.pdf'), dpi=200, transparent=True)
 
     if 'pb_shared' in figs:
-        ax_pb.set_xlim(0.5, T - 3)
-        ax_pb.tick_params(axis='y', labelsize=30)
-        ax_pb.tick_params(axis='x', labelsize=30)
+        ax_pb.set_xlim(0.5, 7)
+        ax_pb.tick_params(axis='both', labelsize=30)
         fig_pb.savefig(os.path.join(out, 'pb_shared.pdf'), dpi=200, transparent=True)
 
     if 'fig4d' in figs:
@@ -316,28 +331,79 @@ def make_shared_figures(cfg, results):
             pts = fig4d_pts[name]
             if not pts:
                 continue
-            xs = [d for d, _, _ in pts]; ys = [p for _, p, _ in pts]
-            cs = [c for _, _, c in pts]
-            ax_4d.plot(xs, ys, color='grey', lw=1.5, zorder=1)
-            ax_4d.scatter(xs, ys, c=cs, marker=marker, s=130, edgecolor='k',
-                          linewidth=0.6, zorder=2, label=r'$\mathrm{%s}$' %name)
-        null_sval = cfg.get('null_sval')
-        rn = results.get(('null', null_sval, 0)) if null_sval is not None else None
+            P  = np.array([p[1] for p in pts])
+            C  = [p[2] for p in pts]
+            Da = np.array([p[3] for p in pts])
+            # idx = [int(np.argmin(P))] if name == 'primary' else list(np.argsort(Da))
+            idx = list(np.argsort(Da))
+            # ax_4d.plot(Da[idx], P[idx], color='0.6', lw=1.5, ls='--', zorder=1)
+            ax_4d.scatter(Da[idx], P[idx], facecolors=[C[i] for i in idx],
+                          edgecolors='k', marker=marker,
+                          s=130, linewidth=1.5, zorder=2, label=r'$\mathrm{%s}$' % name)
+        rn = results.get(('null', cfg.get('null_sval'), 0))
         if rn is not None:
-            D = mf.compute_specificity(rn); P = mf.compute_potency_P(rn)
-            if not (np.isnan(D) or np.isnan(P)):
-                ax_4d.scatter([D], [P], c=[mfp.my_brown], marker='^', s=170,
-                              edgecolor='k', linewidth=0.8, zorder=3, label=r'$\mathrm{null}$')
-        # ax_4d.set_xlabel(r'Specificity, $D_{\mathrm{KL}}(\Omega\,|\,\Omega_0)$', fontsize=22)
-        # ax_4d.set_ylabel(r'Response potency, $P$', fontsize=22)
-        ax_4d.set_xlim(right = 15)
+            _, P = mf.compute_potency_P(rn)
+            D_ana = mf.dkl_analytic(FIG4D_MU['null'], DG4D_STAR + mf.DG_mf(rn),
+                                    DG_star=DG4D_STAR + mf.DG_min(rn), sigma2=DG4D_SIG2)
+            if not (np.isnan(P) or np.isnan(D_ana)):
+                ax_4d.scatter([D_ana], [P], facecolors=[mfp.my_brown], edgecolors='k',
+                              marker='^', s=170, linewidth=1.5, zorder=3, label=r'$\mathrm{null}$')
+        ax_4d.set_xlim(4.95, 18)
         ax_4d.tick_params(axis='both', labelsize=30)
-        ax_4d.legend(fontsize=24, loc = 0)
-        fig_4d.savefig(os.path.join(out, 'potency_specificity_D.pdf'),
-                       dpi=200, transparent=True)
+        ax_4d.legend(fontsize=24, loc=0)
+        fig_4d.savefig(os.path.join(out, 'potency_specificity_D.pdf'), dpi=200, transparent=True)
+
+    if 'DG_shared' in figs:
+        rn = results.get(('null', cfg.get('null_sval'), 0))
+        if rn is not None:
+            fr = mfp.compute_affinity_front(rn, on_slope=1.0)
+            ax_DG.plot(fr['ton'], fr['DG_on'], color=mfp.my_brown, ls='dotted')
+            off = fr['DG_off'] > rn['params'].DG_min
+            ax_DG.plot(fr['toff'][off], fr['DG_off'][off],
+                       color=mfp.my_brown, ls='dashed', lw=3, label='null')
+        ax_DG.set_ylim(bottom=cfg['base']['DG_min'] - 0.1)
+        ax_DG.set_xlim(0, T)
+        ax_DG.legend(fontsize=14)
+        fig_DG.savefig(os.path.join(out, 'DG_shared.pdf'), dpi=150)
+
+    if 'n0_shared' in figs:
+        rn = results.get(('null', cfg.get('null_sval'), 0))
+        if rn is not None:
+            try:
+                expanded, produced = mf.memory_seed_from_primary(
+                    rn, p=rn['params'], n_mem=int(rn['params'].n_mem))
+                ax_n0.plot(rn['DG'], expanded, color=mfp.my_brown, lw=2, label='null')
+                ax_n0.plot(rn['DG'], produced * rn['weights'], color=mfp.my_brown, lw=2)
+            except ValueError:
+                pass                      # null produced no activated cells to seed
+        ax_n0.set_yscale('log')
+        ax_n0.set_ylim(1, 2.5e9)
+        ax_n0.legend(fontsize=16, title=r'$\pi_c$')
+        fig_n0.savefig(os.path.join(out, 'n0_shared.pdf'), dpi=200, transparent=True)
+
+    if 'P_pi' in figs:
+        for name, marker in [('primary', 'o'), ('recall', 's')]:
+            pts = fig4d_pts[name]
+            if not pts:
+                continue
+            P  = np.array([p[1] for p in pts])
+            C  = [p[2] for p in pts]
+            Da = np.array([p[3] for p in pts])
+            pi_cs = np.array([p[4] for p in pts])
+            # idx = [int(np.argmin(P))] if name == 'primary' else list(np.argsort(Da))
+            idx = list(np.argsort(Da))
+            ax_P_pi.plot(pi_cs[idx], -P[idx], color='0.6', lw=1.5, ls='--', zorder=1)
+            ax_P_pi.scatter(pi_cs[idx], -P[idx], facecolors=[C[i] for i in idx],
+                            edgecolors='k', marker=marker,
+                            s=130, linewidth=1.5, zorder=2, label=r'$\mathrm{%s}$' % name)
+        ax_P_pi.tick_params(axis='both', labelsize=30)
+        ax_P_pi.set_xscale('log')
+        # ax_P_pi.legend(fontsize=16, title=r'$\pi_c$')
+        fig_P_pi.savefig(os.path.join(out, 'P_pi_shared.pdf'), dpi=200, transparent=True)
 
     if not cfg['show']:
-        plt.close(fig_NA); plt.close(fig_Z); plt.close(fig_pb); plt.close(fig_4d)   
+        for f in all_figs:
+            plt.close(f)
 
 
 def make_per_run_figures(cfg, results):
@@ -413,52 +479,6 @@ def make_per_run_figures(cfg, results):
             plt.close('all')
 
 
-def make_h0_extra_figures(cfg, results):
-    """
-    The extra panels from mf_potency_h0.py: the memory-seed distribution n0(DG)
-    and the analytic affinity front DG(t). Only meaningful for an h0 sweep.
-    """
-    sweep_name, sweep_values = cfg['sweep']
-    T = cfg['T']
-    fig_n0, ax_n0 = mfp.new_fig()
-    fig_DG, ax_DG = mfp.new_fig(wide=True)
-
-    colors_h0 = mfp.sweep_colors(len(sweep_values), cfg.get('sweep_cmap', 'summer'))
-    for (model, sval, memory), res in results.items():
-        if sval not in sweep_values:      # skip runs outside the sweep (restricted models)
-            continue
-        i_s = sweep_values.index(sval)
-        label = label_pi_star(res)
-
-        if memory == 0:
-            # affinity front (growth-phase slope 1.0 as in the h0 script)
-            fr = mfp.compute_affinity_front(res, on_slope=1.0)
-            ax_DG.plot(fr['ton'], fr['DG_on'], color=colors_h0[i_s],
-                       ls='dotted', label=label)
-            off = fr['DG_off'] > res['params'].DG_min
-            ax_DG.plot(fr['toff'][off], fr['DG_off'][off],
-                       color=colors_h0[i_s], ls='dashed', lw=3)
-            # per-clone memory pool that would be seeded from this primary
-            expanded, _ = mf.memory_seed_from_primary(
-                res, p=res['params'], n_mem=int(res['params'].n_mem))
-            ax_n0.plot(res['DG'], expanded, color=colors_h0[i_s], lw=2, label=label)
-
-    out = _outdir(cfg, 'shared')
-    ax_n0.set_yscale('log')
-    ax_n0.set_ylim(1, 2.5e9)
-    ax_n0.legend(fontsize=16, title=r'$\pi_c$')
-    fig_n0.savefig(os.path.join(out, 'n0_shared.pdf'), dpi=200, transparent=True)
-
-    ax_DG.set_ylim(bottom=cfg['base']['DG_min'] - 0.1)
-    ax_DG.set_xlim(0, T)
-    ax_DG.legend(fontsize=14)
-    fig_DG.savefig(os.path.join(out, 'DG_shared.pdf'), dpi=150)
-
-    if not cfg['show']:
-        plt.close(fig_n0); plt.close(fig_DG)
-
-
-
 # ============================================================
 # Entry point
 # ============================================================
@@ -468,12 +488,11 @@ def main(cfg=CONFIG):
     results = run_experiment(cfg)
 
     figs = cfg['figures']
-    if any(f in figs for f in ('NA_shared', 'Z_shared', 'pb_shared', 'fig4d')):
+    if any(f in figs for f in ('NA_shared', 'Z_shared', 'pb_shared',
+                               'fig4d', 'DG_shared', 'n0_shared', 'P_pi')):
         make_shared_figures(cfg, results)
     if 'per_run' in figs:
         make_per_run_figures(cfg, results)
-    if 'h0_extras' in figs:
-        make_h0_extra_figures(cfg, results)
 
     if cfg['show']:
         plt.show()
