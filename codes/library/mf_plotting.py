@@ -21,20 +21,26 @@ from mf_lib import (compute_N_B_tot, compute_L_act, compute_zipf, compute_potenc
 # ============================================================
 # Palette
 # ============================================================
-my_red = np.array((228, 75, 41)) / 256.
+my_red = np.array((228,75,41))/256.
+# _colors_h0_default_naive = plt.cm.autumn(np.linspace(0, 0.7, 6))
+# my_red = _colors_h0_default_naive[3]
 my_purple = np.array((125, 64, 119)) / 256.
 my_purple2 = np.array((116, 97, 164)) / 256.
-_colors_h0_default_naive = plt.cm.summer(np.linspace(0, 0.8, 6))
-my_green = _colors_h0_default_naive[3]
-_colors_h0_default_memory = plt.cm.winter(np.linspace(0, 0.8, 6))
-my_blue = _colors_h0_default_memory[3]
+my_green = np.array((125,165,38))/256.
+# _colors_h0_default_naive = plt.cm.summer(np.linspace(0, 0.7, 6))
+# my_green = _colors_h0_default_naive[3]
+my_blue = np.array((76,109,166))/256.
+# _colors_h0_default_memory = plt.cm.winter(np.linspace(0, 0.7, 6))
+# my_blue = _colors_h0_default_memory[3]
 my_gold = np.array((215, 139, 45)) / 256.
 my_brown = np.array((182, 90, 36)) / 256.
 my_blue2 = np.array((80, 141, 188)) / 256.
 my_yellow = np.array((246, 181, 56)) / 256.
 my_yellow2 = np.array((242, 192, 65)) / 256.
-my_green2 = np.array((158, 248, 72)) / 256.
+# my_green2 = np.array((158, 248, 72)) / 256.
+my_green2 = 'darkgreen'
 my_cyan = 'tab:cyan'
+my_grey = np.array((128, 128, 128)) / 256.
 antigen_color = my_yellow
 
 my_green_a = np.array((159, 206, 99)) / 256.
@@ -42,9 +48,12 @@ my_green_b = np.array((79, 173, 91)) / 256.
 my_green_c = np.array((94, 129, 63)) / 256.
 
 # Default per-series colours / linestyles (index by loop counter).
-colors_sim = [my_green, my_blue, my_purple2, my_gold, my_brown,
+colors_sim = [my_red, my_blue, my_purple2, my_gold, my_brown,
               my_blue, my_green, 'tab:orange', my_purple, my_cyan]
+colors_mem = [my_green, my_green2]
+colors_sweep = [my_brown, my_red, my_purple2, my_green, my_blue, my_cyan]
 styles_sim = ['--', '-', ':', '-.', '-', '--', ':', '-.', '-', '--']
+styles_mem = ['--', '-']
 
 # Standard figure geometries.
 FIG_KW = dict(figsize=(8 * 1.62, 8),
@@ -132,7 +141,7 @@ def plot_yield(ax, res, color, label=None):
     ax.plot(res['t'], compute_N_B_tot(res), lw=4, color=color, label=label)
 
 
-def plot_potency(ax, res, color, ls='-', label=None, mark_Zc=True,
+def plot_potency(ax, res, color, ls='-', label=None, mark_Zc=True, mark_t = False,
                  marker='o', marker_face=None, marker_edge='k'):
     """Potency Z(t); optionally mark the first crossing of Z_c."""
     t = res['t']
@@ -145,6 +154,12 @@ def plot_potency(ax, res, color, ls='-', label=None, mark_Zc=True,
             ax.scatter(t[hit[0]], Z_c, marker = marker,
                        facecolor=color if marker_face is None else marker_face,
                        edgecolor=marker_edge, linewidth=2, s=250, zorder=100, label=label)
+    elif mark_t:
+        hit = np.where(t >= mark_t)[0]
+        if len(hit):
+            ax.scatter(mark_t, Z[hit[0]], marker = marker,
+                        facecolor=color if marker_face is None else marker_face,
+                        edgecolor=marker_edge, linewidth=2, s=180, zorder=100, label=label)
     return Z
 
 

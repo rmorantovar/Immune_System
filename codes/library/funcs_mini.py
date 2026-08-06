@@ -44,11 +44,18 @@ plt.rcParams['text.usetex'] = True
 N_Avg = 6.02214076e23
 k_BT = 1.380649e-23*293
 
-my_red = np.array((228,75,41))/256.
+
+# my_red = np.array((228,75,41))/256.
+_colors_h0_default_naive = plt.cm.autumn(np.linspace(0, 0.7, 6))
+my_red = _colors_h0_default_naive[3]
 my_purple = np.array((125,64,119))/256.
 my_purple2 = np.array((116,97,164))/256.
-my_green = np.array((125,165,38))/256.
-my_blue = np.array((76,109,166))/256.
+# my_green = np.array((125,165,38))/256.
+_colors_h0_default_naive = plt.cm.summer(np.linspace(0, 0.7, 6))
+my_green = _colors_h0_default_naive[3]
+# my_blue = np.array((76,109,166))/256.
+_colors_h0_default_memory = plt.cm.winter(np.linspace(0, 0.7, 6))
+my_blue = _colors_h0_default_memory[3]
 my_gold = np.array((215,139,45))/256.
 my_brown = np.array((182,90,36))/256.
 my_blue2 = np.array((80,141,188))/256.

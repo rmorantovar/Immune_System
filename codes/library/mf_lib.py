@@ -613,12 +613,27 @@ def find_t_c(res, Z_c=None):
     return hit[0], res['t'][hit[0]]
 
 
-def compute_potency_P(res, Z_c=None):
+def find_t_star(res, Z_c=None):
+    """Index/time when potency Z(t) first crosses Z_c. idx=None if never."""
+    Z = compute_potency_t(res)
+    if Z_c is None:
+        Z_c = res['params'].Z_c
+    hit = np.where(Z >= 0)[0]
+    if len(hit) == 0:
+        return None, np.inf
+    return hit[0], res['t'][hit[0]]
+
+
+def compute_potency_P(res, t_c_star=None):
     """Potency P = -log[N_A(t_c)]/lambda_A (natural log). nan if Z_c unreached."""
-    idx, t_c = find_t_c(res, Z_c)
-    if idx is None:
-        return np.nan, -t_c
-    return -np.log(res['N_A'][idx]) / res['params'].lambda_A, -t_c
+    Z = compute_potency_t(res)
+    P = Z[res['t']>t_c_star][0] if t_c_star is not None else np.inf
+    # idc, t_c = find_t_c(res, Z_c)
+    # idstar, t_star = find_t_star(res, Z_c)
+    # if Z_c is None:
+    #     Z_c = res['params'].Z_c
+    # P = Z_c*np.exp(-res['params'].b0*(t_c - t_star)) if idc is not None and idstar is not None else np.nan
+    return t_c_star, P
 
 
 def compute_specificity(res, threshold=2.0):
