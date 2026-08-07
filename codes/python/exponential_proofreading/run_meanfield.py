@@ -51,7 +51,7 @@ BASE = dict(
     hill=2.0, beta_star=2.3, K_T=1e4,
     delta_T=0.00, Tcell_growth_factor=2.0,
     tau_eng=0.1, b0=_b0, delta_B=0.00, h0=_b0 / 1000.,
-    DG_min=0.0, DG_max=8.0, M=32,
+    DG_min=0.0, DG_max=12.0, M=32,
     omega_0=1.0, T_lim=True, N_T0=1e6,
     Z_c=1.4e3, n_mem=4e4,
 )
@@ -240,9 +240,10 @@ def make_shared_figures(cfg, results):
     fig_4d, ax_4d = mfp.new_fig()
     fig_DG, ax_DG = mfp.new_fig()
     fig_n0, ax_n0 = mfp.new_fig()
+    fig_n02, ax_n02 = mfp.new_fig()
     fig_P_pi, ax_P_pi = mfp.new_fig()
 
-    all_figs = [fig_NA, fig_Z, fig_pb, fig_4d, fig_DG, fig_n0, fig_P_pi]
+    all_figs = [fig_NA, fig_Z, fig_pb, fig_4d, fig_DG, fig_n0, fig_n02, fig_P_pi]
 
     # sweep_cols_primary = mfp.sweep_colors(len(sweep_values), 'autumn')   # memory 0
     sweep_cols_primary =  mfp.colors_sweep   # memory 0
@@ -287,23 +288,23 @@ def make_shared_figures(cfg, results):
         na_color = mfp.antigen_color if memory == 0 else color
         mfp.plot_NA(ax_NA, res, color=na_color, ls=ls, label=label)
 
-        if memory == 0:
-            mfp.plot_innate(ax_pb, res, color='grey', ls='--')
-            if opt_sval is None or sval == opt_sval or model == 'null':
+        if len(sweep_values) > 1 and sval in sweep_values:
+            if memory == 0:
+                mfp.plot_innate(ax_pb, res, color='grey', ls='--')
+                if opt_sval is None or sval == opt_sval or model == 'null':
+                    mfp.plot_potency(ax_Z, res, color=color, ls=ls,
+                            marker_face=color, marker_edge='k',
+                            marker='o', mark_Zc=False, mark_t = t_c_star)
+                    t_peak = res['t'][np.argmax(res['N_A'])]
+                    ax_Z.axvline(t_peak, lw=2, ls='--', color='grey')
+
+            else:
                 mfp.plot_potency(ax_Z, res, color=color, ls=ls,
-                        marker_face=color, marker_edge='k',
-                        marker='o', mark_Zc=False, mark_t = t_c_star)
-                t_peak = res['t'][np.argmax(res['N_A'])]
-                ax_Z.axvline(t_peak, lw=2, ls='--', color='grey')
-
-        else:
-            mfp.plot_potency(ax_Z, res, color=color, ls=ls,
-                label=label,
-                marker_face=color, marker_edge='k',
-                marker='s', mark_Zc=False, mark_t = t_c_star)
-            if opt_sval is None or sval == opt_sval:
-                ax_Z.axvline(t_c_star, lw=2, ls='--', color='k')
-
+                    label=label,
+                    marker_face=color, marker_edge='k',
+                    marker='s', mark_Zc=False, mark_t = t_c_star)
+                if opt_sval is None or sval == opt_sval:
+                    ax_Z.axvline(t_c_star, lw=2, ls='--', color='k')
 
         mfp.plot_pb_from_potency(ax_pb, res, color=color, ls=ls, label=label)
 
@@ -322,13 +323,21 @@ def make_shared_figures(cfg, results):
 
         if memory == 0 and model == 'semicomplete' and sval in sweep_values:
             fr = mfp.compute_affinity_front(res, on_slope=1.0)
-            ax_DG.plot(fr['ton'], fr['DG_on'], color=color, ls='dotted', label=label)
+            ax_DG.plot(fr['ton'], fr['DG_on'], color=color, ls='--', label=label, lw=3)
             off = fr['DG_off'] > res['params'].DG_min
-            ax_DG.plot(fr['toff'][off], fr['DG_off'][off], color=color, ls='dashed', lw=3)
+            ax_DG.plot(fr['toff'][off], fr['DG_off'][off], color=color, ls='--', lw=3)
             expanded, produced = mf.memory_seed_from_primary(res, p=res['params'],
                                                       n_mem=int(res['params'].n_mem))
-            ax_n0.plot(res['DG'], expanded, color=color, lw=2, label=label)
-            ax_n0.plot(res['DG'], produced * res['weights'], color=color, lw=2, label=label)
+            ax_n0.plot(res['DG'], expanded, color=color, lw=2, ls = '--')
+            ax_n0.plot(res['DG'], produced * res['weights'], color=color, lw=3, label=label)
+        if memory == 1 and model == 'semicomplete' and sval in sweep_values:
+            fr = mfp.compute_affinity_front(res, on_slope=1.0)
+            ax_DG.plot(fr['ton'], fr['DG_on'], color=color, ls=':', lw=3)
+            off = fr['DG_off'] > res['params'].DG_min
+            ax_DG.plot(fr['toff'][off], fr['DG_off'][off], color=color, ls=':', lw=3)
+            expanded, produced = mf.memory_seed_from_primary(res, p=res['params'],
+                                                        n_mem=int(res['params'].n_mem))
+            ax_n02.plot(res['DG'], expanded, color=color, lw=2, label=label)
 
     out = _outdir(cfg, 'shared')
 
@@ -347,7 +356,7 @@ def make_shared_figures(cfg, results):
                        for i in range(len(sweep_values))]
             labels = [label_pi_star(results[(model0, sv, 0)]) for sv in sweep_values]
             ax_Z.legend(handles, labels, handler_map={tuple: HandlerTuple(ndivide=2)},
-                        handlelength=3, fontsize=18, title=r'$\pi_c$', title_fontsize=22)
+                        handlelength=3, fontsize=22, title=r'$\pi_c$', title_fontsize=24)
         else:
             mfp.style_log_axis(ax_Z, T, ylim=(5e-1, 1e5), xlim=(2.0, 7.0), hide_xticklabels=False)
 
@@ -373,28 +382,45 @@ def make_shared_figures(cfg, results):
             ax_4d.scatter(Da[idx], P[idx], facecolors=[C[i] for i in idx],
                           edgecolors='k', marker=marker,
                           s=130, linewidth=1.5, zorder=2, label=r'$\mathrm{%s}$' % name)
-        rn = results.get(('null', cfg.get('null_sval'), 0))
-        if rn is not None:
-            _, P = mf.compute_potency_P(rn, t_c_star=t_c_star)
-            D_ana = mf.dkl_analytic(FIG4D_MU['null'], DG4D_STAR + mf.DG_mf(rn),
-                                    DG_star=DG4D_STAR + mf.DG_min(rn), sigma2=DG4D_SIG2)
+        rn0 = results.get(('null', cfg.get('null_sval'), 0))
+        if rn0 is not None:
+            _, P = mf.compute_potency_P(rn0, t_c_star=t_c_star)
+            D_ana = mf.dkl_analytic(FIG4D_MU['null'], DG4D_STAR + mf.DG_mf(rn0),
+                                    DG_star=DG4D_STAR + mf.DG_min(rn0), sigma2=DG4D_SIG2)
             if not (np.isnan(P) or np.isnan(D_ana)):
                 ax_4d.scatter([D_ana], [P], facecolors=[mfp.my_grey], edgecolors='k',
                               marker='o', s=170, linewidth=1.5, zorder=3, label=r'$\mathrm{null}$')
+
+        rn1 = results.get(('null', cfg.get('null_sval'), 1))
+        if rn1 is not None:
+            _, P = mf.compute_potency_P(rn1, t_c_star=t_c_star)
+            D_ana = mf.dkl_analytic(FIG4D_MU['null']*2, DG4D_STAR + mf.DG_mf(rn1),
+                                    DG_star=DG4D_STAR + mf.DG_min(rn1), sigma2=DG4D_SIG2)
+            if not (np.isnan(P) or np.isnan(D_ana)):
+                ax_4d.scatter([D_ana], [P], facecolors=[mfp.my_grey], edgecolors='k',
+                                marker='s', s=170, linewidth=1.5, zorder=3)
+                
         ax_4d.set_xlim(4.95, 18)
         ax_4d.set_yscale('log')
         ax_4d.tick_params(axis='both', labelsize=30)
-        ax_4d.legend(fontsize=24, loc=0)
+        ax_4d.legend(fontsize=24, loc=3)
         fig_4d.savefig(os.path.join(out, 'potency_specificity_D.pdf'), dpi=200, transparent=True)
 
     if 'DG_shared' in figs:
         rn = results.get(('null', cfg.get('null_sval'), 0))
         if rn is not None:
             fr = mfp.compute_affinity_front(rn, on_slope=1.0)
-            ax_DG.plot(fr['ton'], fr['DG_on'], color=mfp.my_grey, ls='dotted')
+            ax_DG.plot(fr['ton'], fr['DG_on'], color=mfp.my_grey, ls='--', lw=3)
             off = fr['DG_off'] > rn['params'].DG_min
             ax_DG.plot(fr['toff'][off], fr['DG_off'][off],
-                       color=mfp.my_grey, ls='dashed', lw=3, label='null')
+                       color=mfp.my_grey, ls='--', lw=3, label='null')
+        rn = results.get(('null', cfg.get('null_sval'), 1))
+        if rn is not None:
+            fr = mfp.compute_affinity_front(rn, on_slope=1.0)
+            ax_DG.plot(fr['ton'], fr['DG_on'], color=mfp.my_grey, ls=':', lw=3)
+            off = fr['DG_off'] > rn['params'].DG_min
+            ax_DG.plot(fr['toff'][off], fr['DG_off'][off],
+                        color=mfp.my_grey, ls=':', lw=3)
         ax_DG.set_ylim(bottom=cfg['base']['DG_min'] - 0.1)
         ax_DG.set_xlim(0, T)
         ax_DG.legend(fontsize=14)
@@ -410,10 +436,27 @@ def make_shared_figures(cfg, results):
                 ax_n0.plot(rn['DG'], produced * rn['weights'], color=mfp.my_grey, lw=2)
             except ValueError:
                 pass                      # null produced no activated cells to seed
+        Emax = 12
+        E = np.linspace(0, Emax, 10000)
+        ax_n0.plot(E, 2e9*np.exp(-(E-16)**2/(2*6)), color='grey', alpha = 0.5, lw = 8)
         ax_n0.set_yscale('log')
         ax_n0.set_ylim(1, 2.5e9)
         ax_n0.legend(fontsize=16, title=r'$\pi_c$')
         fig_n0.savefig(os.path.join(out, 'n0_shared.pdf'), dpi=200, transparent=True)
+
+        rn = results.get(('null', cfg.get('null_sval'), 1))
+        if rn is not None:
+            try:
+                expanded, produced = mf.memory_seed_from_primary(
+                    rn, p=rn['params'], n_mem=int(rn['params'].n_mem))
+                ax_n02.plot(rn['DG'], expanded, color=mfp.my_grey, lw=2, label='null')
+            except ValueError:
+                pass                      # null produced no activated cells to seed
+        ax_n02.plot(E, 2e9*np.exp(-(E-16)**2/(2*6)), color='grey', alpha = 0.5, lw = 8)
+        ax_n02.set_yscale('log')
+        ax_n02.set_ylim(1, 2.5e9)
+        ax_n02.legend(fontsize=16, title=r'$\pi_c$')
+        fig_n02.savefig(os.path.join(out, 'n0_shared2.pdf'), dpi=200, transparent=True)
 
     if 'P_pi' in figs:
         for name, marker in [('primary', 'o'), ('recall', 's')]:
