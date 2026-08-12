@@ -450,13 +450,10 @@ def binding_affinity(x, a, b):
     return 1/(1+((np.exp(a+b*x))))
 
 def Z_PWM(PWM, T):
-    Z = 1
-    for i in range(len(PWM[0,:])):
-        Z_i = 0
-        for j in range(len(PWM[:,0])):
-            Z_i = Z_i + np.exp((-PWM[j, i]/T))
-        Z = Z*Z_i
-    return Z
+    # PWM: (20, L), T: (n_T,)
+    # exp(-PWM[:, :, None] / T[None, None, :]) -> sum over aa -> product over positions
+    Zi = np.exp(-PWM[:, :, None] / T[None, None, :]).sum(axis=0)  # (L, n_T)
+    return np.prod(Zi, axis=0)  
 
 def Z_PWMj(PWM, beta):
     Z = 1
