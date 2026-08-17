@@ -20,19 +20,28 @@ import matplotlib.pyplot as plt
 # --- point this at wherever mf_lib.py lives ---
 sys.path.append(os.path.join(os.path.dirname(__file__), '../../library'))
 import mf_lib as mf
+import mf_plotting as mfp
 
 # Reuse the exact BASE parameters from the driver so the physics matches.
 import run_meanfield as R
 
 
 # ---- scan knobs ----
-DELTAS = np.arange(0.0, 6.01, 1.0)   # coarse first pass; refine near crossover
+DELTAS = np.arange(0.0, 6.01, 0.5)   # coarse first pass; refine near crossover
 R_MATURATION = 0.5           # serum fragility factor r (<1); external input
 NU_NSTAR_ANALYTIC = None     # set to your analytic nu*N* to print the comparison
 T_SIM = 5.0                  # only need to clear t_c (~3.5); 5 gives margin
 MODE = 'grid'
 MAX_STEP = 0.05              # cap LSODA micro-steps on the stiff recall solves
 
+CONFIG = dict(
+    # --- output / figures ---
+    figures=['NA_shared', 'Z_shared', 'pb_shared', 'DG_shared', 'n0_shared', 'fig4d', 'P_pi', 'per_run'],
+    #   available: 'NA_shared', 'Z_shared', 'pb_shared', 'per_run', 'h0_extras'
+    outroot='/Users/robertomorantovar/Library/CloudStorage/Dropbox/_Documents/Research/Projects/Immune_System/_Repository/Figures/antigenic_evolution/meanfield/',                  # base directory for saved PDFs
+    usetex=True,                       # set True if you have a LaTeX toolchain
+    show=False,                         # plt.show() at the end instead of/along saving
+)
 
 def shift_seed(seed, delta, p, weights):
     """Rigid drift E -> E + delta with CELL-COUNT conservation.
@@ -69,7 +78,7 @@ def run_recall(p_rec, seed):
                              mode=MODE, memory_seed=seed, max_step=MAX_STEP)
 
 
-def main():
+def main(cfg=CONFIG):
     t_start = time.time()
 
     # 1. primary, once (drift-invariant reference)
@@ -172,14 +181,15 @@ def main():
                     textcoords='offset points', fontsize=11)
     ax.set_xlabel(r'antigenic drift  $\Delta$  (energy units)')
     ax.set_ylabel(r'potency  $P$  at fixed $t_c$')
+    ax.set_yscale('log')
     ax.legend(frameon=False)
     secax = ax.secondary_xaxis('top',
                                functions=(lambda d: d/np.log(2),
                                           lambda f: f*np.log(2)))
     secax.set_xlabel('titer folds (bare;  serum $= /r$)')
-    fig.tight_layout()
-    out = 'drift_crossover.png'
-    fig.savefig(out, dpi=150)
+    out = os.path.join(cfg['outroot'], 'exploration')
+    os.makedirs(out, exist_ok=True)
+    fig.savefig(os.path.join(out, 'drift_crossover.png'), dpi=150)
     print(f"saved: {out}")
 
 

@@ -11,7 +11,7 @@ Holds everything that used to be copy-pasted across the run scripts:
 
 The driver composes these; nothing here runs a simulation.
 """
-
+import os, sys
 import numpy as np
 import matplotlib.pyplot as plt
 from cycler import cycler
@@ -107,6 +107,20 @@ def style_log_axis(ax, T, ylim=None, xlim=None, labelsize=30, hide_xticklabels=T
     ax.tick_params(axis='y', labelsize=labelsize)
     ax.tick_params(axis='x', labelsize=labelsize)
 
+
+def _experiment_tag(cfg):
+    """Top-level folder describing the run: 'sweep_<param>' or 'single_run'."""
+    name = cfg['sweep'][0]
+    return f'sweep_{name}' if name is not None else 'single_run'
+
+
+def _outdir(cfg, *parts):
+    # Everything lands under outroot/<experiment_tag>/... so the folder itself
+    # records whether the figures came from a sweep or a single run.
+    path = os.path.join(cfg['outroot'], _experiment_tag(cfg),
+                        *[str(x) for x in parts])
+    os.makedirs(path, exist_ok=True)
+    return path
 
 # ============================================================
 # Per-run panels (each takes an existing ax + a result dict)
