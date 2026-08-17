@@ -51,7 +51,7 @@ BASE = dict(
     hill=2.0, beta_star=2.3, K_T=1e4,
     delta_T=0.00, Tcell_growth_factor=2.0,
     tau_eng=0.1, b0=_b0, delta_B=0.00, h0=_b0 / 1000.,
-    DG_min=0.0, DG_max=12.0, M=32,
+    DG_min=0.0, DG_max=12.0, M=40,
     omega_0=1.0, T_lim=True, N_T0=1e6,
     Z_c=1.4e3, n_mem=4e4,
 )
@@ -67,8 +67,9 @@ CONFIG = dict(
     # --- what to run ---
     models=['semicomplete', 'null'],            # subset of mf.MODELS
     memory_phases=[0, 1],               # 0 = primary, 1 = memory (seeded from 0)
-    sweep=('h0', np.flip(np.logspace(np.log10(_b0/1e5), np.log10(_b0/1e0), 6))),                         # None -> no sweep (use BASE params as-is).
-    # sweep = None,
+    # sweep=('h0', np.flip(np.logspace(np.log10(_b0/1e5), np.log10(_b0/1e0), 6))),                         # None -> no sweep (use BASE params as-is).
+    # sweep=('h0', np.flip([_b0/1e5, _b0/1e3, _b0/1e1])),                         # None -> no sweep (use BASE params as-is).
+    sweep = None,
                                         # To sweep: ('h0', [v1, v2, ...]) or any
                                         # Parameter name with a list/array of values.
     null_sval= 1.,      # single value: used to RUN null and to PLOT the null point                               
@@ -77,6 +78,7 @@ CONFIG = dict(
     T=10.0,
     mode='grid',                        # 'grid' or 'stochastic'
     base=BASE,
+    drift_delta=0.0,
 
     # --- behaviour toggles ---
     memory_h0_equals_b0=True,           # memory phase forces h0 = b0 (original behaviour)
@@ -98,7 +100,7 @@ CONFIG_DEFAULTS = dict(
     models=['semicomplete'], memory_phases=[0], sweep=None, sweep_cmap='summer',
     T=12.0, mode='grid', base=BASE, memory_h0_equals_b0=True,
     figures=['NA_shared', 'Z_shared', 'pb_shared', 'per_run'],
-    outroot='figures', usetex=True, show=False,
+    outroot='figures', usetex=True, show=False, drift_delta=0.0,
 )
 
 
@@ -181,7 +183,12 @@ def run_experiment(cfg):
             for memory in cfg['memory_phases']:
                 p = build_params(cfg, sval, memory)
                 seed = memory_seeds.get((model, sval)) if memory == 1 else None
-                if memory == 1 and seed is None:
+                delta = cfg.get('drift_delta', 0.0)
+                if memory == 1 and seed is not None and delta > 0:
+                    dDG = (cfg['base']['DG_max'] - cfg['base']['DG_min']) / (cfg['base']['M'] - 1)
+                    k = int(round(delta / dDG))
+                    if k > 0:
+                        seed = np.concatenate([np.zeros(k), seed[:-k]])   # push counts to higher E
                     print("      [skip] memory phase requested but no primary "
                           "(add 0 to memory_phases)")
                     continue

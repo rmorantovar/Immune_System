@@ -52,6 +52,7 @@ colors_sim = [my_red, my_blue, my_purple2, my_gold, my_brown,
               my_blue, my_green, 'tab:orange', my_purple, my_cyan]
 colors_mem = [my_green, my_green2]
 colors_sweep = [my_brown, my_red, my_purple2, my_green, my_blue, my_cyan]
+colors_sweep = [my_red, my_green, my_cyan]
 styles_sim = ['--', '-', ':', '-.', '-', '--', ':', '-.', '-', '--']
 styles_mem = ['--', '-']
 
