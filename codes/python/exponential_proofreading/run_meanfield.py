@@ -53,7 +53,7 @@ BASE = dict(
     tau_eng=0.1, b0=_b0, delta_B=0.00, h0=_b0 / 1000.,
     DG_min=0.0, DG_max=12.0, M=32,
     omega_0=1.0, T_lim=True, N_T0=1e6,
-    Z_c=1.4e3, n_mem=3e4,
+    Z_c=1.4e3, n_mem=4e4,
 )
 
 _alpha_o = BASE['b0'] / BASE['lambda_A'] + BASE['b0'] / BASE['delta_A']   # null EP exponent
