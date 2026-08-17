@@ -39,21 +39,21 @@ import mf_plotting as mfp
 # ============================================================
 # CONFIG  -- edit this block, then run `python run_meanfield.py`
 # ============================================================
-_b0 = 1.5
+_b0 = 1.8
 # Fig 4D analytic-D parameters (naive N(0, sigma2); edge DG_star = -beta* sigma2)
 DG4D_STAR = -16.0        # high-affinity edge (negative)
 DG4D_SIG2 = 7.0          # naive variance sigma^2
 
 BASE = dict(
-    N_A0=1.0, lambda_innate=2.2, threshold_innate=5e3,
-    lambda_A=6.2, delta_A=3.0, eta=1.0,
+    N_A0=1.0, lambda_innate=2.2, threshold_innate=1e4,
+    lambda_A=6.2, delta_A=3.5, eta=1.0,
     k_on=1e2 * 2e5 * 1e6 * 24 * 3600 / mf.N_Avg, delta_pi=0.1,
     hill=2.0, beta_star=2.3, K_T=1e4,
     delta_T=0.00, Tcell_growth_factor=2.0,
     tau_eng=0.1, b0=_b0, delta_B=0.00, h0=_b0 / 1000.,
-    DG_min=0.0, DG_max=12.0, M=40,
+    DG_min=0.0, DG_max=6.0, M=32,
     omega_0=1.0, T_lim=True, N_T0=1e6,
-    Z_c=1.4e3, n_mem=4e4,
+    Z_c=1.e3, n_mem=4e4,
 )
 
 _alpha_o = BASE['b0'] / BASE['lambda_A'] + BASE['b0'] / BASE['delta_A']   # null EP exponent
@@ -65,11 +65,12 @@ FIG4D_MU  = {'primary': -8.0,    # mu = -zeta*|DG*|,  zeta ~ 0.5  (tilted once)
 
 CONFIG = dict(
     # --- what to run ---
-    models=['semicomplete', 'null'],            # subset of mf.MODELS
+    models=['semicomplete'],            # subset of mf.MODELS
     memory_phases=[0, 1],               # 0 = primary, 1 = memory (seeded from 0)
-    # sweep=('h0', np.flip(np.logspace(np.log10(_b0/1e5), np.log10(_b0/1e0), 6))),                         # None -> no sweep (use BASE params as-is).
-    # sweep=('h0', np.flip([_b0/1e5, _b0/1e3, _b0/1e1])),                         # None -> no sweep (use BASE params as-is).
-    sweep = None,
+    # sweep=('h0', np.flip(np.logspace(np.log10(_b0/1e5), np.log10(_b0/1e0), 6))),     # None -> no sweep (use BASE params as-is).
+    # sweep=('h0', np.flip([_b0/1e5, _b0/1e3, _b0/1e1])),      
+    # sweep=('h0', np.flip([_b0/1e3])),                         
+    sweep = None, # None -> no sweep (use BASE params as-is).
                                         # To sweep: ('h0', [v1, v2, ...]) or any
                                         # Parameter name with a list/array of values.
     null_sval= 1.,      # single value: used to RUN null and to PLOT the null point                               
@@ -78,7 +79,6 @@ CONFIG = dict(
     T=10.0,
     mode='grid',                        # 'grid' or 'stochastic'
     base=BASE,
-    drift_delta=0.0,
 
     # --- behaviour toggles ---
     memory_h0_equals_b0=True,           # memory phase forces h0 = b0 (original behaviour)
@@ -100,7 +100,7 @@ CONFIG_DEFAULTS = dict(
     models=['semicomplete'], memory_phases=[0], sweep=None, sweep_cmap='summer',
     T=12.0, mode='grid', base=BASE, memory_h0_equals_b0=True,
     figures=['NA_shared', 'Z_shared', 'pb_shared', 'per_run'],
-    outroot='figures', usetex=True, show=False, drift_delta=0.0,
+    outroot='figures', usetex=True, show=False,
 )
 
 
@@ -174,7 +174,6 @@ def run_experiment(cfg):
             model_vals = [cfg['null_sval']]                       # run null only here
         else:
             model_vals = cfg.get('model_sweep_values', {}).get(model, sweep_values)
-
         for sval in model_vals:
             if sweep_name is None:
                 print("    (fixed parameters, no sweep)")
@@ -183,18 +182,15 @@ def run_experiment(cfg):
             for memory in cfg['memory_phases']:
                 p = build_params(cfg, sval, memory)
                 seed = memory_seeds.get((model, sval)) if memory == 1 else None
-                delta = cfg.get('drift_delta', 0.0)
-                if memory == 1 and seed is not None and delta > 0:
-                    dDG = (cfg['base']['DG_max'] - cfg['base']['DG_min']) / (cfg['base']['M'] - 1)
-                    k = int(round(delta / dDG))
-                    if k > 0:
-                        seed = np.concatenate([np.zeros(k), seed[:-k]])   # push counts to higher E
+                if memory == 1 and seed is None:
                     print("      [skip] memory phase requested but no primary "
                           "(add 0 to memory_phases)")
                     continue
 
+                print('starting...', end='', flush=True)
                 res = mf.run_simulation(model, p=p, t_span=(0.0, cfg['T']),
                                         mode=cfg['mode'], memory_seed=seed)
+                print('done')
                 # Attach the naive run's parameters so memory plots can recover
                 # the primary pi_c (which differs from the memory run's own p).
                 res['params_primary'] = primary_params.get((model, sval), p)
@@ -247,6 +243,7 @@ def make_shared_figures(cfg, results):
     fig4d_map = {('semicomplete', 0): 'primary', ('semicomplete', 1): 'recall'}
 
     opt_sval = None
+    t_c_star = 0
     if len(sweep_values) > 1:
         t_c_star = np.inf
         for sv in sweep_values:
@@ -506,26 +503,32 @@ def make_per_run_figures(cfg, results):
         label = label_pi_star(res)
         out = mfp._outdir(cfg, model, _sweep_tag(cfg, sval), f'memory_{memory}')
 
-        fig_NA, ax_NA = mfp.new_fig(wide=True)
+        fig_NA, ax_NA = mfp.new_fig(wide=False)
         mfp.plot_NA(ax_NA, res, label=label)
         mfp.style_log_axis(ax_NA, T-1, ylim=(1e0, 1e11))
+        ax_NA.tick_params(axis='y', which='both', labelsize=40, labelleft=True if memory == 0 else False)
+        ax_NA.tick_params(axis='x', labelsize=40, labelbottom= False)
         fig_NA.savefig(os.path.join(out, 'N_A.pdf'), dpi=150)
 
         if 'pi' in res:
-            fig_pi, ax_pi = mfp.new_fig(wide=True)
+            fig_pi, ax_pi = mfp.new_fig(wide=False)
             mfp.plot_pi(ax_pi, res, color=color, label=label)
             ax_pi.axhline(pi_star_of(res['params']), lw=1, ls='--',
                           color='grey', alpha=0.8)
             mfp.style_log_axis(ax_pi, T-1, ylim=(5e-1, 1e4))
+            ax_pi.tick_params(axis='y', which='both', labelsize=40, labelleft=True if memory == 0 else False)
+            ax_pi.tick_params(axis='x', labelsize=40, labelbottom= False)
             fig_pi.savefig(os.path.join(out, 'pi.pdf'), dpi=150)
 
-        fig_NB, ax_NB = mfp.new_fig(wide=True)
+        fig_NB, ax_NB = mfp.new_fig(wide=False)
         mfp.plot_NB(ax_NB, res, color=color, label=label)
         ax_NB.axhline(1.0, color='k', ls='--', alpha=0.5)
         mfp.style_log_axis(ax_NB, T-1, ylim=(5e-1, 1e6))
+        ax_NB.tick_params(axis='y', which='both', labelsize=40, labelleft=True if memory == 0 else False)
+        ax_NB.tick_params(axis='x', labelsize=40, labelbottom= False)
         fig_NB.savefig(os.path.join(out, 'N_B.pdf'), dpi=150)
 
-        fig_Z, ax_Z = mfp.new_fig(wide=True)
+        fig_Z, ax_Z = mfp.new_fig(wide=False)
         mfp.plot_potency(ax_Z, res, color=color, label=label)
         ax_Z.axhline(res['params'].Z_c, lw=1, ls='--', color='k')
         mfp.style_log_axis(ax_Z, T-1, ylim=(5e-3, 1e7), hide_xticklabels=False)
@@ -534,19 +537,20 @@ def make_per_run_figures(cfg, results):
 
         # DG: analytic on/off affinity front (skipped if the run never activates)
         try:
-            fr = mfp.compute_affinity_front(res, on_slope=0.78)
+            fr = mfp.compute_affinity_front(res, on_slope=0.85)
             p = res['params']
-            fig_DG, ax_DG = mfp.new_fig(wide=True)
-            ax_DG.plot(fr['ton'], fr['DG_on'], lw=3, color=color, ls='dotted')
+            fig_DG, ax_DG = mfp.new_fig(wide=False)
+            ax_DG.plot(fr['ton'], fr['DG_on'], lw=3, color=color, ls='-')
             off = fr['DG_off'] > p.DG_min
             ax_DG.plot(fr['toff'][off], fr['DG_off'][off], lw=3, color=color, ls='dashed')
             offn = fr['DG_off_null'] > p.DG_min
             ax_DG.plot(fr['toff'][offn], fr['DG_off_null'][offn], lw=3,
                        color=mfp.my_grey, ls='dashed')
             ax_DG.axhline(p.DG_min, lw=1, ls='--', color='grey', alpha=0.8)
-            ax_DG.set_ylim(p.DG_min - 0.1, 6)
+            ax_DG.set_ylim(p.DG_min - 0.1, 7)
             ax_DG.set_xlim(0, T-1)
-            ax_DG.tick_params(axis='both', labelsize=30)
+            ax_DG.tick_params(axis='y', which='both', labelsize=40, labelleft=True if memory == 0 else False)
+            ax_DG.tick_params(axis='x', labelsize=40, labelbottom= True)
             fig_DG.savefig(os.path.join(out, 'DG.pdf'), dpi=150)
         except (IndexError, ValueError):
             print(f"      [warn] no DG front for {model} "

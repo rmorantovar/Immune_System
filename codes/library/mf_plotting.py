@@ -57,7 +57,9 @@ styles_sim = ['--', '-', ':', '-.', '-', '--', ':', '-.', '-', '--']
 styles_mem = ['--', '-']
 
 # Standard figure geometries.
-FIG_KW = dict(figsize=(8 * 1.62, 8),
+# FIG_KW = dict(figsize=(8 * 1.62, 8),
+#               gridspec_kw={'left': .12, 'right': .95, 'bottom': .15, 'top': .94})
+FIG_KW = dict(figsize=(8 * 1.62, 10),
               gridspec_kw={'left': .12, 'right': .95, 'bottom': .15, 'top': .94})
 FIG_KW_WIDE = dict(figsize=(8 * 1.62, 5),
                    gridspec_kw={'left': .12, 'right': .95, 'bottom': .15, 'top': .94})
@@ -196,7 +198,7 @@ def plot_pb_from_potency(ax, res, color, ls='-', label=None):
 # ============================================================
 # Analytic affinity-front overlay (was duplicated in two scripts)
 # ============================================================
-def compute_affinity_front(res, on_slope=0.78):
+def compute_affinity_front(res, on_slope=0.85):
     """
     Reconstruct the on/off affinity front DG(t) from the simulation timing.
 
@@ -213,7 +215,12 @@ def compute_affinity_front(res, on_slope=0.78):
     tpeak_NA = t[res['N_A'] == np.max(res['N_A'])][0]
     if 'pi' in res:
         tpeak_pi = t[res['pi'][0, :] == np.max(res['pi'][0, :])][0]
-        tpeak = tpeak_NA + (tpeak_pi - tpeak_NA) / 2
+        if p.memory==0:
+            tpeak = tpeak_NA # + (tpeak_pi - tpeak_NA) / 2
+            # tpeak = tpeak_pi
+        else:
+            tpeak = tpeak_NA
+            # tpeak = tpeak_pi
     else:
         tpeak = tpeak_NA
 

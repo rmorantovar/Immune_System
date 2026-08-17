@@ -27,8 +27,8 @@ import run_meanfield as R
 
 
 # ---- scan knobs ----
-DELTAS = np.arange(0.0, 6.01, 0.5)   # coarse first pass; refine near crossover
-R_MATURATION = 0.5           # serum fragility factor r (<1); external input
+DELTAS = np.arange(0.0, 4.01, 0.5)   # coarse first pass; refine near crossover
+R_MATURATION = 0.75           # serum fragility factor r (<1); external input
 NU_NSTAR_ANALYTIC = None     # set to your analytic nu*N* to print the comparison
 T_SIM = 5.0                  # only need to clear t_c (~3.5); 5 gives margin
 MODE = 'grid'
@@ -172,26 +172,25 @@ def main(cfg=CONFIG):
 
     # plot
     fig, ax = plt.subplots(figsize=(6.4, 4.6))
-    ax.plot(DELTAS, P_rec, 'o-', color='C0', lw=2, label=r'recall $P(\Delta)$')
-    ax.axhline(P_prim, color='0.4', ls='--', lw=2, label='primary (reference)')
+    ax.plot(DELTAS, P_rec/P_prim, 'o-', color='C0', lw=2, label=r'recall $P(\Delta)$')
+    ax.axhline(1, color='0.4', ls='--', lw=2, label='primary (reference)')
     if np.isfinite(delta_star) and delta_star > 0:
         ax.axvline(delta_star, color='k', ls=':', lw=1.5)
         ax.annotate(rf'$\Delta^*={delta_star:.2f}$',
-                    xy=(delta_star, P_prim), xytext=(6, 8),
+                    xy=(delta_star, 1), xytext=(6, 8),
                     textcoords='offset points', fontsize=11)
     ax.set_xlabel(r'antigenic drift  $\Delta$  (energy units)')
     ax.set_ylabel(r'potency  $P$  at fixed $t_c$')
     ax.set_yscale('log')
     ax.legend(frameon=False)
     secax = ax.secondary_xaxis('top',
-                               functions=(lambda d: d/np.log(2),
-                                          lambda f: f*np.log(2)))
-    secax.set_xlabel('titer folds (bare;  serum $= /r$)')
+                           functions=(lambda d: d / (R_MATURATION * np.log(2)),
+                                      lambda f: f * R_MATURATION * np.log(2)))
+    secax.set_xlabel(f'serum titer folds  ($r={R_MATURATION}$)')
     out = os.path.join(cfg['outroot'], 'exploration')
     os.makedirs(out, exist_ok=True)
     fig.savefig(os.path.join(out, 'drift_crossover.png'), dpi=150)
     print(f"saved: {out}")
-
 
 if __name__ == '__main__':
     main()
