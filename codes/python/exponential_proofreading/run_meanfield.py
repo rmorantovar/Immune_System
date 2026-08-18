@@ -39,7 +39,7 @@ import mf_plotting as mfp
 # ============================================================
 # CONFIG  -- edit this block, then run `python run_meanfield.py`
 # ============================================================
-_b0 = 1.6
+_b0 = 1.8
 # Fig 4D analytic-D parameters (naive N(0, sigma2); edge DG_star = -beta* sigma2)
 DG4D_STAR = -16.0        # high-affinity edge (negative)
 DG4D_SIG2 = 7.0          # naive variance sigma^2
@@ -169,18 +169,20 @@ def run_experiment(cfg):
 
     print("Running experiment")
     for model in cfg['models']:
-        print(f"  model = {model}")
+        print(f"    model = {model}")
         if model == 'null' and cfg.get('null_sval') is not None:
             model_vals = [cfg['null_sval']]                       # run null only here
         else:
             model_vals = cfg.get('model_sweep_values', {}).get(model, sweep_values)
         for sval in model_vals:
             if sweep_name is None:
-                print("    (fixed parameters, no sweep)")
+                print("       (fixed parameters, no sweep)")
             else:
-                print(f"    {sweep_name} = {sval:.4g}")
+                print(f"        {sweep_name} = {sval:.4g}")
             for memory in cfg['memory_phases']:
                 p = build_params(cfg, sval, memory)
+                print(f"            memory = {p.memory:.0g}")
+                print(f"            pi_c = {(_b0 / p.h0) ** (1 / p.hill):.4g}")
                 seed = memory_seeds.get((model, sval)) if memory == 1 else None
                 if memory == 1 and seed is None:
                     print("      [skip] memory phase requested but no primary "
