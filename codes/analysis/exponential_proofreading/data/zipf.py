@@ -233,16 +233,16 @@ def apply_ranking_layout(fig_r, ax_r, suffix):
     ax_r.tick_params(axis='x', labelsize=30)
     ax_r.set_yscale('log')
     ax_r.set_xscale('log')
-    fig_r.savefig(output_plot + f'/ranking_B_cells_{suffix}.pdf', dpi=200, transparent=True)
+    fig_r.savefig(output_plot + f'/ranking_B_cells_{suffix}.pdf', dpi=800, transparent=True)
 
 
 def apply_zeta_layout(fig_zeta, ax_zeta, suffix, tick_positions, tick_labels, x_labelsize=14):
-    my_plot_layout(ax=ax_zeta, yscale='linear', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
+    # my_plot_layout(ax=ax_zeta, yscale='linear', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
     ax_zeta.set_xticks(tick_positions, tick_labels)
     ax_zeta.set_ylabel(r'$\zeta$', fontsize=30)
     ax_zeta.tick_params(axis='y', labelsize=30)
     ax_zeta.tick_params(axis='x', labelsize=x_labelsize, rotation=45)
-    fig_zeta.savefig(output_plot + f'/zetas_{suffix}.pdf', transparent=.5)
+    fig_zeta.savefig(output_plot + f'/zetas_{suffix}.pdf', dpi=800, transparent=True)
 
 
 # ── Figure setup ──────────────────────────────────────────────────────────────
@@ -537,7 +537,7 @@ sns.scatterplot(data=scaling_results, x='barN', y='N1',
 ax_scaling1.set_xlim(left=1, right=200)
 ax_scaling1.tick_params(axis='both', labelsize=30)
 ax_scaling1.legend(title_fontsize=20, fontsize=20, loc=2)
-fig_scaling1.savefig(output_plot + '/size_scaling_1_linear.pdf', dpi=200, transparent=True)
+fig_scaling1.savefig(output_plot + '/size_scaling_1_linear.pdf', dpi=800, transparent=True)
 
 # ─────────────────────────────────────────────────────────────────────────
 sns.scatterplot(data=scaling_results, x='barN', y='L_act',
@@ -550,7 +550,7 @@ ax_scaling2.set_ylim(bottom=0, top=125)
 ax_scaling2.set_xlim(left=1, right=200)
 ax_scaling2.tick_params(axis='both', labelsize=30)
 ax_scaling2.legend(title_fontsize=20, fontsize=20, loc=2)
-fig_scaling2.savefig(output_plot + '/size_scaling_2_linear.pdf', dpi=200, transparent=True)
+fig_scaling2.savefig(output_plot + '/size_scaling_2_linear.pdf', dpi=800, transparent=True)
 
 # ─────────────────────────────────────────────────────────────────────────
 sns.scatterplot(data=scaling_results, x='N1', y='L_act', hue='phenotype', style='experiment', ax=ax_scaling3, s=150, palette=palette, edgecolors='black', alpha=0.8)
@@ -569,7 +569,7 @@ ax_scaling3.set_ylim(bottom=0, top=125)
 ax_scaling3.set_xlim(left=0, right=60)
 ax_scaling3.tick_params(axis='both', labelsize=30)
 ax_scaling3.legend(title_fontsize=20, fontsize=20, loc=0)
-fig_scaling3.savefig(output_plot + '/size_scaling_3_linear.pdf', dpi=200, transparent=True)
+fig_scaling3.savefig(output_plot + '/size_scaling_3_linear.pdf', dpi=800, transparent=True)
 
 # ─────────────────────────────────────────────────────────────────────────
 scaling_results['barN_prediction'] = scaling_results['N1']/(1-scaling_results['zeta'])*(scaling_results['L_act']**(1-scaling_results['zeta']) - 1)
@@ -590,7 +590,7 @@ ax_scaling4.set_yscale('log')
 # ax_scaling4.set_xlim(left=3e1, right=5e2)
 ax_scaling4.tick_params(axis='both', labelsize=30)
 ax_scaling4.legend(title_fontsize=20, fontsize=20, loc=4)
-fig_scaling4.savefig(output_plot + '/size_scaling_4.pdf', dpi=200, transparent=True)
+fig_scaling4.savefig(output_plot + '/size_scaling_4.pdf', dpi=800, transparent=True)
 
 # ─────────────────────────────────────────────────────────────────────────
 Ebeta_star = 2.3 * 10
@@ -609,7 +609,7 @@ ax_entropy.set_xlim(left=2, right=200)
 # ax_entropy.set_xscale('log')
 ax_entropy.tick_params(axis='both', labelsize=30)
 # ax_entropy.legend(title_fontsize=20, fontsize=20, loc=4)
-fig_entropy.savefig(output_plot + '/size_scaling_entropy.pdf', dpi=200, transparent=True)
+fig_entropy.savefig(output_plot + '/size_scaling_entropy.pdf', dpi=800, transparent=True)
 
 # ─────────────────────────────────────────────────────────────────────────
 sns.scatterplot(data=scaling_results, x='L_act', y='S_corr',
@@ -627,7 +627,7 @@ ax_entropy_2.tick_params(axis='both', labelsize=30)
 # ax_entropy_2.set_xscale('log')
 # ax_entropy_2.set_yscale('log')
 ax_entropy_2.legend(title_fontsize=20, fontsize=20, loc=0)
-fig_entropy_2.savefig(output_plot + '/size_scaling_entropy_2.pdf', dpi=200, transparent=True)
+fig_entropy_2.savefig(output_plot + '/size_scaling_entropy_2.pdf', dpi=800, transparent=True)
 
 # ─────────────────────────────────────────────────────────────────────────
 all_N      = np.concatenate(scaling_dict['N'])
@@ -691,7 +691,7 @@ for ph in phenotypes:
     # ax_Omega.set_ylim(bottom=-0.05, top=4)
     ax_Omega.tick_params(axis='both', labelsize=30)
     ax_Omega.legend(title_fontsize=20, fontsize=20, loc=0, title = r'$S$')
-    fig_Omega.savefig(output_plot + f'/distribution_pseudoE_{ph}.pdf', dpi=200, transparent=True)
+    fig_Omega.savefig(output_plot + f'/distribution_pseudoE_{ph}.pdf', dpi=800, transparent=True)
 
 
 # ── Save zeta statistics ──────────────────────────────────────────────────────

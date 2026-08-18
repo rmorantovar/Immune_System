@@ -39,7 +39,7 @@ import mf_plotting as mfp
 # ============================================================
 # CONFIG  -- edit this block, then run `python run_meanfield.py`
 # ============================================================
-_b0 = 1.8
+_b0 = 2.0
 # Fig 4D analytic-D parameters (naive N(0, sigma2); edge DG_star = -beta* sigma2)
 DG4D_STAR = -16.0        # high-affinity edge (negative)
 DG4D_SIG2 = 7.0          # naive variance sigma^2
@@ -53,7 +53,7 @@ BASE = dict(
     tau_eng=0.1, b0=_b0, delta_B=0.00, h0=_b0 / 1000.,
     DG_min=0.0, DG_max=10.0, M=32,
     omega_0=1.0, T_lim=True, N_T0=1e6,
-    Z_c=1.e3, n_mem=5e3,
+    Z_c=1.e3, n_mem=4e4,
 )
 
 _alpha_o = BASE['b0'] / BASE['lambda_A'] + BASE['b0'] / BASE['delta_A']   # null EP exponent
@@ -65,10 +65,10 @@ FIG4D_MU  = {'primary': -8.0,    # mu = -zeta*|DG*|,  zeta ~ 0.5  (tilted once)
 
 CONFIG = dict(
     # --- what to run ---
-    models=['semicomplete'],            # subset of mf.MODELS
+    models=['semicomplete', 'null'],            # subset of mf.MODELS
     memory_phases=[0, 1],               # 0 = primary, 1 = memory (seeded from 0)
-    sweep=('h0', np.flip(np.logspace(np.log10(_b0/1e5), np.log10(_b0/1e0), 6))),     # None -> no sweep (use BASE params as-is).
-    # sweep=('h0', np.flip([_b0/1e5, _b0/1e3, _b0/1e1])),      
+    sweep=('h0', np.flip(np.logspace(np.log10(_b0/1e7), np.log10(_b0/1e2), 6))),     # None -> no sweep (use BASE params as-is).
+    # sweep=('h0', np.flip([_b0/1e7, _b0/1e5, _b0/1e3])),     # None -> no sweep (use BASE params as-is).
     # sweep=('h0', np.flip([_b0/1e3])),                         
     # sweep = None, # None -> no sweep (use BASE params as-is).
                                         # To sweep: ('h0', [v1, v2, ...]) or any
@@ -189,7 +189,7 @@ def run_experiment(cfg):
                           "(add 0 to memory_phases)")
                     continue
 
-                print('starting...', end='', flush=True)
+                print('             starting...', end='', flush=True)
                 res = mf.run_simulation(model, p=p, t_span=(0.0, cfg['T']),
                                         mode=cfg['mode'], memory_seed=seed)
                 print('done')
@@ -340,7 +340,7 @@ def make_shared_figures(cfg, results):
     if 'Z_shared' in figs:
         # ax_Z.axhline(cfg['base']['Z_c'], lw=1, ls='--', color='k')
         if sweep_name == 'h0':
-            mfp.style_log_axis(ax_Z, T, ylim=(8e-1, 6e3), xlim=(2.45, 4.5), hide_xticklabels=False)
+            mfp.style_log_axis(ax_Z, T, ylim=(2e-1, 6e3), xlim=(2.45, 4.6))
             model0 = cfg['models'][0]
             # handles = [(Line2D([], [], color=sweep_cols_primary[i], lw=4),
                         # Line2D([], [], color=sweep_cols_memory[i], lw=4))]
@@ -371,7 +371,7 @@ def make_shared_figures(cfg, results):
             # idx = [int(np.argmin(P))] if name == 'primary' else list(np.argsort(Da))
             idx = list(np.argsort(Da))
             # ax_4d.plot(Da[idx], P[idx], color='0.6', lw=1.5, ls='--', zorder=1)
-            ax_4d.scatter(Da[idx], P[idx], facecolors=[C[i] for i in idx],
+            ax_4d.scatter(np.exp(Da[idx]), P[idx], facecolors=[C[i] for i in idx],
                           edgecolors='k', marker=marker,
                           s=130, linewidth=1.5, zorder=2, label=r'$\mathrm{%s}$' % name)
         rn0 = results.get(('null', cfg.get('null_sval'), 0))
@@ -380,7 +380,7 @@ def make_shared_figures(cfg, results):
             D_ana = mf.dkl_analytic(FIG4D_MU['null'], DG4D_STAR + mf.DG_mf(rn0),
                                     DG_star=DG4D_STAR + mf.DG_min(rn0), sigma2=DG4D_SIG2)
             if not (np.isnan(P) or np.isnan(D_ana)):
-                ax_4d.scatter([D_ana], [P], facecolors=[mfp.my_grey], edgecolors='k',
+                ax_4d.scatter([np.exp(D_ana)], [P], facecolors=[mfp.my_grey], edgecolors='k',
                               marker='o', s=170, linewidth=1.5, zorder=3, label=r'$\mathrm{null}$')
 
         rn1 = results.get(('null', cfg.get('null_sval'), 1))
@@ -389,12 +389,13 @@ def make_shared_figures(cfg, results):
             D_ana = mf.dkl_analytic(FIG4D_MU['null']*2, DG4D_STAR + mf.DG_mf(rn1),
                                     DG_star=DG4D_STAR + mf.DG_min(rn1), sigma2=DG4D_SIG2)
             if not (np.isnan(P) or np.isnan(D_ana)):
-                ax_4d.scatter([D_ana], [P], facecolors=[mfp.my_grey], edgecolors='k',
+                ax_4d.scatter([np.exp(D_ana)], [P], facecolors=[mfp.my_grey], edgecolors='k',
                                 marker='s', s=170, linewidth=1.5, zorder=3)
                 
-        ax_4d.set_xlim(4.95, 18)
+        ax_4d.set_xlim(np.exp(4.2), np.exp(18))
+        ax_4d.set_xscale('log')
         ax_4d.set_yscale('log')
-        ax_4d.tick_params(axis='both', labelsize=30)
+        ax_4d.tick_params(axis='both', labelsize=44)
         ax_4d.legend(fontsize=24, loc=3)
         fig_4d.savefig(os.path.join(out, 'potency_specificity_D.pdf'), dpi=800, transparent=True)
 
