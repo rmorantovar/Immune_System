@@ -52,7 +52,7 @@ colors_sim = [my_red, my_blue, my_purple2, my_gold, my_brown,
               my_blue, my_green, 'tab:orange', my_purple, my_cyan]
 colors_mem = [my_green, my_green2]
 colors_sweep = [my_brown, my_red, my_purple2, my_green, my_blue, my_cyan]
-colors_sweep = [my_red, my_green, my_cyan]
+# colors_sweep = [my_red, my_green, my_cyan]
 styles_sim = ['--', '-', ':', '-.', '-', '--', ':', '-.', '-', '--']
 styles_mem = ['--', '-']
 
@@ -128,7 +128,7 @@ def _outdir(cfg, *parts):
 # Per-run panels (each takes an existing ax + a result dict)
 # ============================================================
 def plot_NA(ax, res, color=antigen_color, ls='-', label=None):
-    ax.plot(res['t'], res['N_A'], lw=4, color=color, ls=ls, label=label)
+    ax.plot(res['t'], res['N_A'], lw=6, color=color, ls=ls, label=label)
 
 
 def plot_pi(ax, res, color, label=None, rows=(0, 10, -10)):
@@ -136,9 +136,9 @@ def plot_pi(ax, res, color, label=None, rows=(0, 10, -10)):
     if 'pi' not in res:
         return None
     t = res['t']
-    line = ax.plot(t, res['pi'][rows[0], :], lw=4, color=color, label=label)
+    line = ax.plot(t, res['pi'][rows[0], :], lw=6, color=color, label=label)
     c = line[0].get_color()
-    for r, (lw, a) in zip(rows[1:], [(3, 0.5), (2, 0.2)]):
+    for r, (lw, a) in zip(rows[1:], [(6, 0.5), (4, 0.2)]):
         ax.plot(t, res['pi'][r, :], lw=lw, alpha=a, color=c)
     return c
 
@@ -147,9 +147,9 @@ def plot_NB(ax, res, color, label=None, rows=(0, 10, -10)):
     """Per-clone total B cells N_Bo+N_Ba for representative clones."""
     t = res['t']
     N_B = res['N_Bo'] + res['N_Ba'] if 'N_Ba' in res else res['N_B']
-    line = ax.plot(t, N_B[rows[0], :], lw=4, color=color, label=label)
+    line = ax.plot(t, N_B[rows[0], :], lw=6, color=color, label=label)
     c = line[0].get_color()
-    for r, (lw, a) in zip(rows[1:], [(3, 0.5), (2, 0.2)]):
+    for r, (lw, a) in zip(rows[1:], [(6, 0.5), (4, 0.2)]):
         ax.plot(t, N_B[r, :], lw=lw, alpha=a, color=c)
     return c
 
