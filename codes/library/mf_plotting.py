@@ -60,7 +60,7 @@ styles_mem = ['--', '-']
 FIG_KW = dict(figsize=(8 * 1.62, 8),
               gridspec_kw={'left': .12, 'right': .95, 'bottom': .15, 'top': .94})
 # FIG_KW = dict(figsize=(8 * 1.62, 10),
-            #   gridspec_kw={'left': .12, 'right': .95, 'bottom': .15, 'top': .94})
+#               gridspec_kw={'left': .12, 'right': .95, 'bottom': .15, 'top': .94})
 FIG_KW_WIDE = dict(figsize=(8 * 1.62, 5),
                    gridspec_kw={'left': .12, 'right': .95, 'bottom': .15, 'top': .94})
 
@@ -85,7 +85,7 @@ def pi_star_label(pi_star):
     return r'${%.1f \cdot 10^{%d}}$' % (pi_star / 10 ** e, e)
 
 
-def sweep_colors(n, cmap='summer', vmax=0.8):
+def sweep_colors(n, cmap='summer', vmax=0.9):
     """
     Colours for an n-value parameter sweep.
 
@@ -95,7 +95,7 @@ def sweep_colors(n, cmap='summer', vmax=0.8):
     """
     if cmap is None:
         return [colors_sim[i % len(colors_sim)] for i in range(n)]
-    return plt.get_cmap(cmap)(np.linspace(0, vmax, max(n, 1)))
+    return plt.get_cmap(cmap)(np.linspace(0.1, vmax, max(n, 1)))
 
 
 def style_log_axis(ax, T, ylim=None, xlim=None, labelsize=44, hide_xticklabels=True):

@@ -51,7 +51,7 @@ BASE = dict(
     hill=2.0, beta_star=2.3, K_T=1e4,
     delta_T=0.00, Tcell_growth_factor=2.0,
     tau_eng=0.1, b0=_b0, delta_B=0.00, h0=_b0 / 1000.,
-    DG_min=0.0, DG_max=10.0, M=32,
+    DG_min=0.0, DG_max=9.0, M=32,
     omega_0=1.0, T_lim=True, N_T0=1e6,
     Z_c=1.e3, n_mem=4e4,
 )
@@ -65,11 +65,10 @@ FIG4D_MU  = {'primary': -8.0,    # mu = -zeta*|DG*|,  zeta ~ 0.5  (tilted once)
 
 CONFIG = dict(
     # --- what to run ---
-    models=['semicomplete', 'null'],            # subset of mf.MODELS
+    models=['semicomplete'],            # subset of mf.MODELS
     memory_phases=[0, 1],               # 0 = primary, 1 = memory (seeded from 0)
-    sweep=('h0', np.flip(np.logspace(np.log10(_b0/1e7), np.log10(_b0/1e2), 6))),     # None -> no sweep (use BASE params as-is).
-    # sweep=('h0', np.flip([_b0/1e7, _b0/1e5, _b0/1e3])),     # None -> no sweep (use BASE params as-is).
-    # sweep=('h0', np.flip([_b0/1e3])),                         
+    sweep=('h0', np.flip(np.logspace(np.log10(_b0/1e8), np.log10(_b0/1e1), 16))),     # None -> no sweep (use BASE params as-is).
+    # sweep=('h0', np.flip([_b0/1e7, _b0/1e5, _b0/1e3])),     # None -> no sweep (use BASE params as-is).                      
     # sweep = None, # None -> no sweep (use BASE params as-is).
                                         # To sweep: ('h0', [v1, v2, ...]) or any
                                         # Parameter name with a list/array of values.
@@ -84,9 +83,10 @@ CONFIG = dict(
     memory_h0_equals_b0=True,           # memory phase forces h0 = b0 (original behaviour)
 
     # --- output / figures ---
-    figures=['NA_shared', 'Z_shared', 'pb_shared', 'DG_shared', 'n0_shared', 'fig4d', 'P_pi', 'per_run'],
+    # figures=['NA_shared', 'Z_shared', 'pb_shared', 'DG_shared', 'n0_shared', 'P_shared', 'P_pi', 'per_run'],
+    figures=['P_shared'],
     #   available: 'NA_shared', 'Z_shared', 'pb_shared', 'per_run', 'h0_extras'
-    outroot='/Users/robertomorantovar/Library/CloudStorage/Dropbox/_Documents/Research/Projects/Immune_System/_Repository/Figures/exponential_proofreading/meanfield/figures',                  # base directory for saved PDFs
+    outroot='/Users/robertomorantovar/Library/CloudStorage/Dropbox/_Documents/Science/Projects/Immune_System/_Repository/Figures/exponential_proofreading/meanfield/figures',                  # base directory for saved PDFs
     usetex=True,                       # set True if you have a LaTeX toolchain
     show=False,                         # plt.show() at the end instead of/along saving
 )
@@ -236,13 +236,13 @@ def make_shared_figures(cfg, results):
 
     all_figs = [fig_NA, fig_Z, fig_pb, fig_4d, fig_DG, fig_n0, fig_n02, fig_P_pi]
 
-    # sweep_cols_primary = mfp.sweep_colors(len(sweep_values), 'autumn')   # memory 0
-    sweep_cols_primary =  mfp.colors_sweep   # memory 0
-    # sweep_cols_memory  = mfp.sweep_colors(len(sweep_values), 'winter')   # memory 1
-    sweep_cols_memory  = mfp.colors_sweep   # memory 1
+    sweep_cols_primary = mfp.sweep_colors(len(sweep_values), 'turbo')   # memory 0
+    # sweep_cols_primary =  mfp.colors_sweep   # memory 0
+    sweep_cols_memory  = mfp.sweep_colors(len(sweep_values), 'turbo_r')   # memory 1
+    # sweep_cols_memory  = mfp.colors_sweep   # memory 1
 
-    fig4d_pts = {'primary': [], 'recall': []}
-    fig4d_map = {('semicomplete', 0): 'primary', ('semicomplete', 1): 'recall'}
+    P_shared_pts = {'primary': [], 'recall': []}
+    P_shared_map = {('semicomplete', 0): 'primary', ('semicomplete', 1): 'recall'}
 
     opt_sval = None
     t_c_star = 0
@@ -300,17 +300,17 @@ def make_shared_figures(cfg, results):
 
         mfp.plot_pb_from_potency(ax_pb, res, color=color, ls=ls, label=label)
 
-        if (model, memory) in fig4d_map:
-            name = fig4d_map[(model, memory)]
+        if (model, memory) in P_shared_map:
+            name = P_shared_map[(model, memory)]
             D, (_, P)  = mf.compute_specificity(res), mf.compute_potency_P(res, t_c_star=t_c_star)
             D_ana = mf.dkl_analytic(FIG4D_MU[name], DG4D_STAR + mf.DG_mf(res),
                                     DG_star=DG4D_STAR + mf.DG_min(res), sigma2=DG4D_SIG2)
             if not (np.isnan(D) or np.isnan(P)):
                 if memory == 0:
                     if sval == opt_sval:
-                        fig4d_pts[name].append((D, P, color, D_ana, pi_c))
+                        P_shared_pts[name].append((D, P, color, D_ana, pi_c))
                 else:
-                    fig4d_pts[name].append((D, P, color, D_ana, pi_c))
+                    P_shared_pts[name].append((D, P, color, D_ana, pi_c))
             ax_P_pi.scatter(pi_c, -P, color=color, ls=ls, marker='o', s=64, label=label)
 
         if memory == 0 and model == 'semicomplete' and sval in sweep_values:
@@ -360,18 +360,19 @@ def make_shared_figures(cfg, results):
         ax_pb.tick_params(axis='both', labelsize=30)
         fig_pb.savefig(os.path.join(out, 'pb_shared.pdf'), dpi=800, transparent=True)
 
-    if 'fig4d' in figs:
-        for name, marker in [('primary', 'o'), ('recall', 's')]:
-            pts = fig4d_pts[name]
+    if 'P_shared' in figs:
+        # for name, marker in [('primary', 'o'), ('recall', 's')]:
+        for name, marker in [('recall', 's')]:
+            pts = P_shared_pts[name]
             if not pts:
                 continue
-            P  = np.array([p[1] for p in pts])
-            C  = [p[2] for p in pts]
-            Da = np.array([p[3] for p in pts])
+            P  = np.array([pt[1] for pt in pts])
+            C  = [pt[2] for pt in pts]
+            Da = np.array([pt[3] for pt in pts])
             # idx = [int(np.argmin(P))] if name == 'primary' else list(np.argsort(Da))
             idx = list(np.argsort(Da))
             # ax_4d.plot(Da[idx], P[idx], color='0.6', lw=1.5, ls='--', zorder=1)
-            ax_4d.scatter(np.exp(Da[idx]), P[idx], facecolors=[C[i] for i in idx],
+            ax_4d.scatter(np.exp(Da[idx]), P[idx], facecolors= [C[i] for i in idx],
                           edgecolors='k', marker=marker,
                           s=130, linewidth=1.5, zorder=2, label=r'$\mathrm{%s}$' % name)
         rn0 = results.get(('null', cfg.get('null_sval'), 0))
@@ -392,12 +393,14 @@ def make_shared_figures(cfg, results):
                 ax_4d.scatter([np.exp(D_ana)], [P], facecolors=[mfp.my_grey], edgecolors='k',
                                 marker='s', s=170, linewidth=1.5, zorder=3)
                 
-        ax_4d.set_xlim(np.exp(4.2), np.exp(18))
+        ax_4d.set_xlim(9e5, 4e7)
+        ax_4d.set_ylim(9e1, 2e3)
         ax_4d.set_xscale('log')
         ax_4d.set_yscale('log')
         ax_4d.tick_params(axis='both', labelsize=44)
         ax_4d.legend(fontsize=24, loc=3)
-        fig_4d.savefig(os.path.join(out, 'potency_specificity_D.pdf'), dpi=800, transparent=True)
+        fig_4d.savefig(os.path.join(out, 'potency'
+        '.pdf'), dpi=800, transparent=True)
 
     if 'DG_shared' in figs:
         rn = results.get(('null', cfg.get('null_sval'), 0))
@@ -453,7 +456,7 @@ def make_shared_figures(cfg, results):
 
     if 'P_pi' in figs:
         for name, marker in [('primary', 'o'), ('recall', 's')]:
-            pts = fig4d_pts[name]
+            pts = P_shared_pts[name]
             if not pts:
                 continue
             P  = np.array([p[1] for p in pts])
@@ -481,10 +484,10 @@ def make_per_run_figures(cfg, results):
     T = cfg['T']
     sweep_name, sweep_values = cfg['sweep']
     # colour scale across the sweep (e.g. the green 'summer' scale for an h0 sweep)
-    # sweep_cols_primary = mfp.sweep_colors(len(sweep_values), 'autumn')   # memory 0
-    sweep_cols_primary =  mfp.colors_sweep   # memory 0
-    # sweep_cols_memory  = mfp.sweep_colors(len(sweep_values), 'winter')   # memory 1
-    sweep_cols_memory  = mfp.colors_sweep   # memory 1
+    sweep_cols_primary = mfp.sweep_colors(len(sweep_values), 'autumn')   # memory 0
+    # sweep_cols_primary =  mfp.colors_sweep   # memory 0
+    sweep_cols_memory  = mfp.sweep_colors(len(sweep_values), 'winter')   # memory 1
+    # sweep_cols_memory  = mfp.colors_sweep   # memory 1
 
     for (model, sval, memory), res in results.items():
         
@@ -547,8 +550,8 @@ def make_per_run_figures(cfg, results):
             off = fr['DG_off'] > p.DG_min
             ax_DG.plot(fr['toff'][off], fr['DG_off'][off], lw=6, color=color, ls='dashed')
             offn = fr['DG_off_null'] > p.DG_min
-            ax_DG.plot(fr['toff'][offn], fr['DG_off_null'][offn], lw=6,
-                       color=mfp.my_grey, ls='dashed')
+            # ax_DG.plot(fr['toff'][offn], fr['DG_off_null'][offn], lw=6,
+            #            color=mfp.my_grey, ls='dashed')
             ax_DG.axhline(p.DG_min, lw=1, ls='--', color='grey', alpha=0.8)
             ax_DG.set_ylim(p.DG_min - 0.1, 7)
             ax_DG.set_xlim(0, T-1)
@@ -573,7 +576,7 @@ def main(cfg=CONFIG):
 
     figs = cfg['figures']
     if any(f in figs for f in ('NA_shared', 'Z_shared', 'pb_shared',
-                               'fig4d', 'DG_shared', 'n0_shared', 'P_pi')):
+                               'P_shared', 'DG_shared', 'n0_shared', 'P_pi')):
         make_shared_figures(cfg, results)
     if 'per_run' in figs:
         make_per_run_figures(cfg, results)
