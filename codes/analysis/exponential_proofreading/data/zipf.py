@@ -12,11 +12,11 @@ from funcs import *
 project    = 'exponential_proofreading'
 subproject = 'data'
 root_dir   = (
-    f"/Users/robertomorantovar/Dropbox/Research_files/"
+    f"/Users/rmorantovar/Library/CloudStorage/Dropbox/Research_files/"
     f"Immune_system/{project}/{subproject}/mesin2020"
 )
 output_plot = (
-    '/Users/robertomorantovar/Dropbox/_Documents/Research/Projects/'
+    '/Users/rmorantovar/Library/CloudStorage/Dropbox/_Documents/Science/Projects/'
     f'Immune_System/_Repository/Figures/{project}/{subproject}/mesin2020/zipf/all'
 )
 os.makedirs(output_plot, exist_ok=True)
