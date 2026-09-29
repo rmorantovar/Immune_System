@@ -21,9 +21,9 @@ from mf_lib import (compute_N_B_tot, compute_L_act, compute_zipf, compute_potenc
 # ============================================================
 # Palette
 # ============================================================
-my_red = np.array((228,75,41))/256.
-# _colors_h0_default_naive = plt.cm.autumn(np.linspace(0, 0.7, 6))
-# my_red = _colors_h0_default_naive[3]
+# my_red = np.array((228,75,41))/256.
+_colors_h0_default_naive = plt.cm.autumn(np.linspace(0, 0.7, 6))
+my_red = _colors_h0_default_naive[3]
 my_purple = np.array((125, 64, 119)) / 256.
 my_purple2 = np.array((116, 97, 164)) / 256.
 my_green = np.array((125,165,38))/256.
