@@ -6,8 +6,8 @@ plt.rcParams['text.usetex'] = True
 project = 'memory_response'
 subproject = 'data'
 experiment = 0
-root_dir = f"/Users/robertomorantovar/Dropbox/Research/Immune_system/{project}/{subproject}/schiepers2023"
-output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/'+project+'/'+ subproject + '/schiepers2023/sera'
+root_dir = f"{DROPBOX}/Research_files/Immune_system/{project}/{subproject}/schiepers2023"
+output_plot = str(DROPBOX) + '/_Documents/Science/Projects/Immune_System/_Repository/Figures/'+project+'/'+ subproject + '/schiepers2023/sera'
 os.makedirs(output_plot, exist_ok=True)
 
 # Parameters

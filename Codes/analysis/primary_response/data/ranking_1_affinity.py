@@ -3,7 +3,7 @@ sys.path.append('../../../library/')
 from functions_2 import*
 plt.rcParams['text.usetex'] = True
 
-Text_files_path = '/Users/robertomorantovar/Library/CloudStorage/Dropbox/Research/Immune_system/'
+Text_files_path = str(DROPBOX) + '/Research_files/Immune_system/'
 
 #--------------- PARAMETERS ---------------------
 N_ens = 100

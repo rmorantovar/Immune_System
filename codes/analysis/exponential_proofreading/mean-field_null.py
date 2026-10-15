@@ -15,6 +15,7 @@ import sys
 sys.path.append('../../library/')
 from mf_lib import*
 from mf_plotting import*
+from paths import DROPBOX
 
 project = 'exponential_proofreading'
 model = 'meanfield'
@@ -62,7 +63,7 @@ if __name__ == '__main__':
     for i_null, null in enumerate([0, 1]):
         print(f"... for null={null}")
         for i_m, memory in enumerate([0, 1]):
-            output_plot = f'/Users/robertomorantovar/Dropbox/_Documents/Research/Projects/Immune_System/_Repository/Figures/{project}/{model}/{submodel}/{subproject}/{subsubproject}/null_{null}/memory_{memory}/'
+            output_plot = f'{DROPBOX}/_Documents/Science/Projects/Immune_System/_Repository/Figures/{project}/{model}/{submodel}/{subproject}/{subsubproject}/null_{null}/memory_{memory}/'
             os.makedirs(output_plot, exist_ok=True)
             print(f"... ... for memory={memory}")
             base['memory'] = memory
@@ -299,7 +300,7 @@ if __name__ == '__main__':
             # ax_Z.legend(fontsize=14)
             fig_Z.savefig(os.path.join(output_plot, f'Z.pdf'), dpi=150)
 
-        output_plot = f'/Users/robertomorantovar/Dropbox/_Documents/Research/Projects/Immune_System/_Repository/Figures/{project}/{model}/{submodel}/{subproject}/{subsubproject}/'
+        output_plot = f'{DROPBOX}/_Documents/Science/Projects/Immune_System/_Repository/Figures/{project}/{model}/{submodel}/{subproject}/{subsubproject}/'
         os.makedirs(output_plot, exist_ok=True)
 
         # Formatting

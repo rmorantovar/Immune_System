@@ -33,6 +33,7 @@ from collections import defaultdict
 from ast import literal_eval
 from numba import njit, prange
 from scipy.integrate import solve_ivp
+from paths import *
 
 if(sys.version_info[1]<= 7):
     import pickle5 as pickle

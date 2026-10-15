@@ -15,6 +15,7 @@ import sys
 sys.path.append('../../library/')
 from mf_lib import*
 from mf_plotting import*
+from paths import DROPBOX
 
 project = 'exponential_proofreading'
 model = 'meanfield'
@@ -147,7 +148,7 @@ if __name__ == '__main__':
                 ax_DG_shared.plot(toff[DG_off>p.DG_min], DG_off[DG_off>p.DG_min], color=colors_h0[i_h0], ls = 'dashed', lw = 3)
                 # ax_DG_shared.plot(toff[DG_off_null>p.DG_min], DG_off_null[DG_off_null>p.DG_min], linewidth = widths_h0[i_h0], color=my_brown, ls = 'dashed')
 
-    output_plot = f'/Users/robertomorantovar/Dropbox/_Documents/Research/Projects/Immune_System/_Repository/Figures/{project}/{model}/{submodel}/{subproject}/{subsubproject}/'
+    output_plot = f'{DROPBOX}/_Documents/Science/Projects/Immune_System/_Repository/Figures/{project}/{model}/{submodel}/{subproject}/{subsubproject}/'
     os.makedirs(output_plot, exist_ok=True)
 
     # Formatting

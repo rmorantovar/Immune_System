@@ -8,7 +8,7 @@ from scipy.optimize import fsolve
 def equation(x, y):
     return  (x**-2) + np.log(x**-8) - y
 
-Text_files_path = '/Users/robertomorantovar/Dropbox/Research/immune_system/primary_immune_response/'
+Text_files_path = str(DROPBOX) + '/Research_files/Immune_system/primary_response/'
 
 # Define constants and parameters
 D0 = 3e-8*(60*60*24) # Diffusion coefficient [cm^2/day]

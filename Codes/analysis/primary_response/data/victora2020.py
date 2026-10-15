@@ -4,10 +4,10 @@ from functions_2 import*
 plt.rcParams['text.usetex'] = True
 warnings.filterwarnings("ignore")
 
-Text_files_path = '/Users/robertomorantovar/Dropbox/Research/immune_system/primary_immune_response/'
+Text_files_path = str(DROPBOX) + '/Research_files/Immune_system/primary_response/'
 
 
-data = pd.read_excel(Text_files_path + 'data/Victora_2020/mmc1.xlsx', header=1, sheet_name = 'Photoactivation CGG')
+data = pd.read_excel(Text_files_path + 'data/victora_2020/mmc1.xlsx', header=1, sheet_name = 'Photoactivation CGG')
 data_early = data.loc[data['Figure']==1][['Mouse', 'GC', 'CDR3:']]
 antigens = ['CGG']
 #antigen_LN = [[1,2,3,4], [5,6,7,8,9,10]]

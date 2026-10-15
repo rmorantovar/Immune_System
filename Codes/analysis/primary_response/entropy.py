@@ -3,7 +3,7 @@ sys.path.append('../../library/')
 from functions_2 import*
 plt.rcParams['text.usetex'] = True
 
-Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/'
+Text_files_path = str(DROPBOX) + '/Research/Evolution_Immune_System/Text_files/'
 
 E_ms = -25
 antigen = 'TACNSEYPNTTRAKCGRWYC' #L=20
@@ -11,7 +11,7 @@ L=len(antigen)
 #----------------------------------------------------------------
 model = 'TCRen'
 #--------------------------Energy Motif--------------------------
-PWM_data, M, Alphabet = get_motif(antigen, model, Text_files_path + 'Input_files/')
+PWM_data, M, Alphabet = get_motif(antigen, model, str(DROPBOX) + '/Research_files/Immune_system/in/')
 print('min_e_PWM=%.4f'%(np.sum([np.min(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))])))
 print('mean_e_PWM=%.4f'%(np.sum([np.mean(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))])))
 #Change values by the minimum

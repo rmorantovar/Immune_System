@@ -34,6 +34,7 @@ from matplotlib.legend_handler import HandlerTuple
 
 import mf_lib as mf
 import mf_plotting as mfp
+from paths import DROPBOX
 
 
 # ============================================================
@@ -86,7 +87,7 @@ CONFIG = dict(
     # figures=['NA_shared', 'Z_shared', 'pb_shared', 'DG_shared', 'n0_shared', 'P_shared', 'P_pi', 'per_run'],
     figures=['P_shared'],
     #   available: 'NA_shared', 'Z_shared', 'pb_shared', 'per_run', 'h0_extras'
-    outroot='/Users/rmorantovar/Library/CloudStorage/Dropbox/_Documents/Science/Projects/Immune_System/_Repository/Figures/exponential_proofreading/meanfield/figures',                  # base directory for saved PDFs
+    outroot=str(DROPBOX) + '/_Documents/Science/Projects/Immune_System/_Repository/Figures/exponential_proofreading/meanfield/figures',                  # base directory for saved PDFs
     usetex=True,                       # set True if you have a LaTeX toolchain
     show=False,                         # plt.show() at the end instead of/along saving
 )

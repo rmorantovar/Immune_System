@@ -3,7 +3,7 @@ sys.path.append('../../library/')
 from functions_2 import*
 plt.rcParams['text.usetex'] = True
 
-Text_files_path = '/Users/robertomorantovar/Library/CloudStorage/Dropbox/Research/Immune_system/'
+Text_files_path = str(DROPBOX) + '/Research_files/Immune_system/'
 
 #--------------- PARAMETERS ---------------------
 N_ens = 400
@@ -227,7 +227,7 @@ for i_p, p in enumerate((ps)):
         #ax.set_ylim(bottom = 2e-2)
         #ax.set_yticks([1, 0.1, 0.01, 0.001])
         #ax.set_yticklabels([1, 0.1, 0.01])
-        fig.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/1_Dynamics/CSV/hist_p-%.1f'%p+energy_model+'.pdf')
+        fig.savefig(str(DROPBOX) + '/_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/1_Dynamics/CSV/hist_p-%.1f'%p+energy_model+'.pdf')
 
 
         f = open(Text_files_path + 'primary_response/out' + '/processed_data_ranking_combined_try_p-%.1f.pkl'%p, 'wb')
@@ -317,7 +317,7 @@ my_plot_layout(ax = ax_ranking, xscale='log', yscale= 'log', ticks_labelsize= 40
 #ax_ranking.set_ylim(bottom = 2e-2)
 #ax_ranking.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_ranking.set_yticklabels([1, 0.1, 0.01])
-fig_ranking.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/1_Dynamics/CSV/Ranking_combined_'+energy_model+'.pdf')
+fig_ranking.savefig(str(DROPBOX) + '/_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/1_Dynamics/CSV/Ranking_combined_'+energy_model+'.pdf')
 
 my_plot_layout(ax = ax_ranking_log, xscale='log', yscale= 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 #ax_ranking_log.legend(fontsize = 20, title_fontsize = 22, title = r'$p$')
@@ -325,7 +325,7 @@ my_plot_layout(ax = ax_ranking_log, xscale='log', yscale= 'log', ticks_labelsize
 #ax_ranking_log.set_ylim(bottom = 2e-2)
 #ax_ranking_log.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_ranking_log.set_yticklabels([1, 0.1, 0.01])
-fig_ranking_log.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/1_Dynamics/CSV/Ranking_combined_log_'+energy_model+'.pdf')
+fig_ranking_log.savefig(str(DROPBOX) + '/_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/1_Dynamics/CSV/Ranking_combined_log_'+energy_model+'.pdf')
 
 
 
