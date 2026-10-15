@@ -13,7 +13,8 @@ import matplotlib.pyplot as plt
 import os
 import sys
 sys.path.append('../../library/')
-from lib_mf import*
+from mf_lib import*
+from mf_plotting import*
 
 project = 'exponential_proofreading'
 model = 'meanfield'
@@ -87,16 +88,16 @@ if __name__ == '__main__':
             for i_ensemble in range(N_ensemble):
                 if null == 0:
                     if p.memory == 0:
-                        res = run_simulation_semicomplete(p=p, t_span=(0, T), mode='grid')
+                        res = run_simulation('semicomplete', p=p, t_span=(0, T), mode='grid')
                         expanded_cells, formed_memory = memory_seed_from_primary(res, p=p, n_mem=int(p.n_mem))
                     else:
-                        res = run_simulation_semicomplete(p=p, t_span=(0, T), mode='grid', memory_seed=formed_memory)
+                        res = run_simulation('semicomplete', p=p, t_span=(0, T), mode='grid', memory_seed=formed_memory)
                 else:
                     if p.memory == 0:
-                        res = run_simulation_null(p=p, t_span=(0, T), mode='grid')
+                        res = run_simulation('null', p=p, t_span=(0, T), mode='grid')
                         expanded_cells, formed_memory = memory_seed_from_primary(res, p=p, n_mem=int(p.n_mem))
                     else:
-                        res = run_simulation_null(p=p, t_span=(0, T), mode='grid', memory_seed=formed_memory)
+                        res = run_simulation('null', p=p, t_span=(0, T), mode='grid', memory_seed=formed_memory)
 
                 t = res['t']
                 N_B = res['N_Bo'] + res['N_Ba']
