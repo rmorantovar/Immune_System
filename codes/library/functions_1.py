@@ -26,6 +26,7 @@ from matplotlib.colors import LogNorm
 from itertools import product
 from collections import deque
 from collections import defaultdict
+from paths import *
 if(sys.version_info[1]<= 7):
     import pickle5 as pickle
 else:

@@ -1,13 +1,13 @@
 import sys
-sys.path.append('../../../my_lib/')
+sys.path.append('../../../library/')
 from funcs import*
 plt.rcParams['text.usetex'] = True
 
 project = 'memory_response'
 subproject = 'data'
 experiment = 0
-root_dir = f"/Users/robertomorantovar/Dropbox/Research/Immune_system/{project}/{subproject}/mesin2020"
-output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/'+project+'/'+ subproject + '/mesin2020/flu'
+root_dir = f"{DROPBOX}/Research_files/Immune_system/{project}/{subproject}/mesin2020"
+output_plot = str(DROPBOX) + '/_Documents/Science/Projects/Immune_System/_Repository/Figures/'+project+'/'+ subproject + '/mesin2020/flu'
 os.makedirs(output_plot, exist_ok=True)
 
 # Parameters

@@ -13,7 +13,9 @@ import matplotlib.pyplot as plt
 import os
 import sys
 sys.path.append('../../library/')
-from lib_mf import*
+from mf_lib import*
+from mf_plotting import*
+from paths import DROPBOX
 
 project = 'exponential_proofreading'
 model = 'meanfield'
@@ -80,15 +82,15 @@ if __name__ == '__main__':
             p = Parameters(**base)
 
             for i_ensemble in range(N_ensemble):
-                # res = run_simulation_semicomplete(p=p, t_span=(0, T), mode='stochastic', seed=None)
+                # res = run_simulation('semicomplete', p=p, t_span=(0, T), mode='stochastic', seed=None)
                 if p.memory == 0:
-                    res = run_simulation_semicomplete(p=p, t_span=(0, T), mode='grid')
+                    res = run_simulation('semicomplete', p=p, t_span=(0, T), mode='grid')
                     expanded_cells, formed_memory = memory_seed_from_primary(res, p=p, n_mem=int(p.n_mem))
                     ax_n0_shared.plot(res['DG'], expanded_cells, color=colors_h0[i_h0], alpha=1.0, ls = styles_sim[i_m], lw = 2)
                     # ax_n0_shared2.plot(res['DG'], expanded_cells, color=colors_h0[i_h0], alpha=0.8, ls = styles_sim[i_m], lw = 2)
                 else:
                     ax_n0_shared.plot(res['DG'], formed_memory*res['weights'], color=colors_h0[i_h0], alpha=1.0, label=label, lw = 3)
-                    res = run_simulation_semicomplete(p=p, t_span=(0, T), mode='grid', memory_seed=formed_memory)
+                    res = run_simulation('semicomplete', p=p, t_span=(0, T), mode='grid', memory_seed=formed_memory)
                     per_clone = res['N_Bo'][:, -1] + res['N_Ba'][:, -1]
                     w = res['weights']
                     threshold = 2.0
@@ -146,7 +148,7 @@ if __name__ == '__main__':
                 ax_DG_shared.plot(toff[DG_off>p.DG_min], DG_off[DG_off>p.DG_min], color=colors_h0[i_h0], ls = 'dashed', lw = 3)
                 # ax_DG_shared.plot(toff[DG_off_null>p.DG_min], DG_off_null[DG_off_null>p.DG_min], linewidth = widths_h0[i_h0], color=my_brown, ls = 'dashed')
 
-    output_plot = f'/Users/robertomorantovar/Dropbox/_Documents/Research/Projects/Immune_System/_Repository/Figures/{project}/{model}/{submodel}/{subproject}/{subsubproject}/'
+    output_plot = f'{DROPBOX}/_Documents/Science/Projects/Immune_System/_Repository/Figures/{project}/{model}/{submodel}/{subproject}/{subsubproject}/'
     os.makedirs(output_plot, exist_ok=True)
 
     # Formatting

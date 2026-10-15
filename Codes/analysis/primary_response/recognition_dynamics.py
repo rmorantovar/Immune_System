@@ -1,11 +1,10 @@
 import sys
-sys.path.append('../my_lib/')
-sys.path.append('../../my_lib/')
+sys.path.append('../../library/')
 from functions_2 import*
 plt.rcParams['text.usetex'] = True
 
-Text_files_path = '/Users/robertomorantovar/Library/CloudStorage/Dropbox/Research/Immune_system/primary_response/in/'
-output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures'
+Text_files_path = str(DROPBOX) + '/Research_files/Immune_system/in/'
+output_plot = str(DROPBOX) + '/_Documents/Science/Projects/Immune_System/_Repository/Figures'
 #--------------- PARAMETERS ---------------------
 N_ens = 1
 L_0s = [1e9]

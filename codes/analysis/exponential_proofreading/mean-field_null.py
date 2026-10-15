@@ -13,7 +13,9 @@ import matplotlib.pyplot as plt
 import os
 import sys
 sys.path.append('../../library/')
-from lib_mf import*
+from mf_lib import*
+from mf_plotting import*
+from paths import DROPBOX
 
 project = 'exponential_proofreading'
 model = 'meanfield'
@@ -61,7 +63,7 @@ if __name__ == '__main__':
     for i_null, null in enumerate([0, 1]):
         print(f"... for null={null}")
         for i_m, memory in enumerate([0, 1]):
-            output_plot = f'/Users/robertomorantovar/Dropbox/_Documents/Research/Projects/Immune_System/_Repository/Figures/{project}/{model}/{submodel}/{subproject}/{subsubproject}/null_{null}/memory_{memory}/'
+            output_plot = f'{DROPBOX}/_Documents/Science/Projects/Immune_System/_Repository/Figures/{project}/{model}/{submodel}/{subproject}/{subsubproject}/null_{null}/memory_{memory}/'
             os.makedirs(output_plot, exist_ok=True)
             print(f"... ... for memory={memory}")
             base['memory'] = memory
@@ -87,16 +89,16 @@ if __name__ == '__main__':
             for i_ensemble in range(N_ensemble):
                 if null == 0:
                     if p.memory == 0:
-                        res = run_simulation_semicomplete(p=p, t_span=(0, T), mode='grid')
+                        res = run_simulation('semicomplete', p=p, t_span=(0, T), mode='grid')
                         expanded_cells, formed_memory = memory_seed_from_primary(res, p=p, n_mem=int(p.n_mem))
                     else:
-                        res = run_simulation_semicomplete(p=p, t_span=(0, T), mode='grid', memory_seed=formed_memory)
+                        res = run_simulation('semicomplete', p=p, t_span=(0, T), mode='grid', memory_seed=formed_memory)
                 else:
                     if p.memory == 0:
-                        res = run_simulation_null(p=p, t_span=(0, T), mode='grid')
+                        res = run_simulation('null', p=p, t_span=(0, T), mode='grid')
                         expanded_cells, formed_memory = memory_seed_from_primary(res, p=p, n_mem=int(p.n_mem))
                     else:
-                        res = run_simulation_null(p=p, t_span=(0, T), mode='grid', memory_seed=formed_memory)
+                        res = run_simulation('null', p=p, t_span=(0, T), mode='grid', memory_seed=formed_memory)
 
                 t = res['t']
                 N_B = res['N_Bo'] + res['N_Ba']
@@ -298,7 +300,7 @@ if __name__ == '__main__':
             # ax_Z.legend(fontsize=14)
             fig_Z.savefig(os.path.join(output_plot, f'Z.pdf'), dpi=150)
 
-        output_plot = f'/Users/robertomorantovar/Dropbox/_Documents/Research/Projects/Immune_System/_Repository/Figures/{project}/{model}/{submodel}/{subproject}/{subsubproject}/'
+        output_plot = f'{DROPBOX}/_Documents/Science/Projects/Immune_System/_Repository/Figures/{project}/{model}/{submodel}/{subproject}/{subsubproject}/'
         os.makedirs(output_plot, exist_ok=True)
 
         # Formatting

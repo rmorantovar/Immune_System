@@ -1,10 +1,9 @@
 import sys
-sys.path.append('../library/')
-sys.path.append('../../my_lib/')
+sys.path.append('../../library/')
 from functions_2 import*
 plt.rcParams['text.usetex'] = True
 
-Text_files_path = '/Users/robertomorantovar/Library/CloudStorage/Dropbox/Research/Immune_system/'
+Text_files_path = str(DROPBOX) + '/Research_files/Immune_system/'
 
 #--------------- PARAMETERS ---------------------
 N_ens = 400
@@ -220,7 +219,7 @@ ax_exponents.set_ylim(bottom = 0.25)
 #ax_exponents.set_yticklabels([1, 0.1, 0.01])
 
 
-fig_exponents.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/1_Dynamics/CSV/Exponent_'+energy_model+'.pdf')
+fig_exponents.savefig(str(DROPBOX) + '/_Documents/Science/Projects/Immune_System/_Repository/Figures/primary_response/1_Dynamics/CSV/Exponent_'+energy_model+'.pdf')
 
 print('----END-----')
 

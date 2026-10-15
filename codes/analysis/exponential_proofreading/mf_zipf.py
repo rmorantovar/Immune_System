@@ -25,7 +25,7 @@ fig_kw = dict(figsize=(8 * 1.62, 8), gridspec_kw={'left': .12, 'right': .95, 'bo
 if __name__ == '__main__':
     fig, ax = plt.subplots(**fig_kw)
     for submodel in ['semicomplete', 'null']:
-        output_plot = f'/Users/robertomorantovar/Dropbox/_Documents/Research/Projects/Immune_System/_Repository/Figures/{project}/{model}/{submodel}/{subproject}/{subsubproject}/'
+        output_plot = f'{DROPBOX}/_Documents/Science/Projects/Immune_System/_Repository/Figures/{project}/{model}/{submodel}/{subproject}/{subsubproject}/'
         os.makedirs(output_plot, exist_ok=True)
         # Default parameters
         base = dict(N_A0=1.0, lambda_A = 6.0, delta_A=6.0,
@@ -136,6 +136,6 @@ if __name__ == '__main__':
     ax.set_xlim(left = 0.9, right=5e1)
     ax.tick_params(which = 'both', labelsize=30)
     ax.legend(fontsize=30, title=r'$\zeta$', title_fontsize=30)
-    output_plot_combined = f'/Users/robertomorantovar/Dropbox/_Documents/Research/Projects/Immune_System/_Repository/Figures/{project}/{model}/combined/{subproject}/{subsubproject}/'
+    output_plot_combined = f'{DROPBOX}/_Documents/Science/Projects/Immune_System/_Repository/Figures/{project}/{model}/combined/{subproject}/{subsubproject}/'
     os.makedirs(output_plot_combined, exist_ok=True)
     fig.savefig(os.path.join(output_plot_combined, f'Zipf.pdf'), dpi=150)

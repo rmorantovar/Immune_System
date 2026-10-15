@@ -4,7 +4,7 @@ from functions_2 import*
 plt.rcParams['text.usetex'] = True
 warnings.filterwarnings("ignore")
 
-Text_files_path = '/Users/robertomorantovar/Dropbox/Research_files/Immune_system/'
+Text_files_path = str(DROPBOX) + '/Research_files/Immune_system/'
 
 #--------------- PARAMETERS ---------------------
 
@@ -77,7 +77,7 @@ for i_model, energy_model in enumerate(energy_models):
     project = 'exponential_proofreading'
     model = 'E_model'
     submodel = energy_model
-    output_plot = f'/Users/robertomorantovar/Dropbox/_Documents/Research/Projects/Immune_System/_Repository/Figures/{project}/{model}/{submodel}/'
+    output_plot = f'{DROPBOX}/_Documents/Science/Projects/Immune_System/_Repository/Figures/{project}/{model}/{submodel}/'
     os.makedirs(output_plot, exist_ok=True)
 
     my_plot_layout(ax=ax_Omega, xscale = 'log', yscale = 'log')

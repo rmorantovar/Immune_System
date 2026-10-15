@@ -36,11 +36,11 @@ from funcs import *
 project    = 'exponential_proofreading'
 subproject = 'data'
 root_dir   = (
-    f"/Users/robertomorantovar/Dropbox/Research_files/"
+    f"{DROPBOX}/Research_files/"
     f"Immune_system/{project}/{subproject}/mesin2020"
 )
 output_plot = (
-    '/Users/robertomorantovar/Dropbox/_Documents/Research/Projects/'
+    str(DROPBOX) + '/_Documents/Science/Projects/'
     f'Immune_System/_Repository/Figures/{project}/{subproject}/mesin2020/entropy_length'
 )
 os.makedirs(output_plot, exist_ok=True)

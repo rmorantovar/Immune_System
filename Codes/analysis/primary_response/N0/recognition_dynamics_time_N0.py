@@ -1,9 +1,9 @@
 import sys
-sys.path.append('../library/')
-from functions import*
+sys.path.append('../../../library/')
+from functions_2 import*
 plt.rcParams['text.usetex'] = True
 import matplotlib.ticker
-Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/'
+Text_files_path = str(DROPBOX) + '/Research/Evolution_Immune_System/Text_files/'
 
 #--------------- PARAMETERS ---------------------
 N_ens = 1
@@ -65,7 +65,7 @@ print('L=%d'%(L))
 model = 'TCRen'
 #energy_model = 'MJ2'
 #--------------------------Energy Motif--------------------------
-PWM_data, M, Alphabet = get_motif(antigen, model, Text_files_path)
+PWM_data, M, Alphabet = get_motif(antigen, model, str(DROPBOX) + '/Research_files/Immune_system/in/')
 print('min_e_PWM=%.4f'%(np.sum([np.min(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))])))
 print('mean_e_PWM=%.4f'%(np.sum([np.mean(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))])))
 #Change values by the minimum

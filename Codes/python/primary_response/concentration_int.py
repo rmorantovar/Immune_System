@@ -1,10 +1,10 @@
 import sys
-sys.path.append('../../lib/')
+sys.path.append('../../library/')
 from functions_2 import*
 plt.rcParams['text.usetex'] = True
 warnings.filterwarnings("ignore")
 
-Text_files_path = '/Users/robertomorantovar/Dropbox/Research/Evolution_Immune_System/Text_files/'
+Text_files_path = str(DROPBOX) + '/Research/Evolution_Immune_System/Text_files/'
 
 
 # Define constants and parameters
