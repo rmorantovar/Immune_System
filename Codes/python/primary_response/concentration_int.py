@@ -1,5 +1,5 @@
 import sys
-sys.path.append('../../lib/')
+sys.path.append('../../library/')
 from functions_2 import*
 plt.rcParams['text.usetex'] = True
 warnings.filterwarnings("ignore")
