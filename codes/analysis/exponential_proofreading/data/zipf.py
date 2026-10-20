@@ -107,8 +107,8 @@ def run_bootstrap(data_grouped, mice, mouse_col, ax_r=None, line_color=None, sca
                 zetas_mice.append(-params_m[0])
                 if scaling_info is not None:
                     d = scaling_info['scaling_dict']
-                    d['experiment'].append(scaling_info['experiment'])
-                    d['response'].append(scaling_info['response'])
+                    d['Experiment'].append(scaling_info['Experiment'])
+                    d['Response'].append(scaling_info['Response'])
                     d['phenotype'].append(scaling_info['phenotype'])
                     d['N1'].append(largest)
                     d['L_act'].append(len(counts))
@@ -142,7 +142,7 @@ def run_bootstrap(data_grouped, mice, mouse_col, ax_r=None, line_color=None, sca
                 ax_S_mouse.set_yscale('log')
                 ax_S_mouse.set_ylim(bottom=0.9, top=50)
                 ax_S_mouse.tick_params(axis='both', labelsize=50)
-                fig_S_mouse.savefig(output_plot + f'/entropy_mouse_{scaling_info["experiment"]}_{scaling_info["phenotype"]}_{i_m+1}.pdf', transparent=.5)
+                fig_S_mouse.savefig(output_plot + f'/entropy_mouse_{scaling_info["Experiment"]}_{scaling_info["phenotype"]}_{i_m+1}.pdf', transparent=.5)
                 plt.close(fig_S_mouse)
             
             
@@ -190,8 +190,10 @@ def plot_zeta_violin(ax_zeta, zetas, zetas_mice, position, color):
     # ax_zeta.scatter(position, np.median(zetas_mice), color=color, edgecolor='k', s=150, marker='X')
 
 
-def plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_entropy_2, zeta_mean, zeta_std, color):
+def plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_scaling4, ax_entropy, ax_entropy_2, zeta_mean, zeta_std, color):
     L   = np.linspace(1, 400, 100)
+    nbar   = np.linspace(30, 300, 100)
+    N1 = np.linspace(0, 70, 100)
     L_e = np.linspace(1, 200, 100)
     z1 = np.linspace(0.01, 0.99, 100)
     z2 = np.linspace(1.01, 2.5, 100)
@@ -208,13 +210,14 @@ def plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_ent
     ax_scaling2.plot(barN(L, Z), L,      color=color, linestyle='--')
     ax_scaling2.fill_betweenx(L, barN(L, Z_min), barN(L, Z_max), color=color, alpha=0.1)
     
-    ax_scaling3.plot(L ** Z, L,      color=color, linestyle='--')
-    ax_scaling3.fill_betweenx(L, L ** Z_min, L ** Z_max, color=color, alpha=0.1)
-    ax_scaling3.plot(L ** Z, L,      color=color, linestyle='--')
-    ax_scaling3.fill_betweenx(L, L, 200, color=my_blue, alpha=0.05)
-    ax_scaling3.fill_betweenx(L, 0, L, color=my_red, alpha=0.05)
+    ax_scaling3.plot(N1, 1*N1**(1/Z),      color=color, linestyle='--')
+    # ax_scaling3.fill_betweenx(L, L ** Z_min, L ** Z_max, color=color, alpha=0.1)
+    # ax_scaling3.plot(L ** Z, L,      color=color, linestyle='--')
+    ax_scaling3.fill_between(N1 ,0, N1, color=my_blue, alpha=0.05)
+    ax_scaling3.fill_between(N1, N1, 200, color=my_red, alpha=0.05)
     
-    
+    ax_scaling4.plot(nbar, nbar, color='k', linestyle='--')
+
     # ax_entropy.plot(L_e, S_th(L_e, Z),    color=color, linestyle='--')
     # ax_entropy.fill_between(L_e, S_th(L_e, Z_min), S_th(L_e, Z_max), color=color, alpha=0.1)
     
@@ -279,10 +282,10 @@ if '1' in RUN_EXPERIMENTS:
     x_avg, mre, zetas, zetas_mice = run_bootstrap(
         data, mice, 'Mouse', ax_r=ax_r, line_color=my_red
         ,
-        scaling_info=dict(experiment='1', response='naive', phenotype='GC', scaling_dict=scaling_dict),
+        scaling_info=dict(Experiment='CGG-alum', Response='primary', phenotype='GC', scaling_dict=scaling_dict),
     )
     print(np.mean(zetas), np.std(zetas))
-    violin_stats.append(dict(experiment='1', response='naive', phenotype='GC',
+    violin_stats.append(dict(Experiment='1', Response='primary', phenotype='GC',
                              violin_zeta_mean=np.mean(zetas), violin_zeta_std=np.std(zetas),
                              mice_zeta_mean=np.mean(zetas_mice), mice_zeta_std=np.std(zetas_mice)))
     recolor_last_lines(ax_r, len(mice), my_red
@@ -291,7 +294,7 @@ if '1' in RUN_EXPERIMENTS:
     , '*',
                         r'$%.2f$' % np.mean(zetas) + ' ; GC', ms=18)
     plot_zeta_violin(ax_zeta, zetas, zetas_mice, position=0, color=my_red)
-    plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_entropy_2, np.mean(zetas), np.std(zetas), my_red)
+    plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_scaling4, ax_entropy, ax_entropy_2, np.mean(zetas), np.std(zetas), my_red)
     apply_ranking_layout(fig_r, ax_r, '1')
     apply_zeta_layout(fig_zeta, ax_zeta, '1', [0, 1], ['', ''])
 
@@ -307,10 +310,10 @@ if '2' in RUN_EXPERIMENTS:
 
     x_avg, mre, zetas, zetas_mice = run_bootstrap(
         data, mice, 'Mouse', ax_r=ax_r, line_color=my_blue,
-        scaling_info=dict(experiment='2', response='recall', phenotype='GC + fm', scaling_dict=scaling_dict),
+        scaling_info=dict(Experiment='2', Response='recall', phenotype='GC + fm', scaling_dict=scaling_dict),
     )
     print(np.mean(zetas), np.std(zetas))
-    violin_stats.append(dict(experiment='2', response='recall', phenotype='GC + fm',
+    violin_stats.append(dict(Experiment='2', Response='recall', phenotype='GC + fm',
                              violin_zeta_mean=np.mean(zetas), violin_zeta_std=np.std(zetas),
                              mice_zeta_mean=np.mean(zetas_mice), mice_zeta_std=np.std(zetas_mice)))
     recolor_last_lines(ax_r, len(mice), my_blue)
@@ -337,10 +340,10 @@ if '3a' in RUN_EXPERIMENTS:
     for i_ph, ph in enumerate(phenotypes):
         x_avg, mre, zetas, zetas_mice = run_bootstrap(
             data[data['Phenotype'] == ph], mice, 'Mouse', ax_r=ax_r, line_color=colors_ph[i_ph],
-            scaling_info=dict(experiment='3', response='recall', phenotype=ph, scaling_dict=scaling_dict),
+            scaling_info=dict(Experiment='3', Response='recall', phenotype=ph, scaling_dict=scaling_dict),
         )
         print(np.mean(zetas), np.std(zetas))
-        violin_stats.append(dict(experiment='3', response='recall', phenotype=ph,
+        violin_stats.append(dict(Experiment='3', Response='recall', phenotype=ph,
                                  violin_zeta_mean=np.mean(zetas), violin_zeta_std=np.std(zetas),
                                  mice_zeta_mean=np.mean(zetas_mice), mice_zeta_std=np.std(zetas_mice)))
         recolor_last_lines(ax_r, len(mice), colors_ph[i_ph])
@@ -364,10 +367,10 @@ if '3b' in RUN_EXPERIMENTS:
 
     x_avg, mre, zetas, zetas_mice = run_bootstrap(
         data, mice, 'Mouse', ax_r=ax_r, line_color=my_colors2[0],
-        scaling_info=dict(experiment='3', response='recall', phenotype='combined', scaling_dict=scaling_dict),
+        scaling_info=dict(Experiment='3', Response='recall', phenotype='combined', scaling_dict=scaling_dict),
     )
     print(np.mean(zetas), np.std(zetas))
-    violin_stats.append(dict(experiment='3', response='recall', phenotype='combined',
+    violin_stats.append(dict(Experiment='3', Response='recall', phenotype='combined',
                              violin_zeta_mean=np.mean(zetas), violin_zeta_std=np.std(zetas),
                              mice_zeta_mean=np.mean(zetas_mice), mice_zeta_std=np.std(zetas_mice)))
     recolor_last_lines(ax_r, len(mice), my_colors_alpha[int(np.mean(zetas) * 100)])
@@ -401,17 +404,17 @@ if '2-3a' in RUN_EXPERIMENTS:
 
     x_avg, mre, zetas, zetas_mice = run_bootstrap(
         data_23a, mice_23a, 'Mouse', ax_r=ax_r, line_color=my_blue,
-        scaling_info=dict(experiment='2-3a', response='recall', phenotype='GC + fm', scaling_dict=scaling_dict),
+        scaling_info=dict(Experiment='CGG-alum', Response='recall', phenotype='GC + fm', scaling_dict=scaling_dict),
     )
     print(np.mean(zetas), np.std(zetas))
-    violin_stats.append(dict(experiment='2-3a', response='recall', phenotype='GC + fm',
+    violin_stats.append(dict(Experiment='2-3a', Response='recall', phenotype='GC + fm',
                              violin_zeta_mean=np.mean(zetas), violin_zeta_std=np.std(zetas),
                              mice_zeta_mean=np.mean(zetas_mice), mice_zeta_std=np.std(zetas_mice)))
     recolor_last_lines(ax_r, len(mice_23a), my_blue)
     plot_ranking_result(ax_r, x_avg, mre, np.mean(zetas), my_blue, 's',
                         r'$%.2f$' % np.mean(zetas) + ' ; GC + fm (pooled 2 and 3)')
     plot_zeta_violin(ax_zeta, zetas, zetas_mice, position=5, color=my_blue)
-    plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_entropy_2, np.mean(zetas), np.std(zetas), my_blue)
+    plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_scaling4, ax_entropy, ax_entropy_2, np.mean(zetas), np.std(zetas), my_blue)
     apply_ranking_layout(fig_r, ax_r, '23a')
     apply_zeta_layout(fig_zeta, ax_zeta, '23a',
                       [0, 1, 2, 3, 4, 5],
@@ -431,17 +434,17 @@ if '2-3b' in RUN_EXPERIMENTS:
 
     x_avg, mre, zetas, zetas_mice = run_bootstrap(
         data_23b, mice_23b, 'Mouse', ax_r=ax_r, line_color=my_blue2,
-        scaling_info=dict(experiment='2-3b', response='recall', phenotype='GC + pb + fm', scaling_dict=scaling_dict),
+        scaling_info=dict(Experiment='2-3b', Response='recall', phenotype='GC + pb + fm', scaling_dict=scaling_dict),
     )
     print(np.mean(zetas), np.std(zetas))
-    violin_stats.append(dict(experiment='2-3b', response='recall', phenotype='GC + pb + fm',
+    violin_stats.append(dict(Experiment='2-3b', Response='recall', phenotype='GC + pb + fm',
                              violin_zeta_mean=np.mean(zetas), violin_zeta_std=np.std(zetas),
                              mice_zeta_mean=np.mean(zetas_mice), mice_zeta_std=np.std(zetas_mice)))
     recolor_last_lines(ax_r, len(mice_23b), my_blue2)
     plot_ranking_result(ax_r, x_avg, mre, np.mean(zetas), my_blue2, 'P',
                         r'$%.2f$' % np.mean(zetas) + ' ; all (pooled 2 and 3)')
     plot_zeta_violin(ax_zeta, zetas, zetas_mice, position=6, color=my_blue2)
-    plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_entropy_2, np.mean(zetas), np.std(zetas), my_blue2)
+    plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_scaling4, ax_entropy, ax_entropy_2, np.mean(zetas), np.std(zetas), my_blue2)
     apply_ranking_layout(fig_r, ax_r, '23b')
     apply_zeta_layout(fig_zeta, ax_zeta, '23b',
                       [0, 1, 2, 3, 4, 5, 6],
@@ -462,17 +465,17 @@ if '4a' in RUN_EXPERIMENTS:
     for i_ph, ph in enumerate(phenotypes[[0, 1]]):#, 3, 2]]):
         x_avg, mre, zetas, zetas_mice = run_bootstrap(
             data[data['Sort'] == ph], mice, 'Experiment / Mouse', ax_r=ax_r, line_color=colors_ph[i_ph],
-            scaling_info=dict(experiment='4a', response='recall', phenotype=ph, scaling_dict=scaling_dict),
+            scaling_info=dict(Experiment='HA', Response='recall' if ph == 'GC + fm' else 'primary', phenotype=ph, scaling_dict=scaling_dict),
         )
         print(ph, np.mean(zetas), np.std(zetas))
-        violin_stats.append(dict(experiment='4a', response='recall', phenotype=ph,
+        violin_stats.append(dict(Experiment='4a', Response='recall', phenotype=ph,
                                  violin_zeta_mean=np.mean(zetas), violin_zeta_std=np.std(zetas),
                                  mice_zeta_mean=np.mean(zetas_mice), mice_zeta_std=np.std(zetas_mice)))
         recolor_last_lines(ax_r, len(mice), colors_ph[i_ph])
         plot_ranking_result(ax_r, x_avg, mre, np.mean(zetas), colors_ph[i_ph], 'D',
                             r'$%.2f$' % np.mean(zetas) + ' ; ' + ph)
         plot_zeta_violin(ax_zeta, zetas, zetas_mice, position=i_ph + 7, color=colors_ph[i_ph])
-        plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_entropy, ax_entropy_2, np.mean(zetas), np.std(zetas), colors_ph[i_ph])
+        plot_theory_curves(ax_scaling1, ax_scaling2, ax_scaling3, ax_scaling4, ax_entropy, ax_entropy_2, np.mean(zetas), np.std(zetas), colors_ph[i_ph])
 
     apply_ranking_layout(fig_r, ax_r, '4a')
     apply_zeta_layout(fig_zeta, ax_zeta, '4a',
@@ -499,10 +502,10 @@ if '4b' in RUN_EXPERIMENTS:
     for i_ph, ph in enumerate(phenotypes):
         x_avg, mre, zetas, zetas_mice = run_bootstrap(
             data[data['Sort2'] == ph], mice, 'Experiment / Mouse', ax_r=ax_r, line_color=colors_ph[i_ph],
-            scaling_info=dict(experiment='4b', response='recall', phenotype='combined', scaling_dict=scaling_dict),
+            scaling_info=dict(Experiment='4b', Response='recall', phenotype='combined', scaling_dict=scaling_dict),
         )
         print(np.mean(zetas), np.std(zetas))
-        violin_stats.append(dict(experiment='4b', response='recall', phenotype='combined',
+        violin_stats.append(dict(Experiment='4b', Response='recall', phenotype='combined',
                                  violin_zeta_mean=np.mean(zetas), violin_zeta_std=np.std(zetas),
                                  mice_zeta_mean=np.mean(zetas_mice), mice_zeta_std=np.std(zetas_mice)))
         recolor_last_lines(ax_r, len(mice), colors_ph[i_ph])
@@ -528,35 +531,35 @@ palette3 = [my_brown, my_cyan, my_cyan, my_purple]
 scaling_results = pd.DataFrame(scaling_dict)
 # ─────────────────────────────────────────────────────────────────────────
 sns.scatterplot(data=scaling_results, x='barN', y='N1',
-                hue='phenotype', style='experiment', ax=ax_scaling1,
+                hue='phenotype', style='Experiment', ax=ax_scaling1,
                 s=150, palette=palette, edgecolors='black', alpha=0.8)
 # my_plot_layout(ax=ax_scaling1, yscale='linear', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
 # ax_scaling1.set_xlabel(r'$N_B^{\mathrm{tot}}$', fontsize=30)
 # ax_scaling1.set_ylabel(r'$N_1$', fontsize=30)
 # ax_scaling1.set_ylim(bottom=0, top=60)
-ax_scaling1.set_xlim(left=1, right=200)
+ax_scaling1.set_xlim(left=30, right=200)
 ax_scaling1.tick_params(axis='both', labelsize=30)
 ax_scaling1.legend(title_fontsize=20, fontsize=20, loc=2)
 fig_scaling1.savefig(output_plot + '/size_scaling_1_linear.pdf', dpi=800, transparent=True)
 
 # ─────────────────────────────────────────────────────────────────────────
 sns.scatterplot(data=scaling_results, x='barN', y='L_act',
-                hue='phenotype', style='experiment', ax=ax_scaling2,
+                hue='phenotype', style='Experiment', ax=ax_scaling2,
                 s=150, palette=palette, edgecolors='black', alpha=0.8)
 # my_plot_layout(ax=ax_scaling2, yscale='linear', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
 # ax_scaling2.set_xlabel(r'$N_B^{\mathrm{tot}}$', fontsize=30)
 # ax_scaling2.set_ylabel(r'$L_{act}$', fontsize=30)
 ax_scaling2.set_ylim(bottom=0, top=125)
-ax_scaling2.set_xlim(left=1, right=200)
+ax_scaling2.set_xlim(left=30, right=200)
 ax_scaling2.tick_params(axis='both', labelsize=30)
 ax_scaling2.legend(title_fontsize=20, fontsize=20, loc=2)
 fig_scaling2.savefig(output_plot + '/size_scaling_2_linear.pdf', dpi=800, transparent=True)
 
 # ─────────────────────────────────────────────────────────────────────────
-sns.scatterplot(data=scaling_results, x='N1', y='L_act', hue='phenotype', style='experiment', ax=ax_scaling3, s=150, palette=palette, edgecolors='black', alpha=0.8)
-# for exp in scaling_results['experiment'].unique():
+sns.scatterplot(data=scaling_results, x='N1', y='L_act', hue='Response', style='Experiment', ax=ax_scaling3, s=150, palette=palette, edgecolors='black', alpha=0.8)
+# for exp in scaling_results['Experiment'].unique():
 #     for ph in scaling_results['phenotype'].unique():
-#         exp_data = scaling_results[(scaling_results['experiment'] == exp) & (scaling_results['phenotype'] == ph)]['N1']
+#         exp_data = scaling_results[(scaling_results['Experiment'] == exp) & (scaling_results['phenotype'] == ph)]['N1']
 #         ax_scaling3.hist(exp_data, bins=10, alpha=0.8, label=f'{exp}-{ph}')
 x = np.linspace(1, 500, 1000)
 # ax_scaling3.plot(x, x, 'k--')  # Example line plot, replace with actual function if needed
@@ -578,7 +581,7 @@ scaling_results['barN_prediction'] = scaling_results.apply(
     axis=1
 )
 sns.scatterplot(data=scaling_results, x='barN_prediction', y='barN',
-                style='experiment', hue='phenotype', ax=ax_scaling4,
+                style='Experiment', hue='phenotype', ax=ax_scaling4,
                 s=150, palette=palette, edgecolors='black', alpha=0.8)
 # ax_scaling4.plot(x, x, 'k--')  # Example line plot, replace with actual function if needed
 my_plot_layout(ax=ax_scaling4, yscale='linear', xscale='linear', ticks_labelsize=40, x_fontsize=30, y_fontsize=30)
@@ -594,9 +597,9 @@ fig_scaling4.savefig(output_plot + '/size_scaling_4.pdf', dpi=800, transparent=T
 
 # ─────────────────────────────────────────────────────────────────────────
 Ebeta_star = 2.3 * 10
-sns.scatterplot(data=scaling_results, x='barN', y='S_corr', hue='phenotype', style='experiment', ax=ax_entropy, s=150, palette=palette, edgecolors='black', alpha=0.8)
-# sns.scatterplot(data=scaling_results, x='L_act', y='S', hue='phenotype', style='experiment', ax=ax_entropy, s=150, palette=palette, edgecolors='black', alpha=0.8)
-# sns.scatterplot(data=scaling_results, x='N1', y='S', hue='phenotype', style='experiment', ax=ax_entropy, s=150, palette=palette3, edgecolors='black', alpha=0.8)
+sns.scatterplot(data=scaling_results, x='barN', y='S_corr', hue='phenotype', style='Experiment', ax=ax_entropy, s=150, palette=palette, edgecolors='black', alpha=0.8)
+# sns.scatterplot(data=scaling_results, x='L_act', y='S', hue='phenotype', style='Experiment', ax=ax_entropy, s=150, palette=palette, edgecolors='black', alpha=0.8)
+# sns.scatterplot(data=scaling_results, x='N1', y='S', hue='phenotype', style='Experiment', ax=ax_entropy, s=150, palette=palette3, edgecolors='black', alpha=0.8)
 # ax_entropy.plot(x, np.log(x), color='k', linestyle='--')  # Example line plot, replace with actual function if needed
 ax_entropy.plot(x, np.ones_like(x)*(np.sqrt((2/3.14)*Ebeta_star) - np.log(2)), color = my_blue, linestyle='--')  # Example line plot, replace with actual function if needed
 # ax_entropy.fill_between(x[x<200], np.ones_like(x[x<200])*(1+np.log((5**2)/(5))), np.ones_like(x[x<200])*(1+np.log((10**2)/(5))), color = my_red, alpha = 0.5)
@@ -613,7 +616,7 @@ fig_entropy.savefig(output_plot + '/size_scaling_entropy.pdf', dpi=800, transpar
 
 # ─────────────────────────────────────────────────────────────────────────
 sns.scatterplot(data=scaling_results, x='L_act', y='S_corr',
-                hue='phenotype', style='experiment', ax=ax_entropy_2,
+                hue='phenotype', style='Experiment', ax=ax_entropy_2,
                 s=150, palette=palette, edgecolors='black', alpha=0.8)
 # ax_entropy_2.plot(x, x/(1.05+1.05/alpha-1), color = my_blue)  # Example line plot, replace with actual function if needed
 # ax_entropy_2.plot(x, x**(1/0.52*(1 - 0.52/alpha))/(-0.52-0.52/alpha+1), color = my_red)  # Example line plot, replace with actual function if needed

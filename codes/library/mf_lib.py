@@ -626,13 +626,14 @@ def find_t_star(res, Z_c=None):
 
 def compute_potency_P(res, t_c_star=None):
     """Potency P = -log[N_A(t_c)]/lambda_A (natural log). nan if Z_c unreached."""
-    Z = compute_potency_t(res)
-    P = Z[res['t']>t_c_star][0] if t_c_star is not None else np.inf
-    # idc, t_c = find_t_c(res, Z_c)
+    # Z = compute_potency_t(res)
+    Z_c = res['params'].Z_c
+    # P = Z[res['t']>t_c_star][0] if t_c_star is not None else np.inf
+    idc, t_c = find_t_c(res, Z_c)
     # idstar, t_star = find_t_star(res, Z_c)
     # if Z_c is None:
     #     Z_c = res['params'].Z_c
-    # P = Z_c*np.exp(-res['params'].b0*(t_c - t_star)) if idc is not None and idstar is not None else np.nan
+    P = res['params'].lambda_A*(4.4-t_c) if idc is not None else np.nan
     return t_c_star, P
 
 

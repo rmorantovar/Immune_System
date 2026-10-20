@@ -76,7 +76,7 @@ CONFIG = dict(
     null_sval= 1.,      # single value: used to RUN null and to PLOT the null point                               
     sweep_cmap='autumn',                # colormap for multi-value sweeps
                                         #   ('summer' = your green scale; None = discrete)
-    T=10.0,
+    T=12.0,
     mode='grid',                        # 'grid' or 'stochastic'
     base=BASE,
 
@@ -85,7 +85,7 @@ CONFIG = dict(
 
     # --- output / figures ---
     # figures=['NA_shared', 'Z_shared', 'pb_shared', 'DG_shared', 'n0_shared', 'P_shared', 'P_pi', 'per_run'],
-    figures=['P_shared'],
+    figures=['P_shared', 'Z_shared'],
     #   available: 'NA_shared', 'Z_shared', 'pb_shared', 'per_run', 'h0_extras'
     outroot=str(DROPBOX) + '/_Documents/Science/Projects/Immune_System/_Repository/Figures/exponential_proofreading/meanfield/figures',                  # base directory for saved PDFs
     usetex=True,                       # set True if you have a LaTeX toolchain
@@ -99,7 +99,7 @@ CONFIG = dict(
 # Defaults filled in for any key omitted from a user config.
 CONFIG_DEFAULTS = dict(
     models=['semicomplete'], memory_phases=[0], sweep=None, sweep_cmap='summer',
-    T=12.0, mode='grid', base=BASE, memory_h0_equals_b0=True,
+    T=10.0, mode='grid', base=BASE, memory_h0_equals_b0=True,
     figures=['NA_shared', 'Z_shared', 'pb_shared', 'per_run'],
     outroot='figures', usetex=True, show=False,
 )
@@ -295,9 +295,10 @@ def make_shared_figures(cfg, results):
                 mfp.plot_potency(ax_Z, res, color=color, ls=ls,
                     label=label,
                     marker_face=color, marker_edge='k',
-                    marker='s', mark_Zc=False, mark_t = t_c_star)
+                    marker='s', mark_Zc=True, mark_t = t_c_star)
                 if opt_sval is None or sval == opt_sval:
                     ax_Z.axvline(t_c_star, lw=2, ls='--', color='k')
+                    ax_Z.axhline(res['params'].Z_c, lw=2, ls='--', color='k')
 
         mfp.plot_pb_from_potency(ax_pb, res, color=color, ls=ls, label=label)
 
@@ -341,7 +342,7 @@ def make_shared_figures(cfg, results):
     if 'Z_shared' in figs:
         # ax_Z.axhline(cfg['base']['Z_c'], lw=1, ls='--', color='k')
         if sweep_name == 'h0':
-            mfp.style_log_axis(ax_Z, T, ylim=(2e-1, 6e3), xlim=(2.45, 4.6))
+            mfp.style_log_axis(ax_Z, T, ylim=(2e-1, 6e3), xlim=(2.45, 5.0))
             model0 = cfg['models'][0]
             # handles = [(Line2D([], [], color=sweep_cols_primary[i], lw=4),
                         # Line2D([], [], color=sweep_cols_memory[i], lw=4))]
@@ -395,9 +396,9 @@ def make_shared_figures(cfg, results):
                                 marker='s', s=170, linewidth=1.5, zorder=3)
                 
         ax_4d.set_xlim(9e5, 4e7)
-        ax_4d.set_ylim(9e1, 2e3)
+        ax_4d.set_ylim(0, 11)
         ax_4d.set_xscale('log')
-        ax_4d.set_yscale('log')
+        # ax_4d.set_yscale('log')
         ax_4d.tick_params(axis='both', labelsize=44)
         ax_4d.legend(fontsize=24, loc=3)
         fig_4d.savefig(os.path.join(out, 'potency'
