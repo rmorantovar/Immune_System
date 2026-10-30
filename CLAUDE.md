@@ -46,7 +46,7 @@ Research code for "How does the adaptive immune system learn?": stochastic simul
   python MeRiM.py --p 3.0 --pmem 1.0 --secondary 0 --pro memory_response --subpro Z_NA_dynamics
   ```
   Common flags: `--L0` (repertoire size), `--l` (sequence length), `--N_ens`, `--p` (proofreading steps), `--lamA`/`--lamB` (growth rates), `--E_lim`, `--t_lim`, `--chunk_size` (used when `L0 >= 1e7`), `--n_jobs`.
-- Data and figures live in the author's Dropbox. Build paths from `DROPBOX` (from `Codes/library/paths.py`, which reads `~/.dropbox/info.json` and falls back to `~/Dropbox`), never from a hard-coded `/Users/<name>/...` prefix. Write `str(DROPBOX) + '/...'` or `f'{DROPBOX}/...'`. Current Dropbox layout:
+- Data and figures live in the author's Dropbox. Build paths from `DROPBOX` (from `Codes/library/paths.py`, which reads `~/.dropbox/info.json` and falls back to `~/Dropbox`; the account is chosen with the `DROPBOX_ACCOUNT` env var, `personal` (default) or `business`), never from a hard-coded `/Users/<name>/...` prefix. Write `str(DROPBOX) + '/...'` or `f'{DROPBOX}/...'`. Current Dropbox layout:
   - Data and simulation output: `DROPBOX/Research_files/Immune_system/{project}/...`, e.g. `primary_response/simulations/output_N_ens_.../`, `primary_response/data/Victora_2016/`, `primary_response/data/victora_2020/` (lowercase `v`).
   - Energy matrices and alphabets (`TCRen.txt`, `Alphabet_TCRen.txt`, `MJ2.txt`, `BLOSUM62.txt`, `TCRen_potential.csv`): `DROPBOX/Research_files/Immune_system/in/`. Pass this folder to `get_motif`.
   - Figures and other documents: `DROPBOX/_Documents/Science/Projects/Immune_System/_Repository/Figures/{project}/...`.
