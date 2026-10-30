@@ -29,7 +29,7 @@ MAX_RANK_FIT = 20
 N_ENSEMBLE   = 400
 RUN_EXPERIMENTS = {'1', '2', '3a', '3b', '2-3a', '2-3b', '4a', '4b'}
 RUN_EXPERIMENTS = {'1', '2-3a', '4a'}
-# RUN_EXPERIMENTS = {'1', '2'}
+# RUN_EXPERIMENTS = {'1'}
 
 color_vals      = np.linspace(0, 2, 200)
 my_colors_alpha = [plt.get_cmap('autumn_r')(v) for v in color_vals]
@@ -73,7 +73,8 @@ def run_bootstrap(data_grouped, mice, mouse_col, ax_r=None, line_color=None, sca
 
     Returns: x_avg_eff, max_rank_eff, zetas (array), zetas_mice (array)
     """
-    zetas, zetas_mice = [], []
+    zetas, zetas_mice, rate_fits = [], [], []
+    
     print(len(mice), "total mice, running bootstrap...")
     for rep in tqdm(range(N_ENSEMBLE)):
         is_last            = rep == N_ENSEMBLE - 1
@@ -157,7 +158,13 @@ def run_bootstrap(data_grouped, mice, mouse_col, ax_r=None, line_color=None, sca
         )
         zetas.append(-params[0])
 
-    return x_avg_eff, max_rank_eff, np.array(zetas), np.array(zetas_mice)
+        logj = np.log(np.arange(1, max_rank_eff + 1))[:MAX_RANK_FIT]
+        logx = np.log(x_avg_eff)[:MAX_RANK_FIT]
+        res  = fit_both(logj, logx)
+        zetas.append(res['zeta'])          # identical to the previous Zipf fit
+        rate_fits.append(res)
+
+    return x_avg_eff, max_rank_eff, np.array(zetas), np.array(zetas_mice), pd.DataFrame(rate_fits)
 
 
 # ── Plot helpers ──────────────────────────────────────────────────────────────
@@ -247,6 +254,34 @@ def apply_zeta_layout(fig_zeta, ax_zeta, suffix, tick_positions, tick_labels, x_
     ax_zeta.tick_params(axis='x', labelsize=x_labelsize, rotation=45)
     fig_zeta.savefig(output_plot + f'/zetas_{suffix}.pdf', dpi=800, transparent=True)
 
+# ── Rate-model fit (affinity-dependent growth rates; SI Sec. rate model) ──────
+
+def zipf_logx(logj, z):
+    """EP: log(N_j/N_1) = -zeta log j."""
+    return -z * logj
+
+def rate_logx(logj, z0, c):
+    """Rate model: log(N_j/N_1) = log N_1 (j^{-c} - 1), with z0 = c log N_1.
+    Reduces to Zipf (-z0 log j) for c -> 0; z0 j^{-c} is the local exponent."""
+    return z0 * np.expm1(-c * logj) / c
+
+def fit_both(logj, logx):
+    """Fit both models to a normalized rank curve (rank 1 excluded: exact for both)."""
+    logj, logx = logj[1:], logx[1:]
+    n = len(logj)
+    pz, _ = curve_fit(zipf_logx, logj, logx, p0=[0.5])
+    rss_z = np.sum((logx - zipf_logx(logj, *pz)) ** 2)
+    pr, _ = curve_fit(rate_logx, logj, logx, p0=[pz[0], 0.1],
+                      bounds=([0, 1e-6], [10, 3]))
+    rss_r = np.sum((logx - rate_logx(logj, *pr)) ** 2)
+    aic_z = n * np.log(rss_z / n) + 2 * 1
+    aic_r = n * np.log(rss_r / n) + 2 * 2
+    return dict(zeta=pz[0], z0=pr[0], c=pr[1], logN1=pr[0] / pr[1],
+                dAIC=aic_r - aic_z)
+
+def plot_rate_fit(ax_r, max_rank_eff, z0, c, color):
+    j = np.arange(1, max_rank_eff + 10)
+    ax_r.plot(j, np.exp(rate_logx(np.log(j), z0, c)), color=color, lw=2, ls=':')
 
 # ── Figure setup ──────────────────────────────────────────────────────────────
 
@@ -279,15 +314,21 @@ if '1' in RUN_EXPERIMENTS:
                           filter_specs={'Figure': 1})
     mice = data['Mouse'].unique()
 
-    x_avg, mre, zetas, zetas_mice = run_bootstrap(
+    x_avg, mre, zetas, zetas_mice, rate_fits = run_bootstrap(
         data, mice, 'Mouse', ax_r=ax_r, line_color=my_red
         ,
         scaling_info=dict(Experiment='CGG-alum', Response='primary', phenotype='GC', scaling_dict=scaling_dict),
     )
-    print(np.mean(zetas), np.std(zetas))
+    full, boot = rate_fits.iloc[-1], rate_fits.iloc[:-1]
     violin_stats.append(dict(Experiment='1', Response='primary', phenotype='GC',
-                             violin_zeta_mean=np.mean(zetas), violin_zeta_std=np.std(zetas),
-                             mice_zeta_mean=np.mean(zetas_mice), mice_zeta_std=np.std(zetas_mice)))
+                             zeta_hat=full['zeta'], zeta_std=boot['zeta'].std(),
+                             c_hat=full['c'], c_std=boot['c'].std(),
+                             c_hi=boot['c'].quantile(.975),
+                             frac_c_at_zero=(boot['c'] < 1e-3).mean(),
+                             dAIC_hat=full['dAIC'],
+                             dAIC_lo=boot['dAIC'].quantile(.025),
+                             dAIC_hi=boot['dAIC'].quantile(.975)))
+    plot_rate_fit(ax_r, mre, full['z0'], full['c'], my_red)
     recolor_last_lines(ax_r, len(mice), my_red
     )
     plot_ranking_result(ax_r, x_avg, mre, np.mean(zetas), my_red
@@ -402,9 +443,21 @@ if '2-3a' in RUN_EXPERIMENTS:
     data_23a  = pd.concat([data_2_gcfm, data_3_gcfm], ignore_index=True)
     mice_23a  = data_23a['Mouse'].unique()
 
-    x_avg, mre, zetas, zetas_mice = run_bootstrap(
+    x_avg, mre, zetas, zetas_mice, rate_fits = run_bootstrap(
         data_23a, mice_23a, 'Mouse', ax_r=ax_r, line_color=my_blue,
         scaling_info=dict(Experiment='CGG-alum', Response='recall', phenotype='GC + fm', scaling_dict=scaling_dict),
+    )
+    full, boot = rate_fits.iloc[-1], rate_fits.iloc[:-1]
+    violin_stats.append(dict(Experiment='2-3a', Response='recall', phenotype='GC + fm',
+                                zeta_hat=full['zeta'], zeta_std=boot['zeta'].std(),
+                                c_hat=full['c'], c_std=boot['c'].std(),
+                                c_hi=boot['c'].quantile(.975),
+                                frac_c_at_zero=(boot['c'] < 1e-3).mean(),
+                                dAIC_hat=full['dAIC'],
+                                dAIC_lo=boot['dAIC'].quantile(.025),
+                                dAIC_hi=boot['dAIC'].quantile(.975)))
+    plot_rate_fit(ax_r, mre, full['z0'], full['c'], my_red)
+    recolor_last_lines(ax_r, len(mice_23a), my_red
     )
     print(np.mean(zetas), np.std(zetas))
     violin_stats.append(dict(Experiment='2-3a', Response='recall', phenotype='GC + fm',
@@ -463,9 +516,21 @@ if '4a' in RUN_EXPERIMENTS:
     phenotypes = data['Sort'].unique()
 
     for i_ph, ph in enumerate(phenotypes[[0, 1]]):#, 3, 2]]):
-        x_avg, mre, zetas, zetas_mice = run_bootstrap(
+        x_avg, mre, zetas, zetas_mice, rate_fits = run_bootstrap(
             data[data['Sort'] == ph], mice, 'Experiment / Mouse', ax_r=ax_r, line_color=colors_ph[i_ph],
             scaling_info=dict(Experiment='HA', Response='recall' if ph == 'GC + fm' else 'primary', phenotype=ph, scaling_dict=scaling_dict),
+        )
+        full, boot = rate_fits.iloc[-1], rate_fits.iloc[:-1]
+        violin_stats.append(dict(Experiment='4a', Response='recall', phenotype=ph,
+                                    zeta_hat=full['zeta'], zeta_std=boot['zeta'].std(),
+                                    c_hat=full['c'], c_std=boot['c'].std(),
+                                    c_hi=boot['c'].quantile(.975),
+                                    frac_c_at_zero=(boot['c'] < 1e-3).mean(),
+                                    dAIC_hat=full['dAIC'],
+                                    dAIC_lo=boot['dAIC'].quantile(.025),
+                                    dAIC_hi=boot['dAIC'].quantile(.975)))
+        plot_rate_fit(ax_r, mre, full['z0'], full['c'], my_red)
+        recolor_last_lines(ax_r, len(mice), my_red
         )
         print(ph, np.mean(zetas), np.std(zetas))
         violin_stats.append(dict(Experiment='4a', Response='recall', phenotype=ph,
