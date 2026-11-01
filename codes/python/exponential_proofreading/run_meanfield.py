@@ -85,7 +85,7 @@ CONFIG = dict(
 
     # --- output / figures ---
     # figures=['NA_shared', 'Z_shared', 'pb_shared', 'DG_shared', 'n0_shared', 'P_shared', 'P_pi', 'per_run'],
-    figures=['P_shared', 'Z_shared'],
+    figures=['P_shared'],
     #   available: 'NA_shared', 'Z_shared', 'pb_shared', 'per_run', 'h0_extras'
     outroot=str(DROPBOX) + '/_Documents/Science/Projects/Immune_System/_Repository/Figures/exponential_proofreading/meanfield/figures',                  # base directory for saved PDFs
     usetex=True,                       # set True if you have a LaTeX toolchain
@@ -218,6 +218,60 @@ def _sweep_tag(cfg, sval):
     """Folder-name fragment for one sweep value ('fixed' when not sweeping)."""
     name = cfg['sweep'][0]
     return 'fixed' if name is None else f'{name}_{sval:.4g}'
+
+
+def fig4d_theory_curve(cfg, results, pts, n_grid=200):
+    """Analytic recall potency vs specificity across pi_c (SI, optimal threshold).
+
+    Recall control time, up to a constant:
+        lambda_A t_c = (1/r) [ -alpha E_max + log(1 + Y/M) ]
+    (memory threshold fixed, so no timing term; memory = M/(Y+M) of the yield).
+    P = -lambda_A t_c + const; the constant is fitted to the simulated recall points.
+    Returns (exp(D), P) on a fine pi_c grid.
+    """
+    b = cfg['base']
+    lamA, lamB, dA, beta = b['lambda_A'], b['b0'], b['delta_A'], b['beta_star']
+    M = b['n_mem']                                  # memory capacity (gamma = 1)
+    v_off = min(dA, lamB)
+    alpha = lamB * (1.0 / lamA + 1.0 / v_off)       # EP exponent
+    r = lamB / lamA
+
+    # primary runs: pi_c, reach E_max, and total yield Y
+    pic_sim, Emax_sim, Y_sim, DGmin = [], [], [], 0.0
+    for (model, sval, memory), res in results.items():
+        if model != 'semicomplete' or memory != 0:
+            continue
+        p = res['params']
+        DGmin = mf.DG_min(res)
+        pic_sim.append(pi_star_of(p))
+        Emax_sim.append(mf.DG_mf(res) - DGmin)
+        expanded, _ = mf.memory_seed_from_primary(res, p=p, n_mem=int(p.n_mem))
+        Y_sim.append(np.sum(expanded))              # CHECK: total primary cells
+    pic_sim, Emax_sim, Y_sim = map(np.asarray, (pic_sim, Emax_sim, Y_sim))
+
+    # reach: slope -1 in log pi_c (theory), intercept from the runs
+    E0 = np.mean(Emax_sim + np.log(pic_sim))
+    Emax_of = lambda pic: E0 - np.log(pic)
+
+    # yield: exact integral of the exponential tail; prefactor from the runs
+    logY_shape = lambda Em: alpha * Em + np.log(np.expm1((beta - alpha) * Em) / (beta - alpha))
+    logY0 = np.mean(np.log(Y_sim) - logY_shape(Emax_of(pic_sim)))
+
+    def P_shape(pic):
+        Em = Emax_of(pic)
+        Y = np.exp(logY0 + logY_shape(Em))
+        return (alpha * Em - np.log1p(Y / M)) / r   # = -lambda_A t_c + const
+
+    pic_pts = np.array([pt[4] for pt in pts])
+    P_pts = np.array([pt[1] for pt in pts])
+    const = np.mean(P_pts - P_shape(pic_pts))
+
+    pic = np.logspace(np.log10(pic_sim.min()), np.log10(pic_sim.max()), n_grid)
+    Em = Emax_of(pic)
+    D = np.array([mf.dkl_analytic(FIG4D_MU['recall'], DG4D_STAR + e + DGmin,
+                                  DG_star=DG4D_STAR + DGmin, sigma2=DG4D_SIG2)
+                  for e in Em])
+    return np.exp(D), P_shape(pic) + const
 
 
 def make_shared_figures(cfg, results):
@@ -378,6 +432,10 @@ def make_shared_figures(cfg, results):
                           edgecolors='k', marker=marker,
                           s=130, linewidth=1.5, zorder=2, label=r'$\mathrm{%s}$' % name)
         rn0 = results.get(('null', cfg.get('null_sval'), 0))
+        if P_shared_pts['recall']:
+            x_th, P_th = fig4d_theory_curve(cfg, results, P_shared_pts['recall'])
+            ax_4d.plot(x_th, P_th, color='k', lw=2, ls='--', zorder=1,
+                       label=r'$\mathrm{theory}$')
         if rn0 is not None:
             _, P = mf.compute_potency_P(rn0, t_c_star=t_c_star)
             D_ana = mf.dkl_analytic(FIG4D_MU['null'], DG4D_STAR + mf.DG_mf(rn0),
