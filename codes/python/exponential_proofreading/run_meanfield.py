@@ -22,6 +22,15 @@ Reproducing the three original scripts:
         models=['semicomplete'], memory_phases=[0, 1],
         sweep=('h0', flip(logspace(log10(b0/1e5), log10(b0/1e0), 6))),
         figures=[..., 'h0_extras']
+
+Two-clone mode (`python run_meanfield.py two_clone`, see TWO_CLONE_CONFIG):
+    Instead of the whole naive repertoire, the response starts from 2 clones,
+        clone 1 : DG1,        initial size N1
+        clone 2 : DG1 + gap,  initial size N1 * ratio
+    so `gap` is the affinity gap (clone 1 is the stronger binder when gap > 0)
+    and `ratio` = N2(0)/N1(0) the initial size ratio. Any of DG1, gap, N1,
+    ratio can be swept like a Parameter, e.g. sweep=('gap', [0.5, 1, 2]).
+    Figures: 'two_clone' (clone sizes, clone-1 fraction, pi, final fraction).
 """
 
 import os, sys
@@ -82,6 +91,7 @@ CONFIG = dict(
 
     # --- behaviour toggles ---
     memory_h0_equals_b0=True,           # memory phase forces h0 = b0 (original behaviour)
+    two_clone=None,                     # None -> whole naive repertoire; see TWO_CLONE_CONFIG
 
     # --- output / figures ---
     # figures=['NA_shared', 'Z_shared', 'pb_shared', 'DG_shared', 'n0_shared', 'P_shared', 'P_pi', 'per_run'],
@@ -92,6 +102,19 @@ CONFIG = dict(
     show=False,                         # plt.show() at the end instead of/along saving
 )
 
+# Two-clone competition: run with `python run_meanfield.py two_clone`.
+TWO_CLONE_CONFIG = dict(
+    CONFIG,
+    two_clone=dict(DG1=0.0,             # DG of clone 1
+                   gap=1.0,             # DG2 - DG1 (affinity gap)
+                   N1=1.0,              # initial size of clone 1
+                   ratio=1.0),          # N2(0) / N1(0)
+    sweep=('gap', [0.0, 0.5, 1.0, 2.0, 4.0]),   # or ('ratio', [...]), ('h0', [...]), ...
+    # sweep=('ratio', np.logspace(-2, 2, 5)),
+    memory_phases=[0, 1],
+    figures=['two_clone'],
+)
+
 
 # ============================================================
 # Parameter construction (fixes the in-place-mutation + p-before-assignment bugs)
@@ -99,7 +122,7 @@ CONFIG = dict(
 # Defaults filled in for any key omitted from a user config.
 CONFIG_DEFAULTS = dict(
     models=['semicomplete'], memory_phases=[0], sweep=None, sweep_cmap='summer',
-    T=10.0, mode='grid', base=BASE, memory_h0_equals_b0=True,
+    T=10.0, mode='grid', base=BASE, memory_h0_equals_b0=True, two_clone=None,
     figures=['NA_shared', 'Z_shared', 'pb_shared', 'per_run'],
     outroot='figures', usetex=True, show=False,
 )
@@ -132,7 +155,14 @@ def build_params(cfg, sweep_value, memory):
     """
     d = dict(cfg['base'])
     sweep_name, _ = cfg['sweep']
-    if sweep_name is not None:
+    tc = cfg.get('two_clone')
+    if tc is not None:
+        tc = dict(tc)
+        if sweep_name in tc:                # sweeping a two-clone knob
+            tc[sweep_name] = sweep_value
+        d['clone_DG'] = (tc['DG1'], tc['DG1'] + tc['gap'])
+        d['clone_N0'] = (tc['N1'], tc['N1'] * tc['ratio'])
+    if sweep_name is not None and not (tc is not None and sweep_name in tc):
         d[sweep_name] = sweep_value
     d['memory'] = memory
     if memory == 1 and cfg.get('memory_h0_equals_b0', True):
@@ -164,6 +194,7 @@ def run_experiment(cfg):
     """
     cfg = normalize_config(cfg)
     sweep_name, sweep_values = cfg['sweep']
+    sim_mode = 'clones' if cfg.get('two_clone') is not None else cfg['mode']
     results = {}
     memory_seeds = {}      # (model, sweep_value) -> formed_memory from the primary
     primary_params = {}    # (model, sweep_value) -> Parameters of the naive run
@@ -192,7 +223,7 @@ def run_experiment(cfg):
 
                 print('             starting...', end='', flush=True)
                 res = mf.run_simulation(model, p=p, t_span=(0.0, cfg['T']),
-                                        mode=cfg['mode'], memory_seed=seed)
+                                        mode=sim_mode, memory_seed=seed)
                 print('done')
                 # Attach the naive run's parameters so memory plots can recover
                 # the primary pi_c (which differs from the memory run's own p).
@@ -202,8 +233,10 @@ def run_experiment(cfg):
                 if memory == 0:
                     primary_params[(model, sval)] = p
                     try:
+                        # activated = at least doubled (naive grid: N0 = 1 -> 2)
                         _, formed = mf.memory_seed_from_primary(
-                            res, p=p, n_mem=int(p.n_mem))
+                            res, p=p, n_mem=int(p.n_mem),
+                            threshold=2.0 * mf._N_B(res)[:, 0])
                         memory_seeds[(model, sval)] = formed
                     except ValueError as e:
                         print(f"      [warn] no memory seed for {model}: {e}")
@@ -539,6 +572,80 @@ def make_shared_figures(cfg, results):
             plt.close(f)
 
 
+def make_two_clone_figures(cfg, results):
+    """Two-clone competition: clone sizes, clone-1 fraction, pi, final fraction.
+
+    Colour = sweep value; solid = clone 1 (DG1), dashed = clone 2 (DG1 + gap).
+    """
+    T = cfg['T']
+    sweep_name, sweep_values = cfg['sweep']
+    cols = mfp.sweep_colors(len(sweep_values), cfg['sweep_cmap'])
+    out = mfp._outdir(cfg, 'two_clone')
+    name_tex = (sweep_name or '').replace('_', r'\_')
+
+    def label_of(sval):
+        return None if sweep_name is None else r'$\mathrm{%s} = %.3g$' % (name_tex, sval)
+
+    final_frac = {}                       # (model, memory) -> [(sval, f1)]
+    for model in cfg['models']:
+        for memory in cfg['memory_phases']:
+            fig_NB, ax_NB = mfp.new_fig()
+            fig_f, ax_f = mfp.new_fig()
+            fig_pi, ax_pi = mfp.new_fig()
+            for i, sval in enumerate(sweep_values):
+                res = results.get((model, sval, memory))
+                if res is None:
+                    continue
+                t, N_B = res['t'], mf._N_B(res)
+                c, lab = cols[i], label_of(sval)
+                ax_NB.plot(t, N_B[0], lw=5, color=c, ls='-', label=lab)
+                ax_NB.plot(t, N_B[1], lw=5, color=c, ls='--')
+                f1 = N_B[0] / (N_B[0] + N_B[1])
+                ax_f.plot(t, f1, lw=5, color=c, label=lab)
+                if 'pi' in res:
+                    ax_pi.plot(t, res['pi'][0], lw=5, color=c, ls='-', label=lab)
+                    ax_pi.plot(t, res['pi'][1], lw=5, color=c, ls='--')
+                    ax_pi.axhline(pi_star_of(res['params']), lw=1, ls=':', color=c)
+                final_frac.setdefault((model, memory), []).append((sval, f1[-1]))
+
+            tag = f'{model}_memory_{memory}'
+            mfp.style_log_axis(ax_NB, T, ylim=(5e-1, None))
+            ax_NB.legend(fontsize=20)
+            fig_NB.savefig(os.path.join(out, f'N_B_{tag}.pdf'), dpi=800)
+
+            ax_f.set_xlim(0, T)
+            ax_f.set_ylim(-0.02, 1.02)
+            ax_f.tick_params(axis='both', labelsize=44)
+            ax_f.legend(fontsize=20)
+            fig_f.savefig(os.path.join(out, f'frac_clone1_{tag}.pdf'), dpi=800)
+
+            if ax_pi.lines:
+                mfp.style_log_axis(ax_pi, T, ylim=(1e-2, None))
+                ax_pi.legend(fontsize=20)
+                fig_pi.savefig(os.path.join(out, f'pi_{tag}.pdf'), dpi=800)
+            if not cfg['show']:
+                for f in (fig_NB, fig_f, fig_pi):
+                    plt.close(f)
+
+    # final clone-1 fraction vs the swept knob (primary o, recall s)
+    if sweep_name is not None and len(sweep_values) > 1:
+        fig, ax = mfp.new_fig()
+        for (model, memory), pts in final_frac.items():
+            x, y = np.array(pts).T
+            ax.plot(x, y, lw=3, ls=mfp.styles_mem[memory], color=mfp.colors_mem[memory],
+                    marker='os'[memory], ms=14, mec='k',
+                    label=r'$\mathrm{%s}$' % ('primary', 'recall')[memory])
+            if np.all(x > 0) and x.max() / x.min() > 100:
+                ax.set_xscale('log')
+        ax.set_xlabel(r'$\mathrm{%s}$' % name_tex, fontsize=30)
+        ax.set_ylim(-0.02, 1.02)
+        ax.tick_params(axis='both', labelsize=30)
+        ax.legend(fontsize=20)
+        fig.savefig(os.path.join(out, 'final_frac_clone1.pdf'), dpi=800)
+        if not cfg['show']:
+            plt.close(fig)
+
+
 def make_per_run_figures(cfg, results):
     """Standard per-run panels (antigen, pi, N_B, potency)."""
     T = cfg['T']
@@ -635,6 +742,17 @@ def main(cfg=CONFIG):
     results = run_experiment(cfg)
 
     figs = cfg['figures']
+    if cfg['two_clone'] is not None:
+        # the repertoire-level figures assume the full grid and an h0 sweep
+        skipped = [f for f in figs if f != 'two_clone']
+        if skipped:
+            print(f"[two_clone] skipping repertoire figures: {skipped}")
+        make_two_clone_figures(cfg, results)
+        if cfg['show']:
+            plt.show()
+        print("Done.")
+        return results
+
     if any(f in figs for f in ('NA_shared', 'Z_shared', 'pb_shared',
                                'P_shared', 'DG_shared', 'n0_shared', 'P_pi')):
         make_shared_figures(cfg, results)
@@ -648,4 +766,4 @@ def main(cfg=CONFIG):
 
 
 if __name__ == '__main__':
-    main()
+    main(TWO_CLONE_CONFIG if 'two_clone' in sys.argv[1:] else CONFIG)

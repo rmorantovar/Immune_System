@@ -80,6 +80,10 @@ class Parameters:
     T_lim: bool = False          # include T-cell limitation in the demand function
     memory: bool = False         # use memory-like initial conditions for N_B
 
+    # --- Explicit clones (mode='clones') ---
+    clone_DG: Optional[tuple] = None   # DG of each clone, e.g. (0.0, 1.5)
+    clone_N0: Optional[tuple] = None   # initial size of each clone (default 1 each)
+
 
 # ============================================================
 # Repertoire
@@ -140,16 +144,38 @@ def build_repertoire_stochastic(p, DG_max_sim=None, seed=None):
     return DG_arr, psi_arr, weights, L_sim
 
 
+def build_repertoire_clones(p):
+    """
+    A handful of explicit clones at p.clone_DG (e.g. a two-clone competition).
+    Returns (DG, psi, weights=ones, M=len(clone_DG)).
+    """
+    if p.clone_DG is None:
+        raise ValueError("mode='clones' needs p.clone_DG (one DG per clone).")
+    DG_arr = np.asarray(p.clone_DG, dtype=float)
+    psi_arr = psi(DG_arr, p.eta)
+    weights = np.ones(len(DG_arr))
+    return DG_arr, psi_arr, weights, len(DG_arr)
+
+
 def build_context(p, mode='grid', DG_max_sim=None, seed=None):
     """Everything the RHS/IC need that only depends on the repertoire + params."""
     if mode == 'grid':
         DG, psi_arr, weights, M = build_repertoire_grid(p)
     elif mode == 'stochastic':
         DG, psi_arr, weights, M = build_repertoire_stochastic(p, DG_max_sim, seed)
+    elif mode == 'clones':
+        DG, psi_arr, weights, M = build_repertoire_clones(p)
     else:
-        raise ValueError(f"Unknown mode: {mode}. Use 'grid' or 'stochastic'.")
+        raise ValueError(f"Unknown mode: {mode}. Use 'grid', 'stochastic' or 'clones'.")
+    # naive initial clone sizes (all ones unless explicit clones say otherwise)
+    if mode == 'clones' and p.clone_N0 is not None:
+        N0 = np.asarray(p.clone_N0, dtype=float)
+        if N0.shape != DG.shape:
+            raise ValueError("clone_N0 and clone_DG must have the same length.")
+    else:
+        N0 = np.ones(M)
     return dict(DG=DG, psi=psi_arr, weights=weights,
-                neut=weights * np.exp(-DG), M=M, mode=mode)
+                neut=weights * np.exp(-DG), M=M, mode=mode, N0=N0)
 
 
 # ============================================================
@@ -364,7 +390,7 @@ def _memory_ic(p, ctx, memory_seed):
             return memory_seed.copy()
         alpha = p.eta * (p.b0 / p.lambda_A + 1)
         return 1e4 * np.exp(-alpha * DG)          # analytic fallback
-    return np.ones(M)
+    return ctx['N0'].copy()
 
 
 # -------------------------------------------------------------------------
@@ -491,7 +517,7 @@ def run_simulation(model='semicomplete', p=None, t_span=None, t_eval=None,
     p : Parameters
     t_span : (t0, t1)
     t_eval : output times (default 500 points over t_span)
-    mode : 'grid' | 'stochastic'
+    mode : 'grid' | 'stochastic' | 'clones' (explicit p.clone_DG / p.clone_N0)
     memory_seed : optional per-clone N_Bo initial condition (memory phase)
     solver_overrides : override the model's default solve_ivp kwargs.
 
@@ -747,16 +773,19 @@ def produce_memory(res, n_mem=int(1e4)):
     return res['DG'][activated_idx[nz]], drawn[nz]
 
 
-def memory_seed_from_primary(res_primary, p, n_mem=int(1e4)):
+def memory_seed_from_primary(res_primary, p, n_mem=int(1e4), threshold=2.0):
     """
     Subsample the primary's activated population into a length-M grid IC.
+
+    threshold : final per-clone size above which a clone counts as activated
+                (scalar or per-clone array, e.g. 2 * initial size).
 
     Returns (expanded_cells, formed_memory) where formed_memory is the per-clone
     initial condition to pass to `run_simulation(..., memory_seed=formed_memory)`.
     """
     per_clone = _N_B(res_primary)[:, -1]
     w = res_primary['weights']
-    activated = per_clone > 2.0
+    activated = per_clone > threshold
     expanded_cells = (per_clone * w) * activated
     total = expanded_cells.sum()
     if total <= 0:
