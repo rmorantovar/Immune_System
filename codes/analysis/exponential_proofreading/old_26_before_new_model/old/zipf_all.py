@@ -6,8 +6,8 @@ plt.rcParams['text.usetex'] = True
 project = 'exponential_proofreading'
 subproject = 'data'
 experiment = 0
-root_dir = f"/Users/robertomorantovar/Dropbox/Research_files/Immune_system/{project}/{subproject}/mesin2020"
-output_plot = '/Users/robertomorantovar/Dropbox/_Documents/Research/Projects/Immune_System/_Repository/Figures/'+project+'/'+subproject+'/mesin2020/zipf/all'
+root_dir = f"/Users/robertomorantovar/Dropbox/research_files/Immune_system/{project}/{subproject}/mesin2020"
+output_plot = '/Users/robertomorantovar/Dropbox/documents/Research/Projects/Immune_System/_Repository/Figures/'+project+'/'+subproject+'/mesin2020/zipf/all'
 os.makedirs(output_plot, exist_ok=True)
 
 # Parameters

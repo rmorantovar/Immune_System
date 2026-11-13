@@ -3,7 +3,7 @@ sys.path.append('../../../library/')
 from functions_2 import*
 plt.rcParams['text.usetex'] = True
 
-Text_files_path = str(DRIVE) + '/Research_files/Immune_system/'
+Text_files_path = str(DRIVE) + '/research_files/Immune_system/'
 
 #--------------- PARAMETERS ---------------------
 N_ens = 100

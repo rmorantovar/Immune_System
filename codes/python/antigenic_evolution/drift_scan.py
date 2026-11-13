@@ -38,7 +38,7 @@ CONFIG = dict(
     # --- output / figures ---
     figures=['NA_shared', 'Z_shared', 'pb_shared', 'DG_shared', 'n0_shared', 'fig4d', 'P_pi', 'per_run'],
     #   available: 'NA_shared', 'Z_shared', 'pb_shared', 'per_run', 'h0_extras'
-    outroot='/Users/robertomorantovar/Library/CloudStorage/Dropbox/_Documents/Research/Projects/Immune_System/_Repository/Figures/antigenic_evolution/meanfield/',                  # base directory for saved PDFs
+    outroot='/Users/robertomorantovar/Library/CloudStorage/Dropbox/documents/Research/Projects/Immune_System/_Repository/Figures/antigenic_evolution/meanfield/',                  # base directory for saved PDFs
     usetex=True,                       # set True if you have a LaTeX toolchain
     show=False,                         # plt.show() at the end instead of/along saving
 )

@@ -26,6 +26,7 @@ from typing import Callable, List, Tuple, Optional
 
 import numpy as np
 from scipy.integrate import solve_ivp
+from scipy.interpolate import CubicSpline
 from scipy.stats import norm   # add near the top imports
 
 # Physical constants (kept for parameter expressions in the driver).
@@ -79,6 +80,7 @@ class Parameters:
     # --- Simulation options ---
     T_lim: bool = False          # include T-cell limitation in the demand function
     memory: bool = False         # use memory-like initial conditions for N_B
+    h0_mem: Optional[float] = None  # memory-population h0 in the 'boost' model (None -> h0)
 
     # --- Explicit clones (mode='clones') ---
     clone_DG: Optional[tuple] = None   # DG of each clone, e.g. (0.0, 1.5)
@@ -439,6 +441,66 @@ def _rhs_semicomplete(t, s, p, ctx):
 
 
 # -------------------------------------------------------------------------
+# boost model: semicomplete with two B-cell populations on the same DG grid,
+# naive (suffix '') and memory ('_m'), sharing antigen and the T-cell pool.
+# Each population has its own pMHC load, activation latch and h0
+# (naive: p.h0, memory: p.h0_mem). With an empty memory seed it reduces
+# exactly to the semicomplete model.
+# -------------------------------------------------------------------------
+BOOST_POPS = (('', 'h0'), ('_m', 'h0_mem'))
+
+
+def _init_boost(p, ctx, memory_seed=None):
+    M = ctx['M']
+    N_Bo_m = np.zeros(M) if memory_seed is None else memory_seed.copy()
+    # Bins without memory stay frozen: integrating an exactly-empty population
+    # makes N_Ba/N_B_tot jump between 0 and 1 and stalls the solver.
+    ctx['live_m'] = N_Bo_m > 0
+    return dict(N_A=p.N_A0,
+                pi=np.zeros(M), N_Bo=ctx['N0'].copy(), N_Ba=np.zeros(M), a=np.zeros(M),
+                pi_m=np.zeros(M), N_Bo_m=N_Bo_m, N_Ba_m=np.zeros(M), a_m=np.zeros(M),
+                N_To=p.N_T0, N_Ta=0.0)
+
+
+def _rhs_boost(t, s, p, ctx):
+    psi_vec, weights, neut = ctx['psi'], ctx['weights'], ctx['neut']
+    N_A = max(s['N_A'], 0.0)
+    N_To = max(s['N_To'], 0.0)
+    N_Ta = max(s['N_Ta'], 0.0)
+    T_free = N_To / (N_To + p.K_T)
+
+    d, flux_T, Z = {}, 0.0, 0.0
+    for sfx, h0_name in BOOST_POPS:
+        h0 = getattr(p, h0_name)
+        h0 = p.h0 if h0 is None else h0
+        pi_vec = np.maximum(s['pi' + sfx], 0.0)
+        N_Bo = np.maximum(s['N_Bo' + sfx], 0.0)
+        N_Ba = np.maximum(s['N_Ba' + sfx], 0.0)
+        a_vec = s['a' + sfx]
+
+        pi_star = (p.b0 / h0) ** (1 / p.hill)
+        g = pi_vec ** p.hill / (pi_vec ** p.hill + pi_star ** p.hill)
+        N_B_tot = N_Bo + N_Ba
+        with np.errstate(divide='ignore', invalid='ignore'):
+            lambda_eff = np.where(N_B_tot > 0, p.b0 * N_Ba / N_B_tot, 0.0)
+        act = h0 * pi_vec ** p.hill * N_Bo * T_free          # per-clone activation flux
+        live = ctx['live_m'] if sfx == '_m' else 1.0
+        act = act * live
+
+        d['a' + sfx] = (10.0 * p.b0) * (1.0 - a_vec) * g * live
+        d['pi' + sfx] = (p.k_on * psi_vec * N_A - p.delta_pi * pi_vec - lambda_eff * pi_vec) * live
+        d['N_Bo' + sfx] = (- act + 2 * p.b0 * N_Ba - p.delta_B * N_Bo) * live
+        d['N_Ba' + sfx] = (act - p.b0 * N_Ba - p.delta_B * N_Ba) * live
+        flux_T += np.sum(weights * act)
+        Z += np.sum(neut * N_B_tot * a_vec)
+
+    d['N_A'] = _dN_A_with_feedback(t, N_A, p, Z)
+    d['N_To'] = - flux_T + p.Tcell_growth_factor * p.b0 * N_Ta - p.delta_T * N_To
+    d['N_Ta'] = flux_T - p.b0 * N_Ta - p.delta_T * N_Ta
+    return d
+
+
+# -------------------------------------------------------------------------
 # null model (no pMHC / no T cells; antigen drives activation directly)
 # -------------------------------------------------------------------------
 def _init_null(p, ctx, memory_seed=None):
@@ -499,6 +561,14 @@ MODELS = {
                 ('N_Ba', 'vector'), ('a', 'vector')],
         rhs=_rhs_null, init=_init_null,
     ),
+    'boost': ModelSpec(
+        name='boost',
+        blocks=[('N_A', 'scalar'),
+                ('pi', 'vector'), ('N_Bo', 'vector'), ('N_Ba', 'vector'), ('a', 'vector'),
+                ('pi_m', 'vector'), ('N_Bo_m', 'vector'), ('N_Ba_m', 'vector'), ('a_m', 'vector'),
+                ('N_To', 'scalar'), ('N_Ta', 'scalar')],
+        rhs=_rhs_boost, init=_init_boost,
+    ),
 }
 
 
@@ -507,18 +577,22 @@ MODELS = {
 # ============================================================
 def run_simulation(model='semicomplete', p=None, t_span=None, t_eval=None,
                    mode='grid', DG_max_sim=None, seed=None, memory_seed=None,
-                   **solver_overrides):
+                   drive=None, **solver_overrides):
     """
     Run any registered model.
 
     Parameters
     ----------
-    model : 'approx' | 'complete' | 'semicomplete' | 'null'
+    model : 'approx' | 'complete' | 'semicomplete' | 'null' | 'boost'
     p : Parameters
     t_span : (t0, t1)
     t_eval : output times (default 500 points over t_span)
     mode : 'grid' | 'stochastic' | 'clones' (explicit p.clone_DG / p.clone_N0)
-    memory_seed : optional per-clone N_Bo initial condition (memory phase)
+    memory_seed : optional per-clone N_Bo initial condition (memory phase;
+                  the memory population in the 'boost' model)
+    drive : optional dict(t=..., N_A=...). N_A is then not integrated but
+            replayed from this trajectory (cubic spline in log N_A), so the
+            response has no feedback on antigen. None -> unchanged behaviour.
     solver_overrides : override the model's default solve_ivp kwargs.
 
     Returns
@@ -544,8 +618,20 @@ def run_simulation(model='semicomplete', p=None, t_span=None, t_eval=None,
     solver_kw = dict(spec.solver)
     solver_kw.update(solver_overrides)
 
-    def fun(t, y):
-        return layout.pack(spec.rhs(t, layout.unpack(y), p, ctx))
+    if drive is None:
+        def fun(t, y):
+            return layout.pack(spec.rhs(t, layout.unpack(y), p, ctx))
+    else:
+        log_NA = np.log(np.maximum(np.asarray(drive['N_A'], dtype=float), 1e-300))
+        N_A_of = lambda t, f=CubicSpline(drive['t'], log_NA): np.exp(f(t))   # smooth: kinks stall the solver
+        i_NA = layout.slices['N_A'][0]
+
+        def fun(t, y):
+            s = layout.unpack(y)
+            s['N_A'] = N_A_of(t)
+            dy = layout.pack(spec.rhs(t, s, p, ctx))
+            dy[i_NA] = 0.0                     # N_A is read from the drive, not integrated
+            return dy
 
     sol = solve_ivp(fun, t_span, y0, t_eval=t_eval, **solver_kw)
     if not sol.success:
@@ -554,6 +640,8 @@ def run_simulation(model='semicomplete', p=None, t_span=None, t_eval=None,
     res = dict(t=sol.t, DG=ctx['DG'], weights=ctx['weights'],
                params=p, mode=mode, M=ctx['M'], model=model)
     res.update(layout.unpack(sol.y))
+    if drive is not None:
+        res['N_A'] = N_A_of(sol.t)
     if spec.postprocess is not None:
         spec.postprocess(res, p, ctx)
     return res
@@ -798,4 +886,23 @@ def memory_seed_from_primary(res_primary, p, n_mem=int(1e4), threshold=2.0):
     formed_memory = np.zeros_like(per_clone)
     nz = w > 0
     formed_memory[nz] = drawn[nz] / w[nz]
+    return expanded_cells, formed_memory
+
+
+def memory_seed_expected(res_primary, n_mem=int(1e4), threshold=2.0):
+    """
+    Deterministic version of memory_seed_from_primary: the expected multinomial
+    draw instead of a random one. Returns (expanded_cells, formed_memory) in the
+    same units (cells per DG bin; per-clone memory size).
+    """
+    per_clone = _N_B(res_primary)[:, -1]
+    w = res_primary['weights']
+    expanded_cells = (per_clone * w) * (per_clone > threshold)
+    total = expanded_cells.sum()
+    if total <= 0:
+        raise ValueError("Primary produced no activated cells to sample from.")
+    n_draw = (n_mem * total) / (n_mem + total)
+    formed_memory = np.zeros_like(per_clone)
+    nz = w > 0
+    formed_memory[nz] = n_draw * expanded_cells[nz] / total / w[nz]
     return expanded_cells, formed_memory

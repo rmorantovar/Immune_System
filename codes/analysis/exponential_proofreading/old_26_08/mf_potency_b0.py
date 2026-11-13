@@ -22,7 +22,7 @@ subproject = 'potency'
 subsubproject = 'b0'
 
 if __name__ == '__main__':
-    output_plot = f'/Users/robertomorantovar/Dropbox/_Documents/Research/Projects/Immune_System/_Repository/Figures/{project}/{model}/{submodel}//{subproject}/{subsubproject}/'
+    output_plot = f'/Users/robertomorantovar/Dropbox/documents/Research/Projects/Immune_System/_Repository/Figures/{project}/{model}/{submodel}//{subproject}/{subsubproject}/'
     os.makedirs(output_plot, exist_ok=True)
     # Default parameters
     base = dict(N_A0=1.0, delta_A=4.0, lambda_A = 6.,

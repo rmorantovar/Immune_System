@@ -4,7 +4,7 @@ from functions_2 import*
 plt.rcParams['text.usetex'] = True
 warnings.filterwarnings("ignore")
 
-Text_files_path = str(DRIVE) + '/Research_files/Immune_system/primary_response/'
+Text_files_path = str(DRIVE) + '/research_files/Immune_system/primary_response/'
 
 
 data = pd.read_excel(Text_files_path + 'data/victora_2020/mmc1.xlsx', header=1, sheet_name = 'Photoactivation CGG')

@@ -4,7 +4,7 @@ from functions_2 import*
 plt.rcParams['text.usetex'] = True
 warnings.filterwarnings("ignore")
 
-Text_files_path = str(DRIVE) + '/Research_files/Immune_system/'
+Text_files_path = str(DRIVE) + '/research_files/Immune_system/'
 
 #--------------- PARAMETERS ---------------------
 n_ens = 100

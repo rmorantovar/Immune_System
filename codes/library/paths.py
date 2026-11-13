@@ -4,7 +4,7 @@ from pathlib import Path
 __all__ = ['DRIVE', 'DROPBOX', 'drive_path']
 
 def drive_path():
-	# Root holding Research_files/ and _Documents/: the Google Drive "My Drive" folder.
+	# Root holding research_files/ and documents/: the Google Drive "My Drive" folder.
 	# Override with the DRIVE_ROOT env var (e.g. on the cluster, where Google Drive is not mounted).
 	if 'DRIVE_ROOT' in os.environ:
 		return Path(os.environ['DRIVE_ROOT'])

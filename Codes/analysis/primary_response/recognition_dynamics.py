@@ -3,8 +3,8 @@ sys.path.append('../../library/')
 from functions_2 import*
 plt.rcParams['text.usetex'] = True
 
-Text_files_path = str(DRIVE) + '/Research_files/Immune_system/in/'
-output_plot = str(DRIVE) + '/_Documents/Science/research_projects/Immune_System/figures'
+Text_files_path = str(DRIVE) + '/research_files/Immune_system/in/'
+output_plot = str(DRIVE) + '/documents/Science/research_projects/Immune_System/figures'
 #--------------- PARAMETERS ---------------------
 N_ens = 1
 L_0s = [1e9]

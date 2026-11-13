@@ -3,7 +3,7 @@ sys.path.append('../../library/')
 from functions_2 import*
 plt.rcParams['text.usetex'] = True
 
-Text_files_path = str(DRIVE) + '/Research_files/Immune_system/'
+Text_files_path = str(DRIVE) + '/research_files/Immune_system/'
 
 #--------------- PARAMETERS ---------------------
 N_ens = 400
@@ -212,7 +212,7 @@ for i_p, p in enumerate((ps)):
     ax_ranking_i.set_ylim(top = 1e9, bottom = 1e4)
     #ax_ranking_i.set_yticks([1, 0.1, 0.01, 0.001])
     #ax_ranking_i.set_yticklabels([1, 0.1, 0.01])
-    fig_ranking_i.savefig(str(DRIVE) + '/_Documents/Science/research_projects/Immune_System/figures/primary_response/1_Dynamics/CSV/_Ranking_1_affinity_p-%.2f'%(p)+'_'+energy_model+'.pdf')
+    fig_ranking_i.savefig(str(DRIVE) + '/documents/Science/research_projects/Immune_System/figures/primary_response/1_Dynamics/CSV/_Ranking_1_affinity_p-%.2f'%(p)+'_'+energy_model+'.pdf')
 
 my_plot_layout(ax = ax_ranking_log, xscale='log', yscale= 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 #ax_ranking_log.legend(fontsize = 15, title_fontsize = 16, title = r'$p$')
@@ -220,7 +220,7 @@ my_plot_layout(ax = ax_ranking_log, xscale='log', yscale= 'log', ticks_labelsize
 ax_ranking_log.set_ylim(bottom = 1e-2)
 #ax_ranking_log.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_ranking_log.set_yticklabels([1, 0.1, 0.01])
-fig_ranking_log.savefig(str(DRIVE) + '/_Documents/Science/research_projects/Immune_System/figures/primary_response/1_Dynamics/CSV/_Ranking_1_affinity_log_'+energy_model+'.pdf')
+fig_ranking_log.savefig(str(DRIVE) + '/documents/Science/research_projects/Immune_System/figures/primary_response/1_Dynamics/CSV/_Ranking_1_affinity_log_'+energy_model+'.pdf')
 
 my_plot_layout(ax = ax_ranking, xscale='log', yscale= 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 #ax_ranking.legend(fontsize = 32, title_fontsize = 34, title = r'$p$')
@@ -228,7 +228,7 @@ my_plot_layout(ax = ax_ranking, xscale='log', yscale= 'log', ticks_labelsize= 40
 #ax_ranking.set_ylim(bottom = 1e-2)
 #ax_ranking.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_ranking.set_yticklabels([1, 0.1, 0.01])
-fig_ranking.savefig(str(DRIVE) + '/_Documents/Science/research_projects/Immune_System/figures/primary_response/1_Dynamics/CSV/_Ranking_1_affinity_'+energy_model+'.pdf')
+fig_ranking.savefig(str(DRIVE) + '/documents/Science/research_projects/Immune_System/figures/primary_response/1_Dynamics/CSV/_Ranking_1_affinity_'+energy_model+'.pdf')
 
 print('----END-----')
 

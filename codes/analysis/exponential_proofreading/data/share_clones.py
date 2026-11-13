@@ -31,11 +31,11 @@ from funcs import *
 project    = 'exponential_proofreading'
 subproject = 'data'
 root_dir   = (
-    f"{DRIVE}/Research_files/"
+    f"{DRIVE}/research_files/"
     f"Immune_system/{project}/{subproject}/mesin2020"
 )
 output_plot = (
-    str(DRIVE) + '/_Documents/Science/research_projects/'
+    str(DRIVE) + '/documents/Science/research_projects/'
     f'Immune_System/figures/{project}/{subproject}/mesin2020/share_clones'
 )
 os.makedirs(output_plot, exist_ok=True)

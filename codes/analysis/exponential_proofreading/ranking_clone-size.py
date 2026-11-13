@@ -3,7 +3,7 @@ sys.path.append('../../library/')
 from functions_2 import*
 plt.rcParams['text.usetex'] = True
 
-Text_files_path = str(DRIVE) + '/Research_files/Immune_system/'
+Text_files_path = str(DRIVE) + '/research_files/Immune_system/'
 
 #--------------- PARAMETERS ---------------------
 N_ens = 400
@@ -63,7 +63,7 @@ linear = 0
 
 project = 'exponential_proofreading'
 subproject = 'clonal_structure'
-output_plot = str(DRIVE) + '/_Documents/Science/research_projects/Immune_System/figures/'+project+'/'+subproject
+output_plot = str(DRIVE) + '/documents/Science/research_projects/Immune_System/figures/'+project+'/'+subproject
 os.makedirs(output_plot, exist_ok=True)
 
 

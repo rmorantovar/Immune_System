@@ -31,6 +31,18 @@ Two-clone mode (`python run_meanfield.py two_clone`, see TWO_CLONE_CONFIG):
     and `ratio` = N2(0)/N1(0) the initial size ratio. Any of DG1, gap, N1,
     ratio can be swept like a Parameter, e.g. sweep=('gap', [0.5, 1, 2]).
     Figures: 'two_clone' (clone sizes, clone-1 fraction, pi, final fraction).
+
+Boost mode (`python run_meanfield.py boost`, see BOOST_CONFIG), phase 2:
+    The naive repertoire and the memory formed in the primary (phase 0, same
+    model and sweep value) respond jointly -- sharing the T-cell pool -- to the
+    primary's antigen trajectory, replayed with no feedback of the response.
+    Memory uses the phase-1 activation threshold (h0_mem = b0 when
+    memory_h0_equals_b0). Readout at t = boost_t_read (default T):
+        R = memory-derived / naive-derived cells (expanded clones only),
+        phi_naive = 1 / (1 + f R), f = boost_f (memory GC-entry bias),
+    compared with R_th = kappa nu_mu Nbar_w and with Mesin et al. 2020.
+    One boost run per memory capacity in boost_nmem_values.
+    Figures: 'boost' (saved under outroot/.../boost/).
 """
 
 import os, sys
@@ -97,7 +109,7 @@ CONFIG = dict(
     # figures=['NA_shared', 'Z_shared', 'pb_shared', 'DG_shared', 'n0_shared', 'P_shared', 'P_pi', 'per_run'],
     figures=['P_shared'],
     #   available: 'NA_shared', 'Z_shared', 'pb_shared', 'per_run', 'h0_extras'
-    outroot=str(DRIVE) + '/_Documents/Science/research_projects/Immune_System/figures/exponential_proofreading/meanfield/figures',                  # base directory for saved PDFs
+    outroot=str(DRIVE) + '/documents/Science/research_projects/Immune_System/figures/exponential_proofreading/meanfield/figures',                  # base directory for saved PDFs
     usetex=True,                       # set True if you have a LaTeX toolchain
     show=False,                         # plt.show() at the end instead of/along saving
 )
@@ -115,6 +127,18 @@ TWO_CLONE_CONFIG = dict(
     figures=['two_clone'],
 )
 
+# Boost (phase 2): run with `python run_meanfield.py boost`.
+BOOST_CONFIG = dict(
+    CONFIG,
+    memory_phases=[0, 2],
+    boost_nmem_values=np.logspace(2, 6, 9),   # memory capacity n_mem, one boost run each
+    boost_f=1.0,                        # memory GC-entry bias, applied post hoc in phi_naive
+    boost_t_read=6.0,                   # readout time after the boost (None -> T); Mesin data: day 6
+    figures=['boost'],
+)
+# Mesin et al. 2020: memory-derived fraction of the boosted GC
+BOOST_DATA = dict(flu_HA_d6=0.044, lo=0.038, hi=0.11)
+
 
 # ============================================================
 # Parameter construction (fixes the in-place-mutation + p-before-assignment bugs)
@@ -125,6 +149,7 @@ CONFIG_DEFAULTS = dict(
     T=10.0, mode='grid', base=BASE, memory_h0_equals_b0=True, two_clone=None,
     figures=['NA_shared', 'Z_shared', 'pb_shared', 'per_run'],
     outroot='figures', usetex=True, show=False,
+    boost_nmem_values=None, boost_f=1.0, boost_t_read=None, boost_checks=True,
 )
 
 
@@ -167,6 +192,9 @@ def build_params(cfg, sweep_value, memory):
     d['memory'] = memory
     if memory == 1 and cfg.get('memory_h0_equals_b0', True):
         d['h0'] = d['b0']
+    if memory == 2:                         # boost: naive h0 as swept, memory h0 as in phase 1
+        d['memory'] = 0                     # antigen law without response feedback
+        d['h0_mem'] = d['b0'] if cfg.get('memory_h0_equals_b0', True) else d['h0']
     return mf.Parameters(**d)
 
 
@@ -212,6 +240,14 @@ def run_experiment(cfg):
             else:
                 print(f"        {sweep_name} = {sval:.4g}")
             for memory in cfg['memory_phases']:
+                if memory == 2:
+                    res0 = results.get((model, sval, 0))
+                    if res0 is None or model != 'semicomplete' or sim_mode != 'grid':
+                        print("      [skip] boost needs a phase-0 semicomplete run on the grid "
+                              "(add 0 to memory_phases)")
+                        continue
+                    results[(model, sval, 2)] = run_boost(cfg, sval, res0)
+                    continue
                 p = build_params(cfg, sval, memory)
                 print(f"            memory = {p.memory:.0g}")
                 print(f"            pi_c = {(_b0 / p.h0) ** (1 / p.hill):.4g}")
@@ -241,6 +277,69 @@ def run_experiment(cfg):
                     except ValueError as e:
                         print(f"      [warn] no memory seed for {model}: {e}")
     return results
+
+
+def run_boost(cfg, sval, res0):
+    """
+    Boost (phase 2) for one sweep value, one joint run per memory capacity n_mem.
+
+    Naive repertoire + memory seed (expected draw from the primary res0) in one
+    'boost' simulation, with N_A replayed from res0 (no feedback). Clones count
+    as responding when at least doubled (naive: from 1; memory: from its seed).
+
+    Returns a dict with the primary-derived constants (kappa, Nbar_w, Y, ...) and
+    runs[n_mem] = N_naive_tot, N_mem_tot, R, R(t), N_naive(DG), N_mem(DG), r(DG),
+    nu_mu, R_th, phi_naive.
+    """
+    T = cfg['T']
+    p0, p = res0['params'], build_params(cfg, sval, 2)
+    drive = dict(t=res0['t'], N_A=res0['N_A'])
+    w, DG = res0['weights'], res0['DG']
+    thr0 = 2.0 * mf._N_B(res0)[:, 0]
+
+    if cfg['boost_checks']:
+        rr = mf.run_simulation('semicomplete', p=p0, t_span=(0.0, T), mode='grid', drive=drive)
+        ref = mf._N_B(res0)[:, -1] * w
+        err = np.max(np.abs(mf._N_B(rr)[:, -1] * w - ref)) / ref.max()
+        print(f"            check: phase 0 replayed on its own N_A, max rel. diff {err:.1e}")
+
+    # primary-derived constants for R_th = kappa nu_mu Nbar_w
+    N = mf._N_B(res0)[:, -1] * (mf._N_B(res0)[:, -1] > thr0)     # per-clone primary size, expanded clones
+    Nbar_w = np.sum(w * N ** 2) / np.sum(w * N)                   # cell-weighted mean clone size
+    pi_c, pi_c_mem = pi_star_of(p0), (p.b0 / p.h0_mem) ** (1 / p.hill)
+    alpha = p.b0 * (1.0 / p.lambda_A + 1.0 / min(p.delta_A, p.b0))
+    kappa = (pi_c / pi_c_mem) ** alpha
+
+    t_read = T if cfg['boost_t_read'] is None else cfg['boost_t_read']
+    out = dict(params=p, params_primary=p0, pi_c=pi_c, pi_c_mem=pi_c_mem, alpha=alpha,
+               kappa=kappa, Nbar_w=Nbar_w, DG=DG, weights=w, t_read=t_read, runs={})
+    n_mems = cfg['boost_nmem_values']
+    for n_mem in ([p.n_mem] if n_mems is None else n_mems):
+        expanded, formed = mf.memory_seed_expected(res0, n_mem=n_mem, threshold=thr0)
+        rb = mf.run_simulation('boost', p=p, t_span=(0.0, T), mode='grid',
+                               memory_seed=formed, drive=drive)
+        i = int(np.argmin(np.abs(rb['t'] - t_read)))
+        N_n = rb['N_Bo'] + rb['N_Ba']                             # per clone, (M, N_t)
+        N_m = rb['N_Bo_m'] + rb['N_Ba_m']
+        cells_n = w[:, None] * N_n * (N_n > 2.0 * rb['N_Bo'][:, :1])
+        cells_m = w[:, None] * N_m * ((N_m > 2.0 * formed[:, None]) & (formed[:, None] > 0))
+        R_t = cells_m.sum(0) / np.maximum(cells_n.sum(0), 1e-300)
+        with np.errstate(divide='ignore', invalid='ignore'):
+            r = np.where(formed > 0, (N_m[:, i] / formed) / N_n[:, i], np.nan)   # memory / naive fold expansion
+
+        nu_mu = np.sum(formed * w) / np.sum(expanded)
+        R = R_t[i]
+        R_th = kappa * nu_mu * Nbar_w
+        phi = 1.0 / (1.0 + cfg['boost_f'] * R)
+        out['runs'][n_mem] = dict(
+            N_naive_tot=cells_n[:, i].sum(), N_mem_tot=cells_m[:, i].sum(), R=R, t=rb['t'], R_t=R_t,
+            N_naive=cells_n[:, i], N_mem=cells_m[:, i], r=r, Y=np.sum(expanded),
+            nu_mu=nu_mu, R_th=R_th, phi_naive=phi)
+        below = np.nanmin(r / kappa) if np.any(np.isfinite(r)) else np.nan
+        print(f"            pi_c={pi_c:9.3g}  n_mem={n_mem:8.3g}  R_sim={R:9.3g}  R_th={R_th:9.3g}  "
+              f"R_sim/R_th={R / R_th:7.3g}  phi_naive={phi:6.3f}  min r(DG)/kappa={below:6.3g}")
+    out['Y'] = out['runs'][n_mem]['Y']
+    return out
 
 
 # ============================================================
@@ -348,6 +447,8 @@ def make_shared_figures(cfg, results):
                 t_c_star, opt_sval = t_c, sv
 
     for (model, sval, memory), res in results.items():
+        if memory == 2:                   # boost summaries: see make_boost_figures
+            continue
         # colour: by pi_c when sweeping; else brown (null) / green-blue (single run)
         if len(sweep_values) > 1 and sval in sweep_values:
             pi_c = (_b0 / sval) ** (1 / res['params'].hill)  # for debugging: check that the label matches the run's pi_c
@@ -657,7 +758,8 @@ def make_per_run_figures(cfg, results):
     # sweep_cols_memory  = mfp.colors_sweep   # memory 1
 
     for (model, sval, memory), res in results.items():
-        
+        if memory == 2:                   # boost summaries: see make_boost_figures
+            continue
         if len(sweep_values) > 1 and sval in sweep_values:
             pi_c = (_b0 / sval) ** (1 / res['params'].hill)  # for debugging: check that the label matches the run's pi_c
             if model == 'null':
@@ -733,6 +835,91 @@ def make_per_run_figures(cfg, results):
             plt.close('all')
 
 
+def make_boost_figures(cfg, results):
+    """Boost (phase 2): R vs pi_c, phi_naive map, r(DG), R vs n_mem."""
+    boosts = sorted(((res['pi_c'], res) for (model, sval, memory), res in results.items()
+                     if memory == 2), key=lambda x: x[0])
+    if not boosts:
+        print("[boost] no phase-2 results to plot")
+        return
+    out = mfp._outdir(cfg, 'boost', f"t_read_{boosts[0][1]['t_read']:g}")
+    pics = np.array([pc for pc, _ in boosts])
+    n_mems = sorted(boosts[0][1]['runs'])
+    cols = mfp.sweep_colors(len(n_mems), 'winter')
+    R_of = lambda m: m / (1.0 - m) / cfg['boost_f']           # memory fraction -> R (inverts phi_naive)
+    nmem_label = lambda n: r'$10^{%.1f}$' % np.log10(n)
+    # representative runs: lowest, middle and highest pi_c, at the middle memory capacity
+    rep = [0, len(boosts) // 2, len(boosts) - 1] if len(boosts) > 2 else list(range(len(boosts)))
+    rep_cols = mfp.sweep_colors(len(rep), 'autumn')
+    n_rep = n_mems[len(n_mems) // 2]
+
+    # 1. R vs pi_c: simulation (markers) and R_th (lines), one colour per n_mem; data band
+    fig, ax = mfp.new_fig()
+    for c, n in zip(cols, n_mems):
+        ax.plot(pics, [b['runs'][n]['R'] for _, b in boosts], 'o', color=c, mec='k', ms=10,
+                label=nmem_label(n))
+        ax.plot(pics, [b['runs'][n]['R_th'] for _, b in boosts], '-', color=c, lw=2)
+    ax.axhspan(R_of(BOOST_DATA['lo']), R_of(BOOST_DATA['hi']), color='grey', alpha=0.3)
+    ax.axhline(R_of(BOOST_DATA['flu_HA_d6']), color='k', ls='--', lw=1.5)
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    ax.set_xlabel(r'$\pi_c$', fontsize=30)
+    ax.set_ylabel(r'$R$', fontsize=30)
+    ax.tick_params(axis='both', labelsize=30)
+    ax.legend(fontsize=16, title=r'$n_{\mathrm{mem}}$', title_fontsize=18, ncol=2)
+    fig.savefig(os.path.join(out, 'R_pi.pdf'), dpi=800, transparent=True)
+
+    # 2. phi_naive over (pi_c, n_mem), contours at the data memory fractions
+    phi = np.array([[b['runs'][n]['phi_naive'] for _, b in boosts] for n in n_mems])
+    fig, ax = mfp.new_fig()
+    mesh = ax.pcolormesh(pics, n_mems, phi, shading='nearest', cmap='viridis', vmin=0, vmax=1)
+    fig.colorbar(mesh, ax=ax).set_label(r'$\phi_{\mathrm{naive}}$', fontsize=30)
+    if phi.shape[0] > 1 and phi.shape[1] > 1:
+        ax.contour(pics, n_mems, 1.0 - phi, levels=[BOOST_DATA['flu_HA_d6']], colors='w', linestyles='-')
+        ax.contour(pics, n_mems, 1.0 - phi, levels=[BOOST_DATA['hi']], colors='w', linestyles='--')
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    ax.set_xlabel(r'$\pi_c$', fontsize=30)
+    ax.set_ylabel(r'$n_{\mathrm{mem}}$', fontsize=30)
+    ax.tick_params(axis='both', labelsize=30)
+    fig.savefig(os.path.join(out, 'phi_naive_map.pdf'), dpi=800, transparent=True)
+
+    # 3. r(DG) = memory / naive fold expansion, with kappa, for the representative runs
+    fig, ax = mfp.new_fig()
+    for c, k in zip(rep_cols, rep):
+        pc, b = boosts[k]
+        ax.plot(b['DG'], b['runs'][n_rep]['r'], 'o-', color=c, mec='k', ms=8, lw=2,
+                label=mfp.pi_star_label(pc))
+        ax.axhline(b['kappa'], color=c, ls='--', lw=1.5)
+    ax.set_yscale('log')
+    ax.set_xlabel(r'$\Delta G$', fontsize=30)
+    ax.set_ylabel(r'$r(\Delta G)$', fontsize=30)
+    ax.tick_params(axis='both', labelsize=30)
+    ax.legend(fontsize=18, title=r'$\pi_c$', title_fontsize=20)
+    fig.savefig(os.path.join(out, 'r_DG.pdf'), dpi=800, transparent=True)
+
+    # 4. R vs n_mem at fixed pi_c; saturation expected at n_mem ~ Y (dotted)
+    fig, ax = mfp.new_fig()
+    for c, k in zip(rep_cols, rep):
+        pc, b = boosts[k]
+        ax.plot(n_mems, [b['runs'][n]['R'] for n in n_mems], 'o', color=c, mec='k', ms=10,
+                label=mfp.pi_star_label(pc))
+        ax.plot(n_mems, [b['runs'][n]['R_th'] for n in n_mems], '-', color=c, lw=2)
+        ax.axvline(b['Y'], color=c, ls=':', lw=2)
+    ax.axhspan(R_of(BOOST_DATA['lo']), R_of(BOOST_DATA['hi']), color='grey', alpha=0.3)
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    ax.set_xlim(min(n_mems) / 2, max(n_mems) * 2)
+    ax.set_xlabel(r'$n_{\mathrm{mem}}$', fontsize=30)
+    ax.set_ylabel(r'$R$', fontsize=30)
+    ax.tick_params(axis='both', labelsize=30)
+    ax.legend(fontsize=18, title=r'$\pi_c$', title_fontsize=20)
+    fig.savefig(os.path.join(out, 'R_nmem.pdf'), dpi=800, transparent=True)
+
+    if not cfg['show']:
+        plt.close('all')
+
+
 # ============================================================
 # Entry point
 # ============================================================
@@ -758,6 +945,8 @@ def main(cfg=CONFIG):
         make_shared_figures(cfg, results)
     if 'per_run' in figs:
         make_per_run_figures(cfg, results)
+    if 'boost' in figs:
+        make_boost_figures(cfg, results)
 
     if cfg['show']:
         plt.show()
@@ -766,4 +955,5 @@ def main(cfg=CONFIG):
 
 
 if __name__ == '__main__':
-    main(TWO_CLONE_CONFIG if 'two_clone' in sys.argv[1:] else CONFIG)
+    args = sys.argv[1:]
+    main(TWO_CLONE_CONFIG if 'two_clone' in args else BOOST_CONFIG if 'boost' in args else CONFIG)

@@ -46,7 +46,7 @@ L=len(antigen)
 energy_model = 'TCRen'
 #energy_model = 'MJ2'
 #--------------------------Energy Motif--------------------------
-PWM_data, M, Alphabet = get_motif(antigen, energy_model, str(DRIVE) + '/Research_files/Immune_system/in/')
+PWM_data, M, Alphabet = get_motif(antigen, energy_model, str(DRIVE) + '/research_files/Immune_system/in/')
 #print('min_e_PWM=%.2f'%(np.sum([np.min(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))])))
 #print('mean_e_PWM=%.4f'%(np.sum([np.mean(PWM_data[:,i]) for i in range(len(PWM_data[0,:]))])))
 #Change values by the minimum
