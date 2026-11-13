@@ -1,0 +1,1008 @@
+% ================================================
+% TOGGLE: comment one, uncomment the other
+% ================================================
+\documentclass[aps, pre, twocolumn, 10pt, groupedaddress, superscriptaddress, linenumbers]{revtex4-2}
+% \documentclass[10pt, letterpaper, onecolumn]{article}
+
+% ------------------------------------------------
+% BASIC ENCODING AND LANGUAGE SETTINGS
+% ------------------------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{csquotes}
+\usepackage{xpatch}
+
+% ------------------------------------------------
+% PAGE LAYOUT AND SPACING
+% ------------------------------------------------
+% \usepackage[top=1in, bottom=1in, left=0.75in, right=0.75in]{geometry} % article only — revtex manages margins
+\usepackage{setspace}
+% \usepackage[switch]{lineno} % article only — incompatible with revtex4-2
+% \linenumbers % article only — incompatible with revtex4-2
+
+% ------------------------------------------------
+% AUTHOR / TITLE BLOCK
+% ------------------------------------------------
+% \usepackage{authblk}   % article only — incompatible with revtex4-2
+
+% ------------------------------------------------
+% MATHEMATICS
+% ------------------------------------------------
+\usepackage{amsfonts, amssymb, amsmath}
+\usepackage{mathtools}
+\usepackage{xfrac}
+\usepackage{cancel}
+
+\DeclareMathOperator*{\argmax}{argmax}
+\DeclareMathOperator*{\argmin}{argmin}
+
+% ------------------------------------------------
+% TABLES AND FLOATS
+% ------------------------------------------------
+\usepackage{array}
+% \usepackage{float} % article only — incompatible with revtex4-2
+
+% ------------------------------------------------
+% GRAPHICS AND COLORS
+% ------------------------------------------------
+\usepackage[dvipsnames]{xcolor}
+\usepackage{graphicx}
+\graphicspath{{figures/}}
+% \usepackage{subcaption}
+% \usepackage{caption}
+% \captionsetup{
+%   aboveskip=5pt,
+%   labelfont={bf,footnotesize},
+%   labelsep=period,
+%   justification=justified,
+%   textfont=footnotesize,
+%   figurename=Fig.
+% }
+\makeatletter
+\renewcommand{\fnum@figure}{Fig. \thefigure}
+\makeatother
+% ------------------------------------------------
+% CROSS-REFERENCES AND LINKS
+% ------------------------------------------------
+\usepackage{nameref}
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=MidnightBlue,
+  citecolor=ForestGreen,
+  urlcolor=BrickRed,
+  pdfauthor={Your Name},
+  pdftitle={Document Title}
+}
+
+% ------------------------------------------------
+% OPTIONAL UTILITIES
+% ------------------------------------------------
+\usepackage{changepage}
+% \usepackage{lastpage, fancyhdr}  % article only — revtex handles page numbering
+% \fancyhf{} % article only — revtex handles page numbering
+% \cfoot{\thepage}
+% \pagestyle{fancy}
+\usepackage{epstopdf}
+\usepackage{pifont}
+\usepackage[normalem]{ulem}
+\usepackage[shortlabels]{enumitem}
+\usepackage{tcolorbox}
+\newtcolorbox{resultbox}[1][]{
+    colback=blue!5!white,
+    colframe=blue!50!black,
+    fonttitle=\bfseries,
+    title=#1
+}
+
+% ------------------------------------------------
+% BIBLIOGRAPHY
+% ------------------------------------------------
+% --- revtex4-2: use natbib + apsrev4-2 style ---
+\usepackage{natbib}
+
+% ---(place at end of document:)---
+  % \bibliographystyle{apsrev4-2}
+  % \bibliography{references}
+
+% --- article: use biblatex (comment out natbib block above) ---
+% \usepackage[
+%   backend=bibtex,
+%   style=numeric-comp,
+%   sorting=none,
+%   maxnames=2,
+%   url=false,
+% ]{biblatex}
+% \DeclareFieldFormat[article]{journaltitle}{#1}
+% \addbibresource{references.bib}
+
+% ---(place at end of document:)---
+%   \printbibliography
+
+% ------------------------------------------------
+% CUSTOM COMMANDS
+% ------------------------------------------------
+\newcommand{\EQ}{\begin{equation}}
+\newcommand{\EE}{\end{equation}}
+\newcommand{\EQA}{\begin{eqnarray}}
+\newcommand{\EEA}{\end{eqnarray}}
+\newcommand{\on}{\text{on}}
+\newcommand{\off}{\text{off}}
+\newcommand{\mf}{\text{f}}
+\newcommand{\act}{\text{act}}
+\newcommand{\rec}{\text{rec}}
+\newcommand{\step}{\text{step}}
+\newcommand{\ens}{\text{ens}}
+\newcommand{\peak}{\text{peak}}
+\newcommand{\tail}{\text{tail}}
+\newcommand{\gen}{\text{gen}}
+\newcommand{\largest}{\text{large}}
+\newcommand{\nonact}{\text{non-act}}
+\newcommand{\p}{p}
+\newcommand{\z}{z}
+\newcommand{\zbar}{\bar z}
+\newcommand{\Z}{{\cal Z}}
+\newcommand{\Zbar}{\bar {\cal Z}}
+\newcommand{\B}{{\cal B}}
+\newcommand{\T}{{\cal T}}
+% \newcommand{\DG}{\Delta G}
+\newcommand{\DG}{E}
+\newcommand{\E}{{\cal E}}
+\newcommand{\I}{{\cal I}}
+\newcommand{\X}{{\cal X}}
+\newcommand{\Po}{{\cal P}}
+\newcommand{\K}{{\cal K}}
+\renewcommand{\a}{{\bf a}}
+\renewcommand{\b}{{\bf b}}
+\newcommand{\Ab}{{\bf Ab}}
+\renewcommand{\d}{{\rm d}}
+\newcommand{\eq}{{\rm eq}}
+\newcommand{\nint}{n}
+\newcommand{\ep}{\epsilon}
+\newcommand{\lam}{\lambda}
+\newcommand{\Lam}{\Lambda}
+\newcommand{\x}{{\bf r}}
+\newcommand{\DKL}{D_{\mathrm{KL}}}
+
+%Colors
+\newcommand{\comm}[1]{{\noindent \color{blue} #1}}
+\newcommand{\todo}[1]{{\noindent \color{red} #1}}
+\newcommand{\out}[1]{{\small \noindent \color{gray} #1}}
+\newcommand{\highlight}[1]{{\noindent \color{olive} #1}}
+\newcommand{\data}[1]{{\noindent \color{cyan} #1}}%
+% \newcommand{\change}[2]{\textcolor{purple}{\sout{#1}} \textcolor{teal}{#2}}
+\newcommand{\versions}[2]{\noindent\textcolor{teal}{#1} \noindent\textcolor{purple}{#2}}
+\renewcommand{\versions}[2]{\noindent #1}
+\newcommand{\new}[1]{\textcolor{teal}{#1}} 
+
+%published script version
+%\renewcommand{\comment}[1]{} \renewcommand{\todo}[1]{} \renewcommand{\out}[1]{} \renewcommand{\highlight}[1]{}\renewcommand{\highlight}[1]{} \renewcommand{\data}[1]{} \renewcommand{\change}[1]{}\renewcommand{\new}[1]{}
+
+% Table utilities
+\newlength\savedwidth
+\newcommand\thickcline[1]{%
+    \noalign{\global\savedwidth\arrayrulewidth\global\arrayrulewidth 2pt}%
+    \cline{#1}%
+    \noalign{\vskip\arrayrulewidth}%
+    \noalign{\global\arrayrulewidth\savedwidth}%
+}
+\newcommand\W[1]{q^{}_{\! #1}}
+
+% Misc
+\renewcommand{\epsilon}{\varepsilon}
+\parskip 1ex
+\newcolumntype{+}{!{\vrule width 2pt}}
+
+% ================================================
+% TITLE BLOCK
+% ================================================
+% --- revtex4-2 style (active) ---
+\begin{document}
+\title{Exponential Proofreading: A Kinetic Mechanism of B-cell Immunity}
+\author{Roberto Morán-Tovar}
+\affiliation{Center for Computational Biology, Flatiron Institute, New York, NY, USA}
+\affiliation{Institute for Biological Physics, University of Cologne,
+ K\"oln, Germany}
+\author{Michael Lässig}
+\affiliation{Institute for Biological Physics, University of Cologne,
+ K\"oln, Germany}
+
+% \date{}
+
+% --- article + authblk style (swap in when using article class) ---
+% \author[1]{{\normalsize Roberto Mor\'an-Tovar}}
+% \author[1]{{\normalsize Eric Brauns}}
+% \author[1]{{\normalsize Michael L\"assig}}
+% \affil[1]{{\footnotesize Institute for Biological Physics, University of Cologne,
+%   Z\"ulpicherstr.~77, 50937 K\"oln, Germany}}
+% \title{Exponential Proofreading: A Kinetic Mechanism of B-cell Immunity}
+% \date{}
+% \begin{document}
+
+
+%----------------------------------ABSTRACT--------------------------------------
+
+% --- revtex4-2 ---
+\begin{abstract}
+Protective B-cell immunity relies on circulating antibodies and on memory B cells that mount rapid recall responses upon reinfection.
+Both are seeded by an early expansion of antigen-specific B cells that precedes affinity maturation in germinal centers.
+Here, we show that this early phase selects high-affinity clones by a timing mechanism mediated by T-cell help: all activated clones divide at the same rate, but higher-affinity clones start dividing earlier and stop later.
+We call this mechanism exponential proofreading.
+It predicts a power-law distribution of clone sizes and, because memory B cells pass through it twice, a decay that is twice as steep in recall responses as in primary ones.
+Sequencing data from mouse immunization experiments confirm this doubling and are inconsistent with models in which binding affinity sets the division rate.
+The second round of proofreading also restricts recall responses to a few high-affinity memory clones, consistent with the observation that most of the memory pool remains unengaged upon boosting.
+Finally, the stringency of T-cell help tunes a trade-off between the specificity and the yield of the response, which sets the potency of memory recall.
+Together, these results provide a quantitative link between B-cell clonal dynamics and protection against reinfection.
+\\
+\paragraph*{\bf Significance Statement}
+{\small After an infection or vaccination, a few B cells that recognize the pathogen multiply rapidly to produce antibodies and long-lived memory cells.
+How the immune system favors the cells that bind best has mostly been studied in germinal centers, where antibodies improve by mutation.
+We show that selection already happens earlier, through a different rule: cells that bind better start multiplying sooner and stop later, so they end up as much larger clones.
+This rule, which depends on help from T cells, predicts how clone sizes are distributed, why memory responses are dominated by a few large clones, and why most memory cells are not used upon reinfection.
+It offers a quantitative basis for predicting protection after infection and vaccination.}
+\begin{center}
+    \textbf{Keywords}  $|$ B cells $|$ Immune learning  $|$ Proofreading $|$ Exponential dynamics $|$ 
+\end{center}
+\end{abstract}
+\maketitle
+
+% --- article + authblk (comment out block above, uncomment below) ---
+% \twocolumn[
+% \maketitle
+% \begin{abstract}
+% ... 
+% \paragraph{Keywords}  $|$ B cells $|$ Immune learning  $|$ Proofreading $|$ Exponential dynamics $|$ \\
+% \end{abstract}
+% ]
+
+\vspace{1cm}
+
+
+%::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+{\Huge T}he adaptive immune system relies on the coordinated activity of B and T cells to mount effective responses against pathogens.
+A fundamental step in this process is the activation and clonal expansion of a small fraction of B cells, which occurs rapidly during the early stages of an immune response~\cite{Lam_2019_Bcells}.
+Activated naive B cells, also known as activated precursors (APs), may differentiate into plasmablasts, memory B cells, or germinal center (GC) B cells, each with a distinct role~\cite{pape_different_2011, Lam_2019_Bcells}.
+Plasmablasts provide a rapid but short-lived antibody response~\cite{Lam_2019_Bcells}; memory B cells ensure faster and more potent responses upon re-exposure to related pathogens~\cite{Inoue_2024_Memory_review}; and GC B cells undergo rounds of mutation and selection that lead to affinity maturation (AM) of antibodies~\cite{Eisen_2014_AM, Victora_2022_GC}.
+
+In the framework of clonal selection theory~\cite{Burnet_1957_Abs_theory, rajewskyClonalSelectionLearning1996}, the specificity and potency of the B-cell response are determined in two stages: the initial expansion of APs~\cite{pereira_finding_2010} and the subsequent AM in GCs~\cite{Victora_2022_GC}.
+As a fast Darwinian process, AM has been the focus of extensive research~\cite{Perelson_1997_Review, AltanBonnet_2020_Review, Victora_2022_GC}, to the point that clonal selection is now often identified with the GC reaction itself.
+The early expansion has received far less quantitative attention.
+
+Yet the early expansion matters in its own right.
+A large fraction of the memory B-cell pool is generated with little or no AM~\cite{tangye_human_2007, dogan_multiple_2009, Viant_2020_Fate, Mesin_2020_Restricted_clonality, Glaros_2021_Early_memory}.
+In particular, a substantial population of early memory B cells arises directly from APs, and its exit from the response is controlled by the decline in antigen availability rather than by AM~\cite{Glaros_2021_Early_memory}.
+The properties of this compartment are therefore inherited largely from the initial expansion.
+This expansion is itself affinity-dependent and mediated by T-cell help~\cite{Schwickert_2011_Tcells}, which also strongly determines entry into the GC~\cite{yehGerminalCenterEntry2018}.
+How this phase selects high-affinity clones, and with what quantitative consequences, is less clear.
+In principle, affinity could set how fast clones divide~\cite{Desponds_2021_Population} or for how long; the two alternatives leave distinct signatures in the clonal structure of the responding population, which can be read directly from repertoire sequencing data~\cite{MoranTovar_2024_Primary}.
+
+The early expansion is particularly important in recurrent infections.
+In primary infections, the exponential growth of pathogens is capped mainly by innate immunity, independently of the B-cell response~\cite{perelson_hiv-1_1996, baccam_kinetics_2006}.
+In a recurrent infection, by contrast, memory B cells must respond rapidly to curb the expanding pathogen~\cite{gray_immunological_1993, palmRemembranceThingsLongTerm2019, Inoue_2024_Memory_review}, by proliferating and differentiating into plasmablasts that produce antibodies in large amounts.
+Experiments in mice show that such recall responses are dominated by a few memory clones, while most of the clonal diversity generated by priming is not re-engaged~\cite{Mesin_2020_Restricted_clonality}.
+Understanding the early dynamics is therefore essential to explain the specificity, breadth, and timing of recall responses, as well as to characterize the input to GC evolution.
+
+Building on previous work~\cite{MoranTovar_2024_Primary}, we propose that early B-cell expansion selects high-affinity clones by a timing mechanism, which we call \textit{exponential proofreading} (EP): differences in clone size arise not from ``how fast cells divide'' but from ``for how long they divide''.
+In our model, T-cell help defines an affinity-dependent window of division: higher-affinity clones acquire sufficient help earlier and lose it later.
+EP predicts a power-law distribution of clone sizes and, because memory B cells pass through EP twice, a power law twice as steep in recall responses as in primary ones.
+We confirm this doubling in mouse immunization data from two protocols, and show that the measured clone-size statistics are inconsistent with models in which binding affinity sets the division rate.
+The second round of EP also restricts which memory clones are re-engaged, consistent with the recall bottleneck observed in prime-boost experiments.
+Finally, the stringency of T-cell help tunes a trade-off between the specificity and the yield of the response, which sets the potency of memory recall.
+
+The paper is organized as follows.
+We first introduce a model of antigen presentation and T-cell-mediated clonal expansion.
+We then derive EP for primary and recall responses, test its predictions against repertoire data, and analyze how T-cell help sets the specificity and potency of the response.
+Finally, we discuss the implications of EP for B-cell immunity.
+
+
+%::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+\section*{Model}
+%::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+
+% -----------------------------------
+\begin{figure*}[t]
+\begin{center}
+\includegraphics[width=.95\linewidth]{model.pdf}
+\caption{\textbf{B-cell antigen presentation and T-cell-mediated proliferation model.}
+{\bf A} Antigen presentation. Free antigen (orange), proliferating at rate $\lam_A$, binds the BCR of a B cell (purple) with association rate $k_\on$ and dissociation rate $k_\off$; a bound antigen is irreversibly internalized and processed at rate $k_s$, yielding surface pMHC.
+{\bf B} B-cell proliferation. The B cell presents pMHC to a cognate T cell (pink) and acquires T-cell help at a net rate $h(\pi)$, set by the surface pMHC $\pi$; the licensed cell then divides at the intrinsic rate $b_B$, giving two daughter B cells.
+}
+\label{fig:model}
+\end{center}
+\end{figure*}
+% -----------------------------------
+
+\subsection*{Antigen binding and presentation}
+B cells are defined by the B-cell receptor (BCR) they express. For a given antigen, BCRs can be characterized by the antigen-BCR binding affinity.
+This affinity can be specified by the dissociation constant $K = k_\off/k_\on$, or equivalently by an effective binding energy $\DG = \log\!\left({K}/{K_s}\right)$, with $K_s \equiv {k_s}/{k_\on}$ and where $k_s$ is the effective rate of irreversible internalization, processing and presentation of antigen (see Fig.~\ref{fig:model}A).
+Processed antigen is presented on the cell surface as peptide-MHC complexes (pMHCs).
+The reference scale $K_s$ is then the dissociation constant at which off-rate and internalization balance, so that $\DG = 0$ marks the crossover between encounters that mostly dissociate ($\DG > 0$) and encounters that mostly lead to productive antigen internalization and presentation ($\DG < 0$).
+Larger $\DG$ thus corresponds to weaker binding/lower affinity.
+
+The probability that a single antigen-BCR encounter results in productive internalization is set by the competition between dissociation and processing, $\psi(\DG) = \left(1+\exp{\DG}\right)^{-1},$ which interpolates between $\psi \to 1$ for strong binders ($\DG \ll 0$) and $\psi \to 0$ for weak binders ($\DG \gg 0$).
+The rate of pMHC production on the surface of a B cell with binding energy $\DG$ is therefore proportional to the antigen concentration, the per-cell association rate, and the internalization probability, $u_p(t, \DG) = k_\on\, N_A(t)\, \psi(\DG)$, where $k_\on$ is the effective total association rate between antigen and the BCRs of a single B cell.
+
+\subsection*{Two-stage proliferation}
+B-cell division proceeds through two sequential stages.
+First, the B cell must accumulate sufficient pMHC and engage cognate T cells to acquire a proliferation signal~\cite{Schwickert_2011_Tcells}; this occurs at an effective rate $h(t, \DG)$ (Fig.~\ref{fig:model}B).
+Second, the B cell undergoes division at an intrinsic rate $b_B$ set by the duration of a cell cycle (Fig.~\ref{fig:model}B).
+% \EQ
+% B_i^o + T^o \xrightarrow{\,h(t,\DG)\,} B_i^* + T^* \xrightarrow{\,b_B\,} 2\,(B_i^o + T^o).
+% \nonumber
+% \EE
+Because the two stages are sequential, the mean time per cell division is the sum of the two waiting times, giving an effective division rate of harmonic-mean form
+\EQ
+\lam_B(t, \DG) = \left(\frac{1}{h(t, \DG)} + \frac{1}{b_B}\right)^{-1}.
+\label{eq:lambdaB}
+\EE
+The slower of the two stages always dominates: $\lam_B \approx h$ when T-cell help acquisition is rate-limiting, and $\lam_B \approx b_B$ when the intrinsic cell division is rate-limiting.
+
+The net help rate $h$ depends on the presented surface pMHC density and on the availability of free T cells.
+We take it proportional to the pMHC density, $h(t, \DG) = h_0\,\pi(t, \DG)$, where $h_0$ is the rate at which a B cell acquires help per presented pMHC complex.
+It lumps together the size of the cognate T-cell pool, the co-stimulatory requirements of the T-B interaction, and the efficiency of pMHC-TCR engagement, and is a property of the host rather than of the responding clone.
+
+Two features of the response make T-cell availability a non-limiting factor in our regime.
+First, cognate T cells proliferate in parallel with B cells~\cite{garsideVisualizationSpecificLymphocyte1998}, replenishing the engaged pool on the same timescale at which it is depleted.
+Second, because a single antigen presents many peptide epitopes to T cells but only a few B-cell–accessible surface epitopes, the pool of cognate T cells available to help is broad relative to the small number of B-cell clones initially competing for that help at the onset of the response~\cite{besavillaPreexistingCD4Cell2023}.
+
+\subsection*{T-cell mediated B-cell clonal expansion}
+We describe the dynamics of the immune response through three coupled variables: antigen concentration $N_A(t)$, pMHC surface density per B cell $\pi(t, \DG)$, and B cell clone size $N_B(t, \DG)$ (See Materials and Methods).
+
+The two-stage proliferation scheme above is intrinsically stochastic at the single-cell level, with affinity-dependent waiting times for antigen acquisition and division.
+Here we focus on the mean behavior at the population-level, treating clone size $N_B(t, \DG)$ as a continuous variable that grows deterministically and the density of pMHC per-cell $\pi(t, \DG)$ as a smooth function of time.
+
+The harmonic-mean structure of $\lambda_B$ ensures that the slowest process dominates the division rate.
+This sets a characteristic density of pMHC at which T-cell help becomes likely on the intrinsic division time scale of B-cells, defined by $h(\pi_c) = b_B$, or equivalently $\pi_c = b_B/h_0$.
+Recent experimental evidence has shown that an activation threshold for T cells is directly determined by the cooperative activity of pMHC-TCR to trigger downstream signaling~\cite{wither_antigen_2023, white_proofreading_2025}.
+Additionally, the threshold can be an indirect consequence of other mechanisms such as quorum detection~\cite{Butler_2013_Tcells_QS} or effective aggregate dwell times~\cite{govern_fast_2010}.
+In our model, this threshold emerges from the mean-field dynamics, giving rise to three phases of clonal expansion (Fig.~\ref{fig:ep}).
+
+\textit{Phase 0: Antigen-limited.} At low antigen concentration, the per-cell pMHC density is below $\pi_c$ and T-cell help is unlikely on the timescale of a cell division, $h \ll b_B$. Clonal expansion is negligible.
+
+\textit{Phase 1: Division-limited with antigen growth.} As $N_A(t)$ grows, $\pi$ rises above $\pi_c$ and the bottleneck shifts to the intrinsic cell division, $\lambda_B \approx b_B$. All activated clones expand at the same rate, independently of affinity.
+
+\textit{Phase 2: Division-limited with antigen decay.} After the antigen peak at $t_p$, $\pi$ declines, and clonal expansion continues at $\lambda_B \approx b_B$ until $\pi$ falls below $\pi_c$.
+
+The transitions between phases occur at affinity-dependent times, which we derive in the Results.
+
+\subsection*{Density of B cell clones}
+The B-cell repertoire consists of a large number of different clones.
+We define the density $\Omega_0(\DG)$, where $\Omega_0(\DG)\,\d\DG$ is the expected number of naive clones with binding energy in $[\DG,\DG+\d\DG]$. 
+At the tail of high-affinity clones available in the naive repertoire, we assume $\Omega_0(\DG) =\omega_0 e^{\beta^*\DG}$, reflecting the exponential increase in the number of clones of lower affinity.
+The exponent $\beta^*$ is a summary measure of repertoire complexity~\cite{MoranTovar_2024_Primary}.
+We assume that naive repertoires are randomly sampled from an underlying amino acid sequence distribution~\cite{Elhanati_2015_Diversity} so that most lineages bind only weakly to any given antigen ($\DG \gg 1$).
+Following previous work, we assume that the internalization rate is tuned to the best binder of the naive repertoire, $k_s/k_{\rm on} \approx K^*$ (equivalently $\DG^* \approx 0$), so that activation efficiency saturates at the high-affinity edge of the naive repertoire~\cite{MoranTovar_2024_Primary}.
+We note that $\DG^*\approx 0$ is substantially above the global minimum $\DG_m$ (the Master sequence of the binding motif).
+
+% -----------------------------------
+\begin{figure}[t]
+\begin{center}
+\includegraphics[width=\linewidth]{ep.pdf}
+\caption{\textbf{Exponential proofreading: clonal expansion as a timing problem.}
+Dynamics of a primary (left) and recall (right) response for three clones of decreasing binding affinity (dark to light green).
+The phases of clonal expansion are shown with grey shadowing.
+{\bf A} Antigen load $N_A(t)$ grows exponentially at rate $\lam_A$ until the peak at $t_p$, then decays at rate $\delta_A$.
+{\bf B} Per-cell presented-antigen density $\pi(t,\DG)$ for a clone with $\DG^*$ (darker green line) and two other lower affinity clones ($\DG =$ \todo{$x$ and $x$}).
+{\bf C} Clone size $N_B(t,\DG)$ for three clones (same color code and affinities as in {\bf B}).
+Each clone expands at full speed only while $\pi > \pi_c$, bracketed by the activation front (open diamond, $t_\on$) and the termination front (filled diamond, $t_\off$).
+Higher-affinity clones cross $\pi_c$ earlier and fall below it later, dividing over a longer interval $\Delta t(\DG)$ and reaching a larger final size.
+{\bf D} Moving fronts of activation (inverse of $t_{\on}(\DG)$; solid lines) and termination (inverse of $t_{\off}(\DG)$; dashed lines) for the full model (green) and the null model without T-cell help (grey).
+}
+\label{fig:ep}
+\end{center}
+\end{figure}
+% -----------------------------------
+
+\subsection*{Diversity and specificity of responses}
+The clonal population of B cells can be studied at two distinct levels.
+Using a (usually) genetic definition of clone, we can describe the total B-cell population with the discrete distribution $\{p_i\}$ where $p_i$ is the fraction of B cells in the clone $i$.
+For the naive repertoire, we assume that each clone has initially clone size 1 and therefore $p_i^0 = 1/L_0$, where $L_0$ is the total number of different naive B cells.
+After an immune response, the clone size distribution is modified due to clonal expansion, leading to a new clone-size distribution $p_i\neq p_i^0$.
+
+Alternatively, we can group B cells by their binding affinity for a fixed antigen and define the pdf $q(\DG)$ such that the fraction of B cells with energy in the interval $[\DG, \DG + \d\DG]$ is given by $q(\DG)\d\DG$.
+First, we define the naive pdf $q_0(\DG) = \Omega_0(\DG)/L_0$ where $\Omega_0(\DG)$ is the density of the naive repertoire (see grey curve in Figs.~\ref{fig:potency}A and B).
+Similarly, we define a pdf for the binding energies of the responding repertoires after clonal expansion, $q(\DG)$ (see colored curves in Figs.~\ref{fig:potency}A and B).
+% For the analytical results, we assume that binding energies of the naive and the responding repertoires are Gaussian-distributed with universal variance $\sigma^2$ and a sharp high-affinity bound at $\DG^*$, and with a repertoire-dependent mean $\mu_0$.
+% We characterize the naive repertoire by the affinity scale $\Delta\DG \equiv \mu_0 - \DG^*$, the gap between the mean binding energy and that of the best clone.
+% This scale does not depend on the choice of energy origin; with our convention $\DG^* = 0$, it equals the mean, $\Delta\DG = \mu_0$.
+
+% In the mean-field limit, we assume that for responding repertoires there is a sharp low-affinity bound at $\DG_{\max} = \DG_\on(t_p)$, the largest reach of the moving front of activation during the response.
+% Altogether, this leads to a double-truncated Gaussian distribution $q(\DG)$ with the same variance $\sigma^2$ but shifted mean $\mu<\mu_0$ (see SI).
+
+We define the diversity of a B-cell immune response as the Shannon entropy of the discrete clone-size distribution $S_c[\{p_i\}]$.
+Additionally, we define the specificity of a B-cell immune response as the relative entropy between the responding and the naive distributions, $\DKL[q\|q_0]$, and the corresponding effective fraction of the naive repertoire engaged by the response as $\phi \equiv \exp\left[-\DKL[q\|q_0]\right]$.
+As will become clear in the next sections, the clonal diversity $S_c$ depends on the definition of a clone, while the specificity does not.
+
+\subsection*{Rapidity and potency of responses}
+To study the real-time binding capacity of the ensemble of secreted antibodies, we define a time-dependent partition function $Z(t) = \sum_i c_oN_B(t,\DG_i) \exp[-\DG_i]$, where the sum runs over all activated and proliferating B-cell clones and with $c_o$ a constant that accounts for differentiation efficiency, per-cell antibody secretion rate (See SI).
+Each time a new clone with affinity $\DG$ is activated, a term $\exp[-\DG]$ is added to the sum.
+Additionally, as activated clones proliferate, their contribution to the sum increases.
+Therefore, the partition function increases during an immune response due both to activation and to clonal proliferation.
+From $Z(t)$, we can calculate the probability $p_b(Z)$ that a viral particle is bound by antibodies assuming thermodynamic equilibrium ~\cite{phillips_physical_2019} (See SI).
+In a minimal model for viral fitness where its growth rate depends on $p_b$ (see Materials and Methods), we define a critical value $Z_c$ at which pathogen growth is neutralized ($p_b\sim \mathcal O(1)$).
+
+We define the control time $t_c$ as the first passage of $Z$ to $Z_c$, $Z(t_c) = Z_c$.
+Since the antigen grows at rate $\lam_A$ until control, we define the potency of the real-time recall response as the log-fold reduction in viral-load peak,
+\EQ
+P \equiv \lam_A\,(t_p^o - t_c),
+\label{eq:P}
+\EE
+where $t_p^o$ is the viral-load peak of a naive infection.
+
+
+%::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+\section*{Results}
+%::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+\subsection*{Exponential Proofreading: Clonal expansion as a timing problem}
+A clone with binding energy $\DG$ is activated when its pMHC density reaches the threshold, $\pi(t,\DG)=\pi_c$, marking the transition from Phase 0 to Phase 1.
+
+\textit{Affinity-graded activation.}
+Before activation, $\pi$ tracks quasi-statically the antigen load, $\pi \propto N_A(t)\,\psi(\DG)$ (see Materials and Methods).
+The activation condition therefore defines a moving front $\DG_\on(t)$ in energy space: by time $t$, all clones with $\DG < \DG_\on(t)$ have been activated.
+For exponential antigen growth and $\psi(\DG)\approx \exp{[-\DG]}$, the front advances linearly in time with velocity $v_\on=\lam_A$, because advancing it by $\delta\DG$ requires $N_A$ to grow by a factor $\exp{[\delta\DG]}$, which always takes the same time $\delta\DG/\lam_A$.
+The activation time of a clone with binding energy $\DG$ is
+\EQ
+t_\on(\DG) = t^* + \frac{\DG}{v_\on},
+\label{eq:t_on}
+\EE
+where $t^* = t_\on(\DG^*)$ is the activation time of the host's best clone (Fig.~\ref{fig:ep}D, solid green lines).
+The front velocity is thus set by the pathogen growth rate.
+In previous work, the front velocity was also shaped by a molecular kinetic proofreading scheme, which set the specificity of the response~\cite{MoranTovar_2024_Primary}.
+Here, as we show below, specificity is set by T-cell help.
+At the antigen peak $t_p$, the front stalls at $\DG_{\max} \equiv \DG_\on(t_p)$, and the total number of activated lineages is $L_\act \sim \exp{[\beta^* \DG_{\max}]}$.
+
+\textit{Affinity-graded termination.}
+After the peak, $\pi$ decays at rate $v_\text{off} = \min(\delta_A, \lambda_B)$, set by the slower of two channels: dilution by cell division and decay of the antigen source, assuming slow surface turnover $\delta_\pi \ll \lambda_B$ (see Materials and Methods and SI).
+Because high-affinity clones reach a higher pMHC level at the peak, the condition $\pi = \pi_c$ defines a second front $\DG_\off(t)$ that sweeps in the opposite direction: weak binders exit first, strong binders last.
+The termination time of a clone with binding energy $\DG$ is 
+\EQ
+t_\off(\DG) = t_p + \frac{\DG_{\max} - \DG}{v_\off}
+\label{eq:t_off}
+\EE
+where now the affinity-dependence is negative (Fig.~\ref{fig:ep}D, dashed green lines).
+
+\textit{Affinity-dependent clonal expansion.}
+Between $t_\on$ and $t_\off$, all activated clones divide at the same rate $\lam_B \approx b_B$, so the final clone size is $N_B(\DG) = \exp[\lam_B \Delta t(\DG)]$, with $\Delta t(\DG) = t_\off(\DG) - t_\on(\DG)$ (Fig.~\ref{fig:ep}C).
+Because both fronts are linear in $\DG$, so is $\Delta t(\DG)$ (see Materials and Methods), which gives the central EP relation between final clone size and binding energy,
+\EQ
+N_B(\DG) = e^{-\alpha(\DG-\DG_{\max})},
+\quad
+\alpha = \lam_B\left(\frac{1}{v_\on} + \frac{1}{v_\off}\right).
+\label{eq:alpha}
+\EE
+
+Three features of this result deserve emphasis.
+First, all activated clones proliferate at the same rate, regardless of binding energy; what differs between clones is not how fast they divide, but for how long.
+Second, Eq.~\ref{eq:alpha} is essentially kinematic: it requires only that both fronts are linear in $\DG$ and that clonal expansion is exponential.
+Third, the threshold $\pi_c$ enters $t_\on$ and $t_\off$ identically, through $t^*$ and $\DG_{\max}$, and drops out of the exponent $\alpha$.
+The two-front picture thus converts the affinity spectrum of the naive repertoire into a hierarchy of clone sizes, whose shape is set by three macroscopic rates: the B-cell division rate and the two front velocities.
+
+
+\begin{figure*}[t]
+\begin{center}
+\includegraphics[width=\linewidth]{csd.pdf}
+\caption{\textbf{Clone-size statistics of primary and recall responses.}
+{\bf A} Clone-size profiles for three representative mice each from primary (orange) and recall (blue) responses; bars show clone size for clones sorted by clone-size rank, on a log scale. Recall profiles are visibly less uniform, reflecting the steeper clone-size hierarchy predicted by two rounds of EP.
+{\bf B} Clone-size-rank curves, normalized to the largest clone $N_1$ and pooled across mice. Faint lines are individual mice; symbols are cohort averages for primary (orange stars) and recall (blue squares). Solid lines are Zipf fits $N_k/N_1 \sim k^{-\zeta}$, giving $\zeta = 0.51 \pm 0.04$ (primary) and $\hat\zeta = 1.13 \pm 0.03$ (recall), a ratio $\hat\zeta/\zeta = 2.2 \pm 0.2$ consistent with the predicted exponent doubling.
+{\bf C} Mouse-resolved scaling between the number of activated lineages $L_\act$ and the largest clone size $N_1$. Each point is one mouse, coded by phenotype (GC, orange; GC$+$fm, blue) and experiment (markers). Dashed curves are the predicted relations $L_\act \sim N_1^{1/\zeta}$ using the cohort-averaged $\zeta$ from {\bf B}, with no additional fit parameters; the black dashed line marks the $\zeta = 1$ separatrix dividing the diversity-dominated ($\zeta < 1$, primary) and size-dominated ($\zeta > 1$, recall) regimes. Shading indicates the two regimes.
+}
+\label{fig:csd}
+\end{center}
+\end{figure*}
+% -----------------------------------
+
+\subsection*{Memory response as a second round of EP}
+Memory B cells produced during a primary response provide a head start for subsequent immune challenges in two ways: they are present at an elevated abundance compared to naive clones~\cite{Mesin_2020_Restricted_clonality}, and they have a lower activation threshold than naive cells~\cite{tangyeMemoryCellsEffectors2009, wongBasicsMemoryBcell2019, Inoue_2024_Memory_review}.
+Based on that, here we propose a model of memory production after a primary response and its reactivation during a recall response.
+
+We assume that at the end of the primary response, each B cell commits to the memory fate with an affinity-independent probability $\gamma$ and the memory pool has a global carrying capacity $M$, which admits a fraction $\nu = M/(\gamma Y + M)$ of the committed cells, where $Y = \sum_i N_B(\DG_i)$ is the primary yield.
+The total number of memory cells is then $\hat Y_o = \nu\gamma Y$ (we use $\hat\cdot$ to denote quantities in the memory compartment).
+In the saturated regime ($\gamma Y \gg M$), $\nu \approx M/(\gamma Y)$ and the memory pool saturates at $\hat Y_o \approx M$; in the unsaturated regime ($\gamma Y \ll M$), $\nu \approx 1$ and memory tracks the primary yield, $\hat Y_o \approx \gamma Y$.
+In both regimes, memory formation is a uniform rescaling of the primary response: every cell enters memory with the same probability $\nu\gamma$, regardless of its affinity.
+Large clones therefore keep their relative sizes, and memory inherits the affinity grading of the primary expansion, $\hat N_B^o(\DG) = \nu\gamma N_B^*\, e^{-\alpha\DG}$.
+This holds as long as the best clones are retained, $\nu\gamma N_B^* \gtrsim 1$; otherwise, sampling also thins the high-affinity edge (see Materials and Methods).
+
+Upon re-challenge, memory clones undergo the same kinetic readout described above.
+Their lower activation threshold shifts the timing of activation, but not the exponent (as shown above, $\pi_c$ drops out of $\alpha$).
+The activation and termination fronts therefore advance with the same velocities ($v_\on$ and $-v_\off$, respectively) as in the primary response, and the proliferation time $\Delta\hat t(\DG)$ has the same affinity dependence (see Materials and Methods).
+
+Thus, the final size of a memory clone with binding energy $\DG$ is given by
+\EQ
+\hat N_B(\DG) \sim e^{-\hat\alpha\DG},
+\qquad
+\hat\alpha = 2\alpha .
+\label{eq:alpha2}
+\EE
+
+The memory clone-size distribution is steeper than the primary one because two rounds of EP compound. 
+The new affinity-graded proliferation during memory reactivation occurs on top of the grading inherited from the primary expansion.
+This doubling requires no change in the molecular machinery of the recall response.
+
+The second round of EP also restricts which memory clones take part.
+In a recall challenge with the same initial antigen load and growth rate as the primary one, the activation front stalls at the control time $t_c$, when the antigen load is lower than the primary peak by a factor $e^{-P}$ (Eq.~\ref{eq:P}).
+Its reach is therefore $\hat\DG_{\max} = \DG_{\max} - P + \Delta$, where $\Delta \equiv \log(\pi_c/\hat\pi_c)$ is the activation advantage of memory cells (see Materials and Methods).
+Because the memory pool, like the naive repertoire, is dominated by low-affinity lineages, only a fraction $\hat L_\act/L_\act \approx e^{-\beta^*(P - \Delta)}$ of them is re-engaged (Eq.~\ref{eq:bottleneck}).
+A protective recall response is thus carried by a few high-affinity memory clones while most of the memory pool remains unengaged, consistent with the clonality bottleneck observed in prime-boost experiments~\cite{Mesin_2020_Restricted_clonality}.
+
+\subsection*{EP explains B-cell clonal structure upon recurrent immunizations}
+The EP mechanism predicts that clone size decays exponentially with binding energy as given by Eq.~\ref{eq:alpha}.
+Combined with the repertoire density $\Omega_0(\DG) \sim \exp[{\beta^*\DG}]$, this predicts the statistical structure of the responding population, an observable that can be extracted directly from repertoire sequencing data~\cite{MoranTovar_2024_Primary}.
+In the mean-field deterministic limit, the clone-size-rank relation, obtained by ordering clones from largest $(k=1)$ to smallest $(k = L_\act)$, is a Zipf's law, $N_k \sim k^{-\zeta}$~\cite{MoranTovar_2024_Primary}.
+
+Within a single response, the power-law form is a signature of the timing mechanism.
+In the naive repertoire, lower-affinity clones are exponentially more abundant; EP makes them exponentially smaller in size upon clonal expansion, and the two competing exponential functions in binding energy yield a power law.
+Below, we contrast this with models in which affinity sets the expansion rate.
+
+Using Eqs.~\ref{eq:alpha} and~\ref{eq:alpha2}, the clone-size exponents for primary and memory responses are
+\EQA
+\zeta &=& \frac{\alpha}{\beta^*} \qquad \text{primary}\nonumber \\
+\hat\zeta &=& 2\zeta \,\qquad \text{recall}.
+\label{eq:zetas}
+\EEA
+The compounding of two identical rounds of EP therefore predicts the ratio $\hat\zeta/\zeta = 2$, independent of all model parameters.
+We note that these predictions concern the early, pre-GC phase of one primary and one recall response, and assume that the memory pool inherits its clonal structure from the primary expansion with little or no affinity maturation~\cite{tangye_human_2007, dogan_multiple_2009, Viant_2020_Fate, Mesin_2020_Restricted_clonality, Glaros_2021_Early_memory}.
+
+To test this result of the model, we analyzed published data from mouse immunization experiments~\cite{Mesin_2020_Restricted_clonality}.
+In these experiments, naive mice were immunized one or two times with the same antigen (Materials and Methods), generating in this way primary and recall immune responses.
+A few days post-immunization (p.i.), single-cell sequencing analysis was performed, obtaining in this way a fine-grained characterization of the clonal composition of the responding B-cell population.
+Among the distinct B-cell sub-populations that were sequenced, we focused our analysis on early GC B cells (day 6 p.i.), when GCs have just formed from the initial clonal expansion, and when GC B cells carry few or no somatic hypermutations.
+Importantly, in all primary responses, responding B cells were fate-mapped.
+In this way, during recall responses, it was possible to identify if a responding B cell belonged to the memory pool and had participated in the primary response (fate-mapped) or was a naive B cell before \textit{de novo} activation.
+
+In Fig.~\ref{fig:csd}A we show some examples of the clonal composition of activated B-cell populations.
+We show the 10 largest clones in each immunized mouse (the complete data is shown in SI).
+Consistent with our model, we see a different degree of concentration of B cells between primary and recall responses.
+Pooling three experiments sharing the same prime/boost protocol with antigen CGG-alum, we measure $\zeta = 0.51 \pm 0.04$ for primary responses and $\hat\zeta = 1.14 \pm 0.06$ for recall responses, giving the ratio $\hat\zeta/\zeta = 2.2 \pm 0.2$, consistent with the model prediction.
+A fourth experiment using a distinct protocol (infection with Influenza followed by boost with recombinant HA) gives $\zeta = 0.50 \pm 0.09$ and $\hat\zeta = 1.15 \pm 0.04$, with the same ratio within errors (Fig.~\ref{fig:csd}B).
+The doubling prediction therefore holds across two distinct immunization protocols.
+Cohort-level $\zeta$ values are reproducible across experiments; individual-mouse fits show larger spread, especially for memory responses (see transparent lines in Fig.~\ref{fig:csd}B).
+
+The Zipf fit characterizes the average clone-size hierarchy within a cohort but collapses mouse-to-mouse variation into a single curve.
+A complementary, mouse-resolved test of the EP picture comes from the scaling relations between observables that vary between mice within a cohort.
+Three quantities can be extracted directly from each mouse's repertoire data: the largest clone size $\tilde N_1$, the total cell count $\tilde Y$, and the number of activated lineages $\tilde L_\act$ (we use $\tilde \cdot$ to denote quantities in a given sub-sample of the total expanded population).
+Under the assumption that $\alpha$ and $\beta^*$ are shared among mice, while $\DG_{\max}$ varies between mice (e.g.\ due to dose, innate protection, or individual repertoire variability), Zipf's law predicts power-law relations between these three quantities, with exponents fixed by the same $\zeta$.
+
+The largest clone and the number of activated lineages are set by the reach of the activation front.
+The largest clone is the best binder, $N_1 = N_B(\DG^*) \sim \exp[\alpha\DG_{\max}]$ (Eq.~\ref{eq:alpha} with $\DG^* \approx 0$), and the number of activated lineages is $L_\act \sim \exp[\beta^*\DG_{\max}]$.
+Eliminating $\DG_{\max}$ gives
+\EQ
+L_\act \sim N_1^{1/\zeta}.
+\label{eq:scaling}
+\EE
+
+The same relation holds for the subsampled quantities (see SI).
+The relation in Eq.~\ref{eq:scaling} is convex for $\zeta < 1$ and concave for $\zeta > 1$.
+The value $\zeta = 1$ also separates two regimes of the total yield, $Y = \sum_k N_k$: for $\zeta < 1$, $Y$ is dominated by the many small clones near $\DG_{\max}$ (diversity-dominated); for $\zeta > 1$, by the few largest clones near $\DG^*$ (size-dominated).
+The two response types in our data sit on opposite sides of this transition: primary responses in the diversity-dominated regime ($\zeta < 1$, see orange in Fig.~\ref{fig:csd}C), and memory responses in the size-dominated regime ($\zeta > 1$, see blue in Fig.~\ref{fig:csd}C).
+The crossover marks the point where the clone-size decay exponent $\alpha$ exactly balances the repertoire exponent $\beta^*$.
+
+The mouse data span more than an order of magnitude in $N_1$ and $L_\act$, and follow the predicted scaling behavior using the cohort-averaged $\zeta$ values from the Zipf analysis (see dashed lines in Fig.~\ref{fig:csd}C).
+The scaling test is a non-trivial cross-check of the EP picture: the exponents observed in the mouse-resolved scaling clouds are predicted by the same $\zeta$ extracted from cohort-averaged Zipf fits, with no additional fit parameters.
+
+The measured exponents can be cross-checked against independent estimates of the rates $\lam_A$ and $\lam_B$.
+Typical B-cell doubling times during primary responses are $\sim 12-24$~hours, corresponding to $\lam_B \sim 1.0-2.0$~day$^{-1}$~\cite{pape_different_2011, mesin_germinal_2016, Victora_2022_GC, gitlin_clonal_2014}; typical acute viral growth rates span $\lam_A \sim 3-6$~day$^{-1}$~\cite{perelson_hiv-1_1996, baccam_kinetics_2006}, and effective antigen growth rates after vaccination are comparable~\cite{MoranTovar_2024_Primary}.
+The ratio $\lam_B/\lam_A$ therefore lies in the range $0.17-0.67$, and in the dilution-limited regime, $v_\off = \lam_B$, Eq.~\ref{eq:alpha} gives $\alpha = 1 + \lam_B/\lam_A \approx 1.2-1.7$.
+
+Inverting Eq.~\ref{eq:zetas}, the measured exponents constrain the repertoire complexity: the primary relation gives $\beta^* = \alpha/\zeta \sim 2.3-3.3$, and the recall relation gives $\beta^* = 2\alpha/\hat\zeta \sim 2.1-2.9$.
+Both estimates are consistent with numerical estimates of the repertoire complexity derived in previous work for different binding energy models~\cite{MoranTovar_2024_Primary}.
+Moreover, in a Gaussian approximation for the density of naive B cells, assuming BCRs and antigens are sequences of length $\ell$ amino acid residues, and that the total binding energy is a linear sum over the $\ell$ BCR–antigen residue contacts that form the paratope, the repertoire exponent is related to the naive repertoire size and binding motif length as $\beta^* = \sqrt{2\log{L_0}/\ell}$ (see Materials and Methods).
+Setting $L_0$ to the estimated total number of naive B cells in mice $L_0 \approx 10^8$~\cite{AltanBonnet_2020_Review}, the inferred $\beta^*$ is consistent with paratopes of length $\ell = 4-9$, in line with estimates of the number of antibody residues that make direct contact with antigens~\cite{akbarCompactVocabularyParatopeepitope2021}.
+
+% -----------------------------------
+\begin{figure*}[t]
+\begin{center}
+\includegraphics[width=\linewidth]{potency.pdf}
+\caption{\textbf{Potency and specificity of B-cell responses across the T-cell help threshold.}
+{\bf A} Cell binding-energy densities after a primary response for the total expanded B-cell population (dashed) and the sub-sampled memory formed from it (solid). Grey denotes the naive density $\Omega_0(\DG)$; we show three pair of curves for $\pi_c = 3.2, 32.$ and $320.$ (red, green and cyan, respectively)
+{\bf B} Cell binding-energy densities after a recall response for the total expanded B-cell population (colors as in {\bf A}).
+{\bf C} Partition function $\hat Z(t)$ for a set of recall responses for different values of $\pi_c$. Vertical dashed lines denote time of antigen peak under primary response (grey) and under the optimal $\pi_c^*$ threshold value in a recall response (black). Filled markers highlight denote potency $P$ as defined in the main text (squares for recall and circle for a reference primary response). \todo{(discuss properly the naive $Z$ curve)}
+{\bf D} Response potency $P$ versus specificity $\DKL[q\|q_0]$, for the primary, recall, and null responses (colors and symbols as in {\bf A} and {\bf B}). 
+Other parameters as in Fig~\ref{fig:ep}}
+\label{fig:potency}
+\end{center}
+\end{figure*}
+% -----------------------------------
+
+\todo{\subsection*{Differential growth rates cannot reproduce the observed clonal structure}
+EP requires that activated clones divide at the saturated rate $b_B$.
+The opposite limit of Eq.~\ref{eq:lambdaB}, in which T-cell help remains rate-limiting throughout the response ($\pi \ll \pi_c$, so that $\lam_B \approx h_0\pi$), is the natural alternative: affinity then sets how fast clones divide, not for how long.
+Because $\pi \propto \psi(\DG)$ at all times in this limit, integrating Eq.~\ref{eq:NB} gives
+\EQ
+\log N_B(\DG) \approx \mathcal{A}\,\psi(\DG) \approx \mathcal{A}\, e^{-\DG},
+\label{eq:rate_model}
+\EE
+where $\mathcal{A}$ is independent of $\DG$ and proportional to the integrated antigen exposure (see SI).
+This is the simplest model in which affinity sets the expansion rate~\cite{Desponds_2021_Population}.
+In EP, $\log N_B$ is linear in $\DG$; here it is exponential in $\DG$.
+
+This difference determines the shape of the rank statistics.
+Combining Eq.~\ref{eq:rate_model} with the lineage density $\Omega_0(\DG) \propto \exp{[\beta^*\DG]}$ gives $\log N_k = \log N_1\, k^{-c}$ with $c = 1/\beta^*$ (see SI).
+The local Zipf exponent, $\zeta_{\rm eff}(k) \equiv -\d\log N_k/\d\log k = c \log N_k$, decreases with rank, by a factor $10^{-c} \approx 0.37$ per decade of rank for $\beta^* \approx 2.3$, so that rank curves flatten on logarithmic axes.
+EP corresponds to $c = 0$ (straight rank curves).
+Fitting the rank curves of all four cohorts with a form that interpolates between both cases (SI) gives $c$ consistent with zero ($c < 0.22$ at 95\% bootstrap confidence), and the curvature parameter does not improve the fit ($\Delta{\rm AIC} \approx +2$, the penalty for the additional parameter).
+This holds for primary and recall cohorts alike.
+For the rate model to account for these straight rank curves, the repertoire exponent would have to exceed $\beta^* = 1/c \approx 4.5$, well above independent estimates of repertoire complexity~\cite{MoranTovar_2024_Primary}.
+
+
+The two mechanisms also differ in how a second exposure compounds.
+In the rate model, memory inherits $\log \hat N_B^o = \log(\nu\gamma) + \mathcal{A}\, e^{-\DG}$ and the recall response adds $\hat{\mathcal{A}}\, e^{-\DG}$, so that log-size differences between clones are amplified by a factor $1 + \hat{\mathcal{A}}/\mathcal{A}$ that depends on the ratio of recall to primary antigen exposure.
+A protective recall response reduces this exposure (Eq.~\ref{eq:P}), so that the factor falls below 2.
+In EP, the exponent $\alpha$ is set by the front velocities rather than by antigen exposure, and $\hat\zeta/\zeta = 2$ holds independently of the reach of the fronts, the threshold, and the recall antigen load.
+
+Both mechanisms are limits of the same two-stage division rate (Eq.~\ref{eq:lambdaB}); which one operates depends on whether presented antigen exceeds $\pi_c$.
+The straight rank curves, together with the exponent ratios $\hat\zeta/\zeta = 2.2 \pm 0.2$ (CGG-alum) and $2.4 \pm 0.5$ (influenza/HA) (Fig.~\ref{fig:csd}B), place early B-cell expansion in the division-limited, timing regime rather than in a regime of affinity-dependent growth rates.
+
+
+\subsection*{T-cell help provides tunable B-cell response specificity}
+The specificity of a response follows from the general relation $\DKL = \log L_0 - S_c$ (Materials and Methods), which compares the clonal entropy of the response with that of the naive repertoire.
+Primary responses are diversity-dominated ($\zeta < 1$): their clonal entropy is set by the number of activated lineages, $S_c \approx \log L_\act$, so that $\phi \approx L_\act/L_0$ is the fraction of naive clones within reach of the activation front.
+Recall responses are size-dominated ($\hat\zeta > 1$): cells are concentrated in the largest clones, and the clonal entropy is set mainly by $\hat\zeta$; because $\hat\zeta$ is close to 1, it retains a weak dependence on the number of re-engaged lineages (Materials and Methods).
+In both cases, $\log L_0$ is the maximum specificity, reached by a monoclonal response of the best clone.
+
+The T-cell help threshold $\pi_c$ sets the reach of the activation front.
+At the antigen peak, the activation condition gives $\DG_{\max} = \log[k_\on N_A(t_p)/(\lam_A \pi_c)]$, so the reach decreases logarithmically with $\pi_c$ (see Materials and Methods).
+A lower $\pi_c$ lets lower-affinity clones join the response (larger $\DG_{\max}$; red in Fig.~\ref{fig:potency}A), whereas a higher $\pi_c$ excludes them (smaller $\DG_{\max}$; cyan in Fig.~\ref{fig:potency}A).
+A stringent threshold therefore increases the specificity of the response by focusing it on high-affinity clones.
+Because $\pi_c$ drops out of the EP exponent $\alpha$, the clone-size profiles for different $\pi_c$ have the same slope (Fig.~\ref{fig:potency}A): the gain in specificity comes from fewer low-affinity clones taking part in the response, not from larger high-affinity clones.
+
+The coupling of division to T-cell help has a second, independent effect: it sharpens the EP exponent itself. 
+To see this, consider the limit of fast pMHC surface turnover, $\delta_\pi \gg \lambda_B$. 
+Then $\pi$ tracks the external antigen at all times, $\pi \propto N_A(t)\,\psi(E)$, and dilution by cell division no longer affects termination: clonal expansion stops only as the antigen clears, with termination velocity $v_\text{off} = \delta_A$. 
+This limit corresponds to a null model without T-cell help, in which B-cell proliferation is driven directly by antigen capture (see SI), and gives the exponent $\alpha^o = \lambda_B (1/\lambda_A + 1/\delta_A)$. In the dilution-limited regime of the full model ($\lambda_B < \delta_A$), $\alpha^o < \alpha$: without $\pi$-mediated help, the clone-size hierarchy is less steep. 
+By coupling division to an internal variable $\pi(t)$ rather than to the external antigen concentration $N_A(t)$, T-cell help converts a clearance-limited termination into a dilution-limited one. T-cell help thus shapes specificity in two ways: the threshold $\pi_c$ sets which clones take part in the response, and the coupling through $\pi$ sets how strongly clone size is graded by affinity.
+
+Additionally, $\pi_c$ sets the duration of clonal expansion.
+A higher $\pi_c$ delays activation and accelerates termination for every clone, shortening the proliferation window $\Delta t(\DG) = (\DG_{\max}-\DG)(1/v_\on + 1/v_\off)$ (Eq.~\ref{eq:Delta_t_E}).
+As a result, the total primary yield decreases as a power of the threshold, $Y(\pi_c) \sim \exp[\beta^*\DG_{\max}] \sim \pi_c^{-\beta^*}$ (see Materials and Methods).
+With $\beta^* \approx 2.3$, a tenfold increase in $\pi_c$ reduces the yield about 200-fold.
+A fraction $\nu\gamma$ of this yield is kept as memory.
+Although the B-cell energy distribution after a primary response, $q_1(\DG)$, is more uniform than that of the naive repertoire, $q_0(\DG)$ (colored and grey in Fig.~\ref{fig:potency}A, respectively), it is still dominated by the many low-affinity clones near the edge $\DG_{\max}$, and the best clones make up only a small fraction $N_1/Y$ of the primary yield (see Materials and Methods).
+In the saturated regime ($\nu \ll 1$, $\gamma Y \gg M$), even the best clones are lost from memory if $M N_1/Y < 1$ (red in Fig.~\ref{fig:potency}A).
+In the yield-limited regime ($\nu \approx 1$, $\gamma Y \ll M$), the memory pool is no longer capped by $M$ and tracks the primary yield (cyan in Fig.~\ref{fig:potency}A).
+
+The effect on the memory pool is governed by the interplay of specificity and yield, both controlled by $\pi_c$.
+The potency of the recall response is therefore non-monotonic in $\pi_c$ (Fig.~\ref{fig:potency}C,D).
+In the saturated regime, increasing $\pi_c$ reduces $\DG_{\max}$ and removes the low-affinity tail of the primary response: the memory pool stays full, but the share of the best clones, $N_1/Y$, grows, which increases potency.
+Once $\gamma Y$ falls below $M$, the pool can no longer be filled, and every further increase in $\pi_c$ removes memory cells; the loss of yield then outweighs the gain in affinity.
+The optimum $\pi_c^*$ lies at the crossover between these regimes, where the primary yield just saturates the memory pool, $\hat Y_o(\pi_c^*) \sim M$ (see Materials and Methods).
+Below $\pi_c^*$, potency is specificity-limited; above it, yield-limited.
+}
+
+
+%::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+\section*{Discussion}
+%::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+
+EP identifies a layer of immune regulation that acts before affinity maturation and operates by a different rule.
+In EP, all activated clones divide at the same rate; what binding affinity controls is the \emph{duration} of clonal expansion, bracketed by two fronts in binding energy space whose velocities are set by the growth and the clearance of the antigen.
+The selection of high-affinity clones is thus kinetic and it does not require differential fitness between clones.
+After an immune response, EP establishes a hierarchy of clone sizes, $N_B \sim \exp{[-\alpha \DG]}$, where the exponent $\alpha$ is set by three macroscopic rates ($\lam_A, \lam_B$ and $\delta_A$) and is independent of the T-cell help threshold ($\pi_c$), the reach of the response ($\DG_{\max}$), and the details of the energy model (e.g, $\beta^*$).
+This parameter independence underlies the experimentally observed ratio $\hat\zeta/\zeta = 2$ between recall and primary clone-size exponents.
+
+EP matters because this early phase conditions the three downstream outcomes of the response.
+First, it sets the input to AM: the clonal composition entering germinal centers is already graded by affinity with exponent $\alpha$, so the diversity available at the start of the GC reaction is not the diversity of the naive repertoire but a strongly reshaped sample of it.
+Second, it sets the properties of the memory compartment.
+Because a large fraction of memory is generated with little or no AM~\cite{tangye_human_2007, dogan_multiple_2009, Viant_2020_Fate, Mesin_2020_Restricted_clonality, Glaros_2021_Early_memory}, memory inherits the EP grading of the primary expansion.
+Combined with the architecture of the naive repertoire, we predict that the memory compartment is dominated by many clones of suboptimal affinity.
+Third, it sets the potency of recall.
+The same readout acting a second time on an already graded pool makes recall responses size-dominated rather than diversity-dominated, which concentrates the real-time antibody response on a few high-affinity clones and leaves most memory lineages unengaged, as observed in prime-boost experiments~\cite{Mesin_2020_Restricted_clonality}.
+The recall bottleneck and the protective potency of recall are therefore two faces of the same mechanism: the more potent the recall, the earlier the control time $t_c$ and the narrower the set of re-engaged clones.
+
+These three roles are coupled through a single control parameter, the T-cell help threshold $\pi_c$, which identifies and quantifies T-cell help as an important regulator of the B-cell response.
+A stringent threshold raises specificity by excluding low-affinity clones, but lowers yield, and hence the number of cells available to fill the memory pool; the potency of recall is maximal at the crossover, where the primary yield just saturates the pool.
+Since $\pi_c = b_B/h_0$, the host can shift this optimum by modulating $h_0$, the effective rate of acquisition of T cell help, through the size of the cognate T cell compartment, the co-stimulatory requirements, or the density of pMHC needed to engage a T cell.
+This makes the specificity-yield trade-off a property of the immune response subjected to evolutionary tuning.
+
+EP is a non-equilibrium discrimination mechanism, and the analogy with molecular kinetic proofreading~\cite{hopfieldKineticProofreading1974, ninioKineticAmplification1975, mckeithanKineticProofreadingTcell1995} is instructive but incomplete.
+Classical proofreading amplifies affinity differences through a cascade of irreversible molecular steps, each paid for in free energy, and acts at the level of a single receptor-ligand complex.
+EP amplifies the same differences at the clone level, using the finite duration of antigen availability, bracketed by growth and clearance, as the discriminating variable.
+The amplification factor is not a number of molecular steps but a ratio of rates.
+Coupling division to the internal variable $\pi(t)$ rather than to the external antigen load is what converts a clearance-limited termination into a dilution-limited one, and sharpens the exponent beyond what antigen dynamics alone would produce.
+
+The framework presented here has a broad impact beyond single immune dynamics. 
+It open a new observing windows into the architecture of the immune repertoire.
+The clone-size statistics give access to $\beta^*$, the exponent of the naive repertoire density at its high-affinity edge.
+Unlike the rates entering $\alpha$, $\beta^*$ is not a property of a given infection but of the repertoire itself.
+It summarizes how the number of lineages grows as binding is relaxed.
+An evolutionary parameter of the repertoire is thus inferable from a clone-size measurement.
+
+Moreover, we introduce a new way to estimate the specificity of the immune response.
+We defined it at the phenotypic level, as the relative entropy between the responding and the naive binding-energy distributions.
+This definition is independent of how a clone is delimited, and it quantifies the effective fraction of the naive repertoire that a given antigen engages.
+It therefore provides a measurable route to the long-standing question of how many independent responses a repertoire can mount, posed first in the shape-space picture for antigen-antibody pairs~\cite{perelsonOsterTheoreticalStudies1979, Perelson_1997_Review}.
+
+
+Finally, beyond the immune system itself, our model provide a direct connection with epidemiology.
+Epidemiological models encode immune memory through phenomenological cross-immunity functions, which are rarely derived from immunological mechanism~\cite{gogGrenfellDynamicsMultistrain2002, grenfellUnifyingEpidemiologicalEvolutionary2004}.
+The potency $P$ defined here is a mechanistic candidate for such a function.
+It is a log-fold reduction in peak viral load, and it follows from the structure of the memory repertoire and from the reach of the recall activation front.
+Extending the model to a challenge antigen at antigenic distance $d$ from the priming antigen, the calculated potency would give a direct measurement of the breadth and depth (zero distance) of the memory response.
+A cross-immunity function of this form could be used in multi-strain epidemiological and predictive models~\cite{fonvilleAntibodyLandscapes2014, luksza_predictive_2014, yanShraimanNeher2019, marchiAntigenicWaves2021}.
+
+
+\section*{Materials and Methods}
+
+\subsection*{Mean-field equations}
+The dynamics is governed by
+\EQA
+\dot N_A(t) &=& \left[b_A(t) - \delta_A\right] N_A(t), \label{eq:NA}\\
+\dot \pi(t, \DG) &=& u_p(t, \DG) - \delta_\pi \,\pi(t, \DG)\nonumber\\
+&& - \lam_B(t, \DG)\,\pi(t, \DG)  \label{eq:pi}\\
+\dot N_B(t, \DG) &=& \lam_B(t, \DG)\, N_B(t, \DG). \label{eq:NB}
+\EEA
+Eq.~\ref{eq:NA} describes exponential antigen growth during acute infection; at early times, the antigen sensed by B cells after vaccination follows the same effective dynamics~\cite{MoranTovar_2024_Primary}.
+From the onset ($t=0$) until the antigen peak ($t=t_p$), the antigen replicates at a constant birth rate $b_A$ and grows at rate $\lam_A \equiv b_A - \delta_A$; after the peak ($t>t_p$), replication stops and the antigen decays at rate $\delta_A$.
+Eq.~\ref{eq:pi} describes the balance of pMHC on the B-cell surface: gain through capture and processing at rate $u_p$, and loss through two channels: surface turnover at rate $\delta_\pi$ and dilution by cell division at rate $\lam_B$, which redistributes the existing pMHC pool into two daughter cells at each division.
+Eq.~\ref{eq:NB} describes clonal expansion of B cells at the effective division rate $\lam_B$ given by Eq.~\ref{eq:lambdaB}.
+
+\subsection*{Minimal model of viral fitness}
+Assuming binding equilibrium between free antigen and secreted antibody, the probability that a viral particle is free is $(1+Z)^{-1}$, where $Z$ is the antibody-level partition function defined in the Model section (the calibration constant $c_o$ is derived in the SI).
+
+Taking neutralization to block productive infection,
+Eq.~\ref{eq:NA} becomes
+\EQ
+\dot N_A(t) = \left[\frac{b_A}{1 + Z(t)} - \delta_A\right] N_A(t) .
+\label{eq:NA_coupled}
+\EE
+For $Z = 0$ this recovers $\lam_A = b_A - \delta_A$. Net growth vanishes at
+the \emph{critical partition function}
+\EQ
+Z_c = \frac{b_A}{\delta_A} - 1 = \frac{\lam_A}{\delta_A} ,
+\label{eq:Zc}
+\EE
+equivalently $Z_c = R_0 - 1$. Thus $Z_c$ is a property of the pathogen alone,
+fixed by the same two rates that set the antigen dynamics in
+Fig.~\ref{fig:ep}A; it is not a free parameter.
+
+We note that $c_o$ and $Z_c$ enter the first-passage condition only through the
+ratio $Z_c/c_o$ and are therefore not separately identifiable from response data.
+
+\subsection*{Activation and termination fronts}
+Before activation, $\lam_B \approx 0$, and for exponential antigen growth, $N_A(t) = N_A(0)\,e^{\lam_A t}$, the pMHC density tracks the source,
+\EQ
+\pi(t, \DG) \approx \frac{k_\on\, N_A(t)\, \psi(\DG)}{\lam_A},
+\label{eq:pi_E}
+\EE
+where we neglected slow surface turnover, $\delta_\pi \ll \lam_A$ (SI, Moving front).
+The activation condition $\pi(t, \DG_\on(t)) = \pi_c$ is therefore equivalent to $\psi(\DG_\on(t)) = \pi_c\, \lam_A / (k_\on\, N_A(t))$.
+In the regime $\psi(\DG) \approx e^{-\DG}$, this gives a linear front, $\DG_\on(t) = \lam_A (t - t^*)$, with velocity $v_\on \equiv \partial_t \DG_\on = \lam_A$; the explicit form of $t^*$ is given in the SI.
+The cumulative number of naive lineages recruited by time $t \leq t_p$ follows from integrating the lineage density over the swept region of energy space,
+\EQ
+L_\act(t) \approx \frac{\omega_0}{\beta^*} \exp[\beta^* \DG_\on(t)].
+\EE
+At the antigen peak, the front stalls at $\DG_{\max} = \log[k_\on N_A(t_p)/(\lam_A \pi_c)]$, which decreases logarithmically with $\pi_c$.
+
+After activation, dilution by division reduces the pMHC density of activated clones to $\pi \approx k_\on N_A(t)\,\psi(\DG)/(\lam_A + \lam_B)$, so that at the peak $\pi_p(\DG) \approx \frac{\lam_A}{\lam_A+\lam_B}\,\pi_c\, e^{\DG_{\max} - \DG}$.
+After the peak, Eq.~\ref{eq:pi} has two decay channels: dilution by cell division at rate $\lam_B$, and decay of the antigen source at rate $\delta_A$.
+The long-time dynamics is set by the slower of the two (SI, Termination),
+\EQ
+\pi(t, \DG) \approx K\,\pi_p(\DG)\, e^{-v_\off (t - t_p)}, \qquad v_\off = \min(\delta_A, \lam_B),
+\EE
+with $K = [\lam_A + \max(\delta_A, \lam_B)]/|\lam_B - \delta_A|$.
+When $\delta_A > \lam_B$, the source vanishes quickly and dilution by division dominates the decay; when $\delta_A < \lam_B$, $\pi$ tracks the slowly decaying antigen.
+Solving the termination condition $\pi(t_\off, \DG) = \pi_c$ gives Eq.~\ref{eq:t_off}, up to a $\DG$-independent shift $c_0/v_\off$ with $c_0 = \log[K\lam_A/(\lam_A + \lam_B)]$.
+
+Combining Eqs.~\ref{eq:t_on} and~\ref{eq:t_off}, and using $\DG_{\max} = v_\on (t_p - t^*)$, the proliferation window of a clone with binding energy $\DG$ is
+\EQ
+\Delta t(\DG) = (\DG_{\max} - \DG)\left(\frac{1}{v_\on} + \frac{1}{v_\off}\right)
+\label{eq:Delta_t_E}
+\EE
+up to the same constant, which is linear in $\DG$ and gives Eq.~\ref{eq:alpha}; the constant multiplies all clone sizes by a common factor and does not affect $\alpha$.
+
+\subsection*{Memory formation and sampling}
+Each B cell at the end of the primary response becomes memory with probability $p = \nu\gamma$, where $\nu = M/(\gamma Y + M)$ accounts for the carrying capacity $M$ of the memory pool.
+The number of memory cells from a clone of size $N_B$ is then binomial with mean $p N_B$, and the expected energy density of memory cells is a scaled copy of the primary one.
+
+Although the rescaling is uniform at the level of cells, its effect on the clonal structure is not: because low-affinity clones are smaller, they are more likely to be lost.
+A clone is represented in memory with its mean-field size if $p N_B(\DG) \gtrsim 1$.
+With Eq.~\ref{eq:alpha} and $N_B^* \sim \exp[\alpha\DG_{\max}]$, this gives a low-affinity cutoff
+\EQ
+\DG \lesssim \DG_{\rm mem} \equiv \DG_{\max} - \frac{1}{\alpha}\log\frac{1}{p} = \frac{1}{\alpha}\log\left(p N_B^*\right).
+\label{eq:E_mem}
+\EE
+Clones beyond the cutoff survive with probability $\approx p N_B(\DG)$, typically as single cells.
+Memory formation thus preserves the exponential profile of the high-affinity clones and flattens the low-affinity tail.
+
+The total primary yield follows from integrating the clone sizes over the activated repertoire,
+\EQA
+Y &=& \int_{\DG^*}^{\DG_{\max}} \Omega_0(\DG)\, N_B(\DG)\, d\DG\nonumber\\
+&\approx& \frac{\omega_0}{\beta^*(1-\zeta)}\, \exp[\beta^*\DG_{\max}] = \frac{L_\act}{1-\zeta},
+\label{eq:yield}
+\EEA
+where we used $\DG^* \approx 0$ and $\beta^*(1-\zeta)\DG_{\max} \gg 1$, valid for $\zeta < 1$.
+The yield is thus dominated by the many low-affinity clones near $\DG_{\max}$, and the best clone makes up only a fraction
+\EQ
+\frac{N_B^*}{Y} \approx (1-\zeta)\, \frac{N_B^*}{L_\act} \sim \exp[-\beta^*(1-\zeta)\DG_{\max}]
+\EE
+of it.
+
+The best clone is retained if $\DG_{\rm mem} \gtrsim \DG^*$, that is, if $p N_B^* \gtrsim 1$.
+In the saturated regime ($\gamma Y \gg M$, $p \approx M/Y$), this requires $M N_B^*/Y \gtrsim 1$, which fails if the yield is spread over many low-affinity clones.
+In the unsaturated regime ($\gamma Y \ll M$, $p \approx \gamma$), it requires $\gamma N_B^* \gtrsim 1$, which fails if the best clone is small.
+If the condition fails, sampling also thins the high-affinity edge.
+The best affinity represented in memory is then set by the $pY$ sampled cells: with the primary cell density $\propto \exp[\beta^*(1-\zeta)\DG]$, it lies at
+\EQ
+\hat\DG^* \approx \DG_{\max} - \frac{\log(pY)}{\beta^*(1-\zeta)}.
+\EE
+
+\subsection*{Recall response}
+Upon re-challenge, memory clones are activated and terminated by the same mechanism as in the primary response, with unchanged $\psi(\DG)$, $k_\on$ and $\lam_B$, but with a lower activation threshold $\hat\pi_c < \pi_c$.
+The two fronts therefore advance with the same velocities, and the proliferation window of a memory clone is $\Delta\hat t(\DG) = \hat C - \DG\,(1/v_\on + 1/v_\off)$, where $\hat C$ is independent of $\DG$ (SI, Memory response).
+With the inherited abundance $\hat N_B^o(\DG) = \nu\gamma N_B^*\, e^{-\alpha\DG}$, the final size of a memory clone is $\hat N_B(\DG) = \hat N_B^o(\DG)\, e^{\lam_B \Delta\hat t(\DG)} \propto e^{-2\alpha\DG}$, which gives Eq.~\ref{eq:alpha2}.
+
+We assume that the recall challenge starts from the same initial antigen load and grows at the same rate $\lam_A$ as the primary one.
+The recall front then stalls at the control time $t_c$, where $N_A(t_c)/N_A(t_p^o) = e^{-P}$ (Eq.~\ref{eq:P}).
+Applying the activation condition with threshold $\hat\pi_c$ at $t_c$ and with $\pi_c$ at $t_p^o$, the kinetic prefactors cancel, and the reach of the recall front is
+\EQ
+\hat\DG_{\max} = \DG_{\max} - P + \Delta,
+\qquad
+\Delta \equiv \log\frac{\pi_c}{\hat\pi_c}.
+\label{eq:Emax_recall}
+\EE
+Since memory lineages are distributed with density $\propto e^{\beta^*\DG}$ up to $\DG_{\max}$, the fraction of primary lineages that are re-engaged is
+\EQ
+\frac{\hat L_\act}{L_\act} \approx e^{-\beta^*(P - \Delta)},
+\label{eq:bottleneck}
+\EE
+valid for $\hat\DG_{\max} < \DG_{\rm mem}$ (Eq.~\ref{eq:E_mem}).
+The re-engaged fraction of memory cells, the self-limitation of the bottleneck, and its cost in potency are derived in the SI (Recall bottleneck).
+
+\subsection*{Clone-size statistics}
+With $N_B(\DG) \propto e^{-\alpha\DG}$ (Eq.~\ref{eq:alpha}) and $\Omega_0(\DG) = \omega_0 e^{\beta^*\DG}$, the rank of a clone with binding energy $\DG$ is $k(\DG) \approx (\omega_0/\beta^*)\,e^{\beta^*\DG}$, so that clone sizes follow a Zipf law, $N_k \propto k^{-\zeta}$ with $\zeta = \alpha/\beta^*$; for recall responses, $\alpha \to 2\alpha$ gives $\hat\zeta = 2\zeta$ (Eq.~\ref{eq:zetas}).
+The largest clone and the number of activated lineages are set by the reach of the activation front, $N_1 \sim e^{\alpha\DG_{\max}}$ and $L_\act \approx (\omega_0/\beta^*)\,e^{\beta^*\DG_{\max}}$, which gives $L_\act \sim N_1^{1/\zeta}$ (Eq.~\ref{eq:scaling}).
+The total yield, $Y = \omega_0 e^{\alpha\DG_{\max}} \int_0^{\DG_{\max}} e^{(\beta^* - \alpha)\DG}\,\d\DG$, is dominated by clones near $\DG_{\max}$ for $\zeta < 1$ (Eq.~\ref{eq:yield}) and by clones near $\DG^*$ for $\zeta > 1$, where $Y \approx \omega_0 e^{\alpha\DG_{\max}}/(\alpha - \beta^*)$.
+If each cell is sequenced with probability $p_s$, clones with $p_s N_k \gtrsim 1$ keep their relative sizes, so the shape of normalized rank curves is unchanged, and the scaling relation keeps its exponent (SI, Clone-size scaling laws).
+
+In the rate model, $\lam_B \approx h_0\pi$ gives Eq.~\ref{eq:rate_model}, and hence $\log N_k = \log N_1\, k^{-c}$ with $c = 1/\beta^*$.
+In normalized form, $\log(N_k/N_1) = z_0\,(k^{-c} - 1)/c$ with $z_0 = c\log N_1$, which reduces to the Zipf law with $\zeta = z_0$ for $c \to 0$; $N_1$ is a fit parameter because the sampling fraction is unknown (SI, Affinity-dependent expansion rates).
+
+\subsection*{Repertoire exponent in the Gaussian approximation}
+In the Gaussian approximation, the naive energy density has mean $\mu_0$ and variance $\sigma^2$, truncated at the best clone $\DG^*$.
+By extreme-value statistics, the best of $L_0$ clones lies at $\Delta\DG \equiv \mu_0 - \DG^* \approx \sigma\sqrt{2\log L_0}$, and the local exponent of the density at $\DG^*$ is $\beta^* = \Delta\DG/\sigma^2$.
+Hence $\beta^* = \sqrt{2\log L_0}/\sigma$.
+For a binding energy that is a sum of $\ell$ independent residue contacts, $\sigma^2 = \ell\sigma_r^2$, and with $\sigma_r = 1$ this gives $\beta^* = \sqrt{2\log L_0/\ell}$.
+
+
+\subsection*{Specificity and clonal entropy}
+The fraction of B cells belonging to clone $i$ is $p_i$ such that $\sum_i^{L_0}p_i = 1$.
+We define the clonal entropy as the Shannon entropy
+\EQ
+S_c\left[\{p_i\}\right] = -\sum_i^{L_0} p_i \log p_i
+\EE
+For the naive repertoire, then $p^0_i=1/L_0$ and the clonal entropy of the naive repertoire is given by 
+\EQ
+S^0_c\equiv S_c\left[\{p^0_i\}\right]=\log L_0.
+\EE
+
+At the phenotypic level, the continuous entropy of the distribution $q$ is given by
+\EQ
+S_\DG\left[q\right] = -\int q(\DG)\log q(\DG) \, \d \DG 
+\EE
+For the naive repertoire, the corresponding energy pdf is given by $q_0(\DG) = \Omega_0(\DG)/L_0$.
+In this case, the entropy is given by
+\EQA
+S_E^0\equiv S_\DG\left[q_0\right] &=& \log L_0 -\left\langle \log\Omega_0(E)\right\rangle_{q_0}\nonumber\\
+&=& S_c^0 -\left\langle \log\Omega_0(E)\right\rangle_{q_0}
+\EEA
+
+In general, for any arbitrary clone-size distribution $p_i$ and energy distribution $q(\DG)$, the following relation holds
+\EQ
+S_c\left[\{p_i\}\right] = \left\langle \log\Omega_0(\DG)\right\rangle_{q} + S_\DG\left[q\right]
+\label{eq:S_c_S_E}
+\EE
+The proof, which assumes that clone size is a deterministic function of binding energy, is given in the SI (Specificity and diversity).
+
+We also calculate the relative entropy between the distribution $q(\DG)$ and the naive distribution $q_0(\DG)$
+\EQA
+\DKL\left[q||q_0\right] &=& \int q(\DG)\log \frac{q(\DG)}{q_0(\DG)} \, \d \DG\nonumber\\
+&=& -S_\DG\left[q\right] - \left\langle \log\Omega_0(\DG)\right\rangle_{q} + \log L_0\nonumber\
+\EEA
+Using \ref{eq:S_c_S_E}, we obtain
+\EQ
+\DKL\left[q||q_0\right] = \log L_0 - S_c\left[\{p_i\}\right]
+\EE
+Interestingly, this last equation is also the Kulback-Leibler distance between the clone-size distribution $p_i$ and the uniform distribution $p_i^0$
+\EQA
+\DKL\left[\{p_i\}||\{p_i^0\}\right] &=& \sum_i^{L_0} p_i\log \frac{p_i}{p_i^0}\nonumber\\
+&=& -S_c\left[\{p_i\}\right] + \log L_0
+\EEA
+We calculate the fraction of the activated repertoire, $\phi$, as
+\EQA
+\phi &\equiv& \exp\left(-\DKL\right)\nonumber\\ 
+&=& \frac{1}{L_0}\exp\left(S_c\left[\{p_i\}\right]\right)
+\EEA
+
+For Zipf-distributed clone sizes, $p_k = k^{-\zeta}/H$ with $H = \sum_{k=1}^{L_\act} k^{-\zeta}$, the continuum approximation gives
+\EQ
+S_c(\zeta, L_\act) = \log\frac{1-x}{\zeta-1} + \frac{\zeta}{\zeta-1}\,\frac{1-x(1+y)}{1-x},
+\label{eq:Sc_zipf}
+\EE
+with $x \equiv L_\act^{1-\zeta}$ and $y \equiv (\zeta-1)\log L_\act$, valid for either sign of $\zeta - 1$.
+For a diversity-dominated response ($\zeta < 1$, $(1-\zeta)\log L_\act \gg 1$), $S_c \approx \log L_\act - \zeta/(1-\zeta) - \log(1-\zeta)$.
+For a size-dominated response ($\zeta > 1$), $S_c \to \zeta/(\zeta-1) - \log(\zeta-1)$ as $L_\act \to \infty$; for the measured $\hat\zeta \approx 1.13$ and $L_\act$ of order $50$, $x \approx 0.6$ and the finite form, Eq.~\ref{eq:Sc_zipf}, must be used (SI).
+
+
+\subsection*{Dependence on the T-cell help threshold}
+
+At the antigen peak, the activation front stalls at
+\EQ
+\DG_{\max} = \log\frac{\pi_p^*}{\pi_c}, \qquad \pi_p^* \equiv \frac{k_\on N_A(t_p)}{\lam_A},
+\label{eq:Emax_pic}
+\EE
+where $\pi_p^*$ is the peak pMHC density of the best clone.
+In primary responses, the antigen peak is set independently of the B-cell response (by innate immunity in an infection), so $N_A(t_p)$, and hence $\pi_p^*$, does not depend on $\pi_c$.
+The threshold therefore enters the response only through $\DG_{\max}$.
+With Eq.~\ref{eq:yield} and Eq.~\ref{eq:alpha}, the primary yield and the size of the best clone are
+\EQ
+Y \approx \frac{\omega_0}{\beta^*(1-\zeta)} \left(\frac{\pi_p^*}{\pi_c}\right)^{\beta^*}, \qquad
+N_B^* \approx \left(\frac{\pi_p^*}{\pi_c}\right)^{\alpha},
+\EE
+valid as long as $\beta^*(1-\zeta)\DG_{\max} \gg 1$.
+Increasing $\pi_c$ thus reduces both, but the yield faster, so the share of the best clone, $N_B^*/Y \sim (\pi_c/\pi_p^*)^{\beta^*(1-\zeta)}$, grows.
+
+The potency of the recall response is maximal where the primary yield slightly overfills the memory pool,
+\EQ
+\gamma Y(\pi_c^*) = \frac{s^*}{1-s^*}\, M, \qquad s^* = \hat\zeta - \frac{1}{\beta^*},
+\EE
+which balances the delayed activation and smaller best clone at higher thresholds against the purging of the low-affinity tail (SI, The T-cell help threshold and the optimal potency).
+With the measured exponents, $s^* \approx 0.65$--$0.85$, so the optimum lies close to the crossover from the saturated to the unsaturated regime.
+Using the expression for $Y$ above,
+\EQ
+\pi_c^* \approx \pi_p^* \left[\frac{(1-s^*)\,\gamma\,\omega_0}{s^*\, M \beta^*(1-\zeta)}\right]^{1/\beta^*}.
+\EE
+
+The best clone is retained in memory if $\nu\gamma N_B^* \gtrsim 1$ (see Memory formation and sampling).
+In the saturated regime, this requires $M N_B^*/Y \gtrsim 1$, which holds for sufficiently large $\pi_c$; in the unsaturated regime, it requires $\gamma N_B^* \gtrsim 1$, which holds for $\pi_c \lesssim \pi_p^*\gamma^{1/\alpha}$.
+The best clones are therefore retained within a window of thresholds: at low $\pi_c$, the memory pool fills with low-affinity cells, and at high $\pi_c$, the best clone is too small to survive sampling.
+
+\subsection*{Repertoire data analysis}
+\todo{Datasets and sorts used (CGG-alum experiments pooled; influenza/HA), identity of the HA ``GC'' sort, GC vs.\ plasmablast compartments, clone definition (V, D, J), normalization by the largest sampled clone, fixed random seed.}
+
+We fitted the Zipf law, Eq.~\ref{eq:SI_rate_zipf_norm}, and the two-parameter family, Eq.~\ref{eq:SI_rate_family} with $c \geq 0$, to the cohort-averaged normalized rank curves of Fig.~\ref{fig:csd}B.
+At each rank, $x_k$ was averaged over the mice with at least $k$ clones; ranks with fewer than two contributing mice were discarded, and fits used ranks $2 \leq k \leq 20$ (rank 1 is fixed by normalization).
+Both forms were fitted by least squares on $\log x_k$, and compared by
+\EQ
+\Delta{\rm AIC} = {\rm AIC}_{\rm rate} - {\rm AIC}_{\rm Zipf},
+\qquad
+{\rm AIC} = n \log\frac{\rm RSS}{n} + 2k,
+\label{eq:rate_AIC}
+\EE
+where RSS is the residual sum of squares, $n$ the number of fitted ranks, and $k$ the number of parameters ($k = 1$ for Zipf, $k = 2$ for the rate model).
+If the curvature parameter does not improve the fit, the rate model converges to $c = 0$ and $\Delta{\rm AIC} = +2$.
+Uncertainties were obtained by resampling mice with replacement ($400$ bootstrap replicates); since residuals at consecutive ranks are correlated, we use the bootstrap distribution of $c$ rather than absolute AIC values as the primary measure.
+
+\subsection*{Numerical simulations}
+\todo{Numerical scheme (one paragraph); parameter table in SI (Numerical simulations).}
+
+
+\section*{Acknowledgments}
+This work was partially supported by the Deutsche Forschungsgemeinschaft (grant CRC 1310, to M.L.).
+
+\bibliographystyle{apsrev4-2}
+\bibliography{references}
+  
+
+\todo{
+\begin{itemize}
+	\item In the Gaussian approximation, the following relations hold:
+	\begin{enumerate}
+		\item $\Delta \DG \equiv \mu_0 - \DG^*$
+		\item $\Delta \DG = \beta^*\sigma^2$
+		\item $\Delta \DG = \sigma\sqrt{2\log L_0}$
+		\item $\mu_0 =  \ell \mu_r$ ; $\sigma^2 = \ell \sigma_r^2$
+		\item values: $\beta^*\approx 2.3$ from data.
+		\item if $\mu_r \approx 0$, then $\mu_0=0$
+		\item for $L_0 = $
+		\item $K_D^* \approx 0.1\,\mu M$ (from UCA from \cite{Mesin_2020_Restricted_clonality})
+		\item Average affinity after a primary response $K_D \approx 10 \,\mu M$ (from \cite{Eisen_2014_AM, AltanBonnet_2020_Review}) 
+	\end{enumerate}
+	where $\mu_0$ is the energy distance between the average energy and the EVT value. 
+\end{itemize}
+}
+
+\end{document}
+

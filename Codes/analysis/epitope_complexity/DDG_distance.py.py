@@ -108,7 +108,7 @@ def main():
 	effects_df = pd.read_csv(root_dir + pars_dir_1 + pars_dir_2 + '/DDG_epis.csv')
 	effects0_df = pd.read_csv(root_dir + pars_dir_1 + pars_dir_2 + '/DDG_epis_epi.csv')
 	
-	output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/'+project+'/'+subproject
+	output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/research_projects/Immune_System/figures/'+project+'/'+subproject
 	os.makedirs(output_plot, exist_ok=True)
 
 	mutations = ['_0_3_19', '_16_13_18', '_32_7_15']

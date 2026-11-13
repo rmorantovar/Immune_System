@@ -144,4 +144,4 @@ if __name__ == "__main__":
         
         my_plot_layout(ax = ax, xscale='log', yscale= 'log', ticks_labelsize= 24, x_fontsize=30, y_fontsize=30, bottom = 0.1, top = 8e3)
         ax.legend(fontsize = 20, loc = 1)
-        fig.savefig('/Users/robertomorantovar/Library/CloudStorage/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/presentation_MHC/SS_kstep-%.2f.pdf'%kstep)
+        fig.savefig('/Users/robertomorantovar/Library/CloudStorage/Dropbox/My_Documents/Science/research_projects/Immune_System/figures/presentation_MHC/SS_kstep-%.2f.pdf'%kstep)

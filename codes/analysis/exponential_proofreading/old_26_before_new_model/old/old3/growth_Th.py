@@ -11,7 +11,7 @@ text_files_path = '/Users/robertomorantovar/Library/CloudStorage/Dropbox/Researc
 project = 'memory_response'
 subproject = 'growth_Th'
 
-output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/'+project+'/'+subproject
+output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/research_projects/Immune_System/figures/'+project+'/'+subproject
 os.makedirs(output_plot, exist_ok=True)
 
 # ==========================

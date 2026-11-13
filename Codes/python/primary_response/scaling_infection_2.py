@@ -4,7 +4,7 @@ from functions_2 import*
 plt.rcParams['text.usetex'] = True
 warnings.filterwarnings("ignore")
 
-Text_files_path = str(DROPBOX) + '/Research_files/Immune_system/primary_response/'
+Text_files_path = str(DRIVE) + '/Research_files/Immune_system/primary_response/'
 
 # Define constants and parameters
 D0 = 3*1e-8 * (60*60*24) # Diffusion coefficient [cm^2/days]

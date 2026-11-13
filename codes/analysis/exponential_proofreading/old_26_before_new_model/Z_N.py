@@ -86,7 +86,7 @@ def main():
 		WTs = antigens_data.iloc[[0]]
 	else:
 		WTs = antigens_data
-	output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/'+project+'/'+subproject
+	output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/research_projects/Immune_System/figures/'+project+'/'+subproject
 	os.makedirs(output_plot, exist_ok=True)
 
 	N_ant = len(WTs[:])

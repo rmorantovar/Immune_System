@@ -221,7 +221,7 @@ for i_p, p in enumerate(ps):
 	ax.set_ylim(bottom = 2e-7, top = 1)
 	#ax.set_yticks([1, 0.1, 0.01, 0.001])
 	#ax.set_yticklabels([1, 0.1, 0.01])
-	fig.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/entropy_repertoire/simulations/Pi_vs_Omega_act_'+energy_model+'_p-%.1f_log.pdf'%(p))
+	fig.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/research_projects/Immune_System/figures/entropy_repertoire/simulations/Pi_vs_Omega_act_'+energy_model+'_p-%.1f_log.pdf'%(p))
 
 	my_plot_layout(ax = ax, xscale='log', yscale= 'linear', ticks_labelsize= 28, x_fontsize=30, y_fontsize=30 )
 	ax.legend(fontsize = 18, title_fontsize = 24, loc = 2)
@@ -229,7 +229,7 @@ for i_p, p in enumerate(ps):
 	ax.set_ylim(bottom = 2e-7, top = np.max(Q_R)+.2)
 	#ax.set_yticks([1, 0.1, 0.01, 0.001])
 	#ax.set_yticklabels([1, 0.1, 0.01])
-	fig.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/entropy_repertoire/simulations/Pi_vs_Omega_act_'+energy_model+'_p-%.1f.pdf'%(p))
+	fig.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/research_projects/Immune_System/figures/entropy_repertoire/simulations/Pi_vs_Omega_act_'+energy_model+'_p-%.1f.pdf'%(p))
 
 	my_plot_layout(ax = ax2, xscale='linear', yscale= 'linear', ticks_labelsize= 30, x_fontsize=30, y_fontsize=30 )
 	ax2.legend(fontsize = 16, title_fontsize = 20, loc = 0)
@@ -237,7 +237,7 @@ for i_p, p in enumerate(ps):
 	#ax2.set_ylim(bottom = 2e-4, top = 1e0)
 	#ax2.set_yticks([1, 0.1, 0.01, 0.001])
 	#ax2.set_yticklabels([1, 0.1, 0.01])
-	fig2.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/entropy_repertoire/simulations/Pi_vs_Omega_act_distance_'+energy_model+'_p-%.1f.pdf'%(p))
+	fig2.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/research_projects/Immune_System/figures/entropy_repertoire/simulations/Pi_vs_Omega_act_distance_'+energy_model+'_p-%.1f.pdf'%(p))
 
 ax_total.plot(np.exp(Es[::n_coarse][:-2][::1]), Q_0[::1], color = 'grey', ls = '--', label = r'$\Omega_{0}$', lw = 4, zorder = 0)
 
@@ -256,7 +256,7 @@ ax0.legend(fontsize = 34, title_fontsize = 32, loc = 4)
 #ax0.set_ylim(bottom = 2e-7, top = 3e-2)
 #ax0.set_yticks([1, 0.1, 0.01, 0.001])
 #ax0.set_yticklabels([1, 0.1, 0.01])
-fig0.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/entropy_repertoire/simulations/D_'+energy_model+'.pdf')
+fig0.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/research_projects/Immune_System/figures/entropy_repertoire/simulations/D_'+energy_model+'.pdf')
 
 my_plot_layout(ax = ax_total, xscale='log', yscale= 'log', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_total.set_xlim(left = 2e-10, right = 8e-1)
@@ -264,7 +264,7 @@ ax_total.set_ylim(bottom = 2e-8, top = 2)
 #ax_total.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_total.set_yticklabels([1, 0.1, 0.01])
 # ax_total.legend(fontsize = 24, title = r'$p$', title_fontsize = 26, loc = 0)
-fig_total.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/entropy_repertoire/simulations/Omega_p_'+energy_model+'_log.pdf')
+fig_total.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/research_projects/Immune_System/figures/entropy_repertoire/simulations/Omega_p_'+energy_model+'_log.pdf')
 
 my_plot_layout(ax = ax_total, xscale='log', yscale= 'linear', ticks_labelsize= 40, x_fontsize=30, y_fontsize=30 )
 ax_total.set_xlim(left = 2e-10, right = 8e-1)
@@ -272,5 +272,5 @@ ax_total.set_ylim(bottom = 2e-7, top = 1.01)
 #ax_total.set_yticks([1, 0.1, 0.01, 0.001])
 #ax_total.set_yticklabels([1, 0.1, 0.01])
 # ax_total.legend(fontsize = 24, title = r'$p$', title_fontsize = 26, loc = 0)
-fig_total.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/entropy_repertoire/simulations/Omega_p_'+energy_model+'.pdf')
+fig_total.savefig('/Users/robertomorantovar/Dropbox/My_Documents/Science/research_projects/Immune_System/figures/entropy_repertoire/simulations/Omega_p_'+energy_model+'.pdf')
 

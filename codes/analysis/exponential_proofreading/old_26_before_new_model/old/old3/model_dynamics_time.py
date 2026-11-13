@@ -54,7 +54,7 @@ project = 'memory_response'
 subproject = 'multi-epitope'
 subproject = 'model_dynamics_time'
 
-output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/'+project+'/'+subproject
+output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/research_projects/Immune_System/figures/'+project+'/'+subproject
 os.makedirs(output_plot, exist_ok=True)
 
 antigen = 'TACNSEYPNTTRAKCGRWYC' #L=20

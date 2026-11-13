@@ -108,7 +108,7 @@ ps = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5.0]
 project = 'memory_response'
 subproject = 'Z_dynamics'
 
-output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/'+project+'/'+subproject
+output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/research_projects/Immune_System/figures/'+project+'/'+subproject
 os.makedirs(output_plot, exist_ok=True)
 
 fig, ax = plt.subplots(figsize = (5*1.62, 1), linewidth = 6, gridspec_kw={'left':0.1, 'right':.9, 'bottom':.1, 'top': .3})

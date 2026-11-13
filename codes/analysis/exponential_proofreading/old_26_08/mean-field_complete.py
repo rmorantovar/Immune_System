@@ -22,7 +22,7 @@ from lib_mf import *
 
 
 if __name__ == '__main__':
-    output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/exponential_proofreading/mean_field_complete/'
+    output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/research_projects/Immune_System/figures/exponential_proofreading/mean_field_complete/'
     os.makedirs(output_plot, exist_ok=True)
 
     base = dict(N_A0=1.0, delta_A=3.0, lambda_A=6.,

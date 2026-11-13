@@ -176,7 +176,7 @@ def main(argv=None):
     project = 'presentation_MHC'
     subproject = 'integral_solver'
 
-    output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/'+project+'/'+subproject
+    output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/research_projects/Immune_System/figures/'+project+'/'+subproject
     os.makedirs(output_plot, exist_ok=True)
 
     args = parse_args(argv)

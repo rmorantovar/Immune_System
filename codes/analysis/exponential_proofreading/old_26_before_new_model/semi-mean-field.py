@@ -27,7 +27,7 @@ from lib_mf import*
 
 
 if __name__ == '__main__':
-    output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/exponential_proofreading/mean_field_dynamics/'
+    output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/research_projects/Immune_System/figures/exponential_proofreading/mean_field_dynamics/'
     os.makedirs(output_plot, exist_ok=True)
     # Default parameters
     p = Parameters(N_A0=1.0, lambda_A=6.0, delta_A=0.01,

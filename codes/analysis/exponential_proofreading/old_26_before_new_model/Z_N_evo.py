@@ -87,7 +87,7 @@ def main():
 		WTs = antigens_data.iloc[[0]]
 	else:
 		WTs = antigens_data
-	output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/'+project+'/'+subproject
+	output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/research_projects/Immune_System/figures/'+project+'/'+subproject
 	os.makedirs(output_plot, exist_ok=True)
 
 	figZ, axZ = plt.subplots(figsize=(8*1.62,8), gridspec_kw={'left':0.12, 'right':.95, 'bottom':.15, 'top': 0.94})

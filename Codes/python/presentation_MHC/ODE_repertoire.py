@@ -175,7 +175,7 @@ if __name__ == "__main__":
     project = 'presentation_MHC'
     subproject = 'ODE_repertoire'
 
-    output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/Projects/Immune_System/_Repository/Figures/'+project+'/'+subproject
+    output_plot = '/Users/robertomorantovar/Dropbox/My_Documents/Science/research_projects/Immune_System/figures/'+project+'/'+subproject
     os.makedirs(output_plot, exist_ok=True)
 
     params = ModelParams(
