@@ -16,7 +16,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from cycler import cycler
 
-from mf_lib import (compute_N_B_tot, compute_L_act, compute_zipf, compute_potency_t)
+from mf_lib import (compute_N_B_tot, compute_L_act, compute_zipf, compute_potency_t, _N_B)
 
 # ============================================================
 # Palette
@@ -146,7 +146,7 @@ def plot_pi(ax, res, color, label=None, rows=(0, 10, -10)):
 def plot_NB(ax, res, color, label=None, rows=(0, 10, -10)):
     """Per-clone total B cells N_Bo+N_Ba for representative clones."""
     t = res['t']
-    N_B = res['N_Bo'] + res['N_Ba'] if 'N_Ba' in res else res['N_B']
+    N_B = _N_B(res)
     line = ax.plot(t, N_B[rows[0], :], lw=6, color=color, label=label)
     c = line[0].get_color()
     for r, (lw, a) in zip(rows[1:], [(6, 0.5), (4, 0.2)]):
@@ -207,7 +207,7 @@ def compute_affinity_front(res, on_slope=0.85):
     (0.78 in the dynamics scripts, 1.0 in the h0 script).
     """
     t, p = res['t'], res['params']
-    N_B = res['N_Bo'] + res['N_Ba'] if 'N_Ba' in res else res['N_B']
+    N_B = _N_B(res)
     best = np.argmax(N_B[:, 0] > 0)
     bump = 0.06 if not p.memory else 0.01
     tstar = t[N_B[best, :] > N_B[best, 0] + bump * N_B[best, 0]][0]

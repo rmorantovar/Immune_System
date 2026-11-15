@@ -1,0 +1,521 @@
+"""
+plot_meanfield.py -- generic figures for a run saved by run_meanfield.py.
+
+    python plot_meanfield.py <run name>          (a folder under run_meanfield.DATA_ROOT)
+
+Writes under run_meanfield.FIG_ROOT/<run>/:
+    dynamics/<response>_<quantity>.pdf   time courses; one curve per sweep point
+                                         (2-D sweeps: one figure per first / middle / last
+                                         value of the second parameter)
+    observables/<observable>.pdf         1-D sweep: observable vs the swept parameter,
+                                         one line per (response, t_obs)
+    observables/<observable>_<response>_t<t_obs>.pdf
+                                         2-D sweep: heatmap over the two parameters
+A swept h0 is shown as pi_c = (b0 / h0)^(1 / hill).
+"""
+
+import os, sys, json, pickle
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../library'))
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+import mf_lib as mf
+import mf_plotting as mfp
+from run_meanfield import DATA_ROOT, FIG_ROOT
+
+CLONE_ROWS = (0, 10, -10)       # clones drawn from per-clone arrays of a polyclonal run
+CLONE_LS = ['-', '--', ':']
+
+
+def tex(name):
+    """Axis label for a column or quantity name."""
+    special = {'pi_c': r'$\pi_c$', 'N_T0': r'$N_T^0$', 'n_mem': r'$n_{\mathrm{mem}}$', 'h0': r'$h_0$',
+               't_switch': r'$t_s$', 'h_max': r'$h_{\max}$', 'phi_naive': r'$\phi_{\mathrm{naive}}$'}
+    return special.get(name, name.replace('_', r'\_'))
+
+
+def axis_name(sweep_name):
+    return 'pi_c' if sweep_name == 'h0' else sweep_name
+
+
+def is_log(values):
+    """Log scale when the positive values span > 50x and there are no negatives (zeros are masked)."""
+    v = np.asarray(values, dtype=float)
+    v = v[np.isfinite(v)]
+    pos = v[v > 0]
+    return bool(len(pos) > 1 and np.all(v >= 0) and pos.max() / pos.min() > 50)
+
+
+def point_label(cfg, pt):
+    """Legend label for a sweep point: its first parameter (a swept h0 shown as pi_c)."""
+    if not pt:
+        return None
+    name, v = pt[0]
+    if name == 'h0':
+        b = cfg['base']
+        return r'$\pi_c=%.3g$' % (b['b0'] / v) ** (1 / b['hill'])
+    return f'{tex(name)}$={v:.3g}$'
+
+
+def load(run):
+    folder = os.path.join(DATA_ROOT, run)
+    df = pd.read_csv(os.path.join(folder, 'observables.csv'))
+    with open(os.path.join(folder, 'dynamics.pkl'), 'rb') as fh:
+        dynamics = pickle.load(fh)
+    with open(os.path.join(folder, 'config.json')) as fh:
+        cfg = json.load(fh)
+    return cfg, df, dynamics
+
+
+def save(fig, out, name):
+    os.makedirs(out, exist_ok=True)
+    fig.savefig(os.path.join(out, f'{name}.pdf'), dpi=800, transparent=True)
+    plt.close(fig)
+
+
+# ============================================================
+# Dynamics
+# ============================================================
+def plot_dynamics(cfg, dynamics, out):
+    names = list(cfg['sweep'])
+    responses = list(dict.fromkeys(resp for _, resp in dynamics))
+    keys = list(dict.fromkeys(point for point, _ in dynamics))
+    groups = {'': keys}                                        # figure tag -> sweep points
+    if len(names) == 2:                                        # fix the second parameter
+        vals = cfg['sweep'][names[1]]
+        groups = {f'_{names[1]}_{v:.3g}': [k for k in keys if dict(k)[names[1]] == v]
+                  for v in [vals[0], vals[len(vals) // 2], vals[-1]]}
+    for tag, pts_all in groups.items():
+        for resp in responses:
+            pts = [pt for pt in pts_all if (pt, resp) in dynamics]   # a recall can be missing
+            if not pts:
+                continue
+            cols = mfp.sweep_colors(len(pts), 'turbo') if len(pts) > 1 else ['k']
+            quantities = [q for q in dynamics[(pts[0], resp)] if q not in ('t', 'DG')]
+            for q in quantities:
+                fig, ax = mfp.new_fig()
+                for c, pt in zip(cols, pts):
+                    d = dynamics[(pt, resp)]
+                    label = point_label(cfg, pt)
+                    y = np.asarray(d[q])
+                    if y.ndim == 2:                            # per-clone array
+                        rows = range(len(y)) if len(y) <= 3 else CLONE_ROWS
+                        for ls, r in zip(CLONE_LS, rows):
+                            ax.plot(d['t'], y[r], color=c, ls=ls, lw=3, label=label if r == 0 else None)
+                    else:
+                        ax.plot(d['t'], y, color=c, lw=3, label=label)
+                if q not in ('T_free',) and not q.startswith('f_'):
+                    ax.set_yscale('log')
+                    top = ax.get_ylim()[1]
+                    ax.set_ylim(bottom=max(ax.get_ylim()[0], top * 1e-12))   # hide near-empty bins
+                ax.set_xlabel(r'$t$', fontsize=30)
+                ax.set_ylabel(tex(q), fontsize=30)
+                ax.tick_params(axis='both', labelsize=26)
+                if len(pts) > 1 and len(pts) <= 16:
+                    ax.legend(fontsize=12, ncol=2)
+                save(fig, os.path.join(out, 'dynamics'), f'{resp}_{q}{tag}')
+
+
+# ============================================================
+# Observables
+# ============================================================
+VALUE_COLS = ('response', 't_obs')
+
+
+def observable_columns(cfg, df):
+    meta = set(cfg['sweep']) | {'pi_c', 'response', 't_obs'}
+    return [c for c in df.columns if c not in meta and df[c].notna().any()]
+
+
+def plot_observables_1d(cfg, df, out):
+    x = axis_name(list(cfg['sweep'])[0])
+    combos = df[list(VALUE_COLS)].drop_duplicates().itertuples(index=False)
+    combos = list(combos)
+    cols = mfp.sweep_colors(len(combos), 'viridis') if len(combos) > 1 else ['k']
+    for obs in observable_columns(cfg, df):
+        fig, ax = mfp.new_fig()
+        for c, (resp, t_obs) in zip(cols, combos):
+            sub = df[(df.response == resp) & (df.t_obs == t_obs)].sort_values(x)
+            if sub[obs].notna().any():
+                ax.plot(sub[x], sub[obs], 'o-', color=c, mec='k', ms=9, lw=2,
+                        label=fr'{resp}, $t={t_obs:.3g}$')
+        if not ax.lines:
+            plt.close(fig)
+            continue
+        if is_log(df[x]):
+            ax.set_xscale('log')
+        if is_log(df[obs].dropna()):
+            ax.set_yscale('log')
+        ax.set_xlabel(tex(x), fontsize=30)
+        ax.set_ylabel(tex(obs), fontsize=30)
+        ax.tick_params(axis='both', labelsize=26)
+        ax.legend(fontsize=16)
+        save(fig, os.path.join(out, 'observables'), obs)
+
+
+def plot_observables_2d(cfg, df, out):
+    n1, n2 = list(cfg['sweep'])
+    x, y = axis_name(n1), n2
+    for obs in observable_columns(cfg, df):
+        for (resp, t_obs), sub in df.groupby(list(VALUE_COLS)):
+            if not sub[obs].notna().any():
+                continue
+            grid = sub.pivot_table(index=y, columns=x, values=obs)
+            Z = grid.to_numpy()
+            log_z = is_log(Z[np.isfinite(Z)])
+            fig, ax = mfp.new_fig()
+            with np.errstate(divide='ignore'):
+                Zp = np.where(Z > 0, np.log10(np.where(Z > 0, Z, 1.0)), np.nan) if log_z else Z
+            mesh = ax.pcolormesh(grid.columns, grid.index, Zp,
+                                 shading='nearest', cmap='viridis')
+            fig.colorbar(mesh, ax=ax).set_label((r'$\log_{10}$ ' if log_z else '') + tex(obs), fontsize=24)
+            if is_log(grid.columns):
+                ax.set_xscale('log')
+            if is_log(grid.index):
+                ax.set_yscale('log')
+            ax.set_xlabel(tex(x), fontsize=30)
+            ax.set_ylabel(tex(y), fontsize=30)
+            ax.tick_params(axis='both', labelsize=26)
+            ax.set_title(fr'{resp}, $t={t_obs:.3g}$', fontsize=22)
+            save(fig, os.path.join(out, 'observables'), f'{obs}_{resp}_t{t_obs:.3g}')
+
+
+# ============================================================
+# Manuscript figures (ported from run_meanfield_legacy.py), under <run>/manuscript/
+# ============================================================
+DG4D_STAR, DG4D_SIG2 = -16.0, 7.0     # naive N(0, sigma2) with high-affinity edge -beta* sigma2
+FIG4D_MU_RECALL = -16.0               # tilt of the recall responding Gaussian (zeta ~ 1)
+P_T_REF = 4.4                         # potency P = lambda_A (P_T_REF - t_c), as mf.compute_potency_P
+BOOST_DATA = dict(flu_HA_d6=0.044, lo=0.038, hi=0.11)   # Mesin et al. 2020: memory fraction
+
+
+def find_dynamics(dynamics, point, resp):
+    """Time courses of one (sweep point, response); values matched with a tolerance
+    (they come back from observables.csv slightly rounded)."""
+    for (key, r), d in dynamics.items():
+        if r == resp and len(key) == len(point) and all(
+                n == k and np.isclose(v, point[k], rtol=1e-9, atol=0) for (n, v), k in zip(key, point)):
+            return d
+    raise KeyError((point, resp))
+
+
+def last_t(df, resp):
+    sub = df[df.response == resp]
+    return sub[sub.t_obs == sub.t_obs.max()]
+
+
+def fig_potency(cfg, df, out):
+    """Recall potency vs specificity across pi_c, with the analytic curve (legacy 'P_shared' -> potency.pdf).
+
+    Specificity: analytic D_KL of the tilted, truncated Gaussian between the recall's activated
+    DG range. Theory (SI, optimal threshold): lambda_A t_c = (1/r)[-alpha E_max + log(1 + Y/M)],
+    reach E_max and yield Y of the naive response fitted across pi_c, constant fitted to the points.
+    """
+    b = cfg['base']
+    lamA, lamB, dA, beta, M = b['lambda_A'], b['b0'], b['delta_A'], b['beta_star'], b['n_mem']
+    alpha = lamB * (1.0 / lamA + 1.0 / min(dA, lamB))
+    r = lamB / lamA
+    rec, nav = last_t(df, 'recall'), last_t(df, 'naive')
+
+    # recall points, coloured by sweep position (legacy 'turbo_r')
+    cols = mfp.sweep_colors(len(rec), 'turbo_r')
+    pts = []
+    for c, row in zip(cols, rec.itertuples()):
+        P = lamA * (P_T_REF - row.t_c)
+        D_ana = mf.dkl_analytic(FIG4D_MU_RECALL, DG4D_STAR + row.DG_hi_memory,
+                                DG_star=DG4D_STAR + row.DG_lo_memory, sigma2=DG4D_SIG2)
+        if not (np.isnan(row.D_KL_memory) or np.isnan(P) or np.isnan(D_ana)):
+            pts.append((D_ana, P, c, row.pi_c))
+    D_pts, P_pts = np.array([q[0] for q in pts]), np.array([q[1] for q in pts])
+    pic_pts = np.array([q[3] for q in pts])
+
+    # theory curve from the naive responses
+    nav = nav.dropna(subset=['DG_hi_naive', 'DG_lo_naive', 'Y_naive'])
+    pic_sim = nav.pi_c.to_numpy()
+    Emax_sim = (nav.DG_hi_naive - nav.DG_lo_naive).to_numpy()
+    DGmin = nav.DG_lo_naive.iloc[-1]
+    E0 = np.mean(Emax_sim + np.log(pic_sim))
+    Emax_of = lambda pic: E0 - np.log(pic)
+    logY_shape = lambda Em: alpha * Em + np.log(np.expm1((beta - alpha) * Em) / (beta - alpha))
+    logY0 = np.mean(np.log(nav.Y_naive.to_numpy()) - logY_shape(Emax_of(pic_sim)))
+    P_shape = lambda pic: (alpha * Emax_of(pic) - np.log1p(np.exp(logY0 + logY_shape(Emax_of(pic))) / M)) / r
+    const = np.mean(P_pts - P_shape(pic_pts))
+    pic = np.logspace(np.log10(pic_sim.min()), np.log10(pic_sim.max()), 200)
+    D_th = np.array([mf.dkl_analytic(FIG4D_MU_RECALL, DG4D_STAR + e + DGmin, DG_star=DG4D_STAR + DGmin,
+                                     sigma2=DG4D_SIG2) for e in Emax_of(pic)])
+
+    fig, ax = mfp.new_fig()
+    idx = np.argsort(D_pts)
+    ax.scatter(np.exp(D_pts[idx]), P_pts[idx], facecolors=[pts[i][2] for i in idx], edgecolors='k',
+               marker='s', s=130, linewidth=1.5, zorder=2, label=r'$\mathrm{recall}$')
+    ax.plot(np.exp(D_th), P_shape(pic) + const, color='k', lw=2, ls='--', zorder=1, label=r'$\mathrm{theory}$')
+    ax.set_xlim(9e5, 4e7)
+    ax.set_ylim(0, 11)
+    ax.set_xscale('log')
+    ax.tick_params(axis='both', labelsize=44)
+    ax.legend(fontsize=24, loc=3)
+    save(fig, out, 'potency')
+
+    # same figure against the entropy H of the responding distribution (same truncated Gaussian)
+    H_of = lambda hi, lo: mf.entropy_analytic(FIG4D_MU_RECALL, DG4D_STAR + hi, DG_star=DG4D_STAR + lo,
+                                              sigma2=DG4D_SIG2)
+    rec_ok = [row for row in rec.itertuples()
+              if not (np.isnan(row.D_KL_memory) or np.isnan(row.t_c)
+                      or np.isnan(mf.dkl_analytic(FIG4D_MU_RECALL, DG4D_STAR + row.DG_hi_memory,
+                                                  DG_star=DG4D_STAR + row.DG_lo_memory, sigma2=DG4D_SIG2)))]
+    H_pts = np.array([H_of(row.DG_hi_memory, row.DG_lo_memory) for row in rec_ok])
+    H_th = np.array([H_of(e + DGmin, DGmin) for e in Emax_of(pic)])
+    fig, ax = mfp.new_fig()
+    ax.scatter(H_pts[idx], P_pts[idx], facecolors=[pts[i][2] for i in idx], edgecolors='k',
+               marker='s', s=130, linewidth=1.5, zorder=2, label=r'$\mathrm{recall}$')
+    ax.plot(H_th, P_shape(pic) + const, color='k', lw=2, ls='--', zorder=1, label=r'$\mathrm{theory}$')
+    ax.set_ylim(0, 11)
+    ax.set_xlabel(r'$H\,[\mathrm{nats}]$', fontsize=36)
+    ax.tick_params(axis='both', labelsize=44)
+    ax.legend(fontsize=24, loc=3)
+    save(fig, out, 'potency_entropy')
+    return dict(D=D_pts, P=P_pts, pi_c=pic_pts, x_th=np.exp(D_th), P_th=P_shape(pic) + const,
+                H=H_pts, H_th=H_th)
+
+
+def fig_boost(cfg, df, dynamics, out):
+    """R vs pi_c, phi_naive map, r(DG) and R vs n_mem, one folder per t_obs (legacy boost figures)."""
+    f = cfg['recall']['f']
+    R_of = lambda m: m / (1.0 - m) / f                  # memory fraction -> R (inverts phi_naive)
+    nmem_label = lambda n: r'$10^{%.1f}$' % np.log10(n)
+    Y = last_t(df, 'naive').set_index(['h0', 'n_mem']).Y_naive          # primary yield (end of run)
+    for t_obs, rec in df[df.response == 'recall'].groupby('t_obs'):
+        o = os.path.join(out, f't_read_{round(t_obs, 1):g}')
+        pics = np.sort(rec.pi_c.unique())
+        n_mems = np.sort(rec.n_mem.unique())
+        grid = {k: rec.pivot_table(index='n_mem', columns='pi_c', values=k).reindex(index=n_mems, columns=pics)
+                for k in ('R', 'R_th', 'phi_naive')}
+        cols = mfp.sweep_colors(len(n_mems), 'winter')
+        rep = [0, len(pics) // 2, len(pics) - 1] if len(pics) > 2 else list(range(len(pics)))
+        rep_cols = mfp.sweep_colors(len(rep), 'autumn')
+        n_rep = n_mems[len(n_mems) // 2]
+
+        # 1. R vs pi_c
+        fig, ax = mfp.new_fig()
+        for c, n in zip(cols, n_mems):
+            ax.plot(pics, grid['R'].loc[n], 'o', color=c, mec='k', ms=10, label=nmem_label(n))
+            ax.plot(pics, grid['R_th'].loc[n], '-', color=c, lw=2)
+        ax.axhspan(R_of(BOOST_DATA['lo']), R_of(BOOST_DATA['hi']), color='grey', alpha=0.3)
+        ax.axhline(R_of(BOOST_DATA['flu_HA_d6']), color='k', ls='--', lw=1.5)
+        ax.set_xscale('log')
+        ax.set_yscale('log')
+        ax.set_xlabel(r'$\pi_c$', fontsize=30)
+        ax.set_ylabel(r'$R$', fontsize=30)
+        ax.tick_params(axis='both', labelsize=30)
+        ax.legend(fontsize=16, title=r'$n_{\mathrm{mem}}$', title_fontsize=18, ncol=2)
+        save(fig, o, 'R_pi')
+
+        # 2. phi_naive over (pi_c, n_mem), contours at the data memory fractions
+        phi = grid['phi_naive'].to_numpy()
+        fig, ax = mfp.new_fig()
+        mesh = ax.pcolormesh(pics, n_mems, phi, shading='nearest', cmap='viridis', vmin=0, vmax=1)
+        fig.colorbar(mesh, ax=ax).set_label(r'$\phi_{\mathrm{naive}}$', fontsize=30)
+        if phi.shape[0] > 1 and phi.shape[1] > 1:
+            ax.contour(pics, n_mems, 1.0 - phi, levels=[BOOST_DATA['flu_HA_d6']], colors='w', linestyles='-')
+            ax.contour(pics, n_mems, 1.0 - phi, levels=[BOOST_DATA['hi']], colors='w', linestyles='--')
+        ax.set_xscale('log')
+        ax.set_yscale('log')
+        ax.set_xlabel(r'$\pi_c$', fontsize=30)
+        ax.set_ylabel(r'$n_{\mathrm{mem}}$', fontsize=30)
+        ax.tick_params(axis='both', labelsize=30)
+        save(fig, o, 'phi_naive_map')
+
+        # 3. r(DG) = memory / naive fold expansion, with kappa
+        fig, ax = mfp.new_fig()
+        for c, k in zip(rep_cols, rep):
+            row = rec[(rec.pi_c == pics[k]) & (rec.n_mem == n_rep)].iloc[0]
+            d = find_dynamics(dynamics, {'h0': row.h0, 'n_mem': row.n_mem}, 'recall')
+            i = int(np.argmin(np.abs(d['t'] - t_obs)))
+            Nm, Nn = d['N_B_clones_memory'], d['N_B_clones_naive']
+            with np.errstate(divide='ignore', invalid='ignore'):
+                r = np.where(Nm[:, 0] > 0, Nm[:, i] / Nm[:, 0] / Nn[:, i], np.nan)
+            ax.plot(d['DG'], r, 'o-', color=c, mec='k', ms=8, lw=2, label=mfp.pi_star_label(pics[k]))
+            ax.axhline(row.kappa, color=c, ls='--', lw=1.5)
+        ax.set_yscale('log')
+        ax.set_xlabel(r'$\Delta G$', fontsize=30)
+        ax.set_ylabel(r'$r(\Delta G)$', fontsize=30)
+        ax.tick_params(axis='both', labelsize=30)
+        ax.legend(fontsize=18, title=r'$\pi_c$', title_fontsize=20)
+        save(fig, o, 'r_DG')
+
+        # 4. R vs n_mem at fixed pi_c; saturation expected at n_mem ~ Y (dotted)
+        fig, ax = mfp.new_fig()
+        for c, k in zip(rep_cols, rep):
+            ax.plot(n_mems, grid['R'][pics[k]], 'o', color=c, mec='k', ms=10, label=mfp.pi_star_label(pics[k]))
+            ax.plot(n_mems, grid['R_th'][pics[k]], '-', color=c, lw=2)
+            h0 = rec[rec.pi_c == pics[k]].h0.iloc[0]
+            ax.axvline(Y.loc[(h0, n_mems[0])], color=c, ls=':', lw=2)
+        ax.axhspan(R_of(BOOST_DATA['lo']), R_of(BOOST_DATA['hi']), color='grey', alpha=0.3)
+        ax.set_xscale('log')
+        ax.set_yscale('log')
+        ax.set_xlim(n_mems.min() / 2, n_mems.max() * 2)
+        ax.set_xlabel(r'$n_{\mathrm{mem}}$', fontsize=30)
+        ax.set_ylabel(r'$R$', fontsize=30)
+        ax.tick_params(axis='both', labelsize=30)
+        ax.legend(fontsize=18, title=r'$\pi_c$', title_fontsize=20)
+        save(fig, o, 'R_nmem')
+
+
+def fig_two_clone(cfg, df, dynamics, out):
+    """Clone sizes, clone-1 fraction, pi and final clone-1 fraction vs the swept knob (legacy two-clone figures).
+    Solid = clone 1 (DG1), dashed = clone 2 (DG1 + gap); colour = sweep value."""
+    name = list(cfg['sweep'])[0]
+    vals = cfg['sweep'][name]
+    T, b = cfg['T'], cfg['base']
+    cols = mfp.sweep_colors(len(vals), 'autumn')
+    name_tex = name.replace('_', r'\_')
+    responses = list(dict.fromkeys(resp for _, resp in dynamics))
+    final = {}
+    for resp in responses:
+        pop = 'naive' if resp == 'naive' else 'memory'
+        fig_NB, ax_NB = mfp.new_fig()
+        fig_f, ax_f = mfp.new_fig()
+        fig_pi, ax_pi = mfp.new_fig()
+        for c, v in zip(cols, vals):
+            try:
+                d = find_dynamics(dynamics, {name: v}, resp)
+            except KeyError:
+                continue
+            t, N_B, pi = d['t'], d[f'N_B_clones_{pop}'], d[f'pi_clones_{pop}']
+            lab = r'$\mathrm{%s} = %.3g$' % (name_tex, v)
+            ax_NB.plot(t, N_B[0], lw=5, color=c, ls='-', label=lab)
+            ax_NB.plot(t, N_B[1], lw=5, color=c, ls='--')
+            f1 = N_B[0] / (N_B[0] + N_B[1])
+            ax_f.plot(t, f1, lw=5, color=c, label=lab)
+            ax_pi.plot(t, pi[0], lw=5, color=c, ls='-', label=lab)
+            ax_pi.plot(t, pi[1], lw=5, color=c, ls='--')
+            h0 = v if name == 'h0' else b['h0']
+            h0 = b['b0'] if (pop == 'memory' and cfg['recall']['h0_mem'] == 'b0') else h0
+            ax_pi.axhline((b['b0'] / h0) ** (1 / b['hill']), lw=1, ls=':', color=c)
+            final.setdefault(resp, []).append((v, f1[-1]))
+        tag = f"{cfg['model']}_{resp}"
+        mfp.style_log_axis(ax_NB, T, ylim=(5e-1, None))
+        ax_NB.legend(fontsize=20)
+        save(fig_NB, out, f'N_B_{tag}')
+        ax_f.set_xlim(0, T)
+        ax_f.set_ylim(-0.02, 1.02)
+        ax_f.tick_params(axis='both', labelsize=44)
+        ax_f.legend(fontsize=20)
+        save(fig_f, out, f'frac_clone1_{tag}')
+        mfp.style_log_axis(ax_pi, T, ylim=(1e-2, None))
+        ax_pi.legend(fontsize=20)
+        save(fig_pi, out, f'pi_{tag}')
+
+    if len(vals) > 1:
+        fig, ax = mfp.new_fig()
+        for k, (resp, pts) in enumerate(final.items()):
+            x, y = np.array(pts).T
+            ax.plot(x, y, lw=3, ls=mfp.styles_mem[k], color=mfp.colors_mem[k], marker='os'[k], ms=14,
+                    mec='k', label=r'$\mathrm{%s}$' % ('primary' if resp == 'naive' else 'recall'))
+            if np.all(x > 0) and x.max() / x.min() > 100:
+                ax.set_xscale('log')
+        ax.set_xlabel(r'$\mathrm{%s}$' % name_tex, fontsize=30)
+        ax.set_ylim(-0.02, 1.02)
+        ax.tick_params(axis='both', labelsize=30)
+        ax.legend(fontsize=20)
+        save(fig, out, 'final_frac_clone1')
+
+
+def fig_ep(cfg, dynamics, out):
+    """Fig. 2 panels for a single run, one folder per response (legacy per-run figures, no null model):
+    N_A (A), pi of three clones (B), N_B of three clones (C), potency Z, and the affinity fronts (D;
+    analytic continuous-model fronts, so only for model='continuous')."""
+    T, base = cfg['T'], cfg['base']
+    p0 = mf.Parameters(**base)
+    weights = mf.build_context(p0, mode='grid')['weights']
+    pi_c_primary = (p0.b0 / p0.h0) ** (1 / p0.hill)
+    label = mfp.pi_star_label(pi_c_primary)                 # both responses labelled by the primary pi_c
+    for k, resp in enumerate(['naive', 'recall']):
+        if ((), resp) not in dynamics:
+            continue
+        d = dynamics[((), resp)]
+        pop = 'naive' if resp == 'naive' else 'memory'
+        h0 = p0.b0 if (pop == 'memory' and cfg['recall']['h0_mem'] == 'b0') else p0.h0
+        res = dict(t=d['t'], N_A=d['N_A'], pi=d[f'pi_clones_{pop}'], N_B=d[f'N_B_clones_{pop}'],
+                   DG=d['DG'], weights=weights, model=cfg['model'],
+                   params=mf.Parameters(**dict(base, h0=h0, memory=(pop == 'memory'))))
+        color = mfp.colors_mem[k]
+        o = os.path.join(out, resp)
+        left = dict(labelleft=(k == 0))                     # y tick labels on the primary only
+
+        fig, ax = mfp.new_fig(wide=False)
+        mfp.plot_NA(ax, res, label=label)
+        mfp.style_log_axis(ax, T - 1, ylim=(1e0, 1e11))
+        ax.tick_params(axis='y', which='both', labelsize=44, **left)
+        ax.tick_params(axis='x', labelsize=44, labelbottom=False)
+        save(fig, o, 'N_A')
+
+        fig, ax = mfp.new_fig(wide=False)
+        mfp.plot_pi(ax, res, color=color, label=label)
+        ax.axhline((p0.b0 / h0) ** (1 / p0.hill), lw=1, ls='--', color='grey', alpha=0.8)
+        mfp.style_log_axis(ax, T - 1, ylim=(5e-1, 1e4))
+        ax.tick_params(axis='y', which='both', labelsize=44, **left)
+        ax.tick_params(axis='x', labelsize=44, labelbottom=False)
+        save(fig, o, 'pi')
+
+        fig, ax = mfp.new_fig(wide=False)
+        mfp.plot_NB(ax, res, color=color, label=label)
+        ax.axhline(1.0, color='k', ls='--', alpha=0.5)
+        mfp.style_log_axis(ax, T - 1, ylim=(5e-1, 1e6))
+        ax.tick_params(axis='y', which='both', labelsize=44, **left)
+        ax.tick_params(axis='x', labelsize=44, labelbottom=False)
+        save(fig, o, 'N_B')
+
+        fig, ax = mfp.new_fig(wide=False)
+        mfp.plot_potency(ax, res, color=color, label=label)
+        ax.axhline(p0.Z_c, lw=1, ls='--', color='k')
+        mfp.style_log_axis(ax, T - 1, ylim=(5e-3, 1e7), hide_xticklabels=False)
+        save(fig, o, 'Z')
+
+        if cfg['model'] == 'continuous':
+            fr = mfp.compute_affinity_front(res, on_slope=0.85)
+            fig, ax = mfp.new_fig(wide=False)
+            ax.plot(fr['ton'], fr['DG_on'], lw=6, color=color, ls='-')
+            off = fr['DG_off'] > p0.DG_min
+            ax.plot(fr['toff'][off], fr['DG_off'][off], lw=6, color=color, ls='dashed')
+            ax.axhline(p0.DG_min, lw=1, ls='--', color='grey', alpha=0.8)
+            ax.set_ylim(p0.DG_min - 0.1, 7)
+            ax.set_xlim(0, T - 1)
+            ax.tick_params(axis='y', which='both', labelsize=44, **left)
+            ax.tick_params(axis='x', labelsize=44, labelbottom=True)
+            save(fig, o, 'DG')
+
+
+def manuscript_figures(cfg, df, dynamics, out):
+    """The legacy figure set that matches this run's configuration (nothing if none applies)."""
+    rec, sweep = cfg['recall'], list(cfg['sweep'])
+    recall = 'recall' in cfg['responses']
+    if (recall and rec['antigen'] == 'feedback' and not rec['with_naive']
+            and cfg['repertoire'] == 'polyclonal' and sweep == ['h0']):
+        fig_potency(cfg, df, out)
+    if recall and rec['with_naive'] and set(sweep) == {'h0', 'n_mem'} and 'N_B_clones' in cfg['dynamics']:
+        fig_boost(cfg, df, dynamics, out)
+    if cfg['repertoire'] == 'two_clone' and len(sweep) == 1 and 'N_B_clones' in cfg['dynamics']:
+        fig_two_clone(cfg, df, dynamics, out)
+    if (not sweep and cfg['repertoire'] == 'polyclonal'
+            and {'N_B_clones', 'pi_clones'} <= set(cfg['dynamics'])):
+        fig_ep(cfg, dynamics, out)
+
+
+def main(run):
+    cfg, df, dynamics = load(run)
+    mfp.use_style(usetex=True)
+    out = os.path.join(FIG_ROOT, run)
+    plot_dynamics(cfg, dynamics, out)
+    if len(cfg['sweep']) == 1:
+        plot_observables_1d(cfg, df, out)
+    elif len(cfg['sweep']) == 2:
+        plot_observables_2d(cfg, df, out)
+    manuscript_figures(cfg, df, dynamics, os.path.join(out, 'manuscript'))
+    print(f"figures in {out}")
+
+
+if __name__ == '__main__':
+    main(sys.argv[1])

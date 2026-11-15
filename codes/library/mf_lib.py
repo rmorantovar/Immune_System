@@ -21,7 +21,7 @@ Plotting lives in `mf_plotting.py`; driving runs/sweeps lives in
 `run_meanfield.py`.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Callable, List, Tuple, Optional
 
 import numpy as np
@@ -80,7 +80,9 @@ class Parameters:
     # --- Simulation options ---
     T_lim: bool = False          # include T-cell limitation in the demand function
     memory: bool = False         # use memory-like initial conditions for N_B
-    h0_mem: Optional[float] = None  # memory-population h0 in the 'boost' model (None -> h0)
+    h0_mem: Optional[float] = None  # memory-population h0 in the 'boost' models (None -> h0)
+    t_switch: float = 6.0        # 'two_stage' models: antigen loading for t < t_switch, expansion after
+    h_max: float = 1e3           # 'two_stage' models: max T-cell engagement rate per B cell (per day)
 
     # --- Explicit clones (mode='clones') ---
     clone_DG: Optional[tuple] = None   # DG of each clone, e.g. (0.0, 1.5)
@@ -235,6 +237,8 @@ class ModelSpec:
     solver: dict = field(default_factory=lambda: dict(
         method='LSODA', rtol=1e-4, atol=1e-5))
     postprocess: Optional[Callable] = None   # postprocess(res, p, ctx) -> None
+    breaks: Optional[Callable] = None        # breaks(p) -> times where the rhs switches law;
+                                             # integrated piecewise, ctx['segment'] = segment index
 
     def layout(self, M: int) -> StateLayout:
         return StateLayout(self.blocks, M)
@@ -501,6 +505,99 @@ def _rhs_boost(t, s, p, ctx):
 
 
 # -------------------------------------------------------------------------
+# two-stage models: antigen loading and T-cell help are separated in time.
+#   t <  t_switch : B cells take up antigen (pMHC load pi grows), no division;
+#   t >= t_switch : no antigen uptake; B cells engage T cells, divide, and the
+#                   loaded pMHC is diluted by division until pi < pi_c.
+# T cells form a finite pool of N_T0 cells: each conjugate (N_BT) occupies one
+# T cell for tau_eng, so engagement slows as T cells run out. This is the only
+# coupling between clones (and between naive and memory in 'two_stage_boost').
+# h(pi) = h0 pi^hill / (1 + h0 pi^hill / h_max): a B cell cannot engage faster than
+# it meets T cells; without the cap the loaded pMHC right after t_switch gives
+# rates ~1e8/day and an intractably stiff system.
+# Per population: resting N_Bo -(h(pi) T_free/N_T0)-> engaged N_BT
+#                 -(1/tau_eng)-> licensed N_Ba -(b0)-> 2 resting N_Bo.
+# -------------------------------------------------------------------------
+# Engagement right after t_switch is very fast (h0 pi^hill >> b0): stiff, so BDF;
+# atol well below the smallest per-clone memory sizes (~1e-4 cells).
+TWO_STAGE_SOLVER = dict(method='BDF', rtol=1e-4, atol=1e-10)
+TWO_STAGE_POPS = {'two_stage': (('', 'h0'),),
+                  'two_stage_boost': (('', 'h0'), ('_m', 'h0_mem'))}
+
+
+def _two_stage_pop_ic(p, ctx, N_Bo, sfx=''):
+    M = ctx['M']
+    return {'pi' + sfx: np.zeros(M), 'N_Bo' + sfx: N_Bo, 'N_BT' + sfx: np.zeros(M),
+            'N_Ba' + sfx: np.zeros(M), 'a' + sfx: np.zeros(M)}
+
+
+def _init_two_stage(p, ctx, memory_seed=None):
+    ctx['pops'] = TWO_STAGE_POPS['two_stage']
+    return dict(N_A=p.N_A0, **_two_stage_pop_ic(p, ctx, _memory_ic(p, ctx, memory_seed)))
+
+
+def _init_two_stage_boost(p, ctx, memory_seed=None):
+    ctx['pops'] = TWO_STAGE_POPS['two_stage_boost']
+    N_Bo_m = np.zeros(ctx['M']) if memory_seed is None else memory_seed.copy()
+    ctx['live_m'] = N_Bo_m > 0            # bins without memory stay frozen (see _init_boost)
+    return dict(N_A=p.N_A0, **_two_stage_pop_ic(p, ctx, ctx['N0'].copy()),
+                **_two_stage_pop_ic(p, ctx, N_Bo_m, '_m'))
+
+
+def _rhs_two_stage(t, s, p, ctx):
+    psi_vec, weights, neut = ctx['psi'], ctx['weights'], ctx['neut']
+    N_A = max(s['N_A'], 0.0)
+    loading = ctx['segment'] == 0 if 'segment' in ctx else t < p.t_switch
+    engaged = sum(np.sum(weights * np.maximum(s['N_BT' + sfx], 0.0)) for sfx, _ in ctx['pops'])
+    T_free = max(p.N_T0 - engaged, 0.0) / p.N_T0            # fraction of T cells free
+
+    d, Z = {}, 0.0
+    for sfx, h0_name in ctx['pops']:
+        h0 = getattr(p, h0_name)
+        h0 = p.h0 if h0 is None else h0
+        live = ctx['live_m'] if sfx == '_m' else 1.0
+        pi_vec = np.maximum(s['pi' + sfx], 0.0)
+        N_Bo = np.maximum(s['N_Bo' + sfx], 0.0)
+        N_BT = np.maximum(s['N_BT' + sfx], 0.0)
+        N_Ba = np.maximum(s['N_Ba' + sfx], 0.0)
+        a_vec = s['a' + sfx]
+
+        N_B_tot = N_Bo + N_BT + N_Ba
+        pi_star = (p.b0 / h0) ** (1 / p.hill)
+        g = pi_vec ** p.hill / (pi_vec ** p.hill + pi_star ** p.hill)
+        if loading:
+            dpi = p.k_on * psi_vec * N_A - p.delta_pi * pi_vec
+            eng = rel = div = 0.0
+        else:
+            with np.errstate(divide='ignore', invalid='ignore'):
+                lambda_eff = np.where(N_B_tot > 0, p.b0 * N_Ba / N_B_tot, 0.0)
+            dpi = - p.delta_pi * pi_vec - lambda_eff * pi_vec   # dilution by division
+            h = h0 * pi_vec ** p.hill
+            eng = h / (1.0 + h / p.h_max) * N_Bo * T_free      # engagement capped at h_max
+            rel = N_BT / p.tau_eng
+            div = p.b0 * N_Ba
+
+        d['pi' + sfx] = dpi * live
+        d['N_Bo' + sfx] = (- eng + 2 * div - p.delta_B * N_Bo) * live
+        d['N_BT' + sfx] = (eng - rel - p.delta_B * N_BT) * live
+        d['N_Ba' + sfx] = (rel - div - p.delta_B * N_Ba) * live
+        d['a' + sfx] = (10.0 * p.b0) * (1.0 - a_vec) * g * live
+        Z += np.sum(neut * N_B_tot * a_vec)
+
+    d['N_A'] = _dN_A_with_feedback(t, N_A, p, Z)
+    return d
+
+
+def _post_two_stage(res, p, ctx):
+    """Total cells per clone (resting + engaged + licensed) and the free T-cell fraction."""
+    engaged = 0.0
+    for sfx, _ in ctx['pops']:
+        res['N_B' + sfx] = res['N_Bo' + sfx] + res['N_BT' + sfx] + res['N_Ba' + sfx]
+        engaged = engaged + np.sum(ctx['weights'][:, None] * res['N_BT' + sfx], axis=0)
+    res['T_free'] = np.maximum(p.N_T0 - engaged, 0.0) / p.N_T0
+
+
+# -------------------------------------------------------------------------
 # null model (no pMHC / no T cells; antigen drives activation directly)
 # -------------------------------------------------------------------------
 def _init_null(p, ctx, memory_seed=None):
@@ -569,6 +666,24 @@ MODELS = {
                 ('N_To', 'scalar'), ('N_Ta', 'scalar')],
         rhs=_rhs_boost, init=_init_boost,
     ),
+    'two_stage': ModelSpec(
+        name='two_stage',
+        blocks=[('N_A', 'scalar'), ('pi', 'vector'), ('N_Bo', 'vector'),
+                ('N_BT', 'vector'), ('N_Ba', 'vector'), ('a', 'vector')],
+        rhs=_rhs_two_stage, init=_init_two_stage, postprocess=_post_two_stage,
+        breaks=lambda p: [p.t_switch],
+        solver=TWO_STAGE_SOLVER,
+    ),
+    'two_stage_boost': ModelSpec(
+        name='two_stage_boost',
+        blocks=[('N_A', 'scalar'),
+                ('pi', 'vector'), ('N_Bo', 'vector'), ('N_BT', 'vector'), ('N_Ba', 'vector'), ('a', 'vector'),
+                ('pi_m', 'vector'), ('N_Bo_m', 'vector'), ('N_BT_m', 'vector'), ('N_Ba_m', 'vector'),
+                ('a_m', 'vector')],
+        rhs=_rhs_two_stage, init=_init_two_stage_boost, postprocess=_post_two_stage,
+        breaks=lambda p: [p.t_switch],
+        solver=TWO_STAGE_SOLVER,
+    ),
 }
 
 
@@ -612,9 +727,16 @@ def run_simulation(model='semicomplete', p=None, t_span=None, t_eval=None,
         t_eval = np.linspace(t_span[0], t_span[1], 500)
 
     ctx = build_context(p, mode=mode, DG_max_sim=DG_max_sim, seed=seed)
-    layout = spec.layout(ctx['M'])
+    return _integrate(spec, p, ctx, spec.init(p, ctx, memory_seed), t_span, t_eval,
+                      drive, mode, model, solver_overrides)
 
-    y0 = layout.pack(spec.init(p, ctx, memory_seed))
+
+def _integrate(spec, p, ctx, init_state, t_span, t_eval, drive, mode, model, solver_overrides,
+               strict=False):
+    """Integrate one ModelSpec from init_state; shared by run_simulation and run_response.
+    strict: raise if the solver fails (run_simulation only warns, as before)."""
+    layout = spec.layout(ctx['M'])
+    y0 = layout.pack(init_state)
     solver_kw = dict(spec.solver)
     solver_kw.update(solver_overrides)
 
@@ -633,28 +755,264 @@ def run_simulation(model='semicomplete', p=None, t_span=None, t_eval=None,
             dy[i_NA] = 0.0                     # N_A is read from the drive, not integrated
             return dy
 
-    sol = solve_ivp(fun, t_span, y0, t_eval=t_eval, **solver_kw)
-    if not sol.success:
-        print(f"Warning: integration failed ({model}): {sol.message}")
+    breaks = [] if spec.breaks is None else [b for b in spec.breaks(p) if t_span[0] < b < t_span[1]]
+    if not breaks:
+        sol = solve_ivp(fun, t_span, y0, t_eval=t_eval, **solver_kw)
+        if not sol.success:
+            if strict:
+                raise RuntimeError(f"integration failed ({model}): {sol.message}")
+            print(f"Warning: integration failed ({model}): {sol.message}")
+        t_out, y_out = sol.t, sol.y
+    else:
+        # Integrate each segment separately so the solver never steps across a switch.
+        edges = [t_span[0], *breaks, t_span[1]]
+        t_parts, y_parts, y = [], [], y0
+        for k, (a, b) in enumerate(zip(edges[:-1], edges[1:])):
+            ctx['segment'] = k
+            last = k == len(edges) - 2
+            te = t_eval[(t_eval >= a) & ((t_eval <= b) if last else (t_eval < b))]
+            sol = solve_ivp(fun, (a, b), y, t_eval=te if last else np.append(te, b), **solver_kw)
+            if not sol.success:
+                raise RuntimeError(f"integration failed ({model}, segment {k}): {sol.message}")
+            y = sol.y[:, -1]
+            t_parts.append(sol.t[:len(te)])
+            y_parts.append(sol.y[:, :len(te)])
+        t_out, y_out = np.concatenate(t_parts), np.concatenate(y_parts, axis=1)
 
-    res = dict(t=sol.t, DG=ctx['DG'], weights=ctx['weights'],
+    res = dict(t=t_out, DG=ctx['DG'], weights=ctx['weights'],
                params=p, mode=mode, M=ctx['M'], model=model)
-    res.update(layout.unpack(sol.y))
+    res.update(layout.unpack(y_out))
     if drive is not None:
-        res['N_A'] = N_A_of(sol.t)
+        res['N_A'] = N_A_of(t_out)
     if spec.postprocess is not None:
         spec.postprocess(res, p, ctx)
     return res
 
 
 # ============================================================
+# Unified response models (driven by run_meanfield.py)
+# ============================================================
+# A response is a set of B-cell populations on the same DG grid, 'naive'
+# (state suffix '') and/or 'memory' (suffix '_m'), sharing antigen and T cells.
+# Primary = naive only; recall = memory, with or without the naive repertoire.
+# Each population has its own pMHC load, activation latch and h0
+# (naive: p.h0, memory: p.h0_mem, default p.h0). Memory bins with no cells are
+# frozen (integrating an exactly-empty population stalls the solver).
+#
+#   model   : 'continuous' -- loading, T-cell help and division at the same time
+#                             (the semicomplete equations; T cells consumed/recycled)
+#             'two_stage'  -- loading for t < t_switch, then expansion without
+#                             uptake, limited by a finite pool of N_T0 T cells
+#   antigen : 'innate'   -- antigen cut by the innate response (autonomous)
+#             'feedback' -- antigen cut by the response's potency Z
+#             'replay'   -- antigen replayed from a given trajectory (drive)
+POP_SUFFIX = {'naive': '', 'memory': '_m'}
+ANTIGEN_LAWS = ('innate', 'feedback', 'replay')
+
+
+def _antigen_rate(t, N_A, p, Z, antigen):
+    """dN_A/dt for the innate or feedback law (same arithmetic as _dN_A_with_feedback)."""
+    if antigen == 'feedback':
+        frac = (1.0 + p.Z_c / (max(Z, 0.0) + 1e-30)) ** (-1)
+    else:
+        innate_proxy = np.exp(p.lambda_innate * t)
+        frac = (1.0 + p.threshold_innate / (innate_proxy + 1e-30)) ** (-1)
+    return (p.lambda_A * (1 - frac) - p.delta_A * frac) * N_A - 0.01 * N_A
+
+
+def _rhs_continuous(t, s, p, ctx):
+    psi_vec, weights, neut = ctx['psi'], ctx['weights'], ctx['neut']
+    N_A = max(s['N_A'], 0.0)
+    N_To = max(s['N_To'], 0.0)
+    N_Ta = max(s['N_Ta'], 0.0)
+    T_term = N_To / (N_To + p.K_T)
+
+    d, flux_T, Z = {}, 0.0, 0.0
+    for sfx, h0, live in ctx['pops']:
+        pi_vec = np.maximum(s['pi' + sfx], 0.0)
+        N_Bo = np.maximum(s['N_Bo' + sfx], 0.0)
+        N_Ba = np.maximum(s['N_Ba' + sfx], 0.0)
+        a_vec = s['a' + sfx]
+
+        pi_star = (p.b0 / h0) ** (1 / p.hill)
+        g = pi_vec ** p.hill / (pi_vec ** p.hill + pi_star ** p.hill)
+        N_B_tot = N_Bo + N_Ba
+        with np.errstate(divide='ignore', invalid='ignore'):
+            lambda_eff = np.where(N_B_tot > 0, p.b0 * N_Ba / N_B_tot, 0.0)
+        act = h0 * pi_vec ** p.hill * N_Bo * N_To / (N_To + p.K_T)
+
+        dd = {'a': (10.0 * p.b0) * (1.0 - a_vec) * g,
+              'pi': p.k_on * psi_vec * N_A - p.delta_pi * pi_vec - lambda_eff * pi_vec,
+              'N_Bo': - act + 2 * p.b0 * N_Ba - p.delta_B * N_Bo,
+              'N_Ba': act - p.b0 * N_Ba - p.delta_B * N_Ba}
+        if live is not None:
+            dd = {k: v * live for k, v in dd.items()}
+            flux_T += h0 * np.sum(weights * pi_vec ** p.hill * N_Bo * live) * T_term
+        else:
+            flux_T += h0 * np.sum(weights * pi_vec ** p.hill * N_Bo) * T_term
+        d.update({k + sfx: v for k, v in dd.items()})
+        Z += np.sum(neut * N_B_tot * a_vec)
+
+    d['N_A'] = _antigen_rate(t, N_A, p, Z, ctx['antigen'])
+    d['N_To'] = - flux_T + p.Tcell_growth_factor * p.b0 * N_Ta - p.delta_T * N_To
+    d['N_Ta'] = flux_T - p.b0 * N_Ta - p.delta_T * N_Ta
+    return d
+
+
+def _rhs_two_stage_pops(t, s, p, ctx):
+    psi_vec, weights, neut = ctx['psi'], ctx['weights'], ctx['neut']
+    N_A = max(s['N_A'], 0.0)
+    loading = ctx['segment'] == 0 if 'segment' in ctx else t < p.t_switch
+    engaged = sum(np.sum(weights * np.maximum(s['N_BT' + sfx], 0.0)) for sfx, _, _ in ctx['pops'])
+    T_free = max(p.N_T0 - engaged, 0.0) / p.N_T0            # fraction of T cells free
+
+    d, Z = {}, 0.0
+    for sfx, h0, live in ctx['pops']:
+        pi_vec = np.maximum(s['pi' + sfx], 0.0)
+        N_Bo = np.maximum(s['N_Bo' + sfx], 0.0)
+        N_BT = np.maximum(s['N_BT' + sfx], 0.0)
+        N_Ba = np.maximum(s['N_Ba' + sfx], 0.0)
+        a_vec = s['a' + sfx]
+
+        N_B_tot = N_Bo + N_BT + N_Ba
+        pi_star = (p.b0 / h0) ** (1 / p.hill)
+        g = pi_vec ** p.hill / (pi_vec ** p.hill + pi_star ** p.hill)
+        if loading:
+            dpi = p.k_on * psi_vec * N_A - p.delta_pi * pi_vec
+            eng = rel = div = 0.0
+        else:
+            with np.errstate(divide='ignore', invalid='ignore'):
+                lambda_eff = np.where(N_B_tot > 0, p.b0 * N_Ba / N_B_tot, 0.0)
+            dpi = - p.delta_pi * pi_vec - lambda_eff * pi_vec   # dilution by division
+            h = h0 * pi_vec ** p.hill
+            eng = h / (1.0 + h / p.h_max) * N_Bo * T_free      # engagement capped at h_max
+            rel = N_BT / p.tau_eng
+            div = p.b0 * N_Ba
+
+        dd = {'pi': dpi,
+              'N_Bo': - eng + 2 * div - p.delta_B * N_Bo,
+              'N_BT': eng - rel - p.delta_B * N_BT,
+              'N_Ba': rel - div - p.delta_B * N_Ba,
+              'a': (10.0 * p.b0) * (1.0 - a_vec) * g}
+        if live is not None:
+            dd = {k: v * live for k, v in dd.items()}
+        d.update({k + sfx: v for k, v in dd.items()})
+        Z += np.sum(neut * N_B_tot * a_vec)
+
+    d['N_A'] = _antigen_rate(t, N_A, p, Z, ctx['antigen'])
+    return d
+
+
+# atol far below per-clone memory sizes, which can be << 1 cell (sparse memory pools)
+RESPONSE_MODELS = {
+    'continuous': dict(pop_blocks=('pi', 'N_Bo', 'N_Ba', 'a'),
+                       shared=(('N_To', 'scalar'), ('N_Ta', 'scalar')),
+                       shared_init=lambda p: dict(N_To=p.N_T0, N_Ta=0.0),
+                       rhs=_rhs_continuous, solver=dict(method='LSODA', rtol=1e-4, atol=1e-10),
+                       breaks=None),
+    'two_stage':  dict(pop_blocks=('pi', 'N_Bo', 'N_BT', 'N_Ba', 'a'),
+                       shared=(), shared_init=lambda p: {},
+                       rhs=_rhs_two_stage_pops, solver=TWO_STAGE_SOLVER,
+                       breaks=lambda p: [p.t_switch]),
+}
+
+
+def _post_response(res, p, ctx):
+    """Per-population totals N_B<sfx> (all B-cell blocks) and the free T-cell fraction."""
+    vec_blocks = [b for b in RESPONSE_MODELS[res['model']]['pop_blocks'] if b.startswith('N_B')]
+    for name in res['pops']:
+        sfx = POP_SUFFIX[name]
+        res['N_B' + sfx] = sum(res[b + sfx] for b in vec_blocks)
+    if res['model'] == 'two_stage':
+        engaged = sum(np.sum(ctx['weights'][:, None] * res['N_BT' + POP_SUFFIX[n]], axis=0)
+                      for n in res['pops'])
+        res['T_free'] = np.maximum(p.N_T0 - engaged, 0.0) / p.N_T0
+    else:
+        res['T_free'] = res['N_To'] / (res['N_To'] + p.K_T)
+
+
+def run_response(model, p, naive=True, memory_seed=None, antigen='innate', drive=None,
+                 t_span=(0.0, 10.0), t_eval=None, mode='grid', DG_max_sim=None, seed=None,
+                 **solver_overrides):
+    """
+    Run one response of a unified model.
+
+    model       : 'continuous' | 'two_stage'
+    naive       : include the naive repertoire (initial size ctx['N0'] per clone)
+    memory_seed : per-clone memory sizes on the grid (None -> no memory population)
+    antigen     : 'innate' | 'feedback' | 'replay' ('replay' needs drive=dict(t, N_A))
+    Returns the usual results dict plus 'pops' (population names), 'antigen',
+    N_B / N_B_m (per-clone totals) and T_free.
+    """
+    if model not in RESPONSE_MODELS:
+        raise ValueError(f"Unknown model '{model}'. Choose from {list(RESPONSE_MODELS)}.")
+    if antigen not in ANTIGEN_LAWS:
+        raise ValueError(f"Unknown antigen law '{antigen}'. Choose from {ANTIGEN_LAWS}.")
+    if (antigen == 'replay') != (drive is not None):
+        raise ValueError("antigen='replay' needs drive=dict(t=..., N_A=...), and only it.")
+    rm = RESPONSE_MODELS[model]
+    if t_eval is None:
+        t_eval = np.linspace(t_span[0], t_span[1], 500)
+
+    ctx = build_context(p, mode=mode, DG_max_sim=DG_max_sim, seed=seed)
+    ctx['antigen'] = antigen
+    pops, init = [], dict(N_A=p.N_A0)
+    if naive:
+        pops.append(('naive', ctx['N0'].copy(), p.h0, None))
+    if memory_seed is not None:
+        seed_m = np.asarray(memory_seed, dtype=float).copy()
+        pops.append(('memory', seed_m, p.h0 if p.h0_mem is None else p.h0_mem, seed_m > 0))
+    if not pops:
+        raise ValueError("A response needs naive=True and/or a memory_seed.")
+    ctx['pops'] = [(POP_SUFFIX[name], h0, live) for name, _, h0, live in pops]
+    blocks = [('N_A', 'scalar')]
+    for name, N_Bo, _, _ in pops:
+        sfx = POP_SUFFIX[name]
+        blocks += [(b + sfx, 'vector') for b in rm['pop_blocks']]
+        init.update({b + sfx: (N_Bo if b == 'N_Bo' else np.zeros(ctx['M'])) for b in rm['pop_blocks']})
+    blocks += list(rm['shared'])
+    init.update(rm['shared_init'](p))
+
+    spec = ModelSpec(name=model, blocks=blocks, rhs=rm['rhs'], init=None,
+                     solver=rm['solver'], breaks=rm['breaks'])
+    res = _integrate(spec, p, ctx, init, t_span, t_eval, drive, mode, model, solver_overrides,
+                     strict=True)
+    res.update(pops=[name for name, _, _, _ in pops], antigen=antigen)
+    _post_response(res, p, ctx)
+    return res
+
+
+def pop_view(res, pop):
+    """
+    One population of a run_response result as a single-population results dict
+    (unsuffixed keys N_Bo, N_Ba, pi, a, N_B; params with h0 = that population's h0),
+    so the analysis functions below (potency, specificity, memory seeding, ...)
+    apply to it unchanged. pop='all' sums the populations' cells (pi, a of naive).
+    """
+    p = res['params']
+    if pop == 'all':
+        view = pop_view(res, res['pops'][0])
+        for other in res['pops'][1:]:
+            view['N_B'] = view['N_B'] + res['N_B' + POP_SUFFIX[other]]
+        return view
+    sfx = POP_SUFFIX[pop]
+    h0 = p.h0 if (pop == 'naive' or p.h0_mem is None) else p.h0_mem
+    view = {k: res[k] for k in ('t', 'DG', 'weights', 'mode', 'M', 'N_A', 'T_free')}
+    view.update(params=replace(p, h0=h0), model=res['model'], pop=pop,
+                **{b: res[b + sfx] for b in RESPONSE_MODELS[res['model']]['pop_blocks']},
+                N_B=res['N_B' + sfx])
+    return view
+
+
+# ============================================================
 # Analysis
 # ============================================================
 def _N_B(res):
-    """Total per-clone B cells, handling models with/without N_Ba."""
-    if 'N_Ba' in res:
-        return res['N_Bo'] + res['N_Ba']
-    return res['N_B']
+    """Total per-clone B cells, handling models with/without N_Ba.
+    Models that store their own total ('approx', 'two_stage': N_Bo + N_BT + N_Ba) use it."""
+    if 'N_B' in res:
+        return res['N_B']
+    return res['N_Bo'] + res['N_Ba']
 
 
 def compute_N_B_tot(res, threshold=2.0):
@@ -802,6 +1160,22 @@ def dkl_analytic(mu, DG_mf, DG_star=-16.0, sigma2=7.0):
     m1 = g / Z
     delta = mu / sigma
     return delta ** 2 / 2 + delta * m1 - np.log(Z)
+
+
+def entropy_analytic(mu, DG_mf, DG_star=-16.0, sigma2=7.0):
+    """
+    Differential entropy (nats) of the same double-truncated, tilted Gaussian as
+    dkl_analytic: N(mu, sigma2) restricted to [DG_star, DG_mf].
+    H = log(sqrt(2 pi e) sigma Z) + (z' phi(z') - z'' phi(z'')) / (2 Z).
+    """
+    sigma = np.sqrt(sigma2)
+    zp  = (DG_star - mu) / sigma
+    zpp = (DG_mf   - mu) / sigma
+    Z = norm.cdf(zpp) - norm.cdf(zp)
+    if Z <= 0:
+        return np.nan
+    return (np.log(np.sqrt(2 * np.pi * np.e) * sigma * Z)
+            + (zp * norm.pdf(zp) - zpp * norm.pdf(zpp)) / (2 * Z))
 
 
 def find_t_D(res, D_threshold=1.0):
