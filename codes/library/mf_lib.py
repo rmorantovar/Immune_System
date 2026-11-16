@@ -758,6 +758,9 @@ def _integrate(spec, p, ctx, init_state, t_span, t_eval, drive, mode, model, sol
     breaks = [] if spec.breaks is None else [b for b in spec.breaks(p) if t_span[0] < b < t_span[1]]
     if not breaks:
         sol = solve_ivp(fun, t_span, y0, t_eval=t_eval, **solver_kw)
+        if not sol.success and strict and solver_kw.get('method') == 'LSODA':
+            # LSODA can stop with "Unexpected istate" on sparse memory pools; BDF gets through
+            sol = solve_ivp(fun, t_span, y0, t_eval=t_eval, **dict(solver_kw, method='BDF'))
         if not sol.success:
             if strict:
                 raise RuntimeError(f"integration failed ({model}): {sol.message}")
@@ -1162,20 +1165,15 @@ def dkl_analytic(mu, DG_mf, DG_star=-16.0, sigma2=7.0):
     return delta ** 2 / 2 + delta * m1 - np.log(Z)
 
 
-def entropy_analytic(mu, DG_mf, DG_star=-16.0, sigma2=7.0):
+def renyi2_analytic(a, E_max, beta_star, omega_0=1.0):
     """
-    Differential entropy (nats) of the same double-truncated, tilted Gaussian as
-    dkl_analytic: N(mu, sigma2) restricted to [DG_star, DG_mf].
-    H = log(sqrt(2 pi e) sigma Z) + (z' phi(z') - z'' phi(z'')) / (2 Z).
+    Renyi-2 clone entropy S2 = -ln sum_clones p^2 for clone sizes n ~ exp(-a DG) on
+    [0, E_max] with omega_0 exp(beta_star DG) clones per unit DG:
+        S2 = ln omega_0 + 2 ln I(beta_star - a) - ln I(beta_star - 2a),
+        I(c) = int_0^E_max exp(c x) dx = (exp(c E_max) - 1) / c.
     """
-    sigma = np.sqrt(sigma2)
-    zp  = (DG_star - mu) / sigma
-    zpp = (DG_mf   - mu) / sigma
-    Z = norm.cdf(zpp) - norm.cdf(zp)
-    if Z <= 0:
-        return np.nan
-    return (np.log(np.sqrt(2 * np.pi * np.e) * sigma * Z)
-            + (zp * norm.pdf(zp) - zpp * norm.pdf(zpp)) / (2 * Z))
+    I = lambda c: E_max if abs(c) < 1e-12 else np.expm1(c * E_max) / c
+    return np.log(omega_0) + 2 * np.log(I(beta_star - a)) - np.log(I(beta_star - 2 * a))
 
 
 def find_t_D(res, D_threshold=1.0):

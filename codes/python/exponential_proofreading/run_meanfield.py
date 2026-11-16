@@ -81,8 +81,8 @@ CONFIG = dict(
     sweep={'h0': H0_SWEEP},
     T=12.0,
     t_obs=[12.0],
-    dynamics=['N_A', 'Z', 'Y', 'L_act', 'T_free'],
-    observables=['Y', 'L_act', 'N1', 'Z', 'D_KL', 'alpha_fit', 'DG_front', 'DG_hi', 'DG_lo', 'f_best',
+    dynamics=['N_A', 'Z', 'Y', 'L_act', 'T_free', 'DG_dist'],
+    observables=['Y', 'L_act', 'N1', 'Z', 'D_KL', 'S2', 'alpha_fit', 'DG_front', 'DG_hi', 'DG_lo', 'f_best',
                  'N_A', 'T_free_min', 't_c', 'R', 'phi_naive', 'R_th', 'kappa'],
     base=BASE,
     two_clone=TWO_CLONE,
@@ -93,7 +93,8 @@ CONFIG = dict(
 
 PRESETS = {
     # single primary + recall at the BASE parameters, with per-clone time courses (Fig. 2 panels)
-    'single': dict(sweep={}, dynamics=['N_A', 'Z', 'Y', 'L_act', 'T_free', 'N_B_clones', 'pi_clones']),
+    'single': dict(sweep={}, dynamics=['N_A', 'Z', 'Y', 'L_act', 'T_free', 'N_B_clones', 'pi_clones',
+                                       'DG_dist']),
     # naive + memory responding together to the naive antigen trajectory (prime-boost)
     'boost': dict(recall=dict(CONFIG['recall'], with_naive=True, antigen='replay'),
                   sweep={'h0': H0_SWEEP, 'n_mem': np.logspace(2, 6, 9)}, t_obs=[6.0, 12.0],
@@ -190,6 +191,15 @@ def obs_D_KL(v, i):
     return float(np.sum(r[m] * np.log(r[m] / q[m])))
 
 
+def obs_S2(v, i):
+    """Renyi-2 clone entropy -ln sum_clones p^2 of the expanded clones (weights = clones per bin);
+    as -ln(lambda2) in zipf.py, which small samples estimate without bias."""
+    act = _expanded(v, i)
+    w, n = v['weights'][act], v['N_B'][act, i]
+    N = np.sum(w * n)
+    return float(-np.log(np.sum(w * (n / N) ** 2))) if N > 0 else np.nan
+
+
 def obs_alpha_fit(v, i):
     """-slope of ln N_B vs DG over the expanded clones (EP exponent)."""
     act = _expanded(v, i)
@@ -216,13 +226,14 @@ POP_OBSERVABLES = {
     'N1': lambda v, i: _max_over_expanded(v, i, v['N_B'][:, i]),
     'Z': lambda v, i: float(mf.compute_potency_t(v)[i]),
     'D_KL': obs_D_KL,
+    'S2': obs_S2,
     'alpha_fit': obs_alpha_fit,
     'DG_front': lambda v, i: _max_over_expanded(v, i, v['DG']),
     'DG_hi': lambda v, i: _range_above_2(v, i, np.max),
     'DG_lo': lambda v, i: _range_above_2(v, i, np.min),
     'f_best': lambda v, i: float(v['weights'][0] * v['N_B'][0, i] / np.sum(v['weights'] * v['N_B'][:, i])),
 }
-POP_ONLY = ('Z', 'D_KL', 'alpha_fit', 'DG_hi', 'DG_lo', 'f_best')   # not defined for the naive + memory sum
+POP_ONLY = ('Z', 'D_KL', 'S2', 'alpha_fit', 'DG_hi', 'DG_lo', 'f_best')   # not defined for the naive + memory sum
 OBSERVABLES = list(POP_OBSERVABLES) + ['N_A', 'T_free_min', 't_c', 'R', 'phi_naive', 'R_th', 'kappa']
 
 
@@ -274,8 +285,9 @@ def R_theory(cfg, res0, seed, p):
 # ============================================================
 # Dynamics  (time courses kept per run)
 # ============================================================
-def response_dynamics(cfg, res):
-    """Requested time courses: N_A, T_free, and per population Z, Y, L_act, N_B / pi per clone."""
+def response_dynamics(cfg, res, extra=None):
+    """Requested time courses: N_A, T_free, and per population Z, Y, L_act, N_B / pi per clone;
+    'DG_dist' keeps the final cells per clone (and the memory seed of a recall) for the energy distributions."""
     want, out = cfg['dynamics'], {'t': res['t']}
     for q in ('N_A', 'T_free'):
         if q in want:
@@ -293,8 +305,14 @@ def response_dynamics(cfg, res):
             out[f'N_B_clones_{pop}'] = v['N_B']
         if 'pi_clones' in want:
             out[f'pi_clones_{pop}'] = v['pi']
-    if 'N_B_clones' in want or 'pi_clones' in want:
+        if 'DG_dist' in want:
+            out[f'N_B_end_{pop}'] = v['N_B'][:, -1]
+    if 'N_B_clones' in want or 'pi_clones' in want or 'DG_dist' in want:
         out['DG'] = res['DG']
+    if 'DG_dist' in want:
+        out['weights'] = res['weights']
+        if extra and 'seed' in extra:
+            out['seed'] = extra['seed']
     return out
 
 
@@ -344,7 +362,7 @@ def run(cfg=CONFIG, save=True):
         p, out = run_point(cfg, point)
         summary = []
         for resp, (res, extra) in out.items():
-            dynamics[(tuple(point.items()), resp)] = response_dynamics(cfg, res)
+            dynamics[(tuple(point.items()), resp)] = response_dynamics(cfg, res, extra)
             for t_obs in cfg['t_obs']:
                 i = int(np.argmin(np.abs(res['t'] - t_obs)))
                 row = dict(point, pi_c=pi_c_of(p), response=resp, t_obs=float(res['t'][i]))

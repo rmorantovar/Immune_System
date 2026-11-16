@@ -111,6 +111,7 @@ $PY plot_meanfield.py <run name>             # re-plot a saved run without re-ru
 | `N1` | largest clone |
 | `Z` | potency |
 | `D_KL` | specificity |
+| `S2` | Rényi-2 clone entropy, −ln Σ p² over expanded clones |
 | `alpha_fit` | fitted EP exponent |
 | `DG_front` | affinity front of the expanded clones |
 | `DG_hi`, `DG_lo` | range of clones above 2 cells |
@@ -133,12 +134,13 @@ $PY plot_meanfield.py <run name>             # re-plot a saved run without re-ru
 | `R_th` | analytic κ·ν_μ·N̄_w |
 | `kappa` | per-cell expansion advantage of memory |
 
-**`dynamics.pkl`:** time courses per run: N_A, T_free, and Z, Y and L_act per population. Single, two-clone and boost runs also keep per-clone N_B and π.
+**`dynamics.pkl`:** time courses per run: N_A, T_free, and Z, Y and L_act per population. Single, two-clone and boost runs also keep per-clone N_B and π. With `DG_dist` (default and `single`), it also keeps the final cells per clone and the memory seed, for the energy distributions.
 
 **`config.json`:** the full resolved configuration.
 
 ## 5. Figures (`--plot`, or `plot_meanfield.py <run>`)
 
+- **`DG_dist/`:** cell density in ΔG (cells per unit ΔG, expanded clones) at the end of the primary, in the memory seed and at the end of the recall, one figure per sweep point plus a grid (single runs and 1-D sweeps). Theory shapes scaled to each curve's total cells: dotted, EP exponentials Ω₀e^{−aΔG} (a = α, or 2α for the recall); dashed grey, the Gaussian of Fig. 4D.
 - **`dynamics/`:** time courses, one curve per sweep point. For 2-D sweeps, one figure each at the first, middle and last value of the second parameter.
 - **`observables/`:** each observable against the swept parameter (1-D sweep), or as a heatmap (2-D sweep).
 - **`manuscript/`:** produced automatically when the run matches a figure:

@@ -27,6 +27,7 @@ from run_meanfield import DATA_ROOT, FIG_ROOT
 
 CLONE_ROWS = (0, 10, -10)       # clones drawn from per-clone arrays of a polyclonal run
 CLONE_LS = ['-', '--', ':']
+NOT_TIME_COURSES = ('t', 'DG', 'weights', 'seed')   # stored with 'DG_dist', not plotted against t
 
 
 def tex(name):
@@ -93,7 +94,8 @@ def plot_dynamics(cfg, dynamics, out):
             if not pts:
                 continue
             cols = mfp.sweep_colors(len(pts), 'turbo') if len(pts) > 1 else ['k']
-            quantities = [q for q in dynamics[(pts[0], resp)] if q not in ('t', 'DG')]
+            quantities = [q for q in dynamics[(pts[0], resp)] if q not in NOT_TIME_COURSES
+                          and not q.startswith('N_B_end')]
             for q in quantities:
                 fig, ax = mfp.new_fig()
                 for c, pt in zip(cols, pts):
@@ -183,12 +185,82 @@ def plot_observables_2d(cfg, df, out):
 
 
 # ============================================================
+# Energy distributions ('DG_dist' dynamics)
+# ============================================================
+def _draw_DG_dist(ax, cfg, d0, d1, fs=1.0):
+    """Cell density (cells per unit DG) of the expanded clones: primary end, memory seed, recall end.
+    Theory shapes over each range, scaled to the same total cells: EP exponential Omega_0 e^{-a DG}
+    (a = alpha, or 2 alpha for the recall) and the tilted Gaussian of Fig. 4D for the recall."""
+    b = cfg['base']
+    alpha = b['b0'] * (1.0 / b['lambda_A'] + 1.0 / min(b['delta_A'], b['b0']))
+    DG, w = d0['DG'], d0['weights']
+    dDG = DG[1] - DG[0]
+    curves = [(r'$\mathrm{primary}$', d0['N_B_end_naive'], d0['N_B_end_naive'] > 2.0, mfp.my_orange, alpha)]
+    if d1 is not None and 'seed' in d1:
+        curves.append((r'$\mathrm{memory}$', d1['seed'], d1['seed'] > 0, mfp.my_purple, alpha))
+        if 'N_B_end_memory' in d1:
+            n = d1['N_B_end_memory']
+            curves.append((r'$\mathrm{recall}$', n, n > 2.0 * d1['seed'], mfp.my_blue, 2 * alpha))
+    for label, n, m, c, a in curves:
+        if m.sum() < 2:
+            continue
+        rho = w[m] * n[m] / dDG
+        total = np.sum(w[m] * n[m])
+        seed = label == r'$\mathrm{memory}$'            # the primary's shape, scaled by n_draw / Y
+        ax.plot(DG[m], rho, 'o--' if seed else 'o-', color=c, ms=(11 if seed else 8) * fs, lw=2 * fs,
+                mfc='none' if seed else c, mew=2 * fs, label=label, zorder=1 if seed else 2)
+        x = np.linspace(DG[m].min(), DG[m].max(), 200)
+        ep = np.exp((b['beta_star'] - a) * (x - x[0]))
+        ax.plot(x, total * ep / np.trapezoid(ep, x), ':', color=c, lw=3 * fs)
+        if label == r'$\mathrm{recall}$':
+            g = np.exp(-(x - x[0] + DG4D_STAR - FIG4D_MU_RECALL) ** 2 / (2 * DG4D_SIG2))
+            ax.plot(x, total * g / np.trapezoid(g, x), '--', color='grey', lw=2 * fs, label=r'$\mathrm{Gaussian}$')
+    ax.set_yscale('log')
+
+
+def plot_DG_dist(cfg, dynamics, out):
+    """One figure per sweep point (and a grid for 1-D sweeps) of the cell densities in DG."""
+    pts = [pt for pt in dict.fromkeys(pt for pt, _ in dynamics)
+           if 'N_B_end_naive' in dynamics.get((pt, 'naive'), {})]
+    if not pts or len(cfg['sweep']) > 1:
+        return
+    o = os.path.join(out, 'DG_dist')
+    for pt in pts:
+        fig, ax = mfp.new_fig()
+        _draw_DG_dist(ax, cfg, dynamics[(pt, 'naive')], dynamics.get((pt, 'recall')))
+        ax.set_xlabel(r'$\Delta G$', fontsize=30)
+        ax.set_ylabel(r'$\mathrm{cells\ per\ unit}\ \Delta G$', fontsize=30)
+        ax.tick_params(axis='both', labelsize=26)
+        if pt:
+            ax.set_title(point_label(cfg, pt), fontsize=24)
+        ax.legend(fontsize=18)
+        b = cfg['base']
+        tag = '_'.join(f'pi_c_{(b["b0"] / v) ** (1 / b["hill"]):.3g}' if k == 'h0' else f'{k}_{v:.3g}' for k, v in pt)
+        save(fig, o, 'DG_dist_' + (tag or 'single'))
+    if len(pts) > 1:
+        ncol = int(np.ceil(np.sqrt(len(pts))))
+        nrow = int(np.ceil(len(pts) / ncol))
+        fig, axs = plt.subplots(nrow, ncol, figsize=(4 * ncol, 3.2 * nrow), sharex=True, sharey=True)
+        for ax, pt in zip(axs.flat, pts):
+            _draw_DG_dist(ax, cfg, dynamics[(pt, 'naive')], dynamics.get((pt, 'recall')), fs=0.5)
+            ax.set_title(point_label(cfg, pt), fontsize=14)
+        for ax in axs.flat[len(pts):]:
+            ax.axis('off')
+        axs.flat[0].legend(fontsize=9)
+        fig.supxlabel(r'$\Delta G$', fontsize=18)
+        fig.supylabel(r'$\mathrm{cells\ per\ unit}\ \Delta G$', fontsize=18)
+        fig.tight_layout()
+        save(fig, o, 'DG_dist_grid')
+
+
+# ============================================================
 # Manuscript figures (ported from run_meanfield_legacy.py), under <run>/manuscript/
 # ============================================================
 DG4D_STAR, DG4D_SIG2 = -16.0, 7.0     # naive N(0, sigma2) with high-affinity edge -beta* sigma2
 FIG4D_MU_RECALL = -16.0               # tilt of the recall responding Gaussian (zeta ~ 1)
 P_T_REF = 4.4                         # potency P = lambda_A (P_T_REF - t_c), as mf.compute_potency_P
 BOOST_DATA = dict(flu_HA_d6=0.044, lo=0.038, hi=0.11)   # Mesin et al. 2020: memory fraction
+MESIN_S2_RECALL = dict(CGG=1.76, HA=1.93)   # Mesin et al. 2020, recall GC+PB: -ln(mean lambda2) (zipf.py)
 
 
 def find_dynamics(dynamics, point, resp):
@@ -258,26 +330,32 @@ def fig_potency(cfg, df, out):
     ax.legend(fontsize=24, loc=3)
     save(fig, out, 'potency')
 
-    # same figure against the entropy H of the responding distribution (same truncated Gaussian)
-    H_of = lambda hi, lo: mf.entropy_analytic(FIG4D_MU_RECALL, DG4D_STAR + hi, DG_star=DG4D_STAR + lo,
-                                              sigma2=DG4D_SIG2)
-    rec_ok = [row for row in rec.itertuples()
-              if not (np.isnan(row.D_KL_memory) or np.isnan(row.t_c)
-                      or np.isnan(mf.dkl_analytic(FIG4D_MU_RECALL, DG4D_STAR + row.DG_hi_memory,
-                                                  DG_star=DG4D_STAR + row.DG_lo_memory, sigma2=DG4D_SIG2)))]
-    H_pts = np.array([H_of(row.DG_hi_memory, row.DG_lo_memory) for row in rec_ok])
-    H_th = np.array([H_of(e + DGmin, DGmin) for e in Emax_of(pic)])
-    fig, ax = mfp.new_fig()
-    ax.scatter(H_pts[idx], P_pts[idx], facecolors=[pts[i][2] for i in idx], edgecolors='k',
-               marker='s', s=130, linewidth=1.5, zorder=2, label=r'$\mathrm{recall}$')
-    ax.plot(H_th, P_shape(pic) + const, color='k', lw=2, ls='--', zorder=1, label=r'$\mathrm{theory}$')
-    ax.set_ylim(0, 11)
-    ax.set_xlabel(r'$H\,[\mathrm{nats}]$', fontsize=36)
-    ax.tick_params(axis='both', labelsize=44)
-    ax.legend(fontsize=24, loc=3)
-    save(fig, out, 'potency_entropy')
+    # same potencies against the Renyi-2 clone entropy, with the data (zipf.py) as a band.
+    # Like D, S2 is evaluated analytically on a reach (monotonic in pi_c): recall clone sizes
+    # ~ exp(-2 alpha DG) (primary EP x recall EP) over the recall's DG range (points) or E_max(pi_c) (theory).
+    S2_of = lambda E: mf.renyi2_analytic(2 * alpha, E, beta, b['omega_0'])
+    rec_pic = rec.set_index('pi_c').reindex(pic_pts)
+    S2_pts = np.array([S2_of(E) for E in (rec_pic.DG_hi_memory - rec_pic.DG_lo_memory)])
+    S2_th = np.array([S2_of(e) for e in Emax_of(pic)])
+    S2_sim = rec_pic.S2_memory.to_numpy() if 'S2_memory' in rec_pic else None
+    variants = [('potency_entropy', S2_pts, True)]
+    if S2_sim is not None:               # check: S2 measured on the simulated clone sizes
+        variants.append(('potency_entropy_sim', S2_sim, False))
+    for name, x, with_theory in variants:
+        fig, ax = mfp.new_fig()
+        ax.axvspan(min(MESIN_S2_RECALL.values()), max(MESIN_S2_RECALL.values()), color='grey', alpha=0.3,
+                   label=r'$\mathrm{data}$')
+        ax.scatter(x[idx], P_pts[idx], facecolors=[pts[i][2] for i in idx], edgecolors='k',
+                   marker='s', s=130, linewidth=1.5, zorder=2, label=r'$\mathrm{recall}$')
+        if with_theory:
+            ax.plot(S2_th, P_shape(pic) + const, color='k', lw=2, ls='--', zorder=1, label=r'$\mathrm{theory}$')
+        ax.set_ylim(0, 11)
+        ax.set_xlabel(r'$S_2\,[\mathrm{nats}]$', fontsize=36)
+        ax.tick_params(axis='both', labelsize=44)
+        ax.legend(fontsize=24, loc=0)
+        save(fig, out, name)
     return dict(D=D_pts, P=P_pts, pi_c=pic_pts, x_th=np.exp(D_th), P_th=P_shape(pic) + const,
-                H=H_pts, H_th=H_th)
+                S2=S2_pts, S2_th=S2_th, S2_sim=S2_sim)
 
 
 def fig_boost(cfg, df, dynamics, out):
@@ -513,6 +591,7 @@ def main(run):
         plot_observables_1d(cfg, df, out)
     elif len(cfg['sweep']) == 2:
         plot_observables_2d(cfg, df, out)
+    plot_DG_dist(cfg, dynamics, out)
     manuscript_figures(cfg, df, dynamics, os.path.join(out, 'manuscript'))
     print(f"figures in {out}")
 
