@@ -759,8 +759,9 @@ def _integrate(spec, p, ctx, init_state, t_span, t_eval, drive, mode, model, sol
     if not breaks:
         sol = solve_ivp(fun, t_span, y0, t_eval=t_eval, **solver_kw)
         if not sol.success and strict and solver_kw.get('method') == 'LSODA':
-            # LSODA can stop with "Unexpected istate" on sparse memory pools; BDF gets through
-            sol = solve_ivp(fun, t_span, y0, t_eval=t_eval, **dict(solver_kw, method='BDF'))
+            # LSODA can stop on sparse memory pools (seeds << 1 cell); BDF with a tighter atol gets through
+            sol = solve_ivp(fun, t_span, y0, t_eval=t_eval,
+                            **dict(solver_kw, method='BDF', atol=min(solver_kw.get('atol', 1e-10), 1e-14)))
         if not sol.success:
             if strict:
                 raise RuntimeError(f"integration failed ({model}): {sol.message}")

@@ -318,17 +318,42 @@ def fig_potency(cfg, df, out):
     D_th = np.array([mf.dkl_analytic(FIG4D_MU_RECALL, DG4D_STAR + e + DGmin, DG_star=DG4D_STAR + DGmin,
                                      sigma2=DG4D_SIG2) for e in Emax_of(pic)])
 
+    P_th = P_shape(pic) + const
+    ylim = (np.min(P_pts) - 1.0, max(np.max(P_pts), np.nanmax(P_th)) + 1.0)   # P is defined up to P_T_REF
     fig, ax = mfp.new_fig()
     idx = np.argsort(D_pts)
     ax.scatter(np.exp(D_pts[idx]), P_pts[idx], facecolors=[pts[i][2] for i in idx], edgecolors='k',
                marker='s', s=130, linewidth=1.5, zorder=2, label=r'$\mathrm{recall}$')
     ax.plot(np.exp(D_th), P_shape(pic) + const, color='k', lw=2, ls='--', zorder=1, label=r'$\mathrm{theory}$')
-    ax.set_xlim(9e5, 4e7)
-    ax.set_ylim(0, 11)
+    ax.set_xlim(np.exp(D_pts.min()) / 1.5, np.exp(D_pts.max()) * 1.5)
+    ax.set_ylim(*ylim)
     ax.set_xscale('log')
     ax.tick_params(axis='both', labelsize=44)
-    ax.legend(fontsize=24, loc=3)
+    ax.legend(fontsize=24, loc=0)
     save(fig, out, 'potency')
+
+    # consistency check: potency vs pi_c, simulation and theory. Second curve: the same recall step
+    # (best memory clone N_1 / (1 + Y/M), finite reach) fed with the measured primary N_1, Y and reach.
+    k = alpha + 1.0 + r * b['eta'] - beta
+    nav_pic = nav.set_index('pi_c').reindex(pic_pts)
+    E_pts = (nav_pic.DG_hi_naive - nav_pic.DG_lo_naive).to_numpy()
+    P_meas = (np.log(nav_pic.N1_naive.to_numpy()) - np.log1p(nav_pic.Y_naive.to_numpy() / M)
+              + np.log(-np.expm1(-k * E_pts))) / r
+    ok = np.isfinite(P_meas)
+    P_meas = P_meas + np.mean(P_pts[ok] - P_meas[ok])
+    fig, ax = mfp.new_fig()
+    ax.scatter(pic_pts, P_pts, facecolors=[q[2] for q in pts], edgecolors='k', marker='s', s=130,
+               linewidth=1.5, zorder=2, label=r'$\mathrm{recall}$')
+    ax.plot(pic, P_th, color='k', lw=2, ls='--', zorder=1, label=r'$\mathrm{theory}$')
+    ax.plot(pic_pts[ok], P_meas[ok], color='grey', lw=2, ls=':', zorder=1,
+            label=r'$\mathrm{theory,\ measured}\ N_1, Y$')
+    ax.set_xscale('log')
+    ax.set_ylim(*ylim)
+    ax.set_xlabel(r'$\pi_c$', fontsize=36)
+    ax.set_ylabel(r'$P$', fontsize=36)
+    ax.tick_params(axis='both', labelsize=44)
+    ax.legend(fontsize=24, loc=0)
+    save(fig, out, 'potency_pi_c')
 
     # same potencies against the Renyi-2 clone entropy, with the data (zipf.py) as a band.
     # Like D, S2 is evaluated analytically on a reach (monotonic in pi_c): recall clone sizes
@@ -349,12 +374,12 @@ def fig_potency(cfg, df, out):
                    marker='s', s=130, linewidth=1.5, zorder=2, label=r'$\mathrm{recall}$')
         if with_theory:
             ax.plot(S2_th, P_shape(pic) + const, color='k', lw=2, ls='--', zorder=1, label=r'$\mathrm{theory}$')
-        ax.set_ylim(0, 11)
+        ax.set_ylim(*ylim)
         ax.set_xlabel(r'$S_2\,[\mathrm{nats}]$', fontsize=36)
         ax.tick_params(axis='both', labelsize=44)
         ax.legend(fontsize=24, loc=0)
         save(fig, out, name)
-    return dict(D=D_pts, P=P_pts, pi_c=pic_pts, x_th=np.exp(D_th), P_th=P_shape(pic) + const,
+    return dict(D=D_pts, P=P_pts, pi_c=pic_pts, x_th=np.exp(D_th), P_th=P_shape(pic) + const, P_meas=P_meas,
                 S2=S2_pts, S2_th=S2_th, S2_sim=S2_sim)
 
 
