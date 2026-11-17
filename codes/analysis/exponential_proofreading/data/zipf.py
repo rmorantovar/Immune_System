@@ -373,10 +373,10 @@ def make_panel(panel, keys):
     # L_act vs N, with the continuous-Zipf prediction (band: zeta +- 2 std)
     fig, ax = plt.subplots(**fig_kw)
     L = np.linspace(1, 400, 100)
-    for gf in fits.itertuples():
-        ax.plot(barN(L, gf.zeta_mean), L, color=gf.color, linestyle=EXP_LS[gf.Experiment])
-        ax.fill_betweenx(L, barN(L, gf.zeta_mean - 2 * gf.zeta_std), barN(L, gf.zeta_mean + 2 * gf.zeta_std),
-                         color=gf.color, alpha=0.1)
+    # for gf in fits.itertuples():
+        # ax.plot(barN(L, gf.zeta_mean), L, color=gf.color, linestyle=EXP_LS[gf.Experiment])
+        # ax.fill_betweenx(L, barN(L, gf.zeta_mean - 2 * gf.zeta_std), barN(L, gf.zeta_mean + 2 * gf.zeta_std),
+                        #  color=gf.color, alpha=0.1)
     scatter(ax, 'barN', 'L_act')
     ax.set_xlim(left=0, right=1.05 * res['barN'].max())
     ax.set_ylim(bottom=0, top=1.1 * res['L_act'].max())
@@ -389,8 +389,8 @@ def make_panel(panel, keys):
     N1 = np.linspace(0, 1.1 * res['N1'].max(), 100)
     ax.fill_between(N1, 0, N1, color=my_blue, alpha=0.2)
     ax.fill_between(N1, N1, 200, color=my_orange, alpha=0.2)
-    for gf in fits.itertuples():
-        ax.plot(N1, N1 ** (1 / gf.zeta_mean), color=gf.color, linestyle=EXP_LS[gf.Experiment])
+    # for gf in fits.itertuples():
+    #     ax.plot(N1, N1 ** (1 / gf.zeta_mean), color=gf.color, linestyle=EXP_LS[gf.Experiment])
     scatter(ax, 'N1', 'L_act')
     ax.set_xlabel('')
     ax.set_ylabel('')
