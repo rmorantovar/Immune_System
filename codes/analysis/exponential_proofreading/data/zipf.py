@@ -223,6 +223,10 @@ def mouse_stats(counts):
     cell_freqs = np.repeat(counts / N, (1000 * counts / N).astype(int))
     return dict(
         N1=x[0], L_act=L, barN=N,
+        F1=np.sum(counts == 1),                  # singletons
+        nonsingleton_frac=1 - np.sum(counts == 1) / L,
+        coverage=1 - np.sum(counts == 1) / N,    # Good-Turing sample coverage
+        L_frac=L / N, N1_frac=x[0] / N,          # clones per cell, top-clone share
         S=S, S_corr=S + (L - 1) / (2 * N),                                       # Miller-Madow correction
         lambda2=np.sum(counts * (counts - 1)) / (N * (N - 1)) if N > 1 else np.nan,  # unbiased Simpson
         zeta=zeta,
@@ -399,6 +403,62 @@ def make_panel(panel, keys):
     ax.tick_params(axis='both', labelsize=30)
     ax.legend(title_fontsize=20, fontsize=20, loc=0)
     save(fig, f'{panel}/scaling_Lact_N1')
+
+    # Fraction of clones seen more than once, 1 - F1/L_act (F1: singletons), vs N
+    fig, ax = plt.subplots(**fig_kw)
+    scatter(ax, 'barN', 'nonsingleton_frac')
+    ax.set_xlabel(r'$N_{\mathrm{sample}}$', fontsize=30)
+    ax.set_ylabel(r'$1 - F_1/L_{\mathrm{act}}$', fontsize=30)
+    ax.set_xlim(left=0, right=1.05 * res['barN'].max())
+    ax.set_ylim(0, 1)
+    ax.tick_params(axis='both', labelsize=30)
+    ax.legend(title_fontsize=20, fontsize=20, loc=0)
+    save(fig, f'{panel}/nonsingleton_frac_Ntot')
+
+    # Good-Turing coverage 1 - F1/N: estimated fraction of the population's cells in the observed clones
+    fig, ax = plt.subplots(**fig_kw)
+    scatter(ax, 'barN', 'coverage')
+    ax.set_xlabel(r'$N_{\mathrm{sample}}$', fontsize=30)
+    ax.set_ylabel(r'$1 - F_1/N$', fontsize=30)
+    ax.set_xlim(left=0, right=1.05 * res['barN'].max())
+    ax.set_ylim(0, 1)
+    ax.tick_params(axis='both', labelsize=30)
+    ax.legend(title_fontsize=20, fontsize=20, loc=0)
+    save(fig, f'{panel}/coverage_Ntot')
+
+    # Clones per cell L_act/N and top-clone share N1/N, vs N and against each other.
+    # Lines: discrete Zipf with the group's zeta and smallest clone 1: N1 = L^zeta, N = N1 sum_{j<=L} j^-zeta
+    # (the continuous barN drops most of the top clone, so N < N1 at small L)
+    L_th = np.arange(1, 2001)
+    H_L  = lambda z: np.cumsum(L_th ** (-z))
+    theory = {gf.group: dict(barN=L_th ** gf.zeta_mean * H_L(gf.zeta_mean),
+                             L_frac=L_th ** (1 - gf.zeta_mean) / H_L(gf.zeta_mean),
+                             N1_frac=1 / H_L(gf.zeta_mean))
+              for gf in fits.itertuples()}
+    # L_act/N vs N1/N: N1 is not tied to L (the data break N1 = L^zeta), so N = N1 H_L(zeta) with the group's
+    # median N1; along the curve N1/N = 1/H_L(zeta) and L_act/N = L/(N1 H_L(zeta))
+    theory_N1 = {}
+    for gf in fits.itertuples():
+        N1_med = res.loc[res['group'] == gf.group, 'N1'].median()
+        H = H_L(gf.zeta_mean)
+        theory_N1[gf.group] = dict(barN=N1_med * H, N1_frac=1 / H, L_frac=L_th / (N1_med * H))
+    for xcol, ycol, xlab, ylab, name in [
+            ('barN', 'L_frac', r'$N_{\mathrm{sample}}$', r'$L_{\mathrm{act}}/N$', 'Lfrac_Ntot'),
+            ('barN', 'N1_frac', r'$N_{\mathrm{sample}}$', r'$N_1/N$', 'N1frac_Ntot'),
+            ('N1_frac', 'L_frac', r'$N_1/N$', r'$L_{\mathrm{act}}/N$', 'Lfrac_N1frac')]:
+        fig, ax = plt.subplots(**fig_kw)
+        for gf in fits.itertuples():
+            th = (theory_N1 if xcol == 'N1_frac' else theory)[gf.group]
+            sel = th['barN'] <= 1.05 * res['barN'].max()
+            ax.plot(th[xcol][sel], th[ycol][sel], color=gf.color, ls=EXP_LS[gf.Experiment], lw=2)
+        scatter(ax, xcol, ycol)
+        ax.set_xlabel(xlab, fontsize=30)
+        ax.set_ylabel(ylab, fontsize=30)
+        ax.set_xlim(0, 0.6 if xcol == 'N1_frac' else 1.05 * res[xcol].max())
+        ax.set_ylim(0, 1)
+        ax.tick_params(axis='both', labelsize=30)
+        ax.legend(title_fontsize=20, fontsize=20, loc=0)
+        save(fig, f'{panel}/{name}')
 
     # N vs its prediction from N1, L_act and the unit's zeta
     fig, ax = plt.subplots(**fig_kw)
