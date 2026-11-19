@@ -104,6 +104,7 @@ PANELS['manuscript_recall'] = ['CGG GC+PB', 'HA GC+PB']
 RUN_PANELS = list(PANELS)
 EXP_LS     = {'CGG': '-', 'HA': '--'}   # line style of model curves, per antigen
 EXP_MARKER = {'CGG': 'o', 'HA': 's'}     # marker of data points, per antigen
+UNIT_COLOR = {'primary': my_orange, 'recall': my_blue}   # per-unit histograms in units/, per response
 
 
 # ── Data ──────────────────────────────────────────────────────────────────────
@@ -310,7 +311,7 @@ for key, g in GROUPS.items():
     rank_fits[key] = dict(xs=xs, full=full, boot=boot, zetas_mice=zetas_mice)
 
     for i_m, x in enumerate(xs):
-        plot_mouse_top_clones(x, g['color'], f"units/entropy_mouse_{key.replace(' ', '_')}_{i_m + 1}")
+        plot_mouse_top_clones(x, UNIT_COLOR[g['Response']], f"units/entropy_mouse_{key.replace(' ', '_')}_{i_m + 1}")
 
 scaling_results = pd.DataFrame(rows)
 group_fits      = pd.DataFrame(group_fits).set_index('group', drop=False)

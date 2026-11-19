@@ -160,9 +160,9 @@ def plot_yield(ax, res, color, label=None):
 
 def plot_potency(ax, res, color, ls='-', label=None, mark_Zc=True, mark_t = False,
                  marker='o', marker_face=None, marker_edge='k'):
-    """Potency Z(t); optionally mark the first crossing of Z_c."""
+    """Potency Z(t) (res['Z'] if given, else computed); optionally mark the first crossing of Z_c."""
     t = res['t']
-    Z = compute_potency_t(res)
+    Z = res['Z'] if 'Z' in res else compute_potency_t(res)
     ax.plot(t[Z > 0], Z[Z > 0], lw=5, color=color, ls=ls)
     if mark_Zc:
         Z_c = res['params'].Z_c

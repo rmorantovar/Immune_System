@@ -11,6 +11,8 @@ Writes under run_meanfield.FIG_ROOT/<run>/:
                                          one line per (response, t_obs)
     observables/<observable>_<response>_t<t_obs>.pdf
                                          2-D sweep: heatmap over the two parameters
+    zipf/zipf_<response>.pdf             1-D sweep: rank-size plot of the expanded clones at the end,
+                                         one curve per sweep point (single runs: manuscript/zipf.pdf)
 A swept h0 is shown as pi_c = (b0 / h0)^(1 / hill).
 """
 
@@ -33,7 +35,8 @@ NOT_TIME_COURSES = ('t', 'DG', 'weights', 'seed')   # stored with 'DG_dist', not
 def tex(name):
     """Axis label for a column or quantity name."""
     special = {'pi_c': r'$\pi_c$', 'N_T0': r'$N_T^0$', 'n_mem': r'$n_{\mathrm{mem}}$', 'h0': r'$h_0$',
-               't_switch': r'$t_s$', 'h_max': r'$h_{\max}$', 'phi_naive': r'$\phi_{\mathrm{naive}}$'}
+               't_switch': r'$t_s$', 'h_max': r'$h_{\max}$', 'phi_naive': r'$\phi_{\mathrm{naive}}$',
+               'Pi': r'$\Pi$', 'H_T': r'$H_T$', 'K_Pi': r'$K_\Pi$'}
     return special.get(name, name.replace('_', r'\_'))
 
 
@@ -251,6 +254,86 @@ def plot_DG_dist(cfg, dynamics, out):
         fig.supylabel(r'$\mathrm{cells\ per\ unit}\ \Delta G$', fontsize=18)
         fig.tight_layout()
         save(fig, o, 'DG_dist_grid')
+
+
+# ============================================================
+# Zipf (rank-size) plots ('DG_dist' dynamics)
+# ============================================================
+def zipf_curve(d, pop, n_ranks=200):
+    """Rank-size curve of the expanded clones at the end of a response (doubled since t = 0, as L).
+    Each DG bin holds `weights` clones of equal size, so rank k is the size of the bin where the
+    cumulative clone count reaches k. Returns (ranks, sizes / size at rank 1), or None if < 1 clone."""
+    n_end = d[f'N_B_end_{pop}']
+    n0 = d['seed'] if pop == 'memory' else d[f'N_B_clones_{pop}'][:, 0] if f'N_B_clones_{pop}' in d \
+        else np.ones_like(n_end)
+    m = (n0 > 0) & (n_end > 2.0 * n0)
+    order = np.argsort(n_end[m])[::-1]
+    sizes, cum = n_end[m][order], np.cumsum(d['weights'][m][order])
+    if not len(cum) or cum[-1] < 1:
+        return None
+    ranks = np.unique(np.logspace(0, np.log10(cum[-1]), n_ranks))
+    s = sizes[np.minimum(np.searchsorted(cum, ranks), len(sizes) - 1)]
+    return ranks, s / s[0]
+
+
+def plot_zipf(cfg, dynamics, out):
+    """Rank-size plots of the expanded clones at the end of the primary and the recall, with the
+    power laws k^-zeta (primary) and k^-2 zeta (recall), zeta = eta (b0/lambda_A + b0/min(b0, delta_A)) / beta*.
+    Single runs: one figure with both responses, in <run>/manuscript/zipf.pdf.
+    1-D sweeps: one figure per response, one curve per sweep point, in <run>/zipf/."""
+    if 'DG_dist' not in cfg['dynamics'] or len(cfg['sweep']) > 1:
+        return
+    b = cfg['base']
+    zeta = b['eta'] * (b['b0'] / b['lambda_A'] + b['b0'] / min(b['b0'], b['delta_A'])) / b['beta_star']
+    resps = [(r, pop, c, k * zeta) for r, pop, c, k in
+             [('naive', 'naive', mfp.my_orange, 1), ('recall', 'memory', mfp.my_blue, 2)]]
+
+    def style(ax, curves, laws):
+        top = max(r[-1] for r, _ in curves)
+        k = np.logspace(0, np.log10(top), 50)
+        for c, z in laws:
+            ax.plot(k, k ** -z, '--', color=c, lw=2)
+        ax.set_xscale('log')
+        ax.set_yscale('log')
+        ax.set_ylim(bottom=max(ax.get_ylim()[0], 1e-4), top=1.5)
+        ax.set_xlabel(r'$\mathrm{rank}\ k$', fontsize=30)
+        ax.set_ylabel(r'$N_k / N_1$', fontsize=30)
+        ax.tick_params(axis='both', labelsize=26)
+
+    pts = list(dict.fromkeys(pt for pt, _ in dynamics))
+    if not cfg['sweep']:
+        fig, ax = mfp.new_fig()
+        curves = []
+        for r, pop, c, z in resps:
+            zc = zipf_curve(dynamics[((), r)], pop) if ((), r) in dynamics else None
+            if zc is not None:
+                ax.plot(*zc, '-', color=c, lw=3,
+                        label=r'$\mathrm{%s},\ %s=%.2g$' % ('primary' if r == 'naive' else 'recall',
+                                                          r'\zeta' if r == 'naive' else r'2\zeta', z))
+                curves.append(zc)
+        if curves:
+            style(ax, curves, [(c, z) for _, _, c, z in resps])
+            ax.legend(fontsize=20)
+            save(fig, os.path.join(out, 'manuscript'), 'zipf')
+        else:
+            plt.close(fig)
+        return
+    cols = mfp.sweep_colors(len(pts), 'turbo')
+    for r, pop, _, z in resps:
+        fig, ax = mfp.new_fig()
+        curves = []
+        for c, pt in zip(cols, pts):
+            zc = zipf_curve(dynamics[(pt, r)], pop) if (pt, r) in dynamics else None
+            if zc is not None:
+                ax.plot(*zc, '-', color=c, lw=2, label=point_label(cfg, pt))
+                curves.append(zc)
+        if curves:
+            style(ax, curves, [('grey', z)])
+            if len(curves) <= 16:
+                ax.legend(fontsize=12, ncol=2)
+            save(fig, os.path.join(out, 'zipf'), f'zipf_{r}')
+        else:
+            plt.close(fig)
 
 
 # ============================================================
@@ -541,7 +624,7 @@ def fig_ep(cfg, dynamics, out):
         d = dynamics[((), resp)]
         pop = 'naive' if resp == 'naive' else 'memory'
         h0 = p0.b0 if (pop == 'memory' and cfg['recall']['h0_mem'] == 'b0') else p0.h0
-        res = dict(t=d['t'], N_A=d['N_A'], pi=d[f'pi_clones_{pop}'], N_B=d[f'N_B_clones_{pop}'],
+        res = dict(t=d['t'], N_A=d['N_A'], pi=d[f'pi_clones_{pop}'], N_B=d[f'N_B_clones_{pop}'], Z=d[f'Z_{pop}'],
                    DG=d['DG'], weights=weights, model=cfg['model'],
                    params=mf.Parameters(**dict(base, h0=h0, memory=(pop == 'memory'))))
         color = mfp.colors_mem[k]
@@ -591,6 +674,102 @@ def fig_ep(cfg, dynamics, out):
             save(fig, o, 'DG')
 
 
+SNAPSHOT_TIMES = {'naive': (4, 4.5, 5, 5.5),        # panel A, primary (days)
+                  'recall': (4, 5, 6, 7)}      # panel B, recall (days)
+COLOR_L, COLOR_Z, COLOR_Y = mfp.my_red, mfp.my_green, mfp.my_purple
+
+
+def _energy_panels(cfg, d, resp, pop, axA, axC, zaxC, axE):
+    """Draw one response's panels of fig_energy_dynamics: cells per unit DG of activated clones at the
+    snapshot times (axA), L, Y (axC) and Z (zaxC, right axis), and Z/Y = <e^-DG> (axE)."""
+    T = cfg['T']
+    t, DG, w = d['t'], d['DG'], d['weights']
+    dDG = DG[1] - DG[0]
+    N_B = d[f'N_B_clones_{pop}']
+    times = [ts for ts in SNAPSHOT_TIMES[resp] if ts <= T]
+    tcols = plt.get_cmap('Blues')(np.linspace(0.35, 1.0, len(times)))
+    for c, ts in zip(tcols, times):
+        i = int(np.argmin(np.abs(t - ts)))
+        n = N_B[:, i]
+        axA.plot(DG, np.where((N_B[:, 0] > 0) & (n > 2.0 * N_B[:, 0]), w * n / dDG, np.nan), 'o-', color=c, ms=4, lw=2, label=r'$t=%g$' % ts)
+    axA.set_yscale('log')
+    axA.set_xlim(right=DG[-1] - 2)
+    axA.set_xlabel(r'$\Delta G$', fontsize=22)
+
+    L, Y, Z = d[f'L_act_{pop}'], d[f'Y_{pop}'], d[f'Z_{pop}']
+    axC.plot(t, np.where(L > 0, L, np.nan), color=COLOR_L, lw=3, label=r'$L$')
+    axC.plot(t, np.where(Y > 0, Y, np.nan), color=COLOR_Y, lw=3, label=r'$Y$')
+    zaxC.plot(t, np.where(Z > 1e-2, Z, np.nan), color=COLOR_Z, lw=3, label=r'$Z$')   # hide the switch's leak
+    zaxC.axhline(cfg['base']['Z_c'], color=COLOR_Z, ls='--', lw=1)
+    zaxC.set_yscale('log')
+    axC.set_yscale('log')
+
+    cells = w[:, None] * N_B * ((N_B[:, :1] > 0) & (N_B > 2.0 * N_B[:, :1]))   # <e^-DG> over the cells counted in Y,
+    with np.errstate(divide='ignore', invalid='ignore'):                       # with Y's doubling rule
+        q = np.sum(np.exp(-DG)[:, None] * cells, axis=0) / np.sum(cells, axis=0)
+    axE.plot(t, q, color='k', lw=3)
+    axE.axhline(1.0, color='grey', ls='--', lw=1)               # Z = Y: all cells at DG = 0
+    axE.set_yscale('log')
+    for ax in (axC, axE):
+        for c, ts in zip(tcols, times):
+            ax.axvline(ts, color=c, ls=':', lw=1.5)
+        ax.set_xlim(0, T)
+        ax.set_xlabel(r'$t$', fontsize=22)
+
+
+def fig_energy_dynamics(cfg, dynamics, out):
+    """Density in DG of the cells in activated clones (doubled since t = 0, as L(t)) at several times (A primary,
+    B recall) and the number of activated clones L(t) and their cells Y(t) (left axis) with the potency Z(t) (right axis)
+    (C primary, D recall), and Z/Y = <e^-DG> over the cells of activated clones (E primary, F recall;
+    computed from the clone sizes with Y's doubling rule, so free of the latch's switch-on lag).
+    Each response has its own snapshot times (SNAPSHOT_TIMES), marked in C-F.
+    Saved as energy_dynamics.pdf and, one panel per file with the same axis limits, energy_dynamics/<A-F>.pdf."""
+    RESP = [('naive', 'naive', 'primary'), ('recall', 'memory', 'recall')]
+    fig, axs = plt.subplots(3, 2, figsize=(14, 14.5), sharey='row',
+                            gridspec_kw=dict(left=.1, right=.9, bottom=.06, top=.96, hspace=.35, wspace=.08))
+    zaxs = []
+    for k, (resp, pop, title) in enumerate(RESP):
+        zax = axs[1, k].twinx()
+        zaxs.append(zax)
+        _energy_panels(cfg, dynamics[((), resp)], resp, pop, axs[0, k], axs[1, k], zax, axs[2, k])
+        zax.tick_params(axis='y', which='both', labelsize=18, colors=COLOR_Z, labelright=(k == 1))
+        axs[0, k].set_title(r'$\mathrm{%s}$' % title, fontsize=24)
+    axs[0, 0].set_ylabel(r'$\mathrm{cells\ per\ unit}\ \Delta G$', fontsize=22)
+    zlim = [f(z.get_ylim()[j] for z in zaxs) for j, f in enumerate((min, max))]
+    zaxs[1].sharey(zaxs[0])
+    zaxs[0].set_ylim(*zlim)
+    axs[1, 0].set_ylabel(r'$L(t),\ Y(t)$', fontsize=22)
+    zaxs[1].set_ylabel(r'$Z(t)$', fontsize=22, color=COLOR_Z)
+    axs[2, 0].set_ylabel(r'$Z/Y = \langle e^{-\Delta G} \rangle$', fontsize=22)
+    for ax in axs[0]:
+        ax.legend(fontsize=14, loc='lower right')
+    axs[1, 0].legend(axs[1, 0].lines[:2] + zaxs[0].lines[:1], [r'$L$', r'$Y$', r'$Z$'], fontsize=16, loc='upper left')
+    for ax, letter in zip(axs.flat, 'ABCDEF'):
+        ax.tick_params(axis='both', labelsize=18)
+        ax.text(-0.02, 1.04, r'$\mathbf{%s}$' % letter, transform=ax.transAxes, fontsize=26, ha='right')
+    lims = {(r, k): (axs[r, k].get_xlim(), axs[r, k].get_ylim()) for r in range(3) for k in range(2)}
+    save(fig, out, 'energy_dynamics')
+
+    ylabels = [r'$\mathrm{cells\ per\ unit}\ \Delta G$', r'$L(t),\ Y(t)$', r'$Z/Y = \langle e^{-\Delta G} \rangle$']
+    for k, (resp, pop, title) in enumerate(RESP):
+        figs = [plt.subplots(figsize=(7, 5.5), gridspec_kw=dict(left=.17, right=.83, bottom=.15, top=.9)) for _ in range(3)]
+        (fA, aA), (fC, aC), (fE, aE) = figs
+        zC = aC.twinx()
+        _energy_panels(cfg, dynamics[((), resp)], resp, pop, aA, aC, zC, aE)
+        zC.set_ylim(*zlim)
+        zC.set_ylabel(r'$Z(t)$', fontsize=22, color=COLOR_Z)
+        zC.tick_params(axis='y', which='both', labelsize=18, colors=COLOR_Z)
+        aA.legend(fontsize=14, loc='lower right')
+        aC.legend(aC.lines[:2] + zC.lines[:1], [r'$L$', r'$Y$', r'$Z$'], fontsize=16, loc='upper left')
+        for r, ((f, ax), ylab) in enumerate(zip(figs, ylabels)):
+            ax.set_xlim(*lims[(r, k)][0])
+            ax.set_ylim(*lims[(r, k)][1])
+            ax.set_ylabel(ylab, fontsize=22)
+            ax.set_title(r'$\mathrm{%s}$' % title, fontsize=24)
+            ax.tick_params(axis='both', labelsize=18)
+            save(f, os.path.join(out, 'energy_dynamics'), 'ABCDEF'[2 * r + k])
+
+
 def manuscript_figures(cfg, df, dynamics, out):
     """The legacy figure set that matches this run's configuration (nothing if none applies)."""
     rec, sweep = cfg['recall'], list(cfg['sweep'])
@@ -605,6 +784,8 @@ def manuscript_figures(cfg, df, dynamics, out):
     if (not sweep and cfg['repertoire'] == 'polyclonal'
             and {'N_B_clones', 'pi_clones'} <= set(cfg['dynamics'])):
         fig_ep(cfg, dynamics, out)
+        if ((), 'recall') in dynamics and 'L_act' in cfg['dynamics']:
+            fig_energy_dynamics(cfg, dynamics, out)
 
 
 def main(run):
@@ -617,6 +798,7 @@ def main(run):
     elif len(cfg['sweep']) == 2:
         plot_observables_2d(cfg, df, out)
     plot_DG_dist(cfg, dynamics, out)
+    plot_zipf(cfg, dynamics, out)
     manuscript_figures(cfg, df, dynamics, os.path.join(out, 'manuscript'))
     print(f"figures in {out}")
 

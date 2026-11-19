@@ -27,6 +27,7 @@ from typing import Callable, List, Tuple, Optional
 import numpy as np
 from scipy.integrate import solve_ivp
 from scipy.interpolate import CubicSpline
+from scipy.special import expit
 from scipy.stats import norm   # add near the top imports
 
 # Physical constants (kept for parameter expressions in the driver).
@@ -83,6 +84,9 @@ class Parameters:
     h0_mem: Optional[float] = None  # memory-population h0 in the 'boost' models (None -> h0)
     t_switch: float = 6.0        # 'two_stage' models: antigen loading for t < t_switch, expansion after
     h_max: float = 1e3           # 'two_stage' models: max T-cell engagement rate per B cell (per day)
+    competition: bool = False    # 'continuous': T-cell help shared in proportion to presented pMHC
+    H_T: Optional[float] = None  # total T-cell help with competition (None -> h0 K_Pi, the no-competition limit)
+    K_Pi: float = 0.0            # competition: h = (h0_pop/h0) H_T pi / (K_Pi + Pi); 0 -> pure competition
 
     # --- Explicit clones (mode='clones') ---
     clone_DG: Optional[tuple] = None   # DG of each clone, e.g. (0.0, 1.5)
@@ -804,14 +808,23 @@ def _integrate(spec, p, ctx, init_state, t_span, t_eval, drive, mode, model, sol
 # frozen (integrating an exactly-empty population stalls the solver).
 #
 #   model   : 'continuous' -- loading, T-cell help and division at the same time
-#                             (the semicomplete equations; T cells consumed/recycled)
+#                             (the semicomplete equations; T cells consumed/recycled).
+#                             With p.competition, help is shared by presented pMHC:
+#                             h = (h0_pop/h0) H_T pi / (K_Pi + Pi), Pi = sum_clones N_B pi
+#                             (all cells); K_Pi >> Pi with H_T = h0 K_Pi gives back h0
 #             'two_stage'  -- loading for t < t_switch, then expansion without
 #                             uptake, limited by a finite pool of N_T0 T cells
 #   antigen : 'innate'   -- antigen cut by the innate response (autonomous)
 #             'feedback' -- antigen cut by the response's potency Z
 #             'replay'   -- antigen replayed from a given trajectory (drive)
+#
+# In 'continuous' a clone counts in the potency Z once it has doubled (N_B > 2 N_B(0),
+# the rule of L_act): the latch a switches on through a steep Hill function of
+# N_B / (2 N_B(0)) and stays on. 'two_stage' keeps the pMHC-driven latch (pi > pi_c).
 POP_SUFFIX = {'naive': '', 'memory': '_m'}
 ANTIGEN_LAWS = ('innate', 'feedback', 'replay')
+EXPAND_HILL = 50.0              # steepness of the doubling switch of the 'continuous' latch
+                                # (switch ~ 1e-15 at half the doubling size, so the many weak bins don't leak into Z)
 
 
 def _antigen_rate(t, N_A, p, Z, antigen):
@@ -830,20 +843,30 @@ def _rhs_continuous(t, s, p, ctx):
     N_To = max(s['N_To'], 0.0)
     N_Ta = max(s['N_Ta'], 0.0)
     T_term = N_To / (N_To + p.K_T)
+    if p.competition:   # help shared by pMHC: h0_pop -> (h0_pop/h0) H_T / (K_Pi + Pi), no T-cell factor
+        H_T = p.h0 * p.K_Pi if p.H_T is None else p.H_T
+        Pi = sum(np.sum(weights * np.maximum(s['pi' + sfx], 0.0)
+                        * (np.maximum(s['N_Bo' + sfx], 0.0) + np.maximum(s['N_Ba' + sfx], 0.0)))
+                 for sfx, _, _ in ctx['pops'])
+        h_scale, T_term = H_T / (p.h0 * (p.K_Pi + Pi) + 1e-300), 1.0
+    else:
+        h_scale = 1.0
 
     d, flux_T, Z = {}, 0.0, 0.0
     for sfx, h0, live in ctx['pops']:
+        h0 = h0 * h_scale
         pi_vec = np.maximum(s['pi' + sfx], 0.0)
         N_Bo = np.maximum(s['N_Bo' + sfx], 0.0)
         N_Ba = np.maximum(s['N_Ba' + sfx], 0.0)
         a_vec = s['a' + sfx]
 
-        pi_star = (p.b0 / h0) ** (1 / p.hill)
-        g = pi_vec ** p.hill / (pi_vec ** p.hill + pi_star ** p.hill)
         N_B_tot = N_Bo + N_Ba
+        N0 = ctx['N0_pops'][sfx]
         with np.errstate(divide='ignore', invalid='ignore'):
             lambda_eff = np.where(N_B_tot > 0, p.b0 * N_Ba / N_B_tot, 0.0)
-        act = h0 * pi_vec ** p.hill * N_Bo * N_To / (N_To + p.K_T)
+            log_x = np.where(N0 > 0, np.log(N_B_tot / (2.0 * N0)), -np.inf)   # 0 when the clone has doubled
+        g = expit(EXPAND_HILL * log_x)                          # x^n / (1 + x^n), without overflow
+        act = h0 * pi_vec ** p.hill * N_Bo * T_term
 
         dd = {'a': (10.0 * p.b0) * (1.0 - a_vec) * g,
               'pi': p.k_on * psi_vec * N_A - p.delta_pi * pi_vec - lambda_eff * pi_vec,
@@ -933,6 +956,8 @@ def _post_response(res, p, ctx):
         res['T_free'] = np.maximum(p.N_T0 - engaged, 0.0) / p.N_T0
     else:
         res['T_free'] = res['N_To'] / (res['N_To'] + p.K_T)
+        res['Pi'] = sum(np.sum(ctx['weights'][:, None] * res['N_B' + POP_SUFFIX[n]] * res['pi' + POP_SUFFIX[n]],
+                               axis=0) for n in res['pops'])   # total presented pMHC
 
 
 def run_response(model, p, naive=True, memory_seed=None, antigen='innate', drive=None,
@@ -969,6 +994,7 @@ def run_response(model, p, naive=True, memory_seed=None, antigen='innate', drive
     if not pops:
         raise ValueError("A response needs naive=True and/or a memory_seed.")
     ctx['pops'] = [(POP_SUFFIX[name], h0, live) for name, _, h0, live in pops]
+    ctx['N0_pops'] = {POP_SUFFIX[name]: N_Bo for name, N_Bo, _, _ in pops}   # doubling reference
     blocks = [('N_A', 'scalar')]
     for name, N_Bo, _, _ in pops:
         sfx = POP_SUFFIX[name]
@@ -1042,12 +1068,13 @@ def compute_potency_t(res, threshold=2.0):
     """
     Omega-weighted, neutralization-weighted potency Z(t).
 
-    Dispatches on the model: the 'null' model uses the integrated activation
-    latch `a`; models with an explicit pMHC use the pi > pi_star criterion.
+    Dispatches on the model: the 'null' and 'continuous' models use the integrated
+    activation latch `a` (for 'continuous', the doubling latch the antigen
+    feedback sees); the other models with an explicit pMHC use the pi > pi_star criterion.
     """
     N_tot = _N_B(res)
     neut = (res['weights'] * np.exp(-res['DG']))[:, None]
-    if res.get('model') == 'null':
+    if res.get('model') in ('null', 'continuous'):
         return np.sum(neut * N_tot * res['a'], axis=0)
     p = res['params']
     pi_star = (p.b0 / p.h0) ** (1 / p.hill)

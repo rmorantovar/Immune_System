@@ -141,6 +141,7 @@ $PY plot_meanfield.py <run name>             # re-plot a saved run without re-ru
 ## 5. Figures (`--plot`, or `plot_meanfield.py <run>`)
 
 - **`DG_dist/`:** cell density in ΔG (cells per unit ΔG, expanded clones) at the end of the primary, in the memory seed and at the end of the recall, one figure per sweep point plus a grid (single runs and 1-D sweeps). Theory shapes scaled to each curve's total cells: dotted, EP exponentials Ω₀e^{−aΔG} (a = α, or 2α for the recall); dashed grey, the Gaussian of Fig. 4D.
+- **`zipf/`:** rank-size (Zipf) plots of the expanded clones (doubled since t = 0) at the end of each response, normalised to the largest clone, one curve per sweep point (1-D sweeps); dashed: k^−ζ (primary) and k^−2ζ (recall), ζ = η(b0/λ_A + b0/min(b0, δ_A))/β*. Single runs get `manuscript/zipf.pdf` with both responses.
 - **`dynamics/`:** time courses, one curve per sweep point. For 2-D sweeps, one figure each at the first, middle and last value of the second parameter.
 - **`observables/`:** each observable against the swept parameter (1-D sweep), or as a heatmap (2-D sweep).
 - **`manuscript/`:** produced automatically when the run matches a figure:

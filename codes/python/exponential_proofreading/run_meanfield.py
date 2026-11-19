@@ -12,7 +12,10 @@ overrides CONFIG):
     python run_meanfield.py --repertoire two_clone --sweep gap=0,0.5,1,2,4 --plot
 
 Choose in CONFIG (or a PRESET, `python run_meanfield.py <preset>`):
-    model       'continuous' : antigen loading, T-cell help and division at the same time
+    model       'continuous' : antigen loading, T-cell help and division at the same time;
+                               with base competition=True, T-cell help is shared in proportion
+                               to presented pMHC: h = (h0_pop/h0) H_T pi / (K_Pi + Pi),
+                               Pi = sum over clones of N_B pi (H_T None -> h0 K_Pi)
                 'two_stage'  : loading for t < t_switch, then expansion limited by a finite
                                pool of N_T0 T cells (the only coupling between clones)
     repertoire  'polyclonal' (DG grid weighted by the density of states) | 'two_clone'
@@ -62,13 +65,13 @@ BASE = dict(
     N_A0=1.0, lambda_innate=2.2, threshold_innate=1e4,
     lambda_A=6.2, delta_A=3.5, eta=1.0,
     k_on=1e2 * 2e5 * 1e6 * 24 * 3600 / mf.N_Avg, delta_pi=0.1,
-    hill=2.0, beta_star=2.3, K_T=1e4,
+    hill=2.0, beta_star=2.0, K_T=1e4,
     delta_T=0.00, Tcell_growth_factor=2.0,
     tau_eng=0.1, b0=_b0, delta_B=0.00, h0=_b0 / 1000.,
-    DG_min=0.0, DG_max=9.0, M=32,
+    DG_min=0.0, DG_max=9.0, M=60,
     omega_0=1.0, T_lim=True, N_T0=1e6,
     Z_c=1.e3, n_mem=4e4,
-    t_switch=6.0, h_max=1e3,
+    t_switch=6.0, h_max=1e3, competition=False, H_T=None, K_Pi=0.0,
 )
 TWO_CLONE = dict(DG1=0.0, gap=1.0, N1=1.0, ratio=1.0)     # clone 2 at DG1 + gap, size N1 * ratio
 H0_SWEEP = np.flip(np.logspace(np.log10(_b0 / 1e8), np.log10(_b0 / 1e1), 16))   # pi_c from 3 to 1e4
@@ -81,7 +84,7 @@ CONFIG = dict(
     sweep={'h0': H0_SWEEP},
     T=12.0,
     t_obs=[12.0],
-    dynamics=['N_A', 'Z', 'Y', 'L_act', 'T_free', 'DG_dist'],
+    dynamics=['N_A', 'Z', 'Y', 'L_act', 'T_free', 'Pi', 'DG_dist'],
     observables=['Y', 'L_act', 'N1', 'Z', 'D_KL', 'S2', 'alpha_fit', 'DG_front', 'DG_hi', 'DG_lo', 'f_best',
                  'N_A', 'T_free_min', 't_c', 'R', 'phi_naive', 'R_th', 'kappa'],
     base=BASE,
@@ -93,7 +96,7 @@ CONFIG = dict(
 
 PRESETS = {
     # single primary + recall at the BASE parameters, with per-clone time courses (Fig. 2 panels)
-    'single': dict(sweep={}, dynamics=['N_A', 'Z', 'Y', 'L_act', 'T_free', 'N_B_clones', 'pi_clones',
+    'single': dict(sweep={}, dynamics=['N_A', 'Z', 'Y', 'L_act', 'T_free', 'Pi', 'N_B_clones', 'pi_clones',
                                        'DG_dist']),
     # naive + memory responding together to the naive antigen trajectory (prime-boost)
     'boost': dict(recall=dict(CONFIG['recall'], with_naive=True, antigen='replay'),
@@ -158,13 +161,15 @@ def pi_c_of(p, h0=None):
 def run_name(cfg):
     if cfg['name']:
         return cfg['name']
-    name = f"{cfg['model']}_{cfg['repertoire']}"
+    competing = cfg['model'] == 'continuous' and cfg['base']['competition']
+    name = f"{'competition' if competing else cfg['model']}_{cfg['repertoire']}"
     if 'recall' in cfg['responses']:
         rec = cfg['recall']
         name += f"_recall{'+naive' if rec['with_naive'] else ''}_{rec['antigen']}"
     name += '_single' if not cfg['sweep'] else '_sweep_' + '_'.join(cfg['sweep'])
     changed = [f'{k}={v:.3g}' for k, v in {**cfg['base'], **cfg['two_clone']}.items()
-               if k not in cfg['sweep'] and v != {**BASE, **TWO_CLONE}.get(k)]
+               if k not in cfg['sweep'] and v != {**BASE, **TWO_CLONE}.get(k)
+               and not (competing and k == 'competition')]
     return '_'.join([name] + changed)                 # changed base parameters keep runs apart
 
 
@@ -172,8 +177,9 @@ def run_name(cfg):
 # Observables  (v = mf.pop_view of one population; i = time index)
 # ============================================================
 def _expanded(v, i):
-    """Clones that at least doubled since t = 0."""
-    return v['N_B'][:, i] > 2.0 * v['N_B'][:, 0]
+    """Clones that at least doubled since t = 0 (empty memory bins never count)."""
+    N_B = v['N_B']
+    return (N_B[:, 0] > 0) & (N_B[:, i] > 2.0 * N_B[:, 0])
 
 
 def _ever_active(v, i):
@@ -286,15 +292,15 @@ def R_theory(cfg, res0, seed, p):
 # Dynamics  (time courses kept per run)
 # ============================================================
 def response_dynamics(cfg, res, extra=None):
-    """Requested time courses: N_A, T_free, and per population Z, Y, L_act, N_B / pi per clone;
+    """Requested time courses: N_A, T_free, Pi ('continuous'), and per population Z, Y, L_act, N_B / pi per clone;
     'DG_dist' keeps the final cells per clone (and the memory seed of a recall) for the energy distributions."""
     want, out = cfg['dynamics'], {'t': res['t']}
-    for q in ('N_A', 'T_free'):
-        if q in want:
+    for q in ('N_A', 'T_free', 'Pi'):
+        if q in want and q in res:
             out[q] = res[q]
     for pop in res['pops']:
         v = mf.pop_view(res, pop)
-        act = v['N_B'] > 2.0 * v['N_B'][:, :1]
+        act = (v['N_B'][:, :1] > 0) & (v['N_B'] > 2.0 * v['N_B'][:, :1])   # as _expanded
         if 'Z' in want:
             out[f'Z_{pop}'] = mf.compute_potency_t(v)
         if 'Y' in want:
