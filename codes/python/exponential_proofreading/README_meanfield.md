@@ -72,7 +72,7 @@ $PY plot_meanfield.py <run name>             # re-plot a saved run without re-ru
 | B cells | division rate b0 | 2 per day |
 | | **h0** | **b0/1000, so π_c = (b0/h0)^½ ≈ 31.6** |
 | | death δ_B | 0 |
-| Recall | memory h0 | `h0_mem = b0`, so π_c,mem = 1 |
+| Recall | memory h0 | `h0_mem = b0` (`BASE` `h0_mem=None`), so π_c,mem = 1; change with `--set h0_mem=...` |
 | | memory capacity n_mem | 4·10⁴ |
 | | GC-entry bias f in φ_naive | 1 |
 | Repertoire | ΔG grid | 0 to 9, 32 points |

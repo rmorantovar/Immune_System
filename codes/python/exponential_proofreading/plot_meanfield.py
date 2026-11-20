@@ -17,6 +17,7 @@ A swept h0 is shown as pi_c = (b0 / h0)^(1 / hill).
 """
 
 import os, sys, json, pickle
+from dataclasses import fields
 sys.path.append(os.path.join(os.path.dirname(__file__), '../../library'))
 
 import numpy as np
@@ -71,6 +72,21 @@ def load(run):
     with open(os.path.join(folder, 'config.json')) as fh:
         cfg = json.load(fh)
     return cfg, df, dynamics
+
+
+def params_of(base, **over):
+    """mf.Parameters from a saved base (fields no longer in Parameters, e.g. of removed models, are dropped)."""
+    names = {f.name for f in fields(mf.Parameters)}
+    return mf.Parameters(**{k: v for k, v in {**base, **over}.items() if k in names})
+
+
+def memory_h0(cfg, base, h0):
+    """h0 of the memory population: base h0_mem (None -> b0); older runs kept it in cfg['recall']
+    ('b0' -> b0, None -> h0)."""
+    if 'h0_mem' in cfg['recall']:
+        hm = cfg['recall']['h0_mem']
+        return base['b0'] if hm == 'b0' else (h0 if hm is None else hm)
+    return base['b0'] if base.get('h0_mem') is None else base['h0_mem']
 
 
 def save(fig, out, name):
@@ -578,7 +594,8 @@ def fig_two_clone(cfg, df, dynamics, out):
             ax_pi.plot(t, pi[0], lw=5, color=c, ls='-', label=lab)
             ax_pi.plot(t, pi[1], lw=5, color=c, ls='--')
             h0 = v if name == 'h0' else b['h0']
-            h0 = b['b0'] if (pop == 'memory' and cfg['recall']['h0_mem'] == 'b0') else h0
+            if pop == 'memory':
+                h0 = v if name == 'h0_mem' else memory_h0(cfg, b, h0)
             ax_pi.axhline((b['b0'] / h0) ** (1 / b['hill']), lw=1, ls=':', color=c)
             final.setdefault(resp, []).append((v, f1[-1]))
         tag = f"{cfg['model']}_{resp}"
@@ -614,7 +631,7 @@ def fig_ep(cfg, dynamics, out):
     N_A (A), pi of three clones (B), N_B of three clones (C), potency Z, and the affinity fronts (D;
     analytic continuous-model fronts, so only for model='continuous')."""
     T, base = cfg['T'], cfg['base']
-    p0 = mf.Parameters(**base)
+    p0 = params_of(base)
     weights = mf.build_context(p0, mode='grid')['weights']
     pi_c_primary = (p0.b0 / p0.h0) ** (1 / p0.hill)
     label = mfp.pi_star_label(pi_c_primary)                 # both responses labelled by the primary pi_c
@@ -623,10 +640,10 @@ def fig_ep(cfg, dynamics, out):
             continue
         d = dynamics[((), resp)]
         pop = 'naive' if resp == 'naive' else 'memory'
-        h0 = p0.b0 if (pop == 'memory' and cfg['recall']['h0_mem'] == 'b0') else p0.h0
+        h0 = memory_h0(cfg, base, p0.h0) if pop == 'memory' else p0.h0
         res = dict(t=d['t'], N_A=d['N_A'], pi=d[f'pi_clones_{pop}'], N_B=d[f'N_B_clones_{pop}'], Z=d[f'Z_{pop}'],
                    DG=d['DG'], weights=weights, model=cfg['model'],
-                   params=mf.Parameters(**dict(base, h0=h0, memory=(pop == 'memory'))))
+                   params=params_of(base, h0=h0, memory=(pop == 'memory')))
         color = mfp.colors_mem[k]
         o = os.path.join(out, resp)
         left = dict(labelleft=(k == 0))                     # y tick labels on the primary only
@@ -677,11 +694,12 @@ def fig_ep(cfg, dynamics, out):
 SNAPSHOT_TIMES = {'naive': (4, 4.5, 5, 5.5),        # panel A, primary (days)
                   'recall': (4, 5, 6, 7)}      # panel B, recall (days)
 COLOR_L, COLOR_Z, COLOR_Y = mfp.my_red, mfp.my_green, mfp.my_purple
+GOLDEN = (1 + 5 ** 0.5) / 2                     # width / height of the fig_energy_dynamics panels
 
 
-def _energy_panels(cfg, d, resp, pop, axA, axC, zaxC, axE):
+def _energy_panels(cfg, d, resp, pop, axA, axC, zaxC):
     """Draw one response's panels of fig_energy_dynamics: cells per unit DG of activated clones at the
-    snapshot times (axA), L, Y (axC) and Z (zaxC, right axis), and Z/Y = <e^-DG> (axE)."""
+    snapshot times (axA), and L (axC) with Z (zaxC, right axis)."""
     T = cfg['T']
     t, DG, w = d['t'], d['DG'], d['weights']
     dDG = DG[1] - DG[0]
@@ -693,78 +711,113 @@ def _energy_panels(cfg, d, resp, pop, axA, axC, zaxC, axE):
         n = N_B[:, i]
         axA.plot(DG, np.where((N_B[:, 0] > 0) & (n > 2.0 * N_B[:, 0]), w * n / dDG, np.nan), 'o-', color=c, ms=4, lw=2, label=r'$t=%g$' % ts)
     axA.set_yscale('log')
-    axA.set_xlim(right=DG[-1] - 2)
+    axA.set_xlim(right=4)
     axA.set_xlabel(r'$\Delta G$', fontsize=22)
 
     L, Y, Z = d[f'L_act_{pop}'], d[f'Y_{pop}'], d[f'Z_{pop}']
     axC.plot(t, np.where(L > 0, L, np.nan), color=COLOR_L, lw=3, label=r'$L$')
-    axC.plot(t, np.where(Y > 0, Y, np.nan), color=COLOR_Y, lw=3, label=r'$Y$')
+    # axC.plot(t, np.where(Y > 0, Y, np.nan), color=COLOR_Y, lw=3, label=r'$Y$')
     zaxC.plot(t, np.where(Z > 1e-2, Z, np.nan), color=COLOR_Z, lw=3, label=r'$Z$')   # hide the switch's leak
     zaxC.axhline(cfg['base']['Z_c'], color=COLOR_Z, ls='--', lw=1)
     zaxC.set_yscale('log')
     axC.set_yscale('log')
 
-    cells = w[:, None] * N_B * ((N_B[:, :1] > 0) & (N_B > 2.0 * N_B[:, :1]))   # <e^-DG> over the cells counted in Y,
-    with np.errstate(divide='ignore', invalid='ignore'):                       # with Y's doubling rule
-        q = np.sum(np.exp(-DG)[:, None] * cells, axis=0) / np.sum(cells, axis=0)
-    axE.plot(t, q, color='k', lw=3)
-    axE.axhline(1.0, color='grey', ls='--', lw=1)               # Z = Y: all cells at DG = 0
-    axE.set_yscale('log')
-    for ax in (axC, axE):
-        for c, ts in zip(tcols, times):
-            ax.axvline(ts, color=c, ls=':', lw=1.5)
-        ax.set_xlim(0, T)
-        ax.set_xlabel(r'$t$', fontsize=22)
+    # for c, ts in zip(tcols, times):
+    #     axC.axvline(ts, color=c, ls=':', lw=1.5)
+    axC.set_xlim(0, T)
+    axC.set_xlabel(r'$t$', fontsize=22)
+
+
+def _mean_affinity_panel(cfg, d, pop, ax, lax):
+    """Mean affinity z = e^-DG of the activated clones (doubled since t = 0, as L(t)) over time, weighted per
+    clone (L) and per cell (Y; this one is Z/Y), with
+    the activation front (z of the weakest activated clone). The number of activated clones L(t) on the right axis (lax)."""
+    t, DG, w = d['t'], d['DG'], d['weights']
+    N_B = d[f'N_B_clones_{pop}']
+    act = (N_B[:, :1] > 0) & (N_B > 2.0 * N_B[:, :1])
+    weights = {'L': w[:, None] * act, 'Y': w[:, None] * N_B * act}
+    z = np.exp(-DG)[:, None]
+    with np.errstate(divide='ignore', invalid='ignore'):
+        for q, ls in (('Y', '-'), ('L', '--')):
+            ax.plot(t, np.sum(z * weights[q], axis=0) / np.sum(weights[q], axis=0), color=COLOR_Z, lw=3, ls=ls,
+                    label=r'$\langle z \rangle_%s$' % q)
+    front = np.where(act.any(axis=0), np.max(np.where(act, DG[:, None], -np.inf), axis=0), np.nan)
+    ax.plot(t, np.exp(-front), color='grey', lw=1.5, ls=':', label=r'$\mathrm{front}$')
+    ax.set_yscale('log')
+    L = d[f'L_act_{pop}']
+    lax.plot(t, np.where(L > 0, L, np.nan), color=COLOR_L, lw=3, label=r'$L$')
+    lax.set_yscale('log')
+    ax.set_xlim(0, cfg['T'])
+    ax.set_ylim(top=1.5)
+    ax.set_xlabel(r'$t$', fontsize=22)
 
 
 def fig_energy_dynamics(cfg, dynamics, out):
     """Density in DG of the cells in activated clones (doubled since t = 0, as L(t)) at several times (A primary,
     B recall) and the number of activated clones L(t) and their cells Y(t) (left axis) with the potency Z(t) (right axis)
-    (C primary, D recall), and Z/Y = <e^-DG> over the cells of activated clones (E primary, F recall;
-    computed from the clone sizes with Y's doubling rule, so free of the latch's switch-on lag).
-    Each response has its own snapshot times (SNAPSHOT_TIMES), marked in C-F.
+    (C primary, D recall), and the mean affinity <z> = <e^-DG> of the activated clones per cell (= Z/Y, from the
+    clone sizes with Y's doubling rule) and per clone, with L(t) (E primary, F recall; _mean_affinity_panel).
+    Each response has its own snapshot times (SNAPSHOT_TIMES), shown in A-B.
     Saved as energy_dynamics.pdf and, one panel per file with the same axis limits, energy_dynamics/<A-F>.pdf."""
     RESP = [('naive', 'naive', 'primary'), ('recall', 'memory', 'recall')]
-    fig, axs = plt.subplots(3, 2, figsize=(14, 14.5), sharey='row',
-                            gridspec_kw=dict(left=.1, right=.9, bottom=.06, top=.96, hspace=.35, wspace=.08))
-    zaxs = []
+    fig, axs = plt.subplots(3, 2, figsize=(14, 12.5), sharey='row',
+                            gridspec_kw=dict(left=.1, right=.9, bottom=.07, top=.95, hspace=.35, wspace=.08))
+    zaxs, laxs = [], []
     for k, (resp, pop, title) in enumerate(RESP):
-        zax = axs[1, k].twinx()
+        zax, lax = axs[1, k].twinx(), axs[2, k].twinx()
         zaxs.append(zax)
-        _energy_panels(cfg, dynamics[((), resp)], resp, pop, axs[0, k], axs[1, k], zax, axs[2, k])
+        laxs.append(lax)
+        _energy_panels(cfg, dynamics[((), resp)], resp, pop, axs[0, k], axs[1, k], zax)
+        _mean_affinity_panel(cfg, dynamics[((), resp)], pop, axs[2, k], lax)
         zax.tick_params(axis='y', which='both', labelsize=18, colors=COLOR_Z, labelright=(k == 1))
+        lax.tick_params(axis='y', which='both', labelsize=18, colors=COLOR_L, labelright=(k == 1))
         axs[0, k].set_title(r'$\mathrm{%s}$' % title, fontsize=24)
     axs[0, 0].set_ylabel(r'$\mathrm{cells\ per\ unit}\ \Delta G$', fontsize=22)
     zlim = [f(z.get_ylim()[j] for z in zaxs) for j, f in enumerate((min, max))]
     zaxs[1].sharey(zaxs[0])
     zaxs[0].set_ylim(*zlim)
-    axs[1, 0].set_ylabel(r'$L(t),\ Y(t)$', fontsize=22)
+    llim = [f(a.get_ylim()[j] for a in laxs) for j, f in enumerate((min, max))]
+    laxs[1].sharey(laxs[0])
+    laxs[0].set_ylim(*llim)
+    laxs[1].set_ylabel(r'$L(t)$', fontsize=22, color=COLOR_L)
+    axs[1, 0].set_ylabel(r'$L(t)$', fontsize=22, color=COLOR_L)
     zaxs[1].set_ylabel(r'$Z(t)$', fontsize=22, color=COLOR_Z)
-    axs[2, 0].set_ylabel(r'$Z/Y = \langle e^{-\Delta G} \rangle$', fontsize=22)
+    axs[2, 0].set_ylabel(r'$\langle z \rangle = \langle e^{-\Delta G} \rangle$', fontsize=22)
+    axs[2, 0].legend(axs[2, 0].lines + laxs[0].lines, [l.get_label() for l in axs[2, 0].lines + laxs[0].lines],
+                     fontsize=16, loc='upper left')
     for ax in axs[0]:
         ax.legend(fontsize=14, loc='lower right')
-    axs[1, 0].legend(axs[1, 0].lines[:2] + zaxs[0].lines[:1], [r'$L$', r'$Y$', r'$Z$'], fontsize=16, loc='upper left')
+    axs[1, 0].legend(axs[1, 0].lines[:1] + zaxs[0].lines[:1], [r'$L$', r'$Z$'], fontsize=16, loc='upper left')
     for ax, letter in zip(axs.flat, 'ABCDEF'):
         ax.tick_params(axis='both', labelsize=18)
         ax.text(-0.02, 1.04, r'$\mathbf{%s}$' % letter, transform=ax.transAxes, fontsize=26, ha='right')
+    for ax in list(axs.flat) + zaxs + laxs:
+        ax.set_box_aspect(1 / GOLDEN)
     lims = {(r, k): (axs[r, k].get_xlim(), axs[r, k].get_ylim()) for r in range(3) for k in range(2)}
     save(fig, out, 'energy_dynamics')
 
-    ylabels = [r'$\mathrm{cells\ per\ unit}\ \Delta G$', r'$L(t),\ Y(t)$', r'$Z/Y = \langle e^{-\Delta G} \rangle$']
+    ylabels = [r'$\mathrm{cells\ per\ unit}\ \Delta G$', r'$L(t)$', r'$\langle z \rangle = \langle e^{-\Delta G} \rangle$']
     for k, (resp, pop, title) in enumerate(RESP):
-        figs = [plt.subplots(figsize=(7, 5.5), gridspec_kw=dict(left=.17, right=.83, bottom=.15, top=.9)) for _ in range(3)]
+        figs = [plt.subplots(figsize=(7.5, 5.2), gridspec_kw=dict(left=.15, right=.85, bottom=.15, top=.9)) for _ in range(3)]
         (fA, aA), (fC, aC), (fE, aE) = figs
-        zC = aC.twinx()
-        _energy_panels(cfg, dynamics[((), resp)], resp, pop, aA, aC, zC, aE)
+        zC, lE = aC.twinx(), aE.twinx()
+        _energy_panels(cfg, dynamics[((), resp)], resp, pop, aA, aC, zC)
+        _mean_affinity_panel(cfg, dynamics[((), resp)], pop, aE, lE)
+        aE.legend(aE.lines + lE.lines, [l.get_label() for l in aE.lines + lE.lines], fontsize=14, loc='upper left')
+        lE.set_ylim(*llim)
+        lE.set_ylabel(r'$L(t)$', fontsize=22, color=COLOR_L)
+        lE.tick_params(axis='y', which='both', labelsize=18, colors=COLOR_L)
         zC.set_ylim(*zlim)
         zC.set_ylabel(r'$Z(t)$', fontsize=22, color=COLOR_Z)
         zC.tick_params(axis='y', which='both', labelsize=18, colors=COLOR_Z)
         aA.legend(fontsize=14, loc='lower right')
-        aC.legend(aC.lines[:2] + zC.lines[:1], [r'$L$', r'$Y$', r'$Z$'], fontsize=16, loc='upper left')
+        aC.legend(aC.lines[:1] + zC.lines[:1], [r'$L$', r'$Z$'], fontsize=16, loc='upper left')
+        for a in (aA, aC, aE, zC, lE):
+            a.set_box_aspect(1 / GOLDEN)
         for r, ((f, ax), ylab) in enumerate(zip(figs, ylabels)):
             ax.set_xlim(*lims[(r, k)][0])
             ax.set_ylim(*lims[(r, k)][1])
-            ax.set_ylabel(ylab, fontsize=22)
+            ax.set_ylabel(ylab, fontsize=22, color=COLOR_L if r == 1 else 'k')
             ax.set_title(r'$\mathrm{%s}$' % title, fontsize=24)
             ax.tick_params(axis='both', labelsize=18)
             save(f, os.path.join(out, 'energy_dynamics'), 'ABCDEF'[2 * r + k])

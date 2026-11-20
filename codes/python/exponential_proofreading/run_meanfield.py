@@ -26,7 +26,6 @@ Choose in CONFIG (or a PRESET, `python run_meanfield.py <preset>`):
                 antigen    : 'feedback' (the response controls the antigen through its
                              potency Z) | 'replay' (the naive response's antigen
                              trajectory, no feedback)
-                h0_mem     : memory activation constant ('b0' -> h0_mem = b0; None -> h0)
                 draw       : memory seed 'expected' (deterministic) | 'random' (multinomial)
                 f          : memory GC-entry bias in phi_naive = 1 / (1 + f R)
     sweep       {} single run | {name: values} | {name1: values1, name2: values2} (grid).
@@ -63,15 +62,16 @@ FIG_ROOT = f'{DRIVE}/documents/Science/research_projects/Immune_System/figures/e
 _b0 = 2.0
 BASE = dict(
     N_A0=1.0, lambda_innate=2.2, threshold_innate=1e4,
-    lambda_A=6.2, delta_A=3.5, eta=1.0,
-    k_on=1e2 * 2e5 * 1e6 * 24 * 3600 / mf.N_Avg, delta_pi=0.1,
+    lambda_A=5., delta_A=3.5, eta=1.0,
+    k_on=1e3 * 2e5 * 1e6 * 24 * 3600 / mf.N_Avg, delta_pi=0.1,
     hill=2.0, beta_star=2.0, K_T=1e4,
     delta_T=0.00, Tcell_growth_factor=2.0,
-    tau_eng=0.1, b0=_b0, delta_B=0.00, h0=_b0 / 1000.,
+    tau_eng=0.1, b0=_b0, delta_B=0.00, h0=_b0 / 100.,
     DG_min=0.0, DG_max=9.0, M=60,
     omega_0=1.0, T_lim=True, N_T0=1e6,
     Z_c=1.e3, n_mem=4e4,
     t_switch=6.0, h_max=1e3, competition=False, H_T=None, K_Pi=0.0,
+    h0_mem=None,                                  # memory activation constant (None -> b0, so pi_c,mem = 1)
 )
 TWO_CLONE = dict(DG1=0.0, gap=1.0, N1=1.0, ratio=1.0)     # clone 2 at DG1 + gap, size N1 * ratio
 H0_SWEEP = np.flip(np.logspace(np.log10(_b0 / 1e8), np.log10(_b0 / 1e1), 16))   # pi_c from 3 to 1e4
@@ -80,9 +80,9 @@ CONFIG = dict(
     model='continuous',
     repertoire='polyclonal',
     responses=['naive', 'recall'],
-    recall=dict(with_naive=False, antigen='feedback', h0_mem='b0', draw='expected', f=1.0),
+    recall=dict(with_naive=False, antigen='feedback', draw='expected', f=1.0),
     sweep={'h0': H0_SWEEP},
-    T=12.0,
+    T=10.0,
     t_obs=[12.0],
     dynamics=['N_A', 'Z', 'Y', 'L_act', 'T_free', 'Pi', 'DG_dist'],
     observables=['Y', 'L_act', 'N1', 'Z', 'D_KL', 'S2', 'alpha_fit', 'DG_front', 'DG_hi', 'DG_lo', 'f_best',
@@ -149,8 +149,8 @@ def build_params(cfg, point):
     if cfg['repertoire'] == 'two_clone':
         d['clone_DG'] = (tc['DG1'], tc['DG1'] + tc['gap'])
         d['clone_N0'] = (tc['N1'], tc['N1'] * tc['ratio'])
-    h0_mem = cfg['recall']['h0_mem']
-    d['h0_mem'] = d['b0'] if h0_mem == 'b0' else h0_mem
+    if d['h0_mem'] is None:                    # memory activation constant: None -> b0 (pi_c,mem = 1)
+        d['h0_mem'] = d['b0']
     return mf.Parameters(**d)
 
 
@@ -506,7 +506,7 @@ def describe(cfg):
     sweep = ', '.join(f"{k} ({len(v)} values, {min(v):.3g} .. {max(v):.3g})" for k, v in cfg['sweep'].items())
     return (f"run       {run_name(cfg)}\n"
             f"model     {cfg['model']}   repertoire {cfg['repertoire']}   responses {cfg['responses']}\n"
-            f"recall    antigen={rec['antigen']} with_naive={rec['with_naive']} draw={rec['draw']} h0_mem={rec['h0_mem']}\n"
+            f"recall    antigen={rec['antigen']} with_naive={rec['with_naive']} draw={rec['draw']} h0_mem={cfg['base']['h0_mem'] or 'b0'}\n"
             f"sweep     {sweep or 'single run'}\n"
             f"T         {cfg['T']}   t_obs {cfg['t_obs']}\n"
             f"dynamics  {cfg['dynamics']}\n"
