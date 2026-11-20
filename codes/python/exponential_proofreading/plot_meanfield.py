@@ -691,8 +691,8 @@ def fig_ep(cfg, dynamics, out):
             save(fig, o, 'DG')
 
 
-SNAPSHOT_TIMES = {'naive': (4, 4.5, 5, 5.5),        # panel A, primary (days)
-                  'recall': (4, 5, 6, 7)}      # panel B, recall (days)
+SNAPSHOT_TIMES = {'naive': (3.5, 4.5, 5.5, 6.5),        # panel A, primary (days)
+                  'recall': (3, 4, 5, 6)}      # panel B, recall (days)
 COLOR_L, COLOR_Z, COLOR_Y = mfp.my_red, mfp.my_green, mfp.my_purple
 GOLDEN = (1 + 5 ** 0.5) / 2                     # width / height of the fig_energy_dynamics panels
 
@@ -711,12 +711,12 @@ def _energy_panels(cfg, d, resp, pop, axA, axC, zaxC):
         n = N_B[:, i]
         axA.plot(DG, np.where((N_B[:, 0] > 0) & (n > 2.0 * N_B[:, 0]), w * n / dDG, np.nan), 'o-', color=c, ms=4, lw=2, label=r'$t=%g$' % ts)
     axA.set_yscale('log')
-    axA.set_xlim(right=4)
+    axA.set_xlim(right=5)
     axA.set_xlabel(r'$\Delta G$', fontsize=22)
 
     L, Y, Z = d[f'L_act_{pop}'], d[f'Y_{pop}'], d[f'Z_{pop}']
     axC.plot(t, np.where(L > 0, L, np.nan), color=COLOR_L, lw=3, label=r'$L$')
-    # axC.plot(t, np.where(Y > 0, Y, np.nan), color=COLOR_Y, lw=3, label=r'$Y$')
+    axC.plot(t, np.where(Y > 0, Y, np.nan), color=COLOR_Y, lw=3, label=r'$Y$')
     zaxC.plot(t, np.where(Z > 1e-2, Z, np.nan), color=COLOR_Z, lw=3, label=r'$Z$')   # hide the switch's leak
     zaxC.axhline(cfg['base']['Z_c'], color=COLOR_Z, ls='--', lw=1)
     zaxC.set_yscale('log')
